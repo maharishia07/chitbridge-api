@@ -7048,6 +7048,7 @@ module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route
 module.exports.sendStepsOnce = sendStepsOnce; /* AR-F-02: tests/ar-1129.test.cjs runs the real step order from an empty state */
 module.exports.SEND_STEPS = SEND_STEPS;
 module.exports.sendCreditReason = sendCreditReason; /* AR-F-02: tests/ar-1129.test.cjs */
+module.exports.sendRailNumber = sendRailNumber; /* AS-F-03: tests/as-1129-order.test.cjs runs the real step order */
 module.exports.sendBillNumber = sendBillNumber; /* F-F-04/05 (1128): tests/walkf-1128-core.test.cjs runs the real step over express */
 module.exports.taxNotChargeableRefusal = taxNotChargeableRefusal; /* F-F-10 (1128): the same test */
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */

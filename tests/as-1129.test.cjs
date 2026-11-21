@@ -20,13 +20,16 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   console.log('\n== AS-F-03 · the rail invoice number, over express ==\n');
   const taken = new Set(['AS/26-27/0001']);
   const lookups = [];
-  const step = rail.railNumberStep(async (id) => (id === 'IN' ? 'IN' : 'XX'), async (sender, purpose, number, since, ref) => { lookups.push({ purpose, number, since, ref }); return taken.has(purpose + ':' + number) || (purpose === 'invoice' && taken.has(number) && ref !== 'same') ? { chit_id: 'x' } : null; });
+  const priceNote = require(path.join(HERE, 'lib', 'price-note.js'));
+  let seqNow = 42; const given = [];
+  const series = { DOCUMENTS: priceNote.DOCUMENTS, numberOf: priceNote.numberOf, nextSequence: async () => ++seqNow, giveBackNumber: async (e, prefix, n) => { given.push(n); } };
+  const step = rail.railNumberStep(async (id) => (id === 'IN' ? 'IN' : 'XX'), async (sender, purpose, number, since, ref) => { lookups.push({ purpose, number, since, ref }); return taken.has(purpose + ':' + number) || (purpose === 'invoice' && taken.has(number) && ref !== 'same') ? { chit_id: 'x' } : null; }, series);
   const app = express();
   app.use(express.json());
   app.post('/send', async (req, res) => {
     res.locals.kind = req.body.kind;
-    if (await step({ sender_id: req.body.sender, is_draft: !!req.body.is_draft, client_ref: req.body.client_ref }, req, res)) return;
-    if (!res.headersSent) res.json({ ok: true });
+    if (await step({ sender_id: req.body.sender, client_ref: req.body.client_ref }, req, res)) return; /* the state the route holds at this step: no is_draft, no purpose */
+    if (!res.headersSent) res.json({ ok: true, number: req.body.business_json && req.body.business_json.bill_no });
   });
   const server = await new Promise((resolve) => { const s = http.createServer(app).listen(0, () => resolve(s)); });
   const url = 'http://127.0.0.1:' + server.address().port + '/send';
@@ -36,9 +39,15 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   let r = await post(inv('AS/26-27/0002'));
   ok('India: a good number is let through', r.status === 200, JSON.stringify(r));
   r = await post(inv());
-  ok('India: NO number is refused 422 BILL_NO_BAD in words', r.status === 422 && r.body.code === 'BILL_NO_BAD' && /needs its number/.test(said(r)), JSON.stringify(r));
+  ok('India: NO number is ASSIGNED from the seller\'s series (leaders give the next one), 26-27/0043 first', r.status === 200 && /^26-27\/0043$/.test(r.body.number || ''), JSON.stringify(r));
   r = await post(inv('   '));
-  ok('India: a blank number is refused', r.status === 422 && r.body.code === 'BILL_NO_BAD', JSON.stringify(r));
+  ok('India: a blank (spaces) number is assigned too', r.status === 200 && /^26-27\/0044$/.test(r.body.number || ''), JSON.stringify(r));
+  r = await post(Object.assign(inv(), { purpose: 'credit_note' }));
+  ok('India: a blank credit note gets its own series CN/26-27/…', r.status === 200 && /^CN\/26-27\/0045$/.test(r.body.number || ''), JSON.stringify(r));
+  r = await post({ sender: 'IN', purpose: 'invoice', business_json: { invoice_no: 'INV-7' } });
+  ok('India: a number carried as invoice_no (the forms\' own field) is the number: judged and let through, nothing assigned', r.status === 200 && r.body.number === undefined, JSON.stringify(r));
+  r = await post({ sender: 'IN', purpose: 'invoice', business_json: { invoice_no: 'bad number' } });
+  ok('India: a bad number typed as invoice_no is refused, not read as blank', r.status === 422, JSON.stringify(r));
   r = await post(inv('ASx walk invoice number one 26 chars'));
   ok('India: 26+ characters with spaces is refused, naming the limit 16', r.status === 422 && /16/.test(said(r)), JSON.stringify(r));
   r = await post(inv('as 1'));

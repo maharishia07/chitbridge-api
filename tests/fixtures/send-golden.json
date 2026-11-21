@@ -5500,12 +5500,12 @@
    },
    {
     "via": "withEntity:SHOP",
-    "sql": "SELECT chit_id FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND purpose = $2 AND COALESCE(role, '') <> 'Draft' AND COALESCE(business_json->>'bill_no', business_json->>'printed_as') = $3 AND created_at >= $4::date AND COALESCE(business_json->>'client_ref', '') <> COALESCE($5, '') LIMIT 1",
+    "sql": "SELECT chit_id FROM chit_header WHERE entity_id = $1 AND sender_entity_id = $1 AND purpose = $2 AND COALESCE(role, '') <> 'Draft' AND upper(replace(COALESCE(NULLIF(business_json->>'bill_no', ''), NULLIF(business_json->>'printed_as', ''), NULLIF(business_json->>'invoice_no', ''), NULLIF(business_json->>'doc_no', ''), ''), ' ', '')) = upper(replace($3, ' ', '')) AND created_at >= $4::date AND COALESCE(business_json->>'client_ref', '') <> COALESCE($5, '') LIMIT 1",
     "params": [
      "SHOP",
      "invoice",
      "INV/26-27/0001",
-     "2026-04-01",
+     "TS",
      null
     ]
    },
