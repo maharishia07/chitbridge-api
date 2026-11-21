@@ -22295,6 +22295,14 @@ function paintPays(){
   if (own && own.payee && !ways.some(function(w){ return String(w.payee || '') === String(own.payee); })) {
     ways.push({ id:'upi-local', label:(own.label || 'UPI'), qr:'upi-deeplink', payee:own.payee });
   }
+  /**
+   * ⭐ IN-F-05 (walk IN 21 Nov; CTR-141, Athi, DECISIONS 24 Oct 15:05 "do not re-ask"): UPI IS OFFERED ON AN INDIA COUNTER EVEN WITH NO PAYEE. The pack names it (chart.paymentModes.upi); with no
+   * address to draw a QR from, the way only RECORDS the tender (no qr, no payee) and the line below says where to add the address. A shop that published or set a payee already has its own UPI row above.
+   */
+  if (packHasUpi() && !ways.some(function(w){ return /^upi/.test(String(w.id || '').toLowerCase()) || String(w.label || '').toUpperCase() === 'UPI'; })) {
+    var cardAt = ways.map(function(w){ return w.id; }).indexOf('card');
+    ways.splice(cardAt < 0 ? ways.length : cardAt, 0, { id:'upi', label:'UPI' });
+  }
   /* ⭐ BOOKS v2 — ON CREDIT, only when exactly one known customer is on the bill (custKnown). A credit bill addressed
      to "Walk-in" is money nobody can be asked for. Deselected if the customer is cleared while it was picked. */
   var credCust = creditCust();
@@ -22315,6 +22323,7 @@ function paintPays(){
   /* ⭐ THE CODE, only for the way that is CHOSEN and only while there is something to pay for */
   + (function(){
       var w = ways.filter(function(x){ return x.label === PICKED && x.qr; })[0];
+      if (!w && CART.length && left > 0 && PICKED === 'UPI' && packHasUpi() && ways.some(function(x){ return x.id === 'upi' && !x.qr; })) return '<div class="qrwrap" data-testid="till-pay-noqr"><div class="qrsay"><b>' + money(left) + '</b><span class="u">No QR to show — the customer scans your own sticker. Add your UPI address in Settings › This counter to draw one here.</span></div></div>';
       if (!w || !CART.length || !(left > 0)) return '';
       var link = payLink(w, left, LASTNO || 'bill');
       var img = payQr(link);
@@ -22551,7 +22560,9 @@ function billCustomerOf(cust, billTotal){
   cust && cust.entity_id ? { entity_id: cust.entity_id } : {},
   /* ⭐ CX1 (T1): the buyer's ABN / TRN on the bill, under a pack whose tax invoice names it (invoiceRule; reg-au · reg-ae).
      The slot the chit already has — business_json.customer.gstin (lib/books-hooks, lib/tax-copy read it). India: unchanged. */
-  cust && cust.gstin && invoiceRule(billTotal, cust.gstin) ? { gstin: cust.gstin } : {});
+  cust && cust.gstin && invoiceRule(billTotal, cust.gstin) ? { gstin: cust.gstin } : {},
+  /* IN-F-07 r.46(d): the registered buyer's address, from the party's own record, so the invoice names where they are */
+  cust && cust.gstin && cust.address ? { address: cust.address } : {});
 }
 /** one cart line as the bill stores it: who it is and what decided its price (billLineFigures), every offer on the record, the chosen modifiers, hsn · rate · catalogue_stamp */
 function billLineOf(cartLine){
@@ -24149,6 +24160,32 @@ function tenderParts(parts, billNet, tendered){
   if (taken < billNet) parts.push({ how: PICKED, amount: cashDue(tendered > 0 ? Math.min(tendered, rest) : rest, payWayId(PICKED)) });   /* CTRY-77: a typed cash part below the rest is on the coin step too */
   return parts;
 }
+/**
+ * ⭐ IN-F-07 (walk IN 21 Nov): CGST Rules 2017 r.46 — the particulars a tax invoice must carry: (c) the date of issue, (f) the HSN / SAC of each line, (d) the recipient's name, address and GSTIN
+ * when registered, (o) whether the tax is payable on reverse charge, (p) the supplier's signature. It is asked only where THE PACK says its invoice carries an HSN (tax.hsn_digits: India),
+ * so an Australian or Emirates slip prints what it did. The number, seller, rate, tax and place of supply were already on it.
+ */
+function slipRule46(bill){
+  var pack = shopPack();
+  return !!(bill && bill.kind === 'tax' && !bill.not_invoice && !unratedOnBill(bill).length && pack && pack.tax && pack.tax.hsn_digits);
+}
+/** the stamp of a slip: a tax invoice names its YEAR ("21 Nov 2026 11:47 am"), every other slip keeps "21 Nov 11:47 am" */
+function slipStampOf(bill){ return slipRule46(bill) ? atShop(bill.at, 'date') + ' ' + atShop(bill.at, 'time') : atShop(bill.at); }
+/** r.46(f): " HSN 7323" on a goods line, " SAC 9987" on a service (a code opening 99 is a service accounting code); nothing when the line carries none */
+function slipHsnOf(bill, line){
+  var code = String((line && line.hsn) || '').replace(/\s+/g, '');
+  return slipRule46(bill) && code ? '  ' + (/^99/.test(code) ? 'SAC ' : 'HSN ') + esc(code) : '';
+}
+/** r.46(o) and (p): the reverse-charge answer (a till sale is never one) and the supplier's signature space, under the total */
+function slipSignatureHTML(bill, shop){
+  if (!slipRule46(bill)) return '';
+  return '<div data-testid="till-slip-rcm" style="font-size:.9em">Tax payable on reverse charge: No</div>'
+    + '<div data-testid="till-slip-sign" style="margin-top:14px;text-align:end;font-size:.9em"><div style="border-top:1px solid #000;display:inline-block;min-width:34mm;padding-top:2px">For ' + esc((shop && shop.name) || counterName()) + '<br>Authorised signatory</div></div>';
+}
+/** IN-F-07, r.46(d)/(e): the recipient's ADDRESS under the buyer row, when the party holds one (a separate row so slipBuyerHTML is unchanged) */
+function slipBuyerAddressHTML(bill){
+  return slipRule46(bill) && bill.customer && bill.customer.address ? '<div data-testid="till-slip-buyer-address" style="font-size:.9em">' + esc(bill.customer.address) + '</div>' : '';
+}
 function slipHeadHTML(kind){
   var shop = (S && S.shop) || {};
   return '<div data-testid="till-slip-head" style="text-align:center;font-weight:700;font-size:1.3em">' + esc(shop.name || counterName()) + '</div>'
@@ -24243,13 +24280,13 @@ function slipHTML(bill, m){
   return '<div id="slip" style="font-family:Consolas,\'Courier New\',monospace;font-size:12px;width:72mm;margin:0 auto;color:#000;background:#fff">'
     + slipHeadHTML(bill.kind)
     + solid + title + dash
-    + t('No ' + esc(bill.no), esc(atShop(bill.at)))
+    + t('No ' + esc(bill.no), esc(slipStampOf(bill)))
     /* ⚠️ a REPRINT of a renumbered sale must carry both numbers — the customer's paper says the first one */
     + (bill.printed_as ? t('Printed as ' + esc(bill.printed_as), 'recorded as ' + esc(bill.no)) : '')
     + t(esc(counterName()) + (bill.by && bill.by.name ? ' · ' + esc(bill.by.name) : ''), esc((bill.customer && bill.customer.name) || 'Walk-in'))
     /* ⭐ DINE-IN (table 4) / TAKEAWAY / DELIVERY — the bill already carries it (BF8) */
     + billOrderRow(bill, t)
-    + slipBuyerHTML(bill, t) + slipCheckedHTML(bill)
+    + slipBuyerHTML(bill, t) + slipBuyerAddressHTML(bill) + slipCheckedHTML(bill)
     /* ⭐ BOOKS v2 — a credit bill says so on the paper, and when it is due */
     + (bill.terms ? t('<b>ON CREDIT</b>', bill.terms.due_date ? '<b>Due by ' + esc(bill.terms.due_date) + '</b>' : 'shop’s terms') : '')
     /* ⭐ the two-sided bill says so, in one line: the customer has their own copy on ChitBridge */
@@ -24292,6 +24329,7 @@ function slipHTML(bill, m){
              + (l.mods && l.mods.length ? '<div data-testid="till-slip-mods" style="font-size:.9em;padding-inline-start:8px">' + esc(modWordsPlain(l.mods)) + '</div>' : '')
              + '<div style="font-size:.9em">' + l.qty + ' ' + esc(l.unit) + ' × ' + money(l.price)
              + (Number(l.mrp) > 0 ? '  MRP ' + money(l.mrp) : '')
+             + slipHsnOf(bill, l)
              + slipRateOf(bill, l, index) + '</div>'
              /* ⚠️ only when something came off — on a line with no offer, "Gross ₹9.00" over "₹9.00" is a row
                 that says nothing twice, and rows that say nothing are how a bill becomes unreadable. */
@@ -24357,6 +24395,7 @@ function slipHTML(bill, m){
      * paper, in the customer's hands, where somebody can still do something about it.
      */
     + rewardOnSlip(bill, t, dash)
+    + slipSignatureHTML(bill, shop)
     + (bill.kind === 'supply' ? '<div style="text-align:center">Composition taxable person.<br>Not eligible to collect tax on supplies.</div>' : '')
     + slipFooterHTML(shop)
     + '<div style="height:10mm"></div></div>';

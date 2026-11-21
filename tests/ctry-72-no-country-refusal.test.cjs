@@ -77,7 +77,7 @@ const get = (port, p, shop) =>
   ok('no country: no slabs, even with the IN layer in hand and a rupee currency', TG.governedFromRows(null, null, inLayer).length === 0);
   ok('no country: the one sentence names Country setup', /Country setup/.test(TG.NO_COUNTRY_SLABS_SAY));
   const inRows = TG.governedFromRows('IN', inLayer, inLayer);
-  ok('IN shop: India GST slab, unchanged', inRows.length === 1 && inRows[0].rules.rate === 18);
+  ok('IN shop: India GST slabs are the pack menu in force (IN-F-04), the layer 18 kept by id', inRows.length === 7 && inRows.some((row) => row.definition_id === 'IN-GST-18' && row.rules.rate === 18));
   const auRows = TG.governedFromRows('AU', auLayer, inLayer);
   ok('AU shop: its own slab, never India', auRows.length === 1 && auRows[0].rules.rate === 10);
   ok(

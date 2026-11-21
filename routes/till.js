@@ -489,7 +489,7 @@ const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM part
                                   AND t.scheme = ANY($2::text[]) ORDER BY array_position($2::text[], t.scheme) LIMIT 1))`;
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, c.groups, c.last_txn_at,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -750,6 +750,8 @@ function customerCore(x) {
   if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
   /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */
   if (x.gstn && String(x.gstn).trim()) out.gstin = String(x.gstn).trim().toUpperCase();
+  /* IN-F-07 (r.46(d)): the buyer's address, only when the party holds one, so a row without one keeps its shape */
+  if (x.address && String(x.address).trim()) out.address = String(x.address).trim();
   return out;
 }
 

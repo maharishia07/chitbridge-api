@@ -10122,7 +10122,8 @@
               },
               "note": {
                 "type": "string"
-              }
+              },
+              "setoff": {}
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
