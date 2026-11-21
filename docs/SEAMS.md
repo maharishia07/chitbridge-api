@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 132 | `answer` | `availability.js` | from March; then nearest. |
 | 126 | `item` | `bank-band.js` |  |
-| 115 | `money` | `bill-privacy.js` |  |
+| 116 | `money` | `bill-privacy.js` |  |
 | 110 | `list` | `cap-flag.js` |  |
 | 104 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 99 | `next` | `dayopen.js` | the next thing to do — |
