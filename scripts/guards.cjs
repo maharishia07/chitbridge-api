@@ -1070,6 +1070,7 @@ const GUARDS = [
   'tax-explicit-1129.test.cjs', // TAX-EXPLICIT (1129): every bill line is RATED, ZERO with a reason, or UNAVAILABLE (refused in words, TAX_LINE_UNAVAILABLE); IN 1,000 at 18% → 1,180 · exempt · AU GST-free · AE 5% · no rate · unreadable cess
   'tax-zero-guard.test.cjs', // TAX-EXPLICIT (1129): no new `<taxish> || 0` / `?? 0` and no swallowing catch in the tax files unless tests/support/tax-zero-allow.json names it with its reason
   'walkr-1129.test.cjs', // WALK R (1129): zero-rated / exempt sales on their own ledgers and VAT201 boxes 4/5 (hand case in fils), the issuer posts its rail credit note, the buyer's note waits for the supplier list
+  'walkt-1129.test.cjs', // WALK T (1129) T-F-01: VAT201 Box 9 counts only a bill's 5% lines (hand 12000 / 600 in fils, not 41000), 0% lines of the same bill out, a reversal nets away
   'ae-f02-trn-dashes.test.cjs', // AE-F-02: a TRN typed with dashes or spaces is cleaned to 15 digits by the pack's rule (was a 500 at gstn varchar(15)); wrong lengths refused in words
   'ae-f03-setup-asks.test.cjs', // AE-F-03: the pack's setup questions (Emirate · VAT period · zone) asked once, kept in tax_registration.asked, read by the return
   'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST

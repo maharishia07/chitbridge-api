@@ -101,7 +101,7 @@ function create() {
       T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
         const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
         if (!ls.some((l) => acct(l).role === taxRole)) return;
-        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0 && !/^0+([.]0+)?$/.test(String(l.tax_rate == null ? '' : l.tax_rate))).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
       });
       return Array.from(out.values());
     },
