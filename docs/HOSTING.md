@@ -114,7 +114,9 @@ public deploy to work · **optional** = has a safe default or turns a feature on
 | `S3_KEY` | optional | `<service key>` | yes | Supabase Storage REST bearer key — used only when no access key pair is set (production before HX1). |
 | `S3_BUCKET` | optional | `cb-attach` | no | Object store bucket (private). |
 | **Limits & tuning** | | | | |
-| `RATE_LIMIT_MAX` | optional | `500` | no | General `/api` requests per window per client. |
+| `RATE_LIMIT_MAX` | optional | `500` | no | General `/api` requests per window for an UNSIGNED caller, per address. |
+| `RATE_LIMIT_USER_MAX` | optional | `3000` | no | General `/api` requests per window for a SIGNED-IN person (own bucket; ~60 screen loads). |
+| `RATE_LIMIT_IP_MAX` | optional | `10000` | no | Ceiling per address for everyone together (a shared shop address); stops a flood only. |
 | `AUTH_RATE_LIMIT_MAX` | optional | `30` | no | Sign-in attempts per window. |
 | `CHECK_LOGIN_RATE_LIMIT_MAX` | optional | `120` | no | Login-check calls per window. |
 | `CATALOGUE_RATE_LIMIT_MAX` | optional | `60` | no | Public catalogue reads per window. |
