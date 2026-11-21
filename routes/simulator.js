@@ -100,11 +100,13 @@ router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (re
     if (name.length < 2 || !email.includes('@')) {
       return problem(req, res, { status: 400, ...words.leadFieldsMissing() });
     }
+    const devOtp = require('../lib/dev-otp'); /* N5: the constant secret is a test/local convenience only; anywhere else a missing secret refuses */
+    const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : (devOtp.isTestRun() || devOtp.isLocalStack()) ? 'sim-lead-dev-only' : '');
+    if (!SIM_SECRET) throw new Error('SIM_JWT_SECRET and JWT_SECRET are both unset: no tour token is signed'); /* fail closed: the fault answer, no row written */
     const ins = await query('INSERT INTO sim_leads (name, email, org) VALUES ($1, $2, $3) RETURNING id', [name, email, org]);
     const leadId = ins.rows[0].id;
     // S1 (reviewer 2026-07-13) — a marketing tour lead is NOT a platform credential. NEVER sign it with the identity
     // secret (JWT_SECRET) or it becomes a valid platform token. Use a SEPARATE secret so auth.js can never verify it.
-    const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : 'sim-lead-dev-only');
     const token = jwt.sign({ kind: 'sim_lead', leadId, email }, SIM_SECRET, { expiresIn: process.env.JWT_TTL || '7d' });
     notify(`New tour lead: ${name}`, `<p><b>${esc(name)}</b> opened the tour.</p><p>Email: ${esc(email)}<br>Org: ${esc(org || '—')}</p>`);
     res.json({ token, leadId });

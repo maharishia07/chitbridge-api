@@ -37,6 +37,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
+const { tolerate: tolerateSecret } = require('../lib/identity-secret'); /* b874-tolerant credential view (as routes/actors.js) */
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
@@ -468,7 +469,7 @@ async function ask(req, res, next) {
       const existing = (await signinLookup.candidates(query, 'email', email)).filter(identityAuth.isAccount); // SEC-130
       if (existing.length > 0) {
         identity_id = await accountIdAfterRestart(req, existing[0]);
-        console.log(`Existing entity login: ${email}`);
+        console.log(`Existing entity login: ${identity_id}`); /* N2: ids in the host log, never addresses */
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
         return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
       } else {
@@ -490,7 +491,7 @@ async function ask(req, res, next) {
       identity_id = rows.rows[0].identity_id;
       email = rows.rows[0].email;
       display_name = rows.rows[0].display_name;
-      console.log(`Display name login: ${display_name} → ${email}`);
+      console.log(`Display name login: ${identity_id}`);
     }
     note(req, { identity_id }, 'ask', 'otp');
     return await mailedCode(answer, { identity_id, email, display_name });
@@ -681,7 +682,7 @@ async function verify(req, res) {
             );
           }
           /* ⚠️ AN UNPARSEABLE IP IS NULL, NOT AN ERROR — a proxy chain can hand over anything */
-          const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+          const rawIp = require('../lib/client-ip').clientIp(req); /* M8: the trusted-proxy rule (req.ip), never the caller-typed left end of X-Forwarded-For */
           const ip = /^[0-9a-fA-F:.]{3,45}$/.test(rawIp) ? rawIp : null;
           const agreed = typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)) ? req.body.agreed_at : null;
           /**
@@ -781,7 +782,7 @@ async function verify(req, res) {
             });
           } else {
             mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
-            console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+            console.log(`Entity minted: ${identity.identity_id} → ${mintedConstitution} on ${installKey}`);
           }
         }
       } catch (e) {
@@ -809,7 +810,7 @@ async function verify(req, res) {
      */
     const token = await identityAuth.issueToken(query, identity, sessions.deviceOfSignin(req));
     note(req, identity, 'in', methodOf(identity), identityAuth.viaCode(check.via), jtiOf(token)); /* SEC-136: a tester-code sign-in is listed as one */
-    console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
+    console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.identity_id}`);
 
     res.json({
       message: 'Verified successfully',
@@ -920,7 +921,7 @@ async function actorLogin(req, res) {
 
     const token = await identityAuth.issueToken(query, a, sessions.deviceOfSignin(req));
     note(req, a, 'in', a.pin_hash ? 'pin' : 'otp', req.signinVia, jtiOf(token));
-    console.log(`Actor login: ${actor_key}@${entity_name}`);
+    console.log(`Actor login: ${a.identity_id}`);
     res.json({
       message: 'Login successful',
       token,
@@ -972,12 +973,16 @@ const pinChecks = [
  * how owners sign in, so not in this move.
  */
 const PIN_ACTORS_ONLY = { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } }; /* the body this refusal always had, frozen */
+const PIN_ALREADY_SET = { status: 409, code: 'PIN_ALREADY_SET', detail: 'A PIN is already set. Change it with your current PIN, or ask the owner to reset it.' };
 async function pin(req, res) {
   try {
     const identity_id = req.identity.identity_id;
     if (req.identity.identity_type !== 'actor') {
       return problem(req, res, PIN_ACTORS_ONLY);
     }
+    /* M5: this door is the FIRST PIN only. A seat that already holds one changes it with the current PIN (PUT /api/actors/change-pin) or has the owner reset it — a stolen session alone must not mint a durable credential or lift a lock */
+    const held = await boundRead(query, identity_id, await tolerateSecret('SELECT (s.pin_hash IS NOT NULL) AS has_pin FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1'), [identity_id]);
+    if (held.rows[0] && held.rows[0].has_pin) return problem(req, res, PIN_ALREADY_SET);
     await identityAuth.setPin(query, identity_id, req.body.pin);
     note(req, { identity_id, parent_entity_id: auth.entityOf(req) }, 'link', 'pin');
     res.json({ message: 'PIN set successfully — use PIN for future logins' });
