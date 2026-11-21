@@ -10125,7 +10125,9 @@
               "setoff": {},
               "unanswered": {
                 "type": "number"
-              }
+              },
+              "tax_differs": {},
+              "einvoice": {}
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -10217,6 +10219,35 @@
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
+              },
+              "isup_rev": {
+                "type": "object",
+                "required": [
+                  "txval",
+                  "iamt",
+                  "camt",
+                  "samt",
+                  "csamt"
+                ],
+                "properties": {
+                  "txval": {
+                    "type": "number"
+                  },
+                  "iamt": {
+                    "type": "number"
+                  },
+                  "camt": {
+                    "type": "number"
+                  },
+                  "samt": {
+                    "type": "number"
+                  },
+                  "csamt": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
               }
             },
             "additionalProperties": false,
@@ -10285,6 +10316,70 @@
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
+              },
+              "itc_rev": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ty",
+                    "iamt",
+                    "camt",
+                    "samt",
+                    "csamt"
+                  ],
+                  "properties": {
+                    "ty": {
+                      "type": "string"
+                    },
+                    "iamt": {
+                      "type": "number"
+                    },
+                    "camt": {
+                      "type": "number"
+                    },
+                    "samt": {
+                      "type": "number"
+                    },
+                    "csamt": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "itc_inelg": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ty",
+                    "iamt",
+                    "camt",
+                    "samt",
+                    "csamt"
+                  ],
+                  "properties": {
+                    "ty": {
+                      "type": "string"
+                    },
+                    "iamt": {
+                      "type": "number"
+                    },
+                    "camt": {
+                      "type": "number"
+                    },
+                    "samt": {
+                      "type": "number"
+                    },
+                    "csamt": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
               }
             },
             "additionalProperties": false,
@@ -38330,8 +38425,7 @@
           },
           "needs": {},
           "code": {},
-          "duplicate": {},
-          "needs": {}
+          "duplicate": {}
         },
         "additionalProperties": false
       },

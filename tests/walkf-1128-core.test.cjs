@@ -33,7 +33,7 @@ const gstin = (state) => { const b = state + 'AAACB1234F1Z'; return b + digitOf(
   console.log('\n== F-F-01 · GSTIN state code ==\n');
   ok('33 (Tamil Nadu) is accepted; its digit is the walk\'s own G', gstin('33') === '33AAACB1234F1ZG' && profile.taxIdRefusal('IN', gstin('33')) === null);
   ok('01 and 38 (the ends of the list) are accepted', profile.taxIdRefusal('IN', gstin('01')) === null && profile.taxIdRefusal('IN', gstin('38')) === null);
-  ok('97 is accepted (batch 1128 fold: 99 is refused as IN-F-02 decided, the centre''s own code is never a shop; fixWalkF had accepted it: cb-country to confirm)', profile.taxIdRefusal('IN', gstin('97')) === null && profile.taxIdRefusal('IN', gstin('99')) !== null);
+  ok('97 is accepted; 99 is refused as IN-F-02 decided (the centre jurisdiction code is never a shop; fixWalkF had accepted it: cb-country to confirm)', profile.taxIdRefusal('IN', gstin('97')) === null && profile.taxIdRefusal('IN', gstin('99')) !== null);
   for (const st of ['00', '39', '45', '50', '96', '98']) {
     const r = profile.taxIdRefusal('IN', gstin(st));
     ok(st + ' with a right check digit is refused, in words naming the state code', r && r.code === 'TAX_ID_BAD' && /state code/.test(r.why), JSON.stringify(r));

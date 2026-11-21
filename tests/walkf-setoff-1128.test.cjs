@@ -12,14 +12,14 @@ const test = (name, fn) => { try { fn(); pass++; console.log('   ok   ' + name);
 const netOf = TL.netOf;
 test('hand case: IGST credit 600.00 → IGST 0, CGST 0, SGST 55.16', () => {
   const n = netOf({ cgst: 247.5, sgst: 247.5, igst: 160.16, cess: 0 }, { cgst: 0, sgst: 0, igst: 600, cess: 0 });
-  assert.deepEqual(n, { cgst: 0, sgst: 55.16, igst: 0, cess: 0, total: 55.16 });
+  assert.deepEqual(n, { cgst: 0, sgst: 55.16, igst: 0, cess: 0, vat: 0, total: 55.16 });
 });
 test('CGST credit 180 pays CGST 100 then IGST 50, carries 30, never SGST', () => {
   const n = netOf({ cgst: 100, sgst: 100, igst: 50, cess: 0 }, { cgst: 180, sgst: 0, igst: 0, cess: 0 });
-  assert.deepEqual(n, { cgst: -30, sgst: 100, igst: 0, cess: 0, total: 70 });
+  assert.deepEqual(n, { cgst: -30, sgst: 100, igst: 0, cess: 0, vat: 0, total: 70 });
 });
 test('SGST credit beyond SGST pays IGST; the rest is carried (negative head), total unchanged', () => {
   const n = netOf({ cgst: 0, sgst: 100, igst: 50, cess: 0 }, { cgst: 0, sgst: 300, igst: 0, cess: 0 });
-  assert.deepEqual(n, { cgst: 0, sgst: -150, igst: 0, cess: 0, total: -150 });
+  assert.deepEqual(n, { cgst: 0, sgst: -150, igst: 0, cess: 0, vat: 0, total: -150 });
 });
 console.log(pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
