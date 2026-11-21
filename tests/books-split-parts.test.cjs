@@ -68,6 +68,7 @@ function stubHandle(answers) {
   let db = stubHandle();
   const map = await parties.partiesOn(db, SHOP, ['not-a-uuid', PARTY]);
   ok('an id that is not a uuid is answered false and never sent to the database (it would raise 22P02)', map.get('not-a-uuid').customer === false && db.sent[0].args[1].length === 1 && db.sent[0].args[1][0] === PARTY);
+  ok('review money-02 M7: partiesOn asks the live rule (hidden_at) on both lists, as partyOn does', (db.sent[0].text.match(/hidden_at/g) || []).length === 2);
   db = stubHandle();
   ok('only a stranger asked about: nothing is sent at all', (await parties.partiesOn(db, SHOP, ['x'])).size === 1 && db.sent.length === 0);
   db = stubHandle();
