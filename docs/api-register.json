@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 689,
+  "partial": 0,
+  "meets": 690,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -18306,11 +18306,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6778dbc58fd2e5f1"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-21 GREY-VERT re-sign, hash 40fdcd90b8ecda55 -> 6778dbc58fd2e5f1: handler and git show HEAD read; one additive boolean key ready on each constitutions[] item (govresolve.setupReady, pure, no I/O), existing keys unchanged so backward compatible; closed output schema updated (api-output-shapes.json, required+boolean); public pre-auth route but ready is a static register verdict, no per-person or tenant data, no leak; trips unchanged (1 constitution query + cached installation read, map is in-memory); 13 columns re-checked after regeneration; business rule (service-desk shown grey at sign-up) belongs to cb-vertical/cb-settings, not changed here",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "register-form.js"
    ],
