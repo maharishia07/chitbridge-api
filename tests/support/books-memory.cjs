@@ -469,7 +469,7 @@ function create() {
         file_name: p.file_name || null, rows: clone(p.rows || []), created_by: p.by || null, created_at: now() };
       T.compare.push(r); return r.part_id;
     },
-    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); },
+    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); }, async hasEntries(db, e) { return T.entries.some((h) => h.entity_id === e); }, /* A-F-59: has the ledger ANY entry (Home Accounts card) */
     async namesOf(db, e, ids) { return new Map((ids || []).map((id) => { const i = T.identities.find((x) => String(x.identity_id) === String(id) && (String(x.identity_id) === String(e) || String(x.parent_entity_id) === String(e) || (T.grants || []).some((g) => String(g.grantor_entity) === String(e) && [String(x.identity_id), String(x.parent_entity_id)].includes(String(g.grantee_entity))))); return i ? [String(id), i.display_name || null] : null; }).filter(Boolean)); }, /* the real namesOf fences to the shop and its own people */
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
