@@ -27,7 +27,7 @@ const prog = (chit, lid, ordered, got) => ({ chit_id: chit, line_id: lid, partic
 function seed() {
   D.copies = [
     /* c1 an ONLINE order in (sell, pending, 2 lines, one fully sent), assigned to A1 */
-    copy(1, { summary_json: { order_details: { channel: 'online', fulfilment: 'pickup', address: null, requested_delivery: '2026-10-12', remark: 'Ring first', name: 'Meena' } }, assigned_to_actor_id: 'A1', assigned_to_actor_display_name: 'Asha' }),
+    copy(1, { summary_json: { money: { tax: 57.17 }, order_details: { channel: 'online', fulfilment: 'pickup', address: null, requested_delivery: '2026-10-12', remark: 'Ring first', name: 'Meena' } }, assigned_to_actor_id: 'A1', assigned_to_actor_display_name: 'Asha' }),
     /* c2 a self-PO (received, declared buy) → Orders OUT; billed */
     copy(2, { biz_side: 'buy', current_status: 'accepted', sender_entity_id: E1 }),
     /* c3 an order I SENT (buy by direction) */

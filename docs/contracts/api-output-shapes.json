@@ -20226,6 +20226,12 @@
               "null"
             ]
           },
+          "tax_minor": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "currency": {
             "type": [
               "string",
