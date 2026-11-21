@@ -475,11 +475,6 @@ function liveCountRead(db, entity_id) {
 }
 
 /**
- * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
- * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
- * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
- */
-/**
  * ⭐ IN-F-01 (21 Nov): THE BUYER'S TAX ID HAS TWO HOMES — identities.gstn (the add-customer door) and party_tax_id (the party editor,
  * CRM-47). The counter read only the first, so a GSTIN saved on the party screen never reached the bill: a registered buyer was billed
  * as a walk-in (B2C, shop state, no buyer GSTIN). One answer, in the same query (no extra trip): the identity's own, else the party's
@@ -487,6 +482,11 @@ function liveCountRead(db, entity_id) {
  */
 const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM party_tax_id t WHERE t.owner_entity_id = $1 AND t.party_id = i.identity_id
                                   AND t.scheme = ANY($2::text[]) ORDER BY array_position($2::text[], t.scheme) LIMIT 1))`;
+/**
+ * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
+ * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
+ * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
+ */
 function customersRead(db, entity_id) {
   return db.query(
     `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, c.groups, c.last_txn_at,
