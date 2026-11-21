@@ -37,6 +37,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { contract, words, faultOf, MAX_BYTES } = require('../lib/attachments-contract');
 const { declaresStatuses } = require('../lib/contract-kit'); // names the statuses the books-entry door (lib/books-evidence-attach) answers for the register // the contract (each route's operation), the words of a refusal and the 6 MB limit (one source)
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187: a file on a dispute message goes to the parties that message goes to: the one reading, not a copy of it
+const access = require('../lib/access');
 const ctpReturn = require('../lib/ctpreturn'); // RAIL-106: a file on a chit is told to the parties on other installations, who pull it
 
 /**
@@ -83,10 +84,15 @@ async function onEntry(req, res, entity_id, body) {
   const done = await require('../lib/books-evidence-attach').put(req, entity_id, body);
   return done.refuse ? problem(req, res, done.refuse) : res.json(done.ok);
 }
+/** LENS-SEC 1129: a VIEWER seat attaches nothing (a file lands on every participant's copy); the rail's read_only 403, same as access.writeGate. A commenter may still attach to an internal note. */
+function viewerGate(req, res, next) {
+  if (access.levelOf(req.identity) !== access.VIEWER || require('../lib/owner').isOwner(req)) return next();
+  return access.writeGate(req, res, next);
+}
 // PER-ENTITY copies (b66): replicate one row per participant so each owns its own. Audience = all chit participants
 // (from the caller's all_recipients), EXCEPT an internal-message attachment which stays single (author entity only).
 // @does A chit id, file name and base64 data in -> we store a copy for each participant of that chit -> the attachment record.
-router.post('/', auth, declaresStatuses([404, 415, 503]) /* the entry door's own refusals: no such entry, bytes that are not JPEG/PNG/PDF, columns not built yet */, ...contract.checked('POST /'), async (req, res) => {
+router.post('/', auth, viewerGate, declaresStatuses([404, 415, 503]) /* the entry door's own refusals: no such entry, bytes that are not JPEG/PNG/PDF, columns not built yet */, ...contract.checked('POST /'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const { chit_id, message_id, line_index, name, mime, data_base64, entry_id } = req.body || {};

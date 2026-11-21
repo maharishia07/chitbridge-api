@@ -102,22 +102,9 @@ router.put('/', auth, checked('PUT /'), async (req, res) => {
      */
     const prevDraft = await run.designOf(e);
     const prevNodes = prevDraft && Array.isArray(prevDraft.nodes) ? prevDraft.nodes : [];
-    if (prevNodes.length && Array.isArray(draft.nodes)) {
-      const receipts = new Map();
-      prevNodes.forEach((item) => {
-        if (item && item.key && (item.built || item.invited)) receipts.set(item.key, item);
-      });
-      if (receipts.size) {
-        draft.nodes = draft.nodes.map((item) => {
-          const nestedR = item && item.key ? receipts.get(item.key) : null;
-          if (!nestedR) return item;
-          const out = Object.assign({}, item);
-          if (nestedR.built && !out.built) out.built = nestedR.built;
-          if (nestedR.invited && !out.invited) out.invited = nestedR.invited;
-          return out;
-        });
-      }
-    }
+    /* LENS-SEC (1129): a receipt is the SERVER's — a `built`/`invited` the client sends is dropped, so a forged
+       { bridge_id } of another business can never reach plan() (it would place a store inside their tree). */
+    if (Array.isArray(draft.nodes)) draft.nodes = run.receiptsOnly(prevNodes, draft.nodes);
 
     const r = await withEntity(e, (db) =>
       db.query(
