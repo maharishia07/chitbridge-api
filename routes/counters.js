@@ -63,7 +63,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const out = await withTransaction(async (db) => {
-      const { counters, list, devices } = await readLocked(db, entity_id);
+      const { counters, list, devices } = await readLocked(db, entity_id, { readOnly: true }); // LV-speed: a list writes nothing, no row lock
       return Object.values(counters)
         .sort((first, second) => keys.TILL_IDS.indexOf(first.id) - keys.TILL_IDS.indexOf(second.id))
         .map((item) => view(item, list, devices));

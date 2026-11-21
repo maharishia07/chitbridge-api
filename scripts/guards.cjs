@@ -910,6 +910,8 @@ const GUARDS = [
   'may-trade.test.cjs', // 28 worlds (wave 3): mayTrade is the database rule asked at the door; the trigger clauses and the helper SQL agree
   'sit-load-evidence.test.cjs', // 28 load simulation + performance (wave 3): the RECORDED SIT knee/stress/load runs agree with themselves and are not stale (a record, not a live run)
   'books-cashflow.test.cjs', // 16 cash position (wave 3): lib/books-cashflow.project shortfall and no-shortfall to the minor unit, GET /cashflow and the cheques pdc_reminders over the in-memory books (repaired: payments need an Idempotency-Key)
+  'lv15-cashflow-open-items.test.cjs', // LV-15 (1129): the cash view reads the OPEN documents; project() answers the same on them as on every row (incl. a bill dated after today)
+  'lv-counters-list-no-lock.test.cjs', // speed-counter-01 F6 (1129): the counters list reads without FOR UPDATE; a key to adopt falls through to the locked read
   'combo-templates.test.cjs', // 7 combo templates (wave 3): save / reopen / rename / delete a combo, push CREATES the product once then UPDATES, cross-entity isolation (repaired: the stub now states the shop currency)
   'till-counter-doors.test.cjs', // 9 verify and reconcile + customer display (wave 3): POST /reconcile ok / absorbed / missing / unknown in one query, GET /verify spread sample, read-only; pair a screen by code, a screen key and nothing else, spent on first read, expiry, guess lock-out
   'till-names.test.cjs', // 9 three counter controls named by title only now carry an aria-label (axe select-name; Wave 1b customer pages)
