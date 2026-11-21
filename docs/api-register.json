@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 691,
+  "partial": 0,
+  "meets": 692,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -48326,11 +48326,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "40418ed61581db4e"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head fa52c20af vs last sign bc409b7eb stage2: handler text unchanged since last sign (routes/books.js:1771 already answers needs); the hash moved because the published output shape (docs/contracts/api-output-shapes.json) now lists needs, the key lib/books-manual.js preview() now always sets (null unless a refusal names a box, C-F-06: a field key such as supplier_gstin, never error text). Additive, key always present, legacy keys kept, same seats and refusals, no status change, RFC 9457 error path untouched (problem()/refusalOf); 13 machine columns true in the regenerated register",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-entry.js"
    ],
