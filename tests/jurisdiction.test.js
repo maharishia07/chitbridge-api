@@ -36,9 +36,10 @@ it('⭐⭐ the country is taken from what is KNOWN, in a stated order of prefere
     'the direct answer beats the profile, or a correction could never take effect');
 });
 
-it('⭐ a GSTIN means India, because only India issues one', () => {
-  /* ⚠️ This is a derivation, not a guess: the document itself is jurisdictional. */
-  assert.strictEqual(J.countryOf({ gstin: '33ABCDE1234F1Z5' }), 'IN');
+it('⭐ a tax number alone says no country here: jurisdiction.countryOf never reads a GSTIN as India (VERIFY-TAX-01 row 6, engines v1.107.0)', () => {
+  /* red1128: this case used to say 'a GSTIN means India'. That rule was the bug: a legacy AU row with an ABN in the gstin slot became India. Reading a number BY FORMAT, per pack, is country.countryOfParty (engines tests/jurisdiction-taxid). */
+  assert.strictEqual(J.countryOf({ gstin: '27AAPFU0939F1ZV' }), null, 'a number is not a country here');
+  assert.strictEqual(require('../lib/country').countryOfParty({ gstin: '27AAPFU0939F1ZV' }), 'IN', 'the pack reads a check-valid GSTIN as India');
   assert.strictEqual(J.countryOf({ gstin: '  ' }), null, 'a blank GSTIN derives nothing');
 });
 

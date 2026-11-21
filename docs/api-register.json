@@ -8396,9 +8396,7 @@
      "LEDGER_OFF"
     ]
    },
-   "reads": [
-    "books_outbox"
-   ],
+   "reads": [],
    "writes": [],
    "money": false,
    "actions": [],

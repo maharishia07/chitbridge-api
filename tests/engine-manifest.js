@@ -211,6 +211,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  'profilemap.js', /* red1128: the one-line door engines v1.107.0 country.js requires for the adopted profile-map.js (lib/profilemap.js) */
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
   'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',
@@ -954,6 +955,8 @@ const ENGINE_OTHER = [
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* red1128 (21 Nov): modules the batch-1128 lanes added with no bucket. Whether each is engine, adoption or infra is cb-capability's call; listed here, said, never silently unclassified. */
+  'account-budget.js', 'client-ip.js', 'einvoice-note.js', 'holds-stock.js', 'match-hold.js', 'message-client-id.js', 'return-overdue.js', 'shop-country.js', 'supplier-list.js',
   /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the
      receivable rule is engine (books) or adoption (counter) needs cb-capability's call. */
   'upi-waiting.js',
