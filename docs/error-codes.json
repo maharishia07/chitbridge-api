@@ -1782,6 +1782,16 @@
    "raised_by": []
   },
   {
+   "code": "CLIENT_MSG_ID_INVALID",
+   "status": "400",
+   "title": "Message id not valid",
+   "shopkeeper": "We could not send that message because its id was not in the right form.",
+   "hint": "Try again, or tell support.",
+   "owner_area": "rail",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "CODE_ISSUE_LIMIT",
    "status": "429",
    "title": "Too many codes",

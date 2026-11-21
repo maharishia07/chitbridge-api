@@ -137,6 +137,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | MARK_THREAD_NOT_FOUND | 404 | Query not found | We could not find that question. | Open the list of queries again. | accounting | 2026-11-15 |
 | MARK_WORDS_REQUIRED | 422 | Say what you ask | Write the question first. The owner will read it. | Write the question and send it. | accounting | 2026-11-15 |
 | MARK_WRITE_NOT_LISTED | 403 | Not open to an auditor | This part of the books is not open to an auditor. | Use the marks the screen offers. | accounting | 2026-11-15 |
+| CLIENT_MSG_ID_INVALID | 400 | Message id not valid | We could not send that message because its id was not in the right form. | Try again, or tell support. | rail | 2026-11-21 |
 | MESSAGE_SUBJECT_UNKNOWN | 500 | Message subject unknown | We could not post that message. | Try again, or tell support. | rail | 2026-11-15 |
 | MESSAGE_FLAG_NOT_OPEN | 409 | No open note | This note cannot take a reply now. | Open the note again, or share it with your firm first. | rail | 2026-11-17 |
 | MONEY_NOT_A_NUMBER | 422 | Not an amount | An amount in the books is not a number, so nothing was posted. | Type the amount as digits, for example 1250.50, and try again. | books | 2026-11-21 |
