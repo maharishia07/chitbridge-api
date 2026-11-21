@@ -21,7 +21,7 @@ test('two invoices to registered buyers: the note counts them, quotes the confir
   const out = T.gstr1(ledger([sale('a', { Gstin: '29AAAAA0000A1Z5', Pos: '29' }, 18), sale('b', { Gstin: '33BBBBB1111B1Z2', Pos: '33' }, 18)]), ME, '092026');
   const note = out._cb.einvoice;
   assert.deepEqual([note.b2b_invoices, note.limit_crore, note.limit_status, note.from], [2, 5, 'confirmed', '2023-08-01']);
-  assert.ok(/above Rs 5 crore/.test(note.words) && /2 invoice\(s\)/.test(note.words) && /does not issue an IRN/.test(note.words));
+  assert.ok(/above Rs 5 crore/.test(note.words) && /2 invoice\(s\)/.test(note.words) && /does not issue that number/.test(note.words));
   assert.ok(/10\/2023-Central Tax/.test(note.cite));
   assert.equal(out.b2b.reduce((n, b) => n + b.inv.length, 0), 2, 'the B2B table is untouched');
 });
