@@ -29100,6 +29100,21 @@ async function tasksBill(id){
   if (!t) { say('That order is not on the counter’s list yet.\n\nRead the shop again (F4), then tap 🛒 and the order.'); return; }
   orderToBill(t);
 }
+/**
+ * F-43 (walk 2026-11-21): the Tasks & Orders PAGE's "Bill it" opens the counter at /till.html?bill=<chit_id> (it is not inside this frame, so it
+ * cannot message us). The counter used to open in whatever mode this browser last held (Receive) and the order was lost. Now the address names the
+ * order: read once at start-up, taken off the address, and put on the bill through the same tasksBill path the frame's Bill it uses.
+ */
+function billAskedId(){
+  var found = /[?&]bill=([A-Za-z0-9_-]{8,64})(?:&|$)/.exec(location.search);
+  return found ? found[1] : '';
+}
+async function billFromAddress(){
+  var id = billAskedId(); if (!id) return;
+  try { history.replaceState(null, '', location.pathname + location.search.replace(/([?&])bill=[^&]*&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { cbQuiet('billFromAddress:1', e); }
+  if (MODE !== 'sell') setMode('sell');
+  await tasksBill(id);
+}
 /** a row → that order, in place: Despatch with it chosen (the same list loadTasks reads) */
 async function onlineOrderPick(id){
   try { document.getElementById('onlinedlg').close(); } catch (e) { cbQuiet('onlineOrderPick:1', e); }
@@ -29547,6 +29562,7 @@ try { paintSide(); } catch (e) { cbQuiet('top:20', e); }
 /* the watchdog rides the repaint that already runs - a second timer would be a second path ([TILL-144]) */
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); watchTick(); keyWatch(); }).catch(function(e){ cbQuiet('top:21', e); }); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
+TILL_BOOT.then(billFromAddress).catch(function(e){ cbQuiet('top:23', e); });   /* F-43: opened by Bill it on the Tasks & Orders page */
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
   navigator.serviceWorker.register('/till-sw.js').catch(function(e){ cbQuiet('top:22', e); });
 /* ═══ CTR-243 helpers that sit at the end of the page, so no anonymous function of theirs shifts the readability ratchet's ordinals above ═══ */
