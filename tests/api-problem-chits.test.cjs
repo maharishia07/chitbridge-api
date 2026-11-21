@@ -440,6 +440,8 @@ const EXTRAS = [
   X('payment-cleared', 'DELETE ' + C + '/:chit_id/payment', 200, { setup: { sqlRows: answeringAll([[/SELECT h.chit_id, h.sender_entity_id, h.all_recipients/, [{ chit_id: PARTY, current_status: 'accepted', business_json: {} }]], [/- 'payment' WHERE/, [{ chit_id: PARTY }]]]) } }),
   X('payment-clear-fails', 'DELETE ' + C + '/:chit_id/payment', 500, { setup: { db: 'fail' } }),
   X('payment-clear-no-chit', 'DELETE ' + C + '/:chit_id/payment', 404, {}),
+  X('payment-clear-on-withdrawn-bill', 'DELETE ' + C + '/:chit_id/payment', 409, { patch: { 'tax-copy': { copyOn: async () => ({ current_status: 'rejected', business_json: {} }) } } }),
+  X('payment-clear-tender-on-bill', 'DELETE ' + C + '/:chit_id/payment', 422, { patch: { 'tax-copy': { copyOn: async () => ({ current_status: 'accepted', business_json: { payment: { parts: [{}] } } }) } } }),
   X('books-request-by-a-key', 'POST ' + C + '/:chit_id/books-request', 403, { setup: { asKey: true } }),
   X('books-request-no-chit', 'POST ' + C + '/:chit_id/books-request', 404, {}),
   X('books-request-made', 'POST ' + C + '/:chit_id/books-request', 200, { setup: { sqlRows: answering(/jsonb_build_object\('books_request'/, [{ chit_id: PARTY }]) } }),
@@ -486,6 +488,7 @@ const EXTRAS = [
   X('bulk-target-not-assignable', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER } }),
   X('bulk-fails', 'POST ' + C + '/assign-bulk', 500, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { db: 'fail' } }),
   X('bulk-job-clients-by-a-plain-actor', 'POST ' + C + '/assign-bulk', 200, { body: { plug: 'client', role: 'adviser', subject_ids: [PARTY], target_actor_id: null }, setup: { who: STAFF } }), /* W17: a seat that NAMES a person may try (the rows are checked inside); handing clients back to the pool is a seat's to TRY too since STAFFPICK 21 Nov (RELEASE): the batch answers 200 and each row it may not open is a skip (JOB_NOT_OPEN), never a whole 403 (red1128: the test still encoded the 19 Nov rule) */
+  X('bulk-whole-chits-by-a-plain-actor', 'POST ' + C + '/assign-bulk', 403, { body: { plug: 'client', role: 'adviser', subject_ids: [PARTY], target_actor_id: null }, setup: { asKey: true } }), /* red1128: the 403 the register declares: an API key is no firm seat, so it cannot try a plug it may not assign (refusedWhole) */
   X('bulk-too-many', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: Array.from({ length: 201 }, () => PARTY), target_actor_id: OTHER } }),
   X('bulk-in-pull-mode', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [PARTY], target_actor_id: OTHER }, setup: { sqlRows: answering(/entity_actor_settings/, [{ assignment_model: 'pull' }]) } }),
   X('bulk-fields-wrong', 'POST ' + C + '/assign-bulk', 400, { body: { chit_ids: [], target_actor_id: 'x' } }),

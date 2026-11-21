@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 3,
   "not_started": 0,
-  "partial": 127,
-  "meets": 565,
+  "partial": 126,
+  "meets": 566,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -761,7 +761,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -54695,7 +54695,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -54757,7 +54757,7 @@
     "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; 403 now names ASSIGN_PICKUP_OFF or ASSIGN_HELD_BY_OTHER (registered, same 403), answer gains optional access_note only; additive",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"

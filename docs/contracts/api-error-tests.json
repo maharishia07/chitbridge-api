@@ -32,6 +32,8 @@
  "DELETE /api/chits/:chit_id/payment": [
   401,
   404,
+  409,
+  422,
   500
  ],
  "DELETE /api/chits/:chit_id/purge": [
@@ -2682,6 +2684,7 @@
  "POST /api/chits/assign-bulk": [
   400,
   401,
+  403,
   500
  ],
  "POST /api/chits/hand-over-all": [
