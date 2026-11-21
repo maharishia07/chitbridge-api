@@ -26,7 +26,7 @@ const check = (name, ok) => { if (ok) pass++; else { fail++; console.log('  FAIL
   const get = src.slice(src.indexOf("router.get('/', auth, ...checked('GET /')"));
   const list = get.slice(0, get.indexOf('// ── POST /api/actors/:id/otp'));
   check('the people list runs inside withEntity (RLS sees the shop)', /await withEntity\(entity_id, async \(shop\)/.test(list));
-  check('the load and the facts read on that binding', /factsOf\(run,/.test(list) && /breakStatusCounts\(entity_id, run\)/.test(list));
+  check('the load and the facts read on that binding', /factsOf\(queryInShop,/.test(list) && /breakStatusCounts\(entity_id, queryInShop\)/.test(list));
   check('no context-free db( in the list route', !/await db\(/.test(list));
   console.log(`acc-382: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
