@@ -687,7 +687,7 @@ router.get('/status', auth, schemaValidate(STATUS_OPERATION), ...filterFor('/sta
     const r = await query(KIT_ROWS + ' ORDER BY last_seen DESC NULLS LAST', [auth.entityOf(req)]);
     const page = PL.pageOut('connectors', r.rows.map(rowOut), PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX));
     /* every key of PL.pageOut is named here: a new key goes here AND into its shape (tools/api-allowlist.cjs --write), or the answer drops it uncounted */
-    res.json({ connectors: page.connectors, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note });
+    res.json({ connectors: page.connectors, total: page.total, page: page.page, limit: page.limit, capped: page.capped, cap_note: page.cap_note, outside: require('../lib/connector-state').statesOf() /* ERR-8: AI · e-mail · WhatsApp · speech, each connected / not_set_up / down with the register's code, sentence and hint */ });
   } catch (e) {
     fromError(req, res, e, FAILED_LEGACY);
   }

@@ -347,7 +347,7 @@ const INFRA_LIBS = [
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
   'books-reconcile.js',
-  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js', 'books-year-reopen.js', 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
+  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
@@ -389,7 +389,7 @@ const INFRA_LIBS = [
      a feature flag and ChitBridge is unchanged, which is what makes it plumbing. (2026-09-14) */
   'istest.js',
   'trips.js',          // INFRA: counts the database round trips one request makes, when CB_TRIPS=1 asks it to (2026-09-07)      // plumbing: neither identity nor adoption. Replaceable without changing what CB is.
-  'logger.js', 'safe-url.js', 'notify.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js', 'iddoc-verify.js',
+  'logger.js', 'safe-url.js', 'notify.js', 'connector-state.js', 'capabilities.js', 'respond.js', 'storage.js', 'schema-bootstrap.js', 'otp.js', 'dev-otp.js', 'employee-code.js', 'iddoc-verify.js',
   'confcache.js',   // a TTL memo over migration-only config tables — holds no rule, decides nothing
   /* INFRA by this file's own test: it holds no rule and decides nothing. It says "the shop moved" down the pipe
      lib/events already owned, so a counter and a television stop waiting out a timer. Swap the transport and

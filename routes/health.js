@@ -11,6 +11,8 @@ const { HEALTH } = require('../lib/plumbing-contract');
 const log = require('../lib/logger');
 
 const router = express.Router();
+/** B6: true when a required file is missing, an adopted engine drifted from its pin, or a connector that is set up is down (not set up is a choice, not a fault) */
+const degradedOf = (caps, connectors) => caps.missing > 0 || caps.engine_drift > 0 || connectors.down > 0;
 
 // @does Nothing in -> we check that the database answers in time -> status with db ok, slow or down, always 200 (public).
 router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
@@ -47,7 +49,7 @@ router.get('/', ...HEALTH.checked('GET /'), async (req, res, next) => {
       output_dropped: require('../lib/output-allowlist').droppedCount(),
       /* K-SEC PR A: tokens with no jti since boot — minted · customer_minted · used · refused, and whether LEGACY_TOKEN_REFUSE is on.
          Athi turns the refusal on after 7 days of minted: 0 here (SECURITY-BACKLOG.md) */
-      legacy_tokens: require('../lib/person-session').legacyCounts()
+      legacy_tokens: require('../lib/person-session').legacyCounts(), capabilities: require('../lib/capabilities').counts(), connectors: require('../lib/connector-state').counts() /* ERR-2/8: COUNTS only (no names); names stay in the boot log and behind sign-in */, degraded: degradedOf(require('../lib/capabilities').counts(), require('../lib/connector-state').counts()) /* ERR-R5 (B6): any part missing, any engine drifted, any connector down */
     });
   } catch (err) {
     next(err);

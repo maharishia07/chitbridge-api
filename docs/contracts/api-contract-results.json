@@ -1787,7 +1787,7 @@
    ]
   },
   "PATCH /api/counters/:id": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -1819,7 +1819,7 @@
    ]
   },
   "PATCH /api/entities/me/exposure": {
-   "cases": 2,
+   "cases": 9,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2659,7 +2659,7 @@
    ]
   },
   "POST /api/channels/:id/approve": {
-   "cases": 4,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -2699,7 +2699,7 @@
    ]
   },
   "POST /api/channels/:id/template-approve": {
-   "cases": 4,
+   "cases": 6,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3043,7 +3043,7 @@
    ]
   },
   "POST /api/counters": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4147,7 +4147,7 @@
    ]
   },
   "POST /api/testing/cases/close": {
-   "cases": 3,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4203,7 +4203,7 @@
    ]
   },
   "POST /api/testing/incidents": {
-   "cases": 6,
+   "cases": 14,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4259,7 +4259,7 @@
    ]
   },
   "POST /api/till/catalogue": {
-   "cases": 2,
+   "cases": 5,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4315,7 +4315,7 @@
    ]
   },
   "POST /api/till/listen": {
-   "cases": 2,
+   "cases": 7,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -4403,7 +4403,7 @@
    ]
   },
   "POST /api/till/reconcile": {
-   "cases": 2,
+   "cases": 3,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [

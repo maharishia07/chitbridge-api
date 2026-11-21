@@ -41,7 +41,7 @@ const { withEntity } = require('../db');
 const { clientRef } = require('../lib/books-input'); /* the one client_ref reader: over 80 characters is 422, never cut */
 const B = require('../lib/books'), statementNotes = require('../lib/books-statement-notes');
 const E = require('../lib/books-engines'); const moneyOps = require('../lib/books-money-ops');
-const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill');
+const S = require('../lib/books-store'), LiveBill = require('../lib/books-live-bill'), LedgerMonths = require('../lib/ledger-months');
 const Evidence = require('../lib/books-evidence'); /* the source document and the files held on it, per row (one read per page) */
 const Needs = require('../lib/books-needs');
 const Dues = require('../lib/books-dues'); /* the ONE dues read: GET /dues and the owner's overview call it (REQ-MIS-SHOWCASE A2) */ /* who needs you, and why: the one list of reasons (W15-114) */
@@ -444,7 +444,7 @@ router.get('/daybook', auth, moneyReader, on, ...checked('GET /daybook'), async 
 });
 
 /** GET /ledger/:account?party&from&to — :account is the code (1300), the role (debtors) or the id →
- *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], closing_minor } */
+ *  { currency, account, opening_minor, lines: [{ date, what, ref, source_chit_id, source (as the day book), dr_minor, cr_minor, running_minor }], months: [{ month YYYY-MM, debit_minor, credit_minor, closing_minor }] (ACC-381, server totals of the whole range), closing_minor } */
 // @does An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.
 router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:account'), async (req, res) => {
   try {
@@ -499,7 +499,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
         from,
         to,
         opening_minor: open,
-        lines,
+        lines, months: LedgerMonths.bands(open, await LedgerMonths.monthSums(h, e, from, to, a.account_id, party, !!lo.period0)),
         closing_minor: t ? open + t.dr - t.cr : run
       };
       await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
@@ -519,7 +519,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
     /* every root key named (the page keys are undefined on an unpaged read and leave the JSON): the output allow-list reads them here */
-    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }, { account: out.chart_account }));
+    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, months: out.months, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }, { account: out.chart_account }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2209,7 +2209,7 @@ router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reop
     res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, refusals, warnings, months, next } — what a close would say, nothing written */
+/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, reclosing, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
@@ -2218,7 +2218,7 @@ router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/
     const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy, { warn: true, req }));
     res.json({
       fiscal_year: st.fiscal_year,
-      closed: st.closed, returns_lodged: st.returns_lodged === true,
+      closed: st.closed, returns_lodged: st.returns_lodged === true, reclosing: st.reclosing === true && !st.closed,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
       warnings: st.closed ? [] : st.warnings || [],

@@ -1388,6 +1388,7 @@
       "balance_minor": 118000,
       "oldest_due": "2026-09-15",
       "disputed_minor": 0,
+      "advance_minor": 0,
       "buckets": {
        "not_due": 0,
        "lt_6m": 0,
@@ -1750,7 +1751,12 @@
      }
     ]
    },
-   "optional": []
+   "optional": [
+    "suggestion"
+   ],
+   "also_optional": [
+    "suggestion"
+   ]
   },
   "GET /api/books/fx-revalue": {
    "status": 200,
@@ -1913,6 +1919,14 @@
       "dr_minor": 118000,
       "cr_minor": 0,
       "running_minor": 118000
+     }
+    ],
+    "months": [
+     {
+      "month": "2026-09",
+      "debit_minor": 118000,
+      "credit_minor": 0,
+      "closing_minor": 118000
      }
     ],
     "closing_minor": 118000
@@ -2823,6 +2837,7 @@
     "fiscal_year": "2026-27",
     "closed": false,
     "returns_lodged": false,
+    "reclosing": false,
     "can_close": false,
     "can_close_if_lodged": false,
     "refusals": [

@@ -16797,6 +16797,12 @@
           },
           "cap_note": {
             "type": "string"
+          },
+          "outside": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
           }
         },
         "additionalProperties": false
@@ -36916,6 +36922,7 @@
           "to",
           "opening_minor",
           "lines",
+          "months",
           "closing_minor"
         ],
         "properties": {
@@ -36941,6 +36948,12 @@
             "type": "number"
           },
           "lines": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "months": {
             "type": "array",
             "items": {
               "type": "object"
@@ -37138,6 +37151,9 @@
             "type": "boolean"
           },
           "returns_lodged": {
+            "type": "boolean"
+          },
+          "reclosing": {
             "type": "boolean"
           },
           "can_close": {

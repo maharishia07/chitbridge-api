@@ -14,7 +14,7 @@ Thirteen machine columns (S15, S33-S38): schema_in · schema_out · error_shape 
 
 **tolerant_outward: 26** routes read strict_input as exempt, never as yes (S33-T, tolerant by design: an unknown body key is ignored; every known key is typed; a test file proves a junk value is refused and an unknown key ignored; the list is docs/contracts/api-hardening-scope.json tolerant_outward, bounded by tolerant_outward_ceiling).
 
-The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023) 17 junk_fuzz (OWASP API4/API8) and 18 audit_logged (a write route reaches an audit writer, ISO 27001 A.8.15, S40) 19 stale_write_refused (an update of a mutable record refuses a stale write with 409 or 412, RFC 9110 sec 13, S22) 20 documented_example (a request and response example in the OpenAPI operation) and 16 resource_cap (a page-size cap on a list read, a named limiter on every route, a tighter own limit on a mail, SMS or AI write, OWASP API4:2023, `lib/resource-cap.js`), `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": bfla_role_check (fails on 0 of 70 routes it applies to) · parameterised_query (fails on 0 of 282 routes it applies to) · rate_limited (fails on 511 of 690 routes it applies to) · role_matrix (fails on 626 of 690 routes it applies to) · junk_fuzz (fails on 49 of 690 routes it applies to) · resource_cap (fails on 0 of 690 routes it applies to) · audit_logged (fails on 347 of 400 routes it applies to) · stale_write_refused (fails on 62 of 64 routes it applies to) · documented_example (fails on 688 of 690 routes it applies to). A column that does not apply to a route reads yes.
+The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked as owner, staff, adviser, auditor and no sign-in, OWASP API5:2023) 17 junk_fuzz (OWASP API4/API8) and 18 audit_logged (a write route reaches an audit writer, ISO 27001 A.8.15, S40) 19 stale_write_refused (an update of a mutable record refuses a stale write with 409 or 412, RFC 9110 sec 13, S22) 20 documented_example (a request and response example in the OpenAPI operation) and 16 resource_cap (a page-size cap on a list read, a named limiter on every route, a tighter own limit on a mail, SMS or AI write, OWASP API4:2023, `lib/resource-cap.js`), `tools/api-reported.cjs`), counted on their own and NOT yet part of "meets standard": bfla_role_check (fails on 0 of 70 routes it applies to) · parameterised_query (fails on 0 of 283 routes it applies to) · rate_limited (fails on 511 of 690 routes it applies to) · role_matrix (fails on 626 of 690 routes it applies to) · junk_fuzz (fails on 49 of 690 routes it applies to) · resource_cap (fails on 0 of 690 routes it applies to) · audit_logged (fails on 347 of 400 routes it applies to) · stale_write_refused (fails on 62 of 64 routes it applies to) · documented_example (fails on 688 of 690 routes it applies to). A column that does not apply to a route reads yes.
 
 | method | path | owner area | file:line | schema_in | schema_out | error_shape | codes_registered | missing_input_answer | error_tests | status_codes | strict_input | output_allowlist | foreign_id_404 | idempotent_money_write | inbound_validated | trips_budgeted | status | bfla_role_check (reported) | parameterised_query (reported) | rate_limited (reported) | role_matrix (reported, col 14) | junk_fuzz (reported, col 17) | resource_cap (reported, col 16) | audit_logged (reported, col 18) | stale_write_refused (reported, col 19) | documented_example (reported, col 20) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -42,10 +42,10 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | DELETE | /api/relationships/suppliers/:id | relationships | routes/relationships.js:475 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | DELETE | /api/schemas/fields/:field_key | schemas | routes/schemas.js:177 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | GET | /api/actors | actors | routes/actors.js:861 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/actors/:id/tasks | actors | routes/actors.js:1538 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/actors/access-events | actors | routes/actors.js:1723 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/actors/:id/tasks | actors | routes/actors.js:1543 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/actors/access-events | actors | routes/actors.js:1728 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/actors/check-login | actors | routes/actors.js:712 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
-| GET | /api/actors/settings | actors | routes/actors.js:1408 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/actors/settings | actors | routes/actors.js:1413 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/adopt/:chit_id | adopt | routes/adopt.js:152 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/assist/catalogue-mine | assist | routes/assist.js:334 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
 | GET | /api/assist/catalogue-source/:key | assist | routes/assist.js:615 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
@@ -329,7 +329,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/work/:chit_id | work | routes/work.js:70 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/work/facts | work | routes/work.js:58 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/work/list | work | routes/work.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /health | health | routes/health.js:16 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /health | health | routes/health.js:18 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | OPTIONS | * | preflight | routes/preflight.js:17 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | PATCH | /api/actors/:id | actors | routes/actors.js:528 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | no | no |
 | PATCH | /api/books-grants/:id | books-grants | routes/books-grants.js:103 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
@@ -359,7 +359,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | PATCH | /api/testing/incidents/:id | testing | routes/testing.js:2454 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
 | PATCH | /api/testing/requirements/:id | testing | routes/testing.js:2071 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
 | POST | /api/actors | actors | routes/actors.js:265 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
-| POST | /api/actors/:id/otp | actors | routes/actors.js:938 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| POST | /api/actors/:id/otp | actors | routes/actors.js:943 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | POST | /api/actors/login | actors | routes/actors.js:838 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
 | POST | /api/actors/set-pin | actors | routes/actors.js:716 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | yes | no |
 | POST | /api/actors/suggest-key | actors | routes/actors.js:235 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
@@ -673,13 +673,13 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/till/state | till | routes/till.js:1692 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | no | yes | no | yes | no |
 | POST | /api/till/stock | till | routes/till.js:1421 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | no | yes | no | yes | no |
 | POST | /api/till/stock/bulk | till | routes/till.js:1480 | yes | yes | yes | yes | yes | yes | yes | exempt | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | no | yes | no | yes | no |
-| PUT | /api/actors/:id/delegate | actors | routes/actors.js:1504 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
-| PUT | /api/actors/:id/status | actors | routes/actors.js:1016 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
-| PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1637 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
-| PUT | /api/actors/assign/:chit_id | actors | routes/actors.js:1356 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
-| PUT | /api/actors/break | actors | routes/actors.js:1230 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
+| PUT | /api/actors/:id/delegate | actors | routes/actors.js:1509 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
+| PUT | /api/actors/:id/status | actors | routes/actors.js:1021 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
+| PUT | /api/actors/:id/tasks/route | actors | routes/actors.js:1642 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
+| PUT | /api/actors/assign/:chit_id | actors | routes/actors.js:1361 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
+| PUT | /api/actors/break | actors | routes/actors.js:1235 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | no | no |
 | PUT | /api/actors/change-pin | actors | routes/actors.js:721 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
-| PUT | /api/actors/settings | actors | routes/actors.js:1430 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
+| PUT | /api/actors/settings | actors | routes/actors.js:1435 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | no | no |
 | PUT | /api/assist/catalogue-source | assist | routes/assist.js:388 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | no | no |
 | PUT | /api/assist/container | assist | routes/assist.js:451 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | no | no |
 | PUT | /api/assist/region-override | assist | routes/assist.js:522 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | no | no | no |
@@ -724,8 +724,8 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/actors** · actors · cb-people · meets standard
 - does: Optional status, type and page in -> we list your co-assists with their role, load and access level, for you or a colleague -> a page of co-assists.
 - errors: 0 code(s) [-] · statuses 400, 401, 500 · money n (derived)
-- effect: offline online-only · round trips 2 (wire 2; share app.html 2/109, cap-admin.js 2/119, cap-chit2.js 2/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): chit_header, chit_status, identities · writes (derived): - · callers: app.html, cap-admin.js, cap-chit2.js, cap-workforce.js, cap-worklist.js, core.js · actions: -
+- effect: offline online-only · round trips 2 (wire 5; share app.html 2/109, cap-admin.js 2/119, cap-chit2.js 2/15) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- reads (derived): identities · writes (derived): - · callers: app.html, cap-admin.js, cap-chit2.js, cap-workforce.js, cap-worklist.js, core.js · actions: -
 
 **GET /api/actors/:id/tasks** · actors · cb-people · meets standard
 - does: A co-assist id and page in -> we find the chits currently assigned to that person in your shop -> their task list with their load and cap.
@@ -1219,7 +1219,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 - errors: 1 code(s) [LEDGER_OFF] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): fiscal_period · writes (derived): - · callers: cap-period.js · actions: -
+- reads (derived): books_change_log, fiscal_period · writes (derived): - · callers: cap-period.js · actions: -
 
 **PATCH /api/books/payments/:id** · books · cb-accounting · meets standard
 - does: A payment id and an advice chit in -> we link or unlink the advice that went with that payment -> the payment's advice state.
@@ -1519,7 +1519,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: A financial year in -> we close the year, carry the opening balances forward and lock it, or refuse with plain reasons -> the result (owner only).
 - errors: 4 code(s) [LEDGER_OFF, OWNER_ONLY, PERIOD_RETURN_OPEN, YEAR_CLOSE_REFUSED] · statuses 401, 403, 404, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 3; share cap-period.js 1/67) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): fiscal_period · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
+- reads (derived): books_change_log, fiscal_period · writes (derived): books_change_log, fiscal_period · callers: cap-period.js · actions: -
 
 **POST /api/books/year/:fy/reopen** · books · cb-accounting · meets standard
 - does: A closed year and a reason in -> we open that year again if it is the newest closed one, and log it -> the year (owner only).

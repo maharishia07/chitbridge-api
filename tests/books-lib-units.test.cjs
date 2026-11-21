@@ -36,8 +36,12 @@ const refusedWith = (fn, status) => { try { fn(); } catch (e) { return !status |
     assert.ok(refusedWith(() => input.majorOnly('ten', 'amount', 'INR', 'How much?'), 400));
     assert.ok(refusedWith(() => input.majorOnly('ten', 'amount', 'INR'), 422));
   });
-  await t('books-input: a rate sent as text is refused; a journal line that is null or not an object is refused naming the line', () => {
-    assert.ok(refusedWith(() => input.typedRate({ rate: '83.1' }, {}), 422));
+  await t('books-input: typedRate takes a JSON number or a plain decimal text, refuses junk in words (422)', () => {
+    [83.25, '83.25', ' 83 ', 0.5].forEach((r) => assert.doesNotThrow(() => input.typedRate({ rate: r }, {}), String(r)));
+    ['abc', '', '-1', '1e3', '1,5', {}, [], true, -2, NaN, Infinity, 1e21].forEach((r) => assert.ok(refusedWith(() => input.typedRate({ rate: r }, {}), 422), 'refused ' + String(r)));
+  });
+  await t('books-input: a rate as junk text is refused; a journal line that is null or not an object is refused naming the line', () => {
+    assert.ok(refusedWith(() => input.typedRate({ rate: 'abc' }, {}), 422));
     assert.ok(refusedWith(() => input.lineShape([{ account: 'a' }, null]), 422));
     assert.doesNotThrow(() => input.lineShape([{ account: 'a', dr: 1 }]));
   });

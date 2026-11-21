@@ -30,7 +30,8 @@ const ALLOW = {
   'lib/reprice.js': 'no module header / CARD yet: own PR with the header (b142, internal error)',
   'lib/schedule.js': 'no module header / CARD yet: own PR with the header (b203)',
   'lib/signin-events.js': 'text goes to the log only (the CHECK that refused), never to a person (b282)',
-  'lib/db-role.js': 'the sign-in door verdict is a boot-log line for the operator (b857 is the migration to run), never shown to a shopkeeper (SEC-185)'
+  'lib/db-role.js': 'the sign-in door verdict is a boot-log line for the operator (b857 is the migration to run), never shown to a shopkeeper (SEC-185)',
+  'lib/capabilities.js': 'the manifest verdict names the migration to run (b890) in the boot log for the operator; the public /health shows counts only, never a name (ERR-2)'
 };
 const ROOT = path.join(__dirname, '..');
 const walk = (dir) => fs.readdirSync(path.join(ROOT, dir), { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? walk(dir + '/' + d.name) : d.name.endsWith('.js') ? [dir + '/' + d.name] : []));

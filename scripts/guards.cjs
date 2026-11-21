@@ -332,6 +332,7 @@ const GUARDS = [
      half (BOOKS_ENGINES_SRC, else a v1.8.0 sibling) and say SKIP with the reason without them — never a silent pass. */
   'books-writer.test.cjs', // ⭐⭐⭐ only lib/books-store writes the journal, only postEntry calls it
   'books-store-sql.test.cjs', // every books statement: binds = placeholders, the shop is $1
+  'books-year-reclose.test.cjs', // ACC-380: a closed year closes again in one step (re-close), the held numbers move with it
   'books-post.test.cjs', // ⭐⭐ the one writer: balances both grains, gap-free JV, locks, reversal, cheques, carryforward
   'books-hooks.test.cjs', // ⭐⭐ what a chit posts — and a failed post NEVER fails the chit (parked, named)
   'books-country.test.cjs', // ⭐ CX2: the books speak the shop's country — IN · AU · AE (core ≥ v1.42, money, zone, year label, depreciation basis)
@@ -368,6 +369,7 @@ const GUARDS = [
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
   'acc-new-4-year-gate.test.cjs', // ⭐ l16-accfix API-new-1 / CTY-new-1: the year-close refusal carries period_codes beside the labels (the code POST /gst/close takes); AE's gate fires without a stagger (every month covered by a closed tax period)
+  'acc381-ledger-months.test.cjs', // ACC-381: GET /ledger/:account carries months (server totals per month, hand 30,000 / 20,500, a page keeps them, cost-blind nulls them)
   'acc-new-1-box9.test.cjs', // ⭐ l16-accfix ACC-new-1: VAT201 box 9 counts only entries that carried recoverable VAT (hand 750.00 vs 1,062.50), a reversal nets away; AU G11 unchanged
   'acc-new-2-supply-kind.test.cjs', // ⭐ l16-accfix ACC-new-2: a supply kind the pack does not define is 422 SUPPLY_KIND_UNKNOWN listing the pack's kinds (AU, AE, IN)
   'acc-336-close-reads-period.test.cjs', // ⭐ ACC-336/336b: the GST close reads the head net before payments (add-back), posts the surplus as tax paid in advance, replays by paid_entries; 86 checks
@@ -1047,6 +1049,10 @@ const GUARDS = [
   'message-post.test.cjs', // MARK & QUERY PR1: the one message writer; a mark post is the mark definer only (no chit_message_deliver, no timeline, no CTP)
   'acc-176-grant-classification.test.cjs', // ACC-176: every books GET is classified for an auditor grant (a new GET is born refused); the synthetic auditor is not an owner, a commenter, read-only; the look failing answers 503 //
   'l16-statement-box.test.cjs', // l16 Statements box (b872): the ONE hash, refusals in words, duplicate and overlap by dates, the account by month grid, the grant doors (owner, adviser, auditor read-only, ended grant)
+  'bkbeh-books-grants-behaviour.test.cjs', // BEHAVIOUR of PATCH /api/books-grants/:id and POST /:id/revoke: the end date moves, the grant ends, one audit row each, the wrong seat writes nothing
+  'bkbeh-books-actions-behaviour.test.cjs', // BEHAVIOUR of GET /api/books-actions/:id and POST review / return / accept: steps, seats, the accept money (confirmed = prepared = written) and the posted lines
+  'bkbeh-marks-thread-behaviour.test.cjs', // BEHAVIOUR of GET and POST /api/marks/:thread_id/messages: who replies, the class never changes, refusals write nothing
+  'bkbeh-books-doors-behaviour.test.cjs',// BEHAVIOUR of party bills, evidence file, statement file and POST /bank/statements: scoping, bytes, audit event, carried BRS figures stored as carried
   'b3-bank-statements-cost-blind.test.cjs', // B3: a cost-blind reader gets 403 COST_BLIND on the bank statement files list, the file download and /bank/log (the one lib/cost.isCostBlind),
   'l16-audbank.test.cjs', // l16 audbank (W15-71, W15-97): the auditor reads the bank log, every books write route refuses the auditor seat, a month opens newest first
   'acc-176b-adviser-doors.test.cjs', // ACC-176b: every books-actions route is an adviser door or the owner's accept (a new one is born refused); no direct adviser write; the synthetic adviser is an editor, never an owner; who may use which grant
@@ -1123,6 +1129,8 @@ const GUARDS = [
   'heir-of-plug.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'api-junk-types-api9394.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
+  'fin-15-advance-key.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'books-lib-units.test.cjs', // READ-GUARD §7 unit evidence for the small 20 Nov modules (input, reversal date, debit check, event guard, balance rows, locks, year reopen, switch audit, ask cap, no-store)
 ];
 const all = process.argv.indexOf('--all') >= 0;

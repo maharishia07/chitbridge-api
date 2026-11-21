@@ -407,6 +407,7 @@ function create() {
     async outboxClose(db, e, ids, why, only) { const l = (ids || []).map(String); let n = 0; T.outbox.forEach((o) => { if (o.entity_id === e && !o.done_at && l.indexOf(String(o.source_chit_id)) >= 0 && (!(only && only.press) || (o.event && o.event.press === only.press))) { o.done_at = now(); o.why = why; n++; } }); return n; },
     async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
+    async yearLastEvent(db, e, fy) { const rows = T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && String(c.row_id) === String(fy) && (c.field === 'year_closed' || c.field === 'year_reopened')); return rows.length ? clone(rows[rows.length - 1]) : null; },
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
     async lockTrail(db, e, fy) { return clone(T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && c.field === 'status' && (!fy || String(c.row_id).startsWith(fy + '/')))).map((c) => { const i = T.identities.find((x) => x.identity_id === c.by); return Object.assign({}, c, { by_name: i ? i.display_name || null : null }); }); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
@@ -517,7 +518,7 @@ const fakeDb = {
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/FROM cb_attachment WHERE chit_id = ANY/.test(t)) return { rows: [] }; /* the evidence behind a books row (lib/books-evidence.attach): no file is held in memory */
     /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */
-    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; }
+    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; } if (t.includes('/* ledger-months */') && fakeDb.T) return require('./ledger-months-memory.cjs')(fakeDb.T, t, v); /* ACC-381 */
     /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
     const T = fakeDb.T || { parties: [] };
     if (/^SELECT terms FROM books_setting/.test(t.trim())) return { rows: [{ terms: T.shopTerms || null }] };
