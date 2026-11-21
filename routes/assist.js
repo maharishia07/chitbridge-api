@@ -23,7 +23,9 @@ const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: th
 const contract = require('../lib/assist-contract'); // the contract (each route's operation) and the words of a refusal
 const { failed, FAULTS, words, PUBLISH_NO } = contract;
 const log = require('../lib/logger');
-const ownerOnly = require('../lib/owner').ownerOnly; // CAT-277: the one owner gate (a co-assist or a key is refused in words)
+const { ownerOnly } = require('../lib/owner');
+const ownerOrPlatform = (why) => { const asOwner = ownerOnly(why); return Object.assign((req, res, next) => (require('../lib/platformroot').isPlatform(req) ? next() : asOwner(req, res, next)), { roleGate: 'owner' }); }; /* LV-13: the owner of a container, or a platform operator; a staff seat, a key and a co-assist are refused in words */
+// CAT-277: the one owner gate (a co-assist or a key is refused in words)
 const { query, queryAs, withEntity, readBatch } = require('../db'); // DB access for the Q&A library (assist_qa) + entity-scoped writes
 const auth = require('../middleware/auth'); // review endpoints are auth-gated (tighten to platform-scope later)
 const ASSIST_KB = require('../lib/assist-kb'); // server-side grounding (cacheable, tamper-proof)
@@ -448,7 +450,7 @@ router.put('/catalogue-source', auth, ownerOnly('Only the owner can change the c
 // PUT /api/assist/container — CONTAINER MODEL (stone 5): author (v1) or ENHANCE (mint the next IMMUTABLE version + move
 // the pointer) a product container. Owner-only. An enhancement never mutates a version → past chits stay verifiable.
 // @does A container id and its content (signed-in shop) -> we author the first version, or add the next fixed version and move the pointer -> the container and its version.
-router.put('/container', auth, ...contract.checked('PUT /container'), async (req, res) => {
+router.put('/container', auth, ownerOrPlatform('Only the owner can author a product container.'), ...contract.checked('PUT /container'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
@@ -519,7 +521,7 @@ router.get('/erp-handoffs', auth, ...contract.checked('GET /erp-handoffs'), asyn
 // Hybrid: most of "per region" auto-cascades (currency/units/language); this is the genuinely-local delta (colour
 // names, compliance labels, regional combinations). Self-healing: 503 if b81 isn't applied.
 // @does A container id, region and local overrides (signed-in brand owner) -> we save the regional changes for that product -> a done answer, or not found.
-router.put('/region-override', auth, ...contract.checked('PUT /region-override'), async (req, res) => {
+router.put('/region-override', auth, ownerOrPlatform('Only the owner can set a regional override.'), ...contract.checked('PUT /region-override'), async (req, res) => {
   try {
     const owner = auth.entityOf(req);
     const b = req.body || {};
@@ -528,7 +530,7 @@ router.put('/region-override', auth, ...contract.checked('PUT /region-override')
     if (!container_id || !region) return problem(req, res, { status: 422, ...words.containerAndRegionNeeded() });
     const overrides = b.overrides && typeof b.overrides === 'object' ? b.overrides : {};
     try {
-      await regional.setRegionOverride(owner, container_id, region, overrides);
+      await regional.setRegionOverride(owner, container_id, region, overrides, require('../lib/platformroot').isPlatform(req));
     } catch (e) {
       if (e.status === 404) return problem(req, res, { status: 404, ...words.noSuchContainer() }); /* lib/regional.js: unknown or another brand's (S6) */
       return problem(req, res, { status: 503, ...words.regionStoreMissing() });

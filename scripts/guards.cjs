@@ -35,6 +35,8 @@ const GUARDS = [
   'lv05-held-pay-out-and-todo.test.cjs', // LV-05/06: owner-approves refuses a Bookkeeper payment out; the To-do lists held entries only to the owner (real Express)
   'pay-out-gate.test.cjs', // AK-F-02: lib/pay-out-gate.js unit — owner and in-house accountant pass, a counter seat records money in only, stored direction read for propose/confirm, a failing read closes the door
   'seat-matrix.test.cjs', // AK-F-02 (22 Nov): docs/SEAT-MATRIX.md is what the gates say (tools/seat-matrix.cjs), the contract's staff seats agree with them; a counter never pays a supplier
+  'lv12-ai-skill-prototype-names.test.cjs', // LV-12: constructor / __proto__ / prototype are not skills (getSkill + POST /ai-draft, real route)
+  'lv13-assist-container-gates.test.cjs', // LV-13: PUT /assist/container and /region-override are the owner's or a platform operator's; an ownerless container's override is the platform's
   'ak-f02-seat-gates.test.cjs', // AK-F-02: manager hat runs pack, FX and pays out; the counter seat records money in only (real Express, in-memory ledger)
   'ak-f03-reopen-hard-month.test.cjs', // AK-F-03: the owner opens the newest hard-locked month with a reason (unlock and reopen), one audit row; an older month stays shut
   'identities-column-grant.test.cjs', // SEC-186 (21 Nov): every identities column added after b875 is granted to cb_app in the same or a later migration (b900 broke sign-in on a column-revoked DB)
