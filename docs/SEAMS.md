@@ -9,13 +9,13 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 207 | `list` | `amend.js` |  |
-| 193 | `rows` | `crm.js` | still in them: |
-| 167 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 208 | `list` | `amend.js` |  |
+| 194 | `rows` | `crm.js` | still in them: |
+| 168 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 159 | `words` | `variant.browser.js` |  |
 | 150 | `withEntity` | `books-hooks.js` |  |
 | 139 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 133 | `answer` | `availability.js` | from March; then nearest. |
+| 134 | `answer` | `availability.js` | from March; then nearest. |
 | 128 | `item` | `bank-band.js` |  |
 | 116 | `money` | `bill-privacy.js` |  |
 | 112 | `list` | `cap-flag.js` |  |
@@ -26,19 +26,19 @@ of file each thing is; this says what already does the job.
 | 97 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 88 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
+| 84 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
-| 83 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 82 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 82 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 81 | `again` | `signin-ui.js` |  |
 | 81 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 78 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
+| 78 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 78 | `count` | `money-check.js` | the count /health reads |
-| 77 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 77 | `items` | `books-store.js` | PERF1: |
 | 76 | `read` | `books-grant-drill.js` |  |
 | 76 | `rows` | `cap-settings.js` |  |
 | 76 | `record` | `access-events.js` |  |
-| 76 | `items` | `books-store.js` | PERF1: |
 | 75 | `failed` | `service.js` | what every catch answers: |
 | 74 | `pack` | `books-store-packs.js` |  |
 | 73 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -54,19 +54,19 @@ of file each thing is; this says what already does the job.
 | 66 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 65 | `shape` | `books-practice.js` | a client's practice row: |
 | 64 | `view` | `country-ready.js` |  |
+| 64 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 63 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 63 | `view` | `books-payables.js` | group: |
-| 63 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 62 | `body` | `books-acting.js` | a write's body: |
 | 62 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 60 | `named` | `bank-rec-log.js` | W15-71: |
-| 60 | `verdict` | `books-advice-in.js` | The payer's own copy, and an advice of money I paid, post nothing here. |
+| 61 | `named` | `bank-rec-log.js` | W15-71: |
+| 60 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 60 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 59 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 59 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 59 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
-| 56 | `facts` | `bill-steps.js` | MY state_log — |
+| 57 | `facts` | `bill-steps.js` | MY state_log — |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 53 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
@@ -89,9 +89,9 @@ of file each thing is; this says what already does the job.
 | 44 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 43 | `sentence` | `one-person.js` |  |
 | 43 | `shell` | `pick.js` |  |
+| 43 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 43 | `rate` | `convert.js` | A rate, with its evidence. |
 | 42 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
-| 42 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 41 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 41 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 41 | `hold` | `orders.js` |  |
@@ -99,12 +99,12 @@ of file each thing is; this says what already does the job.
 | 40 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 40 | `load` | `books-grant-view.js` |  |
 | 40 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
+| 40 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 40 | `entries` | `books-store.js` |  |
 | 40 | `changes` | `books-store.js` |  |
 | 39 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 39 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 39 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 39 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 39 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
@@ -152,17 +152,17 @@ of file each thing is; this says what already does the job.
 | 27 | `head` | `list-ctl.js` |  |
 | 27 | `panel` | `sides.js` |  |
 | 27 | `currency` | `ui-money.js` | the currency a money field uses: |
+| 27 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
+| 27 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 26 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 26 | `groups` | `lab-kit.js` | items [{ name, done, total, next, blocker }] → { Ready:[…], Nearly:[…], 'Not started':[…] } |
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 26 | `textOf` | `bank-statement-file.js` | the file's text: |
-| 26 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 26 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 25 | `side` | `books-grant-reports.js` |  |
 | 25 | `cblog` | `core.js` | const __cblog = []; |
-| 25 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 25 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
@@ -180,6 +180,7 @@ of file each thing is; this says what already does the job.
 | 23 | `figures` | `bank-demo.js` |  |
 | 23 | `more` | `lab-kit.js` | idKey: |
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
+| 23 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 23 | `payment` | `books-store.js` |  |
 | 23 | `connectors` | `home-facts.js` | declare (said in words — |
 | 23 | `reply` | `private-flag.js` | Refused in words: |
@@ -190,7 +191,6 @@ of file each thing is; this says what already does the job.
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
 | 22 | `send` | `cap-quotes.js` |  |
 | 22 | `later` | `home2.js` | adopt once on the next frame, however many changes ask for it |
-| 22 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 22 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 22 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 21 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
