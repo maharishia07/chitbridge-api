@@ -159,29 +159,7 @@ function screenView(body) {
 }
 router.screenView = screenView; /* tests/screen-snapshot.test.cjs asserts the allow-list directly too */
 
-/**
- * M127: DOES THIS SHOP HOLD STOCK? The shop's own DATA decides, never its trade (Athi: "the data decides, not the trade").
- * Two signals, both already in the platform: the shop has RECEIVED stock (a stock_movement of reason opening or purchase - what a
- * Receive / GRN posts, lib/stock-from-chit), or a product of its own says it is kept per batch (item_data.batch_tracked true - the
- * product's word that lotfields.tracksBatch honours first). Neither => false. One read; a table not migrated yet, or a read that
- * fails, answers null (unknown) and the counter then shows Receive and Despatch as usual - it never hides on a guess.
- */
-async function holdsStockOf(entity_id) {
-  try {
-    if (!(await require('../lib/schema').hasTable('stock_movement'))) return null;
-    const found = await withEntity(entity_id, (db) =>
-      db.query(
-        `SELECT (EXISTS (SELECT 1 FROM stock_movement WHERE entity_id = $1 AND reason IN ('opening','purchase'))
-            OR EXISTS (SELECT 1 FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data->>'batch_tracked' = 'true')) AS held`,
-        [entity_id]
-      )
-    );
-    return !!(found.rows[0] && found.rows[0].held);
-  } catch (e) {
-    log.fellBack('till holdsStockOf: the read failed — answered with nothing', e);
-    return null;
-  }
-}
+const { holdsStockOf } = require('../lib/holds-stock'); /* M127: does this shop hold stock? the one reader (moved to lib so Home's Operations card asks the same question, WALK-H H-F-05) */
 
 /**
  * GET /snapshot — everything a counter needs to bill offline, in one call (the story is at the top of this file). The handler only hands the

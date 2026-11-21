@@ -5,6 +5,7 @@
  * R1 an AU card drops 'Pooja & flowers' and 'Gourds' (rows, categories, count); an IN card and a no-country card are untouched
  * R2 an AU adopt of a Tomato (Vegetables) carries tax_kind gst_free and the pack's rate 0 (reg-au supplyKinds.gst_free); a flower stays with no kind
  * R3 an IN or unstated country adopts with no kind added (the pack names none for it)
+ * R4 Home's Operations card for a shop that keeps no stock (holds-stock false): no below-zero line, figures.holds_stock false
  * Run: node tests/walkh-list-country.test.cjs · no DB, no network.   CARD 06-catalogue-pim/README
  */
 const assert = require('assert');
@@ -37,5 +38,18 @@ ok('R3 India / no country: no kind added', () => {
   assert.deepStrictEqual(L.withPackTaxKind(rows, 'IN'), rows);
   assert.deepStrictEqual(L.withPackTaxKind(rows, null), rows);
 });
-console.log(pass + ' passed, ' + fail + ' failed');
-process.exit(fail ? 1 : 0);
+(async () => {
+  const hsPath = require.resolve(path.join(API, 'lib', 'holds-stock'));
+  const schemaPath = require.resolve(path.join(API, 'lib', 'schema'));
+  require.cache[hsPath] = { id: hsPath, filename: hsPath, loaded: true, exports: { holdsStockOf: async () => false } };
+  require.cache[schemaPath] = { id: schemaPath, filename: schemaPath, loaded: true, exports: { hasTable: async () => true } };
+  const HF = require(path.join(API, 'lib', 'home-facts'));
+  try {
+    const card = await HF.BUILD.operations({ entity: 'e1' });
+    assert.strictEqual(card.figures.below_zero, 0);
+    assert.strictEqual(card.figures.holds_stock, false);
+    assert.ok(!card.lines.some((l) => /below zero/.test(l.text)));
+    pass++; console.log('  ✓ R4 a shop that keeps no stock: no below-zero line, said in words');
+  } catch (e) { fail++; console.log('  ✗ R4 ' + String(e.message).slice(0, 300)); }
+  console.log(pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
+})();

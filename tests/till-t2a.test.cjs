@@ -96,9 +96,10 @@ ok('the current mode is a named pill; one tap back to Sell; F10 and F8 work in e
 });
 ok('the snapshot says whether the shop holds stock from its OWN DATA, never its trade: a hotel with a stock-tracked packed product holds stock; a greengrocer with none does not', async () => {
   assert(!/SERVES_RE|laundry/.test(ROUTE), 'no sector-word list');
-  const src = ROUTE.slice(ROUTE.indexOf('async function holdsStockOf('), routeAt(ROUTE, 'get', '/snapshot'));
-  const mk = (db, hasTable) => new Function('require', 'withEntity', src + '; return holdsStockOf;')(
-    () => ({ hasTable: async () => hasTable }), (id, fn) => fn(db))('e1');
+  const HS = require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'holds-stock.js'), 'utf8'); /* H-F-05: the reader lives in lib/holds-stock.js now */
+  const src = HS.slice(HS.indexOf('async function holdsStockOf('), HS.indexOf('module.exports'));
+  const mk = (db, hasTable) => new Function('require', 'withEntity', 'log', src + '; return holdsStockOf;')(
+    () => ({ hasTable: async () => hasTable }), (id, fn) => fn(db), { fellBack() {} })('e1');
   /* a fake database that evaluates the two signals the query asks about */
   const dbOf = (moves, items) => ({ query: async (sql, p) => {
     assert(sql.includes("reason IN ('opening','purchase')") && sql.includes('batch_tracked'));
