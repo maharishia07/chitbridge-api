@@ -289,9 +289,9 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/signin/sessions | signin | routes/signin.js:123 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/simulator/content | simulator | routes/simulator.js:68 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | yes | no | yes | yes | yes | yes | no |
 | GET | /api/supplies | supplies | routes/supplies.js:44 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/tax/gstr | tax | routes/tax.js:103 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/tax/invoice/:chit_id | tax | routes/tax.js:36 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
-| GET | /api/tax/ledger | tax | routes/tax.js:50 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/tax/gstr | tax | routes/tax.js:104 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/tax/invoice/:chit_id | tax | routes/tax.js:37 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
+| GET | /api/tax/ledger | tax | routes/tax.js:51 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/testing/cases | testing | routes/testing.js:436 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/testing/cases/gherkin | testing | routes/testing.js:1608 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
 | GET | /api/testing/changes | testing | routes/testing.js:3796 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | yes | yes | no |
@@ -632,8 +632,8 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/supplies | supplies | routes/supplies.js:63 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/supplies/:id/issue | supplies | routes/supplies.js:143 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/supplies/purchase | supplies | routes/supplies.js:129 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/tax/compute | tax | routes/tax.js:197 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/tax/rate | tax | routes/tax.js:157 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/tax/compute | tax | routes/tax.js:198 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
+| POST | /api/tax/rate | tax | routes/tax.js:158 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/testing/cases/close | testing | routes/testing.js:285 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | no | yes | no | yes | no |
 | POST | /api/testing/cases/gherkin | testing | routes/testing.js:1667 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/testing/cases/import | testing | routes/testing.js:869 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
