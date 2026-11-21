@@ -47,7 +47,7 @@
     "lib/tax-lines.js": 625,
     "lib/work-rows.js": 506,
     "middleware/auth.js": 719,
-    "routes/actors.js": 1788,
+    "routes/actors.js": 1778,
     "routes/assist.js": 733,
     "routes/books.js": 2707,
     "routes/catalogue.js": 2089,
