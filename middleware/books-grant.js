@@ -287,6 +287,7 @@ async function resolveRole(req) {
   return grants.liveRoleOf(entityOfReal(req.identity), member);
 }
 
+const CHOOSE_VIEW_WORDS = 'Choose the adviser or auditor view for this client.';
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
   if (!mayUseGrant(req)) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', notForYouWords());
@@ -296,6 +297,9 @@ async function actOn(req, res, next) {
   if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
   if (verdict.bad) return refuse(req, res, 403, 'BOOKS_GRANT_NONE', 'No access has been given for these books.');
+  /* S2-F-09: no role named and no grant under the look we gave (SEC-117: a firm owner without X-Books-Role gets the auditor look) is not "no access" — the other view may hold it. Same code, words that say what to do. */
+  const roleUnnamed = !String(req.headers[ROLE_HEADER] || '').trim();
+  if (!verdict.allowed && roleUnnamed && verdict.code === 'BOOKS_GRANT_NONE') return refuse(req, res, verdict.status, verdict.code, CHOOSE_VIEW_WORDS);
   if (!verdict.allowed) return refuse(req, res, verdict.status, verdict.code, verdict.words);
   req.realIdentity = req.identity;
   req.identity = syntheticOf(req.realIdentity, verdict.grant);
