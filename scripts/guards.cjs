@@ -789,6 +789,7 @@ const GUARDS = [
   'supply-kind-in-note-day.test.cjs', // enrolled by red1128 (was missing)
   'walkh-list-country.test.cjs', // enrolled by red1128 (walkh, was missing)
   'walkl-measure-credit-note-sign-1128.test.cjs', // L-F-08 (1128): a pile's money subtracts credit notes (measure.signedValue)
+  'walkn-counts-1129.test.cjs', // N-F-03/04 (1129): work counts only received work; a draft is not on the rail and does not bill an order
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
   'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
   'walkk-month-lock-running.test.cjs', // WALK K K-F-01 (1128): the running month is refused a lock in words (the one period-end check, books-period.refuseUnfinished); an ended month locks, today posts
