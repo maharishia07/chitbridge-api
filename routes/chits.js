@@ -2825,6 +2825,8 @@ async function sendCustomers(sendState, req, res) {
   // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
   // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
   if (!is_draft) for (const receiver of receiverDetails) await addReceiverToCustomerList(sender_id, receiver);
+  /* ⭐ WALK I I-F-07: a counter bill that NAMES its customer (business_json.customer, no rail entity) puts that customer on the ONE party list — it said "customers appear when you bill them" and the list stayed empty. Best-effort, after commit. */
+  if (!is_draft) await addNamedCounterCustomer(sender_id, sendState.business_json);
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
      RECEIVER as the SENDER's customer — right for a bill the seller sends, backwards for an order, where the BUYER sends. The seller
      (the recipient who sells) gets the row, the way the storefront order path gives the shop one (CJ-06). Best-effort, after commit. */
@@ -2852,6 +2854,33 @@ async function addReceiverToCustomerList(sender_id, receiver) {
     });
   } catch (e) {
     cbLog.fellBack('chits send: the customer was not added to the party list — the chit is sent without it', e);
+  }
+}
+/**
+ * ⭐ WALK I I-F-07 · addNamedCounterCustomer(owner, business_json) — the customer a counter bill names becomes (or counts again as) a local party: lib/local-identity.addCustomer, the ONE way
+ * a local customer is made (name, phone, tax number, email), on the shop's own transaction. A bill with no name (the default "Customer"), a rail customer (entity_id) or an unreadable
+ * phone adds nothing here. A customer already on the list is counted again (txn_count, last_txn_at), never doubled. A failure is logged, never raised: the chit is already sent.
+ */
+async function addNamedCounterCustomer(owner, business) {
+  const cust = business && typeof business === 'object' && business.customer && typeof business.customer === 'object' ? business.customer : null;
+  const name = cust ? String(cust.name || '').trim() : '';
+  if (!cust || cust.entity_id || !name || name === 'Customer') return null;
+  try {
+    const li = require('../lib/local-identity');
+    const ph = li.phoneOf(cust.phone);
+    return await withEntity(owner, async (db) => {
+      const added = await li.addCustomer(db, owner, { name, phone: ph.bad ? null : ph.phone, email: cust.email || null, gstin: cust.gstin || null, via: 'transaction', number: false });
+      const local = added && (added.local || null);
+      if (local && local.identity_id)
+        await db.query(
+          `UPDATE customer_list SET txn_count = COALESCE(txn_count, 0) + 1, last_txn_at = NOW() WHERE owner_entity_id = $1 AND customer_identity_id = $2`,
+          [owner, local.identity_id]
+        );
+      return added;
+    });
+  } catch (e) {
+    cbLog.fellBack('chits send: the named customer was not added to the party list — the chit is sent without it', e);
+    return null;
   }
 }
 /** an order's seller (the receiver who sells, not the sender) gains the sender as a customer; a failure is logged, never raised */
