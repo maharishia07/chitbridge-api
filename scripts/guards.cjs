@@ -743,6 +743,7 @@ const GUARDS = [
   'books-day-country.test.cjs',
   'books-hooks-kinds.test.cjs',
   'acc355-buyer-credit.test.cjs', // ACC-355 (19 Nov): an unregistered or composition buyer's purchase events carry input_credit:false; unknown/regular untouched
+  'walkk-month-lock-running.test.cjs', // WALK K K-F-01 (1128): the running month is refused a lock in words (the one period-end check, books-period.refuseUnfinished); an ended month locks, today posts
   'books-returns.test.cjs',
   'p1-7-bas-basis.test.cjs',
   'books-tally-remoteid.test.cjs',
