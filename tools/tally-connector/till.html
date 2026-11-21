@@ -19014,40 +19014,28 @@ function shopStateClash(){
       + says.map(function(x){ return x.from + ' says ' + x.name; }).join(' and ') + '. A tax invoice names one state, and the place of supply is ' + gn + '.',
     fix: 'Correct the address or the GSTIN in Settings › Your shop, then press ↻ here. Until then a tax invoice will not print.' };
 }
-/**
- * what sits above the total when something about THIS bill is wrong — said where it is sold.
- * ⚠️ ONE LINE PER PROBLEM, A COUNT AND A Fix › (walk 2026-10-09, M40). It was a 7-line red paragraph on every sale, and the
- * dialog said it again. The full wording sits behind Fix › (billWarnFix), with the door to where it is fixed.
- */
+/** what sits above the total when something about THIS bill is wrong — said where it is sold.
+ * ⚠️ ONE LINE PER PROBLEM, A COUNT AND A Fix › (walk 2026-10-09, M40): it was a 7-line red paragraph on every sale. The full wording sits behind Fix › (billWarnFix). */
 function billWarnLine(which, words, act, allowed){
   var refused = !!(allowed && !allowed.ok);   /* F5 W1a: shown, greyed, with the reason — never hidden ([[feedback-show-action-enable-by-role]]) */
   return '<div class="t warnrow" data-testid="till-warn-' + which + '"><span>⚠ ' + esc(words) + (refused ? ' · ' + esc(allowed.why) : '') + '</span><span>'
     + '<button data-cbsid="CTR006-B09" type="button" class="foldbtn" data-testid="till-warn-' + which + '-fix"' + (refused ? ' disabled title="' + esc(allowed.why) + '"' : '')
     + ' onclick="billWarnFix(\'' + which + '\')">' + esc(act || 'Fix') + ' ›</button></span></div>';
 }
-/**
- * ⭐ M32 (walk 2026-10-10) — A COUNTER BILLING ON YESTERDAY'S PRICES SAYS SO WHERE IT BILLS. The till let a whole sale go through
- * with the day not opened and 13-hour-old prices, with only a red chip on the bar. One line on the bill, never a stop.
- */
+/** ⭐ M32 (walk 2026-10-10) — A COUNTER BILLING ON YESTERDAY'S PRICES SAYS SO WHERE IT BILLS: the day not opened and 13-hour-old prices showed only a red chip on the bar. One line on the bill, never a stop. */
 function dayWarnWords(){
   var open = true; try { open = dayStatus().state !== 'new'; } catch (e) { cbQuiet('dayWarnWords:1', e); }
   var h = null; try { h = DAY().priceAge((S && S.at) || null, Date.now()); } catch (e) { cbQuiet('dayWarnWords:2', e); }
-  var old = h != null && h >= 12;
-  if (open && !old) return '';
+  var old = h != null && h >= 12; if (open && !old) return '';
   return (open ? '' : 'Day not opened') + (open || !old ? '' : ' · ') + (old ? 'prices ' + h + ' h old' : '');
 }
-/**
- * ⭐ WALK I I-F-04 · the supplier's ADDRESS on a tax invoice: the pack names the lines its invoice must carry (CBCountries.meta(country).invoice.requiredLines — AE: trade_name, tax_id, address;
- * ER Art. 59(1)(b) and 59(2)(b) name the supplier's address) and the shop's profile says what is missing (snapshot shop.missing). A shop that charges tax and has no address is told at the counter,
- * before the slip prints without it — in the pack's words, never a typed country. → the sentence, or '' when nothing is missing or the pack does not ask for an address.
- */
+/** ⭐ WALK I I-F-04 · the supplier's ADDRESS on a tax invoice: the pack names the lines its invoice must carry (CBCountries.meta(country).invoice.requiredLines; ER Art. 59(1)(b)) and the shop snapshot says what is missing (shop.missing). A shop that charges tax and has no address is told before the slip prints without it, in the pack's words. → the sentence, or '' */
 function addressWarnWords(){
   try {
-    var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null;
+    var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null, sh = (S && S.shop) || {};
     var need = meta && meta.invoice && Array.isArray(meta.invoice.requiredLines) && meta.invoice.requiredLines.indexOf('address') >= 0;
-    var sh = (S && S.shop) || {}, gone = (Array.isArray(sh.missing) && sh.missing.indexOf('address') >= 0) || !String(sh.address || sh.street || '').trim();
-    if (!need || !gone || !shopTax().charges) return '';
-    return 'Shop address is missing — a tax invoice must show the supplier’s name, address and ' + (countryWords().taxId || 'tax number');
+    var gone = (Array.isArray(sh.missing) && sh.missing.indexOf('address') >= 0) || !String(sh.address || sh.street || '').trim();
+    return (need && gone && shopTax().charges) ? 'Shop address is missing — a tax invoice must show the supplier’s name, address and ' + (countryWords().taxId || 'tax number') : '';
   } catch (e) { cbQuiet('addressWarnWords:1', e); return ''; }
 }
 function billWarnHTML(m){
@@ -19095,8 +19083,7 @@ function billWarnDoor(which){
   return false;
 }
 async function billWarnFix(which){
-  if (billWarnDoor(which)) return;
-  if (which === 'address') { shopEditOpen(); return; }   /* I-F-04: the shop's details box, where the address is typed */
+  if (billWarnDoor(which)) return; if (which === 'address') { shopEditOpen(); return; }   /* I-F-04: the shop's details box, where the address is typed */
   var st = which === 'state', cl = st ? shopStateClash() : null, un = st ? [] : unratedNames();
   var msg = st ? (cl ? cl.words + '\n\n' + cl.fix : 'The shop’s details agree now.')
                : (un.length ? un.join(', ') + '\n\nNo ' + schemeWord() + ' is charged on ' + (un.length === 1 ? 'it' : 'them')
@@ -19107,14 +19094,10 @@ async function billWarnFix(which){
 }
 /**
  * ── ⭐⭐ F5 W1a · THE COUNTER ASKS THE RATE ONCE, THEN SELLS (DECISIONS 2026-10-18 "TAX MISSING"; critic 1; "yes F5" (b): owner or manager) ──
- * "Veg Meals: GST?" with the shop's live slabs on TODAY'S menu as big buttons (cbSlabMenu: the pack's dated rate_menu, so a dead 12% is never
- * offered) and the pack's suggestion for the item's code first ("996331 · restaurant · 5%", its citation behind ⓘ). A tap ASKS FIRST (a rate is a
- * money promise on every bill from now on), then POST /api/till/rate writes through the engine's one writer on the server (tax-slab.setOn);
- * the shelf row here takes the same slab, the bill's lines re-read it and re-price through the engine. A refusal (403 a cashier or a key ·
- * 409 the shop charges no tax · 404) is said in the sheet, in the server's words — never silent. Nothing is queued: an intention, not a bill.
+ * "Veg Meals: GST?" with the shop's live slabs on TODAY'S menu as big buttons (cbSlabMenu: the pack's dated rate_menu, so a dead 12% is never offered) and the pack's suggestion for the item's code first ("996331 · restaurant · 5%", its citation behind ⓘ). A tap ASKS FIRST (a rate is a money promise on every bill from now on), then POST /api/till/rate writes through the engine's one writer on the server (tax-slab.setOn); the shelf row here takes the same slab, the bill's lines re-read it and re-price through the engine.
+ * A refusal (403 a cashier or a key · 409 the shop charges no tax · 404) is said in the sheet, in the server's words — never silent. Nothing is queued: an intention, not a bill.
  */
-/** who may answer: the credential this browser SPEAKS with (the server reads the same one) — the shop itself, or a manager's own session; a key never.
- *  The rule and its sentence are app/tax-slab-ui.js cbRateMay (the api's setsRate, shared with the catalogue's row); an older kit without that file cannot set a rate here at all, and says so */
+/** who may answer: the credential this browser SPEAKS with (the server reads the same one) — the shop itself, or a manager's own session; a key never. The rule and its sentence are app/tax-slab-ui.js cbRateMay (the api's setsRate, shared with the catalogue's row); an older kit without that file cannot set a rate here at all, and says so */
 function rateMay(){
   if (typeof cbRateMay !== 'function') return { ok: false, why: 'This counter cannot set a rate yet. Set it in the catalogue.' };
   var person = personOn() ? CloudHost.person : null;
