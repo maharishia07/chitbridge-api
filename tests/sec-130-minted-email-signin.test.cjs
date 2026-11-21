@@ -55,6 +55,9 @@ function cond(c, params, r) {
   if ((m = c.match(/^(\w+) = '([^']*)'$/))) return r[m[1]] === m[2];
   if ((m = c.match(/^(\w+) IS NOT NULL$/))) return r[m[1]] != null;
   if ((m = c.match(/^(\w+) = ANY\(\$(\d+)::text\[\]\)$/))) return (P(params, m[2]) || []).indexOf(r[m[1]]) >= 0;
+  if ((m = c.match(/^pin_locked_at IS NULL(?: RETURNING identity_id)?$/))) return !r.pin_locked_at; /* M2: the lock is re-checked in the write */
+if ((m = c.match(/^pin_locked_at = \$(\d+)$/))) return String(r.pin_locked_at) === String(P(params, m[1]));
+if ((m = c.match(/^\(COALESCE\(otp_attempts, 0\) < \$(\d+) OR \$(\d+)::boolean\)(?: RETURNING identity_id)?$/))) return (r.otp_attempts || 0) < P(params, m[1]) || !!P(params, m[2]); /* M2: the budget is re-checked in the spend */
   throw new Error('stub db: unknown condition ' + c);
 }
 const where = (rows, clause, params) => rows.filter((r) => splitTop(clause, ' AND ').every((c) => cond(c, params, r)));
@@ -85,7 +88,7 @@ const stub = (rel, exports) => { const p = require.resolve(path.join(API, rel));
 stub('db', { query: q, pool: { query: q, connect: async () => ({ query: q, release() {} }) }, withEntity: async (id, fn) => fn({ query: q }),
   withTransaction: async (fn) => fn({ query: q }), onEntity: async (id, db, fn) => fn({ query: q }), readBatch: async () => ({}),
   trySavepoint: async (db, fn, fb) => { try { return await fn(db); } catch (_) { return fb; } } });
-stub('lib/schema', { hasColumn: async () => true, hasColumns: async () => true, hasTable: async () => true, has: async () => true, columns: async () => [], table: async () => ({}) });
+stub('lib/schema', { hasColumn: async (t, c) => c !== 'auth_fail_count', /* the state before b900 runs */  hasColumns: async () => true, hasTable: async () => true, has: async () => true, columns: async () => [], table: async () => ({}) });
 stub('lib/schema-bootstrap', { ensureDefaultSchema: async () => {} });
 stub('lib/rootlink', { connect: async () => null });
 stub('lib/istest', { atRegistration: () => ({ population: null, entity_kind: 'customer' }), ready: async () => true });

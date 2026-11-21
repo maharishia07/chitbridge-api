@@ -461,7 +461,7 @@ async function ask(req, res, next) {
       const existing = (await signinLookup.candidates(query, 'email', email)).filter(identityAuth.isAccount); // SEC-130
       if (existing.length > 0) {
         identity_id = await accountIdAfterRestart(req, existing[0]);
-        console.log(`Existing entity login: ${email}`);
+        console.log(`Existing entity login: ${identity_id}`); /* N2: ids in the host log, never addresses */
       } else if (req.signinDoor === 'register' && req.body.mode !== 'login') {
         return next(); // ⭐ a new e-mail at /api/entities/register is a REGISTRATION — routes/entities.js. No other door creates.
       } else {
@@ -483,7 +483,7 @@ async function ask(req, res, next) {
       identity_id = rows.rows[0].identity_id;
       email = rows.rows[0].email;
       display_name = rows.rows[0].display_name;
-      console.log(`Display name login: ${display_name} → ${email}`);
+      console.log(`Display name login: ${identity_id}`);
     }
     note(req, { identity_id }, 'ask', 'otp');
     return await mailedCode(answer, { identity_id, email, display_name });
@@ -674,7 +674,7 @@ async function verify(req, res) {
             );
           }
           /* ⚠️ AN UNPARSEABLE IP IS NULL, NOT AN ERROR — a proxy chain can hand over anything */
-          const rawIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.ip || '';
+          const rawIp = require('../lib/client-ip').clientIp(req); /* M8: the trusted-proxy rule (req.ip), never the caller-typed left end of X-Forwarded-For */
           const ip = /^[0-9a-fA-F:.]{3,45}$/.test(rawIp) ? rawIp : null;
           const agreed = typeof req.body.agreed_at === 'string' && !isNaN(Date.parse(req.body.agreed_at)) ? req.body.agreed_at : null;
           /**
@@ -774,7 +774,7 @@ async function verify(req, res) {
             });
           } else {
             mintedConstitution = require('../lib/versionref').format(c.constitution_key, c.version);
-            console.log(`Entity minted: ${identity.display_name} → ${mintedConstitution} on ${installKey}`);
+            console.log(`Entity minted: ${identity.identity_id} → ${mintedConstitution} on ${installKey}`);
           }
         }
       } catch (e) {
@@ -802,7 +802,7 @@ async function verify(req, res) {
      */
     const token = await identityAuth.issueToken(query, identity, sessions.deviceOfSignin(req));
     note(req, identity, 'in', methodOf(identity), identityAuth.viaCode(check.via), jtiOf(token)); /* SEC-136: a tester-code sign-in is listed as one */
-    console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.display_name}`);
+    console.log(`${identity.identity_type === 'actor' ? 'Coassist' : 'Entity'} verified: ${identity.identity_id}`);
 
     res.json({
       message: 'Verified successfully',
@@ -913,7 +913,7 @@ async function actorLogin(req, res) {
 
     const token = await identityAuth.issueToken(query, a, sessions.deviceOfSignin(req));
     note(req, a, 'in', a.pin_hash ? 'pin' : 'otp', req.signinVia, jtiOf(token));
-    console.log(`Actor login: ${actor_key}@${entity_name}`);
+    console.log(`Actor login: ${a.identity_id}`);
     res.json({
       message: 'Login successful',
       token,

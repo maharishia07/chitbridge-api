@@ -138,7 +138,7 @@ it('R112 · issue(): a screen code lives 30 minutes, a mailed one 24 hours; the 
   const screen = await ec.issue(run, 'p1', { channel: 'screen' }); const mail = await ec.issue(run, 'p1', { channel: 'email' });
   const min = (d) => Math.round((d.getTime() - Date.now()) / 60000);
   assert.strictEqual(min(screen.expires), 30); assert.strictEqual(min(mail.expires), 24 * 60);
-  assert(rows.every((r) => /otp_attempts = 0/.test(r.sql)), 'every issue zeroes the guess count');
+  assert(rows.every((r) => /otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW\(\) THEN 0 ELSE COALESCE\(otp_attempts, 0\) END/.test(r.sql)), 'a sign-in ask (no entity_id) keeps the guess count while the old code is live: one attempt counter, never reset by an ask');
 });
 it('R112 · the issue limiter: five codes per person in the window pass, the sixth is 429 in words; another person is unaffected', async () => {
   env({ NODE_ENV: 'test' }); const ec = load(); ec._resetAsk();

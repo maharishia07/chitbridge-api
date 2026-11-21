@@ -298,7 +298,7 @@ async function reissueClaim(store, ownerId) {
   const claim = newClaimCode();
   const expires = new Date(Date.now() + CLAIM_DAYS * 24 * 60 * 60 * 1000);
   const written = await query(
-    `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = 0
+    `UPDATE identities SET otp_code = $1, otp_expires_at = $2, otp_attempts = CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW() THEN 0 ELSE COALESCE(otp_attempts, 0) END
       WHERE identity_id = $3 AND created_by = $4 AND last_active_at IS NULL RETURNING user_id, display_name`,
     [claim, expires, store.identity_id, ownerId]
   );

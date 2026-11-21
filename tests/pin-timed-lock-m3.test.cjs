@@ -26,8 +26,8 @@ const db = async (sql, args) => {
   const s = String(sql).replace(/\s+/g, ' ').trim();
   const counted = pinCount.answer(s, args, () => row, new Date(now));
   if (counted) return counted;
-  if (/^UPDATE identities SET pin_locked_at = NULL WHERE identity_id = \$1$/.test(s)) { row.pin_locked_at = null; return { rows: [], rowCount: 1 }; }
-  if (/^UPDATE identities SET pin_attempts = 0, last_active_at = NOW\(\) WHERE identity_id = \$1$/.test(s)) { row.pin_attempts = 0; return { rows: [], rowCount: 1 }; }
+  if (/^UPDATE identities SET pin_locked_at = NULL WHERE identity_id = \$1 AND pin_locked_at = \$2$/.test(s)) { if (row.pin_locked_at && new Date(row.pin_locked_at).getTime() === new Date(args[1]).getTime()) row.pin_locked_at = null; return { rows: [], rowCount: 1 }; }
+  if (/^UPDATE identities SET pin_attempts = 0, last_active_at = NOW\(\) WHERE identity_id = \$1 AND pin_locked_at IS NULL RETURNING identity_id$/.test(s)) { if (row.pin_locked_at) return { rows: [], rowCount: 0 }; row.pin_attempts = 0; return { rows: [{ identity_id: ID }], rowCount: 1 }; }
   throw new Error('stand-in db: unknown statement ' + s.slice(0, 100));
 };
 const dbPath = require.resolve(path.join(ROOT, 'db'));
