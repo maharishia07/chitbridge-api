@@ -1408,13 +1408,6 @@ router.put(
 );
 
 
-/** Athi 21 Nov: a NEW firm (a settings row made just now, the column default being 'all') starts on client_access = 'assigned'. Call it ONLY for a row this request created; a row that was already there keeps its stored value. Returns the row (re-read when it moved). */
-async function newFirmAccess(shop, entityId, made) {
-  try {
-    const r = await shop.query(`UPDATE entity_actor_settings SET client_access = 'assigned' WHERE entity_id = $1 RETURNING *`, [entityId]);
-    return r.rows.length && made ? r : made;
-  } catch (e) { return made; } /* before b881 there is no column: the shop runs as it did */
-}
 // ── GET /api/actors/settings ─────────────────────────────────
 // @does Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.
 router.get('/settings', auth, async (req, res) => {
@@ -1425,9 +1418,7 @@ router.get('/settings', auth, async (req, res) => {
     const result = await withEntity(entity_id, async (shop) => {
       const found = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
       if (found.rows.length) return found;
-      const made = await shop.query(`INSERT INTO entity_actor_settings (entity_id) VALUES ($1) RETURNING *`, [entity_id]); // default settings if none
-      /* Athi 21 Nov: a NEW firm starts on client_access = assigned (staff see mine + unassigned); a row that exists keeps its stored value. Its own statement: a database before b881 answers as before. */
-      return newFirmAccess(shop, entity_id, made);
+      return require('../lib/assign-register').newFirmRow(shop, entity_id); // default settings if none; a NEW firm starts on client_access = assigned (Athi 21 Nov)
     });
 
     const x = result.rows[0];
@@ -1494,8 +1485,7 @@ router.put(
             default_assignee_actor_id || null
           ]
         );
-        if (!client_access && !before.entity_id) await newFirmAccess(shop, entity_id, null); /* no row before this save = a new firm: Athi 21 Nov, assigned */
-        if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
+        if (client_access) await shop.query(`UPDATE entity_actor_settings SET client_access = $2 WHERE entity_id = $1`, [entity_id, client_access]); else if (!before.entity_id) await require('../lib/assign-register').newFirmAccess(shop, entity_id); /* a row first made by this save = a new firm: assigned */ /* A1: its own statement, so a database before b881 fails only when the switch is asked for */
         if (staff_pick_up) await shop.query(`UPDATE entity_actor_settings SET staff_pick_up = $2 WHERE entity_id = $1`, [entity_id, staff_pick_up]); /* W17: the same, b883 */
       const now = await shop.query(`SELECT * FROM entity_actor_settings WHERE entity_id = $1`, [entity_id]);
         /* H-h1 (ISO 27001 A.8.15): who sees which client is an access control: each switch that moved leaves one access_events row, before and after, the real person (never fails the change; a lost row is counted in /health) */
