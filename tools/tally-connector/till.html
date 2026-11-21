@@ -843,6 +843,7 @@
   .ckot{display:inline-block;margin-top:1px;font-size:.72em;font-weight:700;color:var(--dim);
         border:1px solid var(--line);border-radius:6px;padding:0 5px}
   /* an age-restricted line, marked where the cashier and anyone reading the bill will see it */
+  .stockwarn{display:inline-block;margin-inline-start:6px;font-size:.78em;font-weight:700;color:var(--warn,#b45309)}
   .cage{display:inline-block;margin-top:1px;margin-inline-start:4px;font-size:.72em;font-weight:800;
         color:var(--warn);background:var(--warn-tint);border:1px solid var(--warn);border-radius:6px;padding:0 5px}
   .todoadd{display:flex;gap:6px;align-items:center}
@@ -11552,8 +11553,15 @@ var MAINT_JOBS = [
   { id: 'noslab', label: 'No tax rate',
     why: 'the bill falls back to the shop default, and the invoice cannot say why',
     when: function(){ try { return shopTax().charges; } catch (_) { return false; } },
-    hit: function(i){ return !String((i && i.tax_slab) || '').trim() && !String((i && i.hsn) || '').trim(); } },
+    /* a STATED rate (gst_rate, 0 included, with its reason) is a rate: only a truly absent one is flagged. Read through the one input builder (taxInputOf). */
+    hit: function(i){ return !statedTaxOf(i); } },
 ];
+/** does the item state its own tax: a slab, an HSN/SAC, or a rate (0 counts, it is an answer) — the one resolve input, never a second list of keys */
+function statedTaxOf(i){
+  var t = {}; try { t = taxInputOf(i || {}) || {}; } catch (_) { t = {}; }
+  var rate = (i && i.gst_rate != null && String(i.gst_rate).trim() !== '') ? i.gst_rate : t.gst_rate;
+  return !!(String(t.tax_slab || (i && i.tax_slab) || '').trim() || String(t.hsn || (i && i.hsn) || '').trim() || (rate != null && String(rate).trim() !== ''));
+}
 function maintJobs(){ return MAINT_JOBS.filter(function(j){ return !j.when || j.when(); }); }
 function maintJob(id){ return maintJobs().filter(function(j){ return j.id === id; })[0] || null; }
 /** how many products this job would find — counted over the WHOLE shelf, never the page */
@@ -18560,6 +18568,24 @@ function price(){
  * ⭐ THE WORDS UNDER A LINE — and now WHY the unit price is what it is. A tier that quietly changed the figure with
  * nothing on screen to explain it would look like a bug to the person who set the tier up.
  */
+/**
+ * ⭐ ONLY N IN STOCK (walk S2, counter-small). A WARNING, NEVER A BLOCK: a shop's count is often behind the shelf, and Square, Lightspeed and
+ * Shopify POS all warn and let the sale through. It reads the count the snapshot already carries (item.avail.qty, the quantity feed) and says nothing
+ * when nobody keeps counts (no qty), when the shop holds no stock, or when the line's item is not on the shelf. Lines of one product add up.
+ * Answers the words ('' when fine), so the bill is never touched.
+ */
+function stockWarnWords(c){
+  try {
+    if (!c || c.item_id == null || !S || !S.items || !holdsStock()) return '';
+    var item = S.items.filter(function(x){ return x.item_id === c.item_id; })[0];
+    var have = item && item.avail && item.avail.qty != null && item.avail.qty !== '' ? Number(item.avail.qty) : NaN;
+    if (!isFinite(have)) return '';
+    var want = CART.reduce(function(a, l){ return l.item_id === c.item_id ? a + (Number(l.qty) || 0) : a; }, 0);
+    if (!(want > have + 0.0001)) return '';
+    return 'Only ' + r2(Math.max(0, have)) + ' in stock';
+  } catch (_) { return ''; }
+}
+function stockWarnHTML(c){ var w = typeof stockWarnWords === 'function' ? stockWarnWords(c) : ''; return w ? '<span class="stockwarn" role="status" data-testid="till-stockwarn">' + esc(w) + '</span>' : ''; }
 function cartLineNote(c){
   var pr = c.priced;
   var tierWords = (pr && pr.kind === 'tiered' && pr.tier)
@@ -18862,7 +18888,7 @@ function cartRowHTML(c, k){
     + (c.kot ? '<span class="ckot" data-testid="till-kot-' + k + '">KOT ' + c.kot + '</span>' : '')
     /* ⭐ and that this line was one that needed checking — visible on a bill somebody may be asked about */
     + (c.age ? '<span class="cage" data-testid="till-age-' + k + '">' + c.age + '+</span>' : '')
-    + '<div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + '</div></span>'
+    + '<div class="u" data-testid="till-note-' + k + '">' + cartLineNote(c) + (typeof stockWarnHTML === 'function' ? stockWarnHTML(c) : '') + '</div></span>'
     /* ⭐ THE OFFER, under a heading of its own — see cartGrid() */
     + (v.offer ? '<span class="offc" data-testid="till-offer-' + k + '">' + CART_OFFER_CELL + '</span>' : '')
     /* ⭐ THE SAME NUMBER THE SHELF SHOWS — this is the column that lets a cart line be matched to its list row. */
@@ -18912,7 +18938,7 @@ function paintCartRow(k){
   if (dc) { dc.textContent = f.off > 0.004 ? '−' + money(f.off) : '—'; dc.className = 'disc' + (f.off > 0.004 ? '' : ' none'); }
   if (cl) cl.textContent = money(f.gross);
   if (amt) amt.textContent = money(f.value);
-  note.innerHTML = cartLineNote(c);
+  note.innerHTML = cartLineNote(c) + (typeof stockWarnHTML === 'function' ? stockWarnHTML(c) : '');
   /* ⚠️ THE COUNT IS PART OF WHAT CHANGED — but never the box the caret is sitting in, or "2" on its way to "25" would be
      rewritten to 2 between the keystrokes. activeElement is the only honest test of "somebody is typing here". */
   if (qty && document.activeElement !== qty && String(qty.value) !== String(c.qty)) qty.value = c.qty;
