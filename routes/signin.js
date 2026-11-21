@@ -37,6 +37,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const { query, withTransaction, withEntity } = require('../db');
+const { tolerate: tolerateSecret } = require('../lib/identity-secret'); /* b874-tolerant credential view (as routes/actors.js) */
 const sessions = require('../lib/person-session');
 const identityAuth = require('../lib/identity-auth');
 const signinLookup = require('../lib/signin-lookup'); // SEC-184: the one pre-binding reader of identities (ops.signin_candidates)
@@ -964,12 +965,16 @@ const pinChecks = [
  * how owners sign in, so not in this move.
  */
 const PIN_ACTORS_ONLY = { status: 400, code: 'PIN_ACTORS_ONLY', detail: 'Only actors can set PIN', legacy: { error: 'Only actors can set PIN' } }; /* the body this refusal always had, frozen */
+const PIN_ALREADY_SET = { status: 409, code: 'PIN_ALREADY_SET', detail: 'A PIN is already set. Change it with your current PIN, or ask the owner to reset it.' };
 async function pin(req, res) {
   try {
     const identity_id = req.identity.identity_id;
     if (req.identity.identity_type !== 'actor') {
       return problem(req, res, PIN_ACTORS_ONLY);
     }
+    /* M5: this door is the FIRST PIN only. A seat that already holds one changes it with the current PIN (PUT /api/actors/change-pin) or has the owner reset it — a stolen session alone must not mint a durable credential or lift a lock */
+    const held = await boundRead(query, identity_id, await tolerateSecret('SELECT (s.pin_hash IS NOT NULL) AS has_pin FROM identities LEFT JOIN ops.identity_secret s ON s.for_identity = identities.identity_id WHERE identity_id = $1'), [identity_id]);
+    if (held.rows[0] && held.rows[0].has_pin) return problem(req, res, PIN_ALREADY_SET);
     await identityAuth.setPin(query, identity_id, req.body.pin);
     note(req, { identity_id, parent_entity_id: auth.entityOf(req) }, 'link', 'pin');
     res.json({ message: 'PIN set successfully — use PIN for future logins' });

@@ -73,6 +73,7 @@ function cond(c, params, r) {
 }
 const where = (rows, clause, params) => rows.filter((r) => splitTop(clause, ' AND ').every((c) => cond(c, params, r)));
 function value(expr, params, row) { let m;
+  if (/^CASE WHEN otp_expires_at IS NULL OR otp_expires_at < NOW\(\) THEN 0 ELSE COALESCE\(otp_attempts, 0\) END$/i.test(expr)) return 0; /* M1: the keep-while-live count; a stand-in has no clock to compare, so it counts from zero */
   if ((m = expr.match(/^\$(\d+)$/))) return P(params, m[1]);
   if (/^NOW\(\)$/i.test(expr)) return 'NOW'; if (/^NULL$/i.test(expr)) return null; if (/^TRUE$/i.test(expr)) return true;
   if (/^-?\d+$/.test(expr)) return Number(expr); if ((m = expr.match(/^'([^']*)'$/))) return m[1];

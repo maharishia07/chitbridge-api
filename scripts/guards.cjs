@@ -1038,6 +1038,9 @@ const GUARDS = [
   'till-no-country-boot.test.cjs', // U1 (8 Nov, was run by no CI job): CTRY-94 regression: a shop with no country must not abort the counter's boot. billMoney() (reached from paintTotals at load) calle
   'change-pin-lock.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: change-pin counts a wrong current PIN and honours the lock (was named only in NEEDS_ENGINES, which skips and never runs)
   'change-pin-lock-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: with the count-and-lock removed the test above goes red (was named only in NEEDS_ENGINES)
+  'signin-otp-budget-m1.test.cjs', // M1 (batch 1128): asking for a code again keeps the wrong-guess count while the old code is live
+  'pin-timed-lock-m3.test.cjs', // M3 (batch 1128): the PIN lock is timed with a doubling back-off, never permanent
+  'session-limits-m5.test.cjs', // M5 (batch 1128): absolute session life, till surface only on a paired device, first-PIN door refuses a seat that has a PIN
   'db-error-survives.test.cjs', // U1 (8 Nov, in no GUARDS array): PLT-86: a database fault survives the mutation routes (was named only in NEEDS_ENGINES)
   'db-error-survives-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): PLT-86: with each handler removed the test above goes red (was named only in NEEDS_ENGINES)
   'itemmatch-corpus.test.cjs', // U1 (8 Nov, in no GUARDS array): the item-match corpus (was named only in NEEDS_ENGINES)

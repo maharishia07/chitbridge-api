@@ -15,7 +15,7 @@ const NUL = '\u0000';
 const DEVICE = 'device-aaaa-1111';
 const OTHER_DEVICE = 'device-bbbb-2222';
 const LATER = 1900000000;
-const MINE = { jti: 'jti-of-this-session', iat: 1, exp: LATER, by: OWNER.identity_id, surface: 'web' };
+const MINE = { jti: 'jti-of-this-session', iat: Math.floor(Date.now() / 1000) - 3600, exp: LATER, by: OWNER.identity_id, surface: 'web' };
 /* a shop's two devices as the listing stores them: one named, one not yet (its label, kind, owner and sessions' surface are null until set) */
 const MY_DEVICES = {
   [DEVICE]: { label: 'Till PC', kind: 'till', by: OWNER.identity_id, first_seen: '2026-11-01T06:00:00.000Z', seen: '2026-11-08T06:00:00.000Z', till: { prefix: 'T1' }, sessions: [MINE] },
