@@ -22,10 +22,11 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 (async () => {
   console.log('\n== WALK-D D-F-08 · a registered shop\'s new product carries the country rate ==\n');
   let shop = {};
-  let registration = 'regular';
-  countrySetup.registrationOfShop = async () => registration;
+  /* the shop row carries the owner's registration answer (entity_governance joined in the one read): regular = said registered, unregistered = said not, unknown = nothing said */
+  countrySetup.migrated = async () => true;
+  const said = { regular: { registered: true }, unregistered: { registered: false }, unknown: null };
   const query = async () => ({ rows: [shop] });
-  const stamp = async (items, s, reg) => { shop = s; registration = reg || 'regular'; return dflt.stampDefault('e1', items, query); };
+  const stamp = async (items, s, reg) => { shop = Object.assign({}, s, { tax_registration: said[reg || 'regular'] }); return dflt.stampDefault('e1', items, query); };
   const yoghurt = () => ({ name: 'WKD Yoghurt', price: 5 });
 
   let out = await stamp([yoghurt()], { country: 'AU', gstn: '12345678901', policy_flags: {} });
