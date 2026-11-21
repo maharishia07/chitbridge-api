@@ -5238,8 +5238,65 @@ router.get('/:chit_id/catalogue-overlay', auth, ...checked('GET /:chit_id/catalo
     problem(req, res, failed(err, req, 'Failed to load catalogue'));
   }
 });
+/** the note a status change carries, cleaned; empty when none was sent */
+const noteOf = (body) => sanitise(body.note || '');
+/** reviews6 EL-04 M11: an accept AT THE COUNT carries the figure the screen showed (counted_minor); the books count may have moved since it was read (a goods-in line, a corrected bill) — then nothing moves and the screen is told to read again, never the owner's yes on a figure that is gone; the refusal, or null */
+async function countMovedRefusal(req, entity_id, chit_id, new_status) {
+  if (req.body.counted_minor == null) return null;
+  const now = new_status === 'accepted' ? await require('../lib/books-waits').countNow(entity_id, chit_id) : undefined;
+  if (new_status === 'accepted' && now === Number(req.body.counted_minor)) return null;
+  const message = new_status !== 'accepted' ? 'A counted figure goes with an accept only.' : 'The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.';
+  return { status: 409, ...said({ error: 'The count moved', message, counted_minor: now == null ? null : now }, 'COUNT_MOVED') };
+}
 /** the statuses a bill takes no payment in: withdrawn (the void route writes 'cancelled') and rejected — the rail's two ends with no way to money */
 const NO_PAYMENT_STATUS = ['cancelled', 'rejected'];
+/** reviews6 EL-01 M1: money crosses the Mark-paid door in MINOR units: one amount, whole, never a decimal in major units (500.5 · "12.30") that can land one paisa off; the refusal, or null */
+function amountInMinorRefusal(asked) {
+  if (asked.amount != null && asked.amount_minor != null) return { status: 400, ...said({ error: 'Send one amount', message: 'Send the amount once, as amount_minor (the smallest unit, a whole number).' }, 'AMOUNT_IN_MINOR') };
+  if (asked.amount != null && !/^\+?\d+$/.test(String(asked.amount).trim()))
+    return { status: 400, ...said({ error: 'Send the amount in the smallest unit', message: 'Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.' }, 'AMOUNT_IN_MINOR') };
+  return null;
+}
+/** a Mark-paid the bill's state refuses: a withdrawn or rejected bill (409) and a counter bill that carries its own tender (422); else null */
+function paidRefusal(out) {
+  if (out.voided) return { status: 409, ...said({ error: 'This bill was withdrawn', message: 'This bill is ' + (out.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so it cannot be marked paid.' }, 'CHIT_VOIDED') };
+  if (out.parts) return { status: 422, ...said({ error: 'The tender is on the bill', message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.' }, 'PAYMENT_TENDER_ON_BILL') };
+  return null;
+}
+/** the trail's words for a cleared Mark-paid: who cleared it and what the removed stamp said (method, amount) */
+function paymentClearedWords(copy, req) {
+  const stamp = copy.business_json && copy.business_json.payment;
+  const was = stamp ? ' (was ' + (stamp.method || 'paid') + (stamp.amount != null ? ' ' + stamp.amount : '') + ')' : '';
+  return 'Mark paid cleared by ' + (req.identity.display_name || 'a user') + was;
+}
+/** RAIL-1128 M2: the trail of a cleared mark: who cleared it, on my own timeline, in the same transaction (the stamp it removed is named, never lost) */
+async function logPaymentCleared(db, req, entity_id, copy) {
+  await db.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail) VALUES ($1, $2, 'payment_cleared', $3, $4, $5)`,
+    [req.params.chit_id, entity_id, req.identity.identity_id, req.identity.display_name || null, paymentClearedWords(copy, req)]
+  );
+}
+/** a bill whose Mark-paid is not this door's to clear: no uuid or no copy names no bill · a withdrawn / rejected bill · a counter bill's own tender ({ parts }); else null */
+function paymentMarkBlock(copy) {
+  if (!copy) return { rows: [] };
+  if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { rows: [], voided: copy.current_status };
+  const stamp = copy.business_json && copy.business_json.payment;
+  return stamp && Array.isArray(stamp.parts) ? { rows: [], parts: true } : null;
+}
+/** RAIL-1128 M2: the SAME gate as the Mark-paid press (markChitPaid), then the stamp comes off, the trail is written and any Mark-paid still WAITING in books_outbox is closed (FIN-66 M7a), all in one transaction */
+async function clearPaymentMark(db, req, entity_id) {
+  const copy = trace.UUID_RE.test(req.params.chit_id) ? await taxCopy.copyOn(db, req.params.chit_id, entity_id) : null;
+  const blocked = paymentMarkBlock(copy);
+  if (blocked) return blocked;
+  const cleared = await db.query(
+    `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
+    [req.params.chit_id, entity_id]
+  );
+  if (!cleared.rows.length) return cleared;
+  await logPaymentCleared(db, req, entity_id, copy);
+  if (await schema.hasTable('books_outbox')) await require('../lib/books-store').outboxClose(db, entity_id, [req.params.chit_id], 'Mark paid was cleared before it posted.', { press: 'payment' });
+  return cleared;
+}
 /**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
  * → null (no copy) · { parts } (the bill carries its own tender) · { books }
@@ -5316,26 +5373,15 @@ router.post(
        "Mark paid" is a second payment and a retry of the same press is its own replay (docs/FIELDS.md business_json.payment.client_ref) */
       /* reviews6 EL-01 M1: money crosses this door in MINOR units. A fraction in `amount` is a float in major units (500.5 · "12.30") — refused, said: it is read
          twice (once by the screen, once here) and a float can land one paisa off. `amount` whole, from a caller that has not moved, still reads as whole units. */
-      const asked = req.body;
-      if (asked.amount != null && asked.amount_minor != null)
-        return problem(req, res, { status: 400, ...said({ error: 'Send one amount', message: 'Send the amount once, as amount_minor (the smallest unit, a whole number).' }, 'AMOUNT_IN_MINOR') });
-      if (asked.amount != null && !/^\+?\d+$/.test(String(asked.amount).trim()))
-        return problem(req, res, { status: 400, ...said({ error: 'Send the amount in the smallest unit', message: 'Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.' }, 'AMOUNT_IN_MINOR') });
+      const amountRefusal = amountInMinorRefusal(req.body);
+      if (amountRefusal) return problem(req, res, amountRefusal);
       const payment = pressPayment(req, entity_id);
       const hooks = require('../lib/books-hooks');
       /* an id that is no uuid names no bill: the unknown bill's 404, never a 500 from the cast (gorilla pack 2, GP-8: not-a-bill-N) */
       const out = trace.UUID_RE.test(chit_id) ? await withEntity(entity_id, (db) => markChitPaid(db, { entity_id, chit_id, payment, acknowledge: req.body.acknowledge, hooks })) : null;
       if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
-      if (out.voided)
-        return problem(req, res, { status: 409, ...said({
-          error: 'This bill was withdrawn',
-          message: 'This bill is ' + (out.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so it cannot be marked paid.'
-        }, 'CHIT_VOIDED') });
-      if (out.parts)
-        return problem(req, res, { status: 422, ...said({
-          error: 'The tender is on the bill',
-          message: 'This bill carries its own tender — money received later is recorded at the counter, against the bill.'
-        }, 'PAYMENT_TENDER_ON_BILL') });
+      const refusal = paidRefusal(out);
+      if (refusal) return problem(req, res, refusal);
       /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
       if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id, press: 'payment' }, out.books.why, chit_id, 'chit:' + chit_id); /* press: so "Mark unpaid" closes THIS row and never the bill's own wait (FIN-66) */
       /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
@@ -5356,27 +5402,7 @@ router.post(
 router.delete('/:chit_id/payment', auth, payOnce, ...checked('DELETE /:chit_id/payment'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const r = await withEntity(entity_id, async (db) => {
-      /* RAIL-1128 M2: the SAME gate as the Mark-paid press (markChitPaid): an id that is no uuid names no bill · a withdrawn / rejected bill and a counter bill's tender ({ parts }) are not this door's to clear */
-      const copy = trace.UUID_RE.test(req.params.chit_id) ? await taxCopy.copyOn(db, req.params.chit_id, entity_id) : null;
-      if (!copy) return { rows: [] };
-      if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { rows: [], voided: copy.current_status };
-      if (copy.business_json && copy.business_json.payment && Array.isArray(copy.business_json.payment.parts)) return { rows: [], parts: true };
-      const cleared = await db.query(
-        `UPDATE chit_header SET business_json = COALESCE(business_json, '{}'::jsonb) - 'payment' WHERE chit_id = $1 AND entity_id = $2 RETURNING chit_id`,
-        [req.params.chit_id, entity_id]
-      );
-      /* RAIL-1128 M2: and the same trail: who cleared the mark, on my own timeline, in the same transaction (the stamp it removed is named, never lost) */
-      if (cleared.rows.length)
-        await db.query(
-          `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail) VALUES ($1, $2, 'payment_cleared', $3, $4, $5)`,
-          [req.params.chit_id, entity_id, req.identity.identity_id, req.identity.display_name || null, 'Mark paid cleared by ' + (req.identity.display_name || 'a user') + (copy.business_json && copy.business_json.payment ? ' (was ' + (copy.business_json.payment.method || 'paid') + (copy.business_json.payment.amount != null ? ' ' + copy.business_json.payment.amount : '') + ')' : '')]
-        );
-      /* FIN-66 (M7a): a Mark-paid the books could not post yet WAITS in books_outbox — closed in this same transaction, else the retry books the payment just cleared */
-      if (cleared.rows.length && (await schema.hasTable('books_outbox')))
-        await require('../lib/books-store').outboxClose(db, entity_id, [req.params.chit_id], 'Mark paid was cleared before it posted.', { press: 'payment' });
-      return cleared;
-    });
+    const r = await withEntity(entity_id, (db) => clearPaymentMark(db, req, entity_id));
     if (r.voided) return problem(req, res, { status: 409, ...said({ error: 'This bill was withdrawn', message: 'This bill is ' + (r.voided === 'rejected' ? 'rejected' : 'withdrawn') + ', so its payment mark is not changed here.' }, 'CHIT_VOIDED') });
     if (r.parts) return problem(req, res, { status: 422, ...said({ error: 'The tender is on the bill', message: 'This bill carries its own tender — it is not cleared here; a refund is a credit note.' }, 'PAYMENT_TENDER_ON_BILL') });
     if (!r.rows.length) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
@@ -5478,10 +5504,9 @@ router.put(
       // entity_id   = participant entity context (parent for actors, self for entities)
       // action_by_* = whoever is performing — entity admin or actor, never remapped
       const entity_id = entityId(req);
-      const action_by_id = req.identity.identity_id;
-      const action_by_name = req.identity.display_name;
+      const { identity_id: action_by_id, display_name: action_by_name } = req.identity;
       const new_status = req.body.status;
-      const note = sanitise(req.body.note || '');
+      const note = noteOf(req.body);
 
       // Get current status
       // B1 RLS: own received-copy read -> withEntity(me).
@@ -5530,17 +5555,7 @@ router.put(
        * schema.hasTable costs one query per process.
        */
 
-      /* reviews6 EL-04 M11: an accept AT THE COUNT carries the figure the screen showed (counted_minor); the books count may have moved since it was read
-         (a goods-in line, a corrected bill) — then nothing moves and the screen is told to read again, never the owner's yes on a figure that is gone */
-      if (req.body.counted_minor != null) {
-        const now = new_status === 'accepted' ? await require('../lib/books-waits').countNow(entity_id, chit_id) : undefined;
-        if (new_status !== 'accepted' || now !== Number(req.body.counted_minor))
-          return problem(req, res, { status: 409, ...said({
-            error: 'The count moved',
-            message: new_status !== 'accepted' ? 'A counted figure goes with an accept only.' : 'The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.',
-            counted_minor: now == null ? null : now
-          }, 'COUNT_MOVED') });
-      }
+      const countRefusal = await countMovedRefusal(req, entity_id, chit_id, new_status); if (countRefusal) return problem(req, res, countRefusal);
       const _moved = await moveStatus(entity_id, chit_id, new_status, { id: action_by_id, name: action_by_name }, note, railActions.meOf(req), { from: req.body.from, use: req.body.use, matchOverride: req.body.match_override === true }); /* RAIL-1128 M1: match_override + the note clears a three-way match hold · QA-131: from · use only when a bulk step sends them */
       if (!answerMoved(req, res, _moved)) return;
 
@@ -5595,6 +5610,24 @@ function tellMessageElsewhere(entity_id, chit_id, result, posted) {
 }
 
 const clientMsgId = require('../lib/message-client-id'); /* F5b (1128) */
+/** B3 (Athi): a DISPUTE message posts in the ENTITY's name when an actor of it writes (the actor stays as provenance in the timeline); any other message keeps the writer's own name */
+async function disputeSenderName(req, entity_id, isDispute, display_name) {
+  if (!isDispute || !req.identity.parent_entity_id) return display_name;
+  const found = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+    cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', { rows: [] })
+  );
+  return (found.rows[0] && found.rows[0].display_name) || display_name;
+}
+/** F5b (1128): the id a retry of one message carries, scoped to this shop and chit; undefined when the screen sent none */
+function scopedMessageId(entity_id, chit_id, body) {
+  const clientId = clientMsgId.clientIdOf(body);
+  return clientId ? clientMsgId.scopedId(entity_id, chit_id, clientId) : undefined;
+}
+/** F5b (1128): a retry of a message already held is a no-op — the first answer comes back, nothing is posted, told or rung twice; null when this is the first time */
+async function firstMessageAnswer(entity_id, chit_id, messageId, display_name) {
+  const first = messageId ? await withEntity(entity_id, (db) => clientMsgId.heldAlready(db, entity_id, chit_id, messageId)) : null;
+  return first ? { message_id: first.message_id, thread_type: first.thread_type, message_text: first.message_text, sender_display_name: display_name, created_at: first.created_at, duplicate: true } : null;
+}
 // @does A chit id and message text in -> we post it to the chit thread, internal or external, read-only people may write internal only -> the posted message.
 router.post(
   '/:chit_id/messages',
@@ -5670,23 +5703,12 @@ router.post(
         disputeRoster = audience.ids; /* null for a chit-wide dispute */
       }
       // B3 (Athi): a DISPUTE message posts in the ENTITY's name (the acting actor stays as provenance in the timeline).
-      let senderName = display_name;
-      if (isDispute && req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
-          cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', { rows: [] })
-        );
-        if (_e.rows[0] && _e.rows[0].display_name) senderName = _e.rows[0].display_name;
-      }
+      const senderName = await disputeSenderName(req, entity_id, isDispute, display_name);
 
       /* F5b (1128): an optional client_msg_id makes a retry a no-op — the first answer comes back, nothing is posted, told or rung twice */
-      const clientId = clientMsgId.clientIdOf(req.body);
-      const messageId = clientId ? clientMsgId.scopedId(entity_id, chit_id, clientId) : null;
-      if (messageId) {
-        const first = await withEntity(entity_id, (db) => clientMsgId.heldAlready(db, entity_id, chit_id, messageId));
-        if (first) {
-          return res.json({ message_id: first.message_id, thread_type: first.thread_type, message_text: first.message_text, sender_display_name: display_name, created_at: first.created_at, duplicate: true });
-        }
-      }
+      const messageId = scopedMessageId(entity_id, chit_id, req.body);
+      const first = await firstMessageAnswer(entity_id, chit_id, messageId, display_name);
+      if (first) return res.json(first);
       // PER-ENTITY copies (b67): replicate the message to its audience (internal=author · external=all · dispute=roster).
       /* RAIL-136 (d): the copies and the timeline line in ONE transaction, so a failed timeline write answers 500 with nothing
          posted and a retry posts the message once (it used to be held by every party already, and posted twice) */
@@ -5695,7 +5717,7 @@ router.post(
         return postMessage(db, {
           subject_type: 'chit',
           chit_id,
-          message_id: messageId || undefined,
+          message_id: messageId,
           sender_entity_id: entity_id,
           sender_display_name: senderName,
           thread_type,
@@ -6806,6 +6828,53 @@ function withdrawRefusalSpec(refusal) {
     allowed_transitions: refusal.allowed
   }));
 }
+/** the void door is the sender's: no copy of mine is a 404, a copy whose sender is someone else is a 403; else null */
+function voidRefusal(row, entity_id) {
+  if (!row) return { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') };
+  if (row.sender_entity_id !== entity_id) return { status: 403, ...said({ error: 'Forbidden', message: 'Only the sender can void a chit' }, 'CHIT_NOT_PERMITTED') };
+  return null;
+}
+/** the void route's one transaction: each copy I hold asks the rail's status gate; if ANY may not be cancelled nothing is written, else the copies move, the withdrawal is on my own timeline and the books are told */
+async function withdrawOwnCopies(db, req, entity_id, chit_id, actor, reason) {
+  /**
+   * ⭐⭐ `cancelled`, NOT `void` — Athi, 2026-09-02: *"go with cancelled, retire void."*
+   *
+   * ⚠️⚠️ `void` WAS A STATUS THE FRONT END HAD NEVER HEARD OF. The list maps status → bucket with
+   * `ST[current_status] || 'open'`, and `void` is not in ST — so a withdrawn order fell through the default
+   * and went on reading as **OPEN** in the sender's own list. The withdrawal worked and the screen said it
+   * had not. A vocabulary with one word that only the server knows is not a vocabulary.
+   *
+   * ⭐ AND `cancelled` ALREADY EXISTED, meaning exactly this, already bucketed as closed, already in every
+   * filter and rollup. There were two withdrawal paths — this route, and setting status to `cancelled` as
+   * the sender, which already posted the same `[cancel requested]` message. Two mechanisms for one act, one
+   * of them speaking a private word. This route keeps the door (the button calls it, it enforces
+   * sender-only, it requires a reason) and now writes the vocabulary everything else understands.
+   *
+   * ⚠️ The state_log action stays `voided`: it is a HISTORY row, and rewriting what old entries claim
+   * happened would falsify the record this table exists to keep. b196 converts the stored statuses; the log
+   * keeps saying what the code was called on the day.
+   */
+  /* ⭐⭐ T1-RAIL — THROUGH THE ONE STATUS WRITE. This was a bare SET for every own copy, so a COMPLETED chit could be
+       withdrawn though the rail has no completed → cancelled step. Each copy I hold (the sent one; a self-chit also its
+       received one) asks lib/rail-status statusGate; if ANY copy may not be cancelled, nothing is written and the sender is
+       told why. Own copies only, as before. */
+  const gates = [];
+  for (const copy of railStatus.COPIES) {
+    const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', actor, { copy });
+    if (g.from) gates.push(g); // a copy I do not hold has nothing to move
+  }
+  const refusedBy = gates.find((item) => !item.ok);
+  if (refusedBy) return { refused: refusedBy };
+  const moved = [];
+  for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
+  if (!moved.length) return { refused: null, moved, replay: true }; /* RAIL-1128 F5a: a replay moved nothing: no second voided row, no second books call, no second message */
+  await db.query(
+    `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
+       VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
+    [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
+  ); // own timeline only
+  return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
+}
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
 //
 // ⚠️⚠️ THIS HEADER SAID THE OPPOSITE OF WHAT THE CODE DOES, and said it in the one line anybody skims. It read
@@ -6831,54 +6900,13 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     const own = await withEntity(entity_id, (db) =>
       db.query(`SELECT sender_entity_id FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
     );
-    if (own.rows.length === 0) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found' }, 'NOT_FOUND') });
-    if (own.rows[0].sender_entity_id !== entity_id) {
-      return problem(req, res, { status: 403, ...said({ error: 'Forbidden', message: 'Only the sender can void a chit' }, 'CHIT_NOT_PERMITTED') });
-    }
+    const notYours = voidRefusal(own.rows[0], entity_id);
+    if (notYours) return problem(req, res, notYours);
 
     // Void = the sender withdraws ITS OWN copy and REQUESTS cancellation from the recipients — never a cross-entity
     // write. Each recipient acts on its own copy at its own will (it sees the flagged message below).
     const me = railActions.meOf(req);
-    const gate = await withEntity(entity_id, async (db) => {
-      /**
-       * ⭐⭐ `cancelled`, NOT `void` — Athi, 2026-09-02: *"go with cancelled, retire void."*
-       *
-       * ⚠️⚠️ `void` WAS A STATUS THE FRONT END HAD NEVER HEARD OF. The list maps status → bucket with
-       * `ST[current_status] || 'open'`, and `void` is not in ST — so a withdrawn order fell through the default
-       * and went on reading as **OPEN** in the sender's own list. The withdrawal worked and the screen said it
-       * had not. A vocabulary with one word that only the server knows is not a vocabulary.
-       *
-       * ⭐ AND `cancelled` ALREADY EXISTED, meaning exactly this, already bucketed as closed, already in every
-       * filter and rollup. There were two withdrawal paths — this route, and setting status to `cancelled` as
-       * the sender, which already posted the same `[cancel requested]` message. Two mechanisms for one act, one
-       * of them speaking a private word. This route keeps the door (the button calls it, it enforces
-       * sender-only, it requires a reason) and now writes the vocabulary everything else understands.
-       *
-       * ⚠️ The state_log action stays `voided`: it is a HISTORY row, and rewriting what old entries claim
-       * happened would falsify the record this table exists to keep. b196 converts the stored statuses; the log
-       * keeps saying what the code was called on the day.
-       */
-      /* ⭐⭐ T1-RAIL — THROUGH THE ONE STATUS WRITE. This was a bare SET for every own copy, so a COMPLETED chit could be
-           withdrawn though the rail has no completed → cancelled step. Each copy I hold (the sent one; a self-chit also its
-           received one) asks lib/rail-status statusGate; if ANY copy may not be cancelled, nothing is written and the sender is
-           told why. Own copies only, as before. */
-      const gates = [];
-      for (const copy of railStatus.COPIES) {
-        const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', me, { copy });
-        if (g.from) gates.push(g); // a copy I do not hold has nothing to move
-      }
-      const refusedBy = gates.find((item) => !item.ok);
-      if (refusedBy) return { refused: refusedBy };
-      const moved = [];
-      for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
-      if (!moved.length) return { refused: null, moved, replay: true }; /* RAIL-1128 F5a: a replay moved nothing: no second voided row, no second books call, no second message */
-      await db.query(
-        `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
-           VALUES ($1, $2, 'voided', $3, $4, 'cancelled', $5)`,
-        [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
-      ); // own timeline only
-      return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
-    });
+    const gate = await withEntity(entity_id, (db) => withdrawOwnCopies(db, req, entity_id, chit_id, me, reason));
     if (gate.refused) {
       return problem(req, res, withdrawRefusalSpec(gate.refused));
     }
