@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 692,
+  "partial": 1,
+  "meets": 691,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -48235,7 +48235,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1768,
-   "hash": "8d9186c069afa7fe",
+   "hash": "40418ed61581db4e",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -48326,10 +48326,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 batch 1126 head bc409b7eb vs last sign 75fb226da stage2: diff read (routes/books.js:1771: the answer gains needs (null or the field name) for AE-F-18; same seats, same refusals; additive; 13 machine columns true)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "40418ed61581db4e"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-entry.js"
    ],
