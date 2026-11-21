@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 13,
-  "meets": 679,
+  "partial": 15,
+  "meets": 677,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -2093,7 +2093,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1838,
+   "line": 1840,
    "hash": "65c79891d0d65e2b",
    "does": "A product id in -> we remove the product by marking it inactive, deleting nothing -> a removed message, or not-found.",
    "errors": {
@@ -2219,7 +2219,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1991,
+   "line": 1993,
    "hash": "473a54f775b12c84",
    "does": "A product id and a media id -> we take that picture or video off the product and delete the stored file -> what was removed, or not-found.",
    "errors": {
@@ -2341,7 +2341,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1712,
+   "line": 1714,
    "hash": "287f08d2f52034c4",
    "does": "A product id and a parked change id -> we cancel that scheduled change before it lands -> whether it was cancelled.",
    "errors": {
@@ -3412,7 +3412,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1413,
-   "hash": "8f37493e60d46ccf",
+   "hash": "0756c97d3e81e58c",
    "does": "Nothing in -> we read your shop's rules for handing out work (pull or push, default load, auto-assign) and make the defaults if there are none -> the settings.",
    "errors": {
     "count": 0,
@@ -3426,9 +3426,7 @@
     "entity_actor_settings",
     "identities"
    ],
-   "writes": [
-    "entity_actor_settings"
-   ],
+   "writes": [],
    "money": false,
    "actions": [],
    "derived": [
@@ -3499,10 +3497,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; settings gain staff_pick_up on or off (default on, b883), read and write; additive, the switch audit row never fails the change",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0756c97d3e81e58c"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js"
    ],
@@ -5632,7 +5631,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 71,
-   "hash": "b16f7735d13f7d58",
+   "hash": "325125bf67d3cf56",
    "does": "Optional page and limit in -> we read, for every client that lets this firm read its books right now, the work waiting and the business's health from the client's own books (sales are the one SOLD rule, this year to date against the same dates last year), one look logged per client -> the rule, the band of counts over ALL clients and the clients worst first (a page of at most 100 when asked, else all) (a firm's person only; live grants only).",
    "errors": {
     "count": 3,
@@ -5727,7 +5726,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b16f7735d13f7d58"
+    "stale_since": "325125bf67d3cf56"
    },
    "status": "partial",
    "callers": [
@@ -28894,7 +28893,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1656,
+   "line": 1658,
    "hash": "b60cfb49dec01200",
    "does": "A product id -> we read the changes parked to take effect later on that product, hiding cost from those who may not see it -> whether scheduling is on and the pending changes.",
    "errors": {
@@ -29010,7 +29009,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2028,
+   "line": 2030,
    "hash": "afc07e93ebb96e47",
    "does": "A product id and an optional date -> we read that product's earlier versions, or what was live at the date -> the version history; only for the shop's own products.",
    "errors": {
@@ -29251,7 +29250,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2144,
+   "line": 2146,
    "hash": "ee025dd2836cc0db",
    "does": "The signed-in shop asks for ready-made product lists -> we read the lists we offer and mark what the shop already sells -> the lists, how many it has and its currency.",
    "errors": {
@@ -29368,7 +29367,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1884,
+   "line": 1886,
    "hash": "6552c50215b46546",
    "does": "A product id and a picture id from anyone, no sign-in -> we serve that picture if the product is active and lists it -> the picture bytes.",
    "errors": {
@@ -39236,7 +39235,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1596,
+   "line": 1598,
    "hash": "8c99bea11618f65b",
    "does": "A product id and the fields to change -> we merge them into the product, never replacing other fields, refusing cost or price edits this person may not make -> the updated product.",
    "errors": {
@@ -68423,7 +68422,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1925,
+   "line": 1927,
    "hash": "572f4a7f9b435cdb",
    "does": "A product id with a picture or a video link -> we store the picture or link the video and attach it to the product -> the media added and its address.",
    "errors": {
@@ -68548,7 +68547,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1677,
+   "line": 1679,
    "hash": "fc6c84301d67413a",
    "does": "A product id, a change and when it should apply -> we check the change like an edit and park it to land later -> the scheduled change.",
    "errors": {
@@ -68679,7 +68678,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1727,
+   "line": 1729,
    "hash": "6cfbfb5aa148ed87",
    "does": "A feed of closing stock by product code or id -> we stamp each figure with its date and write it to the product -> how many were written, which were unknown or bad.",
    "errors": {
@@ -69420,7 +69419,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 2230,
+   "line": 2232,
    "hash": "e2f2e8d4155f6bb6",
    "does": "A chosen list and ticked items -> we add those items to the shop's catalogue, skipping any it already has -> a summary of what was added and skipped.",
    "errors": {
@@ -79753,7 +79752,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 1435,
-   "hash": "63d5f0facce66846",
+   "hash": "b48a31d99f5d4c3a",
    "does": "Assignment model, default load, visibility and auto-assign rules in -> we let the owner save how work is handed out in the shop -> the saved settings (owner only).",
    "errors": {
     "count": 0,
@@ -79842,10 +79841,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; settings gain staff_pick_up on or off (default on, b883), read and write; additive, the switch audit row never fails the change",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "b48a31d99f5d4c3a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "core.js"
@@ -82786,7 +82786,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1774,
+   "line": 1776,
    "hash": "2fe0788b33fdb51d",
    "does": "A product id and a stock quantity -> we check it and stamp it with a date on the product -> the updated availability, or a refusal naming what is unclear.",
    "errors": {
@@ -82904,7 +82904,7 @@
    "owner_area": "products",
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
-   "line": 1807,
+   "line": 1809,
    "hash": "b2a20c518803f776",
    "does": "A product id and a status -> we stamp the status with who and when, keeping every other field -> the product's new status, or not-found.",
    "errors": {

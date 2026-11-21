@@ -34,11 +34,11 @@ of file each thing is; this says what already does the job.
 | 81 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 79 | `count` | `money-check.js` | the count /health reads |
 | 78 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
+| 77 | `record` | `access-events.js` |  |
 | 77 | `pack` | `books-store-packs.js` |  |
 | 77 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 76 | `read` | `books-grant-drill.js` |  |
 | 76 | `rows` | `cap-settings.js` |  |
-| 76 | `record` | `access-events.js` |  |
 | 76 | `items` | `books-store.js` | PERF1: |
 | 75 | `failed` | `service.js` | what every catch answers: |
 | 74 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
@@ -59,14 +59,14 @@ of file each thing is; this says what already does the job.
 | 63 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 63 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 62 | `body` | `books-acting.js` | a write's body: |
-| 60 | `verdict` | `books-advice-in.js` | The payer's own copy, and an advice of money I paid, post nothing here. |
+| 60 | `verdict` | `books-advice-in.js` |  |
 | 60 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
+| 60 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 59 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 59 | `named` | `bank-rec-log.js` | W15-71: |
 | 59 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 59 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 58 | `live` | `receivables.js` | the allocations that still count: |
-| 56 | `facts` | `bill-steps.js` | MY state_log — |
+| 57 | `facts` | `bill-steps.js` | MY state_log — |
 | 56 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 54 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 53 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
@@ -87,11 +87,11 @@ of file each thing is; this says what already does the job.
 | 46 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 45 | `rate` | `convert.js` | A rate, with its evidence. |
 | 45 | `gate` | `country-setup.js` | gate(h, entity): |
+| 44 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 44 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 43 | `sentence` | `one-person.js` |  |
 | 43 | `shell` | `pick.js` |  |
 | 43 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 43 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 42 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 42 | `mine` | `crm.js` | `opt.removedOk`: |
 | 41 | `flags` | `cmdb.js` | the flags a record raises about itself — |
