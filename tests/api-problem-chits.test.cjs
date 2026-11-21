@@ -169,11 +169,11 @@ const breaking = (pattern) => (sql) => {
   return null;
 };
 /** the seller's identity row the engine reads at send (ACC-206: a billing document asks the engine, and a seller that is not on record is a 503 — it used to send with no money) */
-const SELLER_ROW = { identity_id: SHOP, gstn: null, display_name: 'Test shop', policy_flags: {}, country: 'IN' };
+const SELLER_ROW = { identity_id: SHOP, gstn: '29BBBBB0000B1Z5', display_name: 'Test shop', policy_flags: {}, country: 'IN' };
 const knowsSeller = (sql) => (/FROM identities WHERE identity_id = ANY/.test(sql) ? { rows: [SELLER_ROW], rowCount: 1 } : null);
 /** the register an entry names exists (K-1: lib/raida asks first, so an unknown or junk one is the 400 of its siblings) */
 const knowsRegister = (sql) => (/SELECT 1 FROM register_subject/.test(sql) ? { rows: [{ '?column?': 1 }], rowCount: 1 } : null);
-const SELF_BILL = { recipients: [{ self: true }], purpose: 'order', line_items: [{ particulars: 'Tea', quantity: 1, price: 10 }] };
+const SELF_BILL = { recipients: [{ self: true }], purpose: 'order', line_items: [{ particulars: 'Tea', quantity: 1, price: 10, gst_rate: 18 }] };
 /** a counter bill that carries its series number and the till that made it */
 const TILL_BILL = (till) => ({ recipients: [{ self: true }], purpose: 'order', client_ref: 'B-1', business_json: { till: { id: till }, billed_at: '2026-10-23T10:00:00Z' } });
 /** a stand-in db whose insert of the header loses the race on the bill number (the unique index on client_ref) */
