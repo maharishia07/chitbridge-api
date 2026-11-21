@@ -93,6 +93,7 @@ stubMod('db/index.js', {
       if (/FROM chit_header h LEFT JOIN chit_detail d/.test(t)) return { rows: s.params[1].filter((id) => mine({ chit_id: id })).filter((id) => D.detail[id]).map((id) => Object.assign({ chit_id: id }, D.detail[id])) };
       if (/SELECT DISTINCT CASE/.test(t)) return { rows: D.marks };
       if (/FROM chit_line l LEFT JOIN chit_line_delivery/.test(t)) return { rows: D.progress.filter((r) => s.params[1].includes(r.chit_id)) };
+      if (/chit_participants/.test(t)) return { rows: [] }; /* B-F-15: the seller's status for an order I sent: none in these shops */
       if (/FROM chit_line_assignment/.test(t)) return { rows: D.assign.filter((r) => s.params[1].includes(r.chit_id)) };
       throw new Error('unexpected statement: ' + t.slice(0, 80));
     });

@@ -5,8 +5,8 @@
   "routes": 690,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 690,
+  "partial": 1,
+  "meets": 689,
   "columns": {
    "strict_input": {
     "applies": 352,
@@ -36601,7 +36601,7 @@
    "owner_agent": "cb-orders",
    "file": "routes/work.js",
    "line": 70,
-   "hash": "ac3b2837a0197d4f",
+   "hash": "f618bac440b28a80",
    "does": "A chit id in -> we read one piece of work with its stage, party, lines, assignee and the actions open to you -> the work card, or 404.",
    "errors": {
     "count": 0,
@@ -36689,10 +36689,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains client (job chits only, null otherwise); additive",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "f618bac440b28a80"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-tasks.js"
    ],

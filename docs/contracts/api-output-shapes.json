@@ -19784,6 +19784,12 @@
               "null"
             ]
           },
+          "seen_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "side": {
             "type": [
               "string",
