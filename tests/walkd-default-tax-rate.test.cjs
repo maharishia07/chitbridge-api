@@ -24,8 +24,8 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   let shop = {};
   let registration = 'regular';
   countrySetup.registrationOfShop = async () => registration;
-  const withEntity = async (entity, fn) => fn({ query: async () => ({ rows: [shop] }) });
-  const stamp = async (items, s, reg) => { shop = s; registration = reg || 'regular'; return dflt.stampDefault('e1', items, withEntity); };
+  const query = async () => ({ rows: [shop] });
+  const stamp = async (items, s, reg) => { shop = s; registration = reg || 'regular'; return dflt.stampDefault('e1', items, query); };
   const yoghurt = () => ({ name: 'WKD Yoghurt', price: 5 });
 
   let out = await stamp([yoghurt()], { country: 'AU', gstn: '12345678901', policy_flags: {} });
