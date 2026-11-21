@@ -20715,7 +20715,7 @@ function lineFaults(rows){
 function shopTz(){
   /* AE-F-05/20 + E-F-06: the shop's OWN IANA zone (snapshot shop.timezone = identities.timezone) answers first - an AU shop read on an IST device shows Sydney - but the person's cb_tz choice still wins (as web helpers.js shopZoneI). Never the PC's own zone. */
   var own = '';
-  try { own = (typeof S !== 'undefined' && S && S.shop && S.shop.timezone) || ''; var ch = localStorage.getItem('cb_tz'); if (ch) own = ''; if (own) new Intl.DateTimeFormat('en', { timeZone: own }); /* zone-ok: a probe */ } catch (e) { own = ''; cbQuiet('shopTz:0', e); }
+  try { own = (typeof S !== 'undefined' && S && S.shop && S.shop.timezone) || ''; var ch = typeof localStorage !== 'undefined' ? localStorage.getItem('cb_tz') : null; if (ch) own = ''; if (own) new Intl.DateTimeFormat('en', { timeZone: own }); /* zone-ok: a probe */ } catch (e) { own = ''; cbQuiet('shopTz:0', e); }
   if (own) return own;
   var pack = shopPack(), zones = pack && Array.isArray(pack.timeZones) ? pack.timeZones : null;
   if (zones && zones.length === 1) return zones[0];
