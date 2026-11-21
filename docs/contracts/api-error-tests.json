@@ -3781,6 +3781,10 @@
   401,
   403
  ],
+ "POST /api/signin/provider/link/finish": [
+  400,
+  403
+ ],
  "POST /api/signin/provider/link/start": [
   400,
   401

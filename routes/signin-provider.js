@@ -185,8 +185,8 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
   const answer = await checkAnswer(row, req.query, spent.started);
   if (answer.refusal) return refuseVisit(req, res, answer.refusal);
   if (spent.started.intent === 'link') {
-    const word = await connect.finishLink(spent.started, answer.claims, req); // no session here: the result word only
-    return res.redirect(302, provider.webSigninUrl() + '#c=' + encodeURIComponent(word));
+    const done = await connect.finishLink(spent.started, answer.claims, req); // no session here and nothing written: a refusal word, or a one-time confirm code for the signed-in session
+    return res.redirect(302, provider.webSigninUrl() + (done.code ? '#k=' + encodeURIComponent(done.code) : '#c=' + encodeURIComponent(done.word)));
   }
   try {
     const code = await keepHandoff(row, spent.started, answer.claims);
@@ -203,6 +203,7 @@ router.post('/provider/handoff', ...contract.checked('POST /provider/handoff', s
 /* 5-7 · connect: a signed-in person links a provider to their own account (re-proof every time), lists the links, unlinks */
 router.get('/provider/links', auth, personOnly, ...contract.checked('GET /provider/links', schemaOptions), connect.list);
 router.post('/provider/link/start', auth, personOnly, ...contract.checked('POST /provider/link/start', schemaOptions), connect.startLink);
+router.post('/provider/link/finish', auth, personOnly, ...contract.checked('POST /provider/link/finish', schemaOptions), connect.confirmLink);
 router.delete('/provider/links/:link_id', auth, personOnly, ...contract.checked('DELETE /provider/links/:link_id', schemaOptions), connect.unlink);
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };

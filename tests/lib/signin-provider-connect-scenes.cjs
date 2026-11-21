@@ -40,7 +40,14 @@ module.exports = async function sectionG({ assert, crypto, http, apiBase, issuer
     const start = await startLink(who, { provider: 'google', pin: '4827' });
     assert.strictEqual(start.status, 200, start.body);
     const trip = await roundTrip(Object.assign({ tamper: tamper || claimsOf({ sub: 'g-link-1' }), lt: ltOf(start) }, opts || {}));
-    return { start, trip };
+    // N2: the callback only keeps a confirm code (#k=); the signed-in session that started it writes the link. The word is shown as the old #c= so each scene reads the same.
+    const code = new URLSearchParams(fragment(trip.callback)).get('k');
+    if (code && !(opts && opts.noConfirm)) {
+      const done = await call('POST', '/api/signin/provider/link/finish', who, { code });
+      trip.confirm = done;
+      trip.callback.headers.location = String(trip.callback.headers.location).split('#')[0] + '#c=' + (done.json.linked ? 'linked' : done.json.code);
+    }
+    return { start, trip, code };
   }
 
   await checkAsync('G1 re-proof is required: no PIN or a wrong PIN is one blind 401 and writes no lt; no session at all is a 401', async () => {
@@ -69,6 +76,66 @@ module.exports = async function sectionG({ assert, crypto, http, apiBase, issuer
     const again = await roundTrip({ tamper: claimsOf({ sub: 'g-link-1' }) });
     assert.ok(new URLSearchParams(fragment(again.callback)).get('h'), 'a hand-off code for the linked subject');
     reset();
+  });
+  await checkAsync('G2b N2: the callback alone writes NO link; a confirm from another session, another device or another person writes none and spends the code; the starting session writes it', async () => {
+    reset();
+    const first = await connect('p', null, { noConfirm: true });
+    assert.strictEqual(world.links.length, 0, 'the callback alone links nothing');
+    assert.ok(/#k=/.test(first.trip.callback.headers.location) && !/#c=|#h=/.test(first.trip.callback.headers.location));
+    const other = await call('POST', '/api/signin/provider/link/finish', 'p', { code: first.code }, { 'x-test-jti': 'jti-another-browser' });
+    assert.deepStrictEqual([other.status, other.json.code], [403, 'LINK_CONFIRM_FAILED'], 'same person, another session');
+    assert.strictEqual(world.links.length, 0);
+    const again = await call('POST', '/api/signin/provider/link/finish', 'p', { code: first.code });
+    assert.strictEqual(again.status, 403, 'a refused confirm spent the code');
+    const second = await connect('p', null, { noConfirm: true });
+    assert.strictEqual((await call('POST', '/api/signin/provider/link/finish', 'p', { code: second.code }, { 'x-device-id': 'device-someone-else' })).status, 403, 'another device');
+    const third = await connect('p', null, { noConfirm: true });
+    assert.strictEqual((await call('POST', '/api/signin/provider/link/finish', 's', { code: third.code })).status, 403, 'another person');
+    assert.strictEqual((await call('POST', '/api/signin/provider/link/finish', null, { code: third.code })).status, 401, 'no session');
+    assert.strictEqual(world.links.length, 0, 'nothing was ever written');
+    const fourth = await connect('p', null, { noConfirm: true });
+    const ok = await call('POST', '/api/signin/provider/link/finish', 'p', { code: fourth.code });
+    assert.deepStrictEqual([ok.status, ok.json.linked], [200, true], ok.body);
+    assert.strictEqual(mine(SHOP).length, 1);
+    const startRow = [...world.pending.values()].filter((row) => row.kind === 'linkstart');
+    assert.strictEqual(startRow.length, 0, 'every lt and confirm row is spent');
+    reset();
+  });
+  await checkAsync('G2c N2: the lt lives 60 seconds, and a confirm row is never taken as an lt (nor an lt as a confirm)', async () => {
+    reset();
+    const start = await startLink('p', { provider: 'google', pin: '4827' });
+    const row = [...world.pending.values()].find((r) => r.kind === 'linkstart');
+    assert.ok(row && (row.expires - world.now) / 1000 <= 60, 'ttl ' + (row && (row.expires - world.now) / 1000));
+    const asConfirm = await call('POST', '/api/signin/provider/link/finish', 'p', { code: ltOf(start) });
+    assert.strictEqual(asConfirm.status, 403, 'an lt is not a confirm code');
+    reset();
+  });
+  await checkAsync('G2d N1: the list says which re-proof this person can give (pin, or code when no PIN is set); N5: a failed code proof is audited as otp; N4: a store fault at the callback is the sentence, not PROVIDER_OFF', async () => {
+    reset();
+    assert.strictEqual((await call('GET', '/api/signin/provider/links', 'p')).json.reproof, 'pin');
+    assert.strictEqual((await call('GET', '/api/signin/provider/links', 'n')).json.reproof, 'code');
+    await startLink('p', { provider: 'google', otp: '000000' });
+    assert.strictEqual(written.filter((ev) => ev.action === 'fail').pop().method, 'otp');
+    const pending = require('../../lib/signin-pending');
+    const realPut = pending.put;
+    const start = await startLink('p', { provider: 'google', pin: '4827' });
+    pending.put = async (kind, ref, payload) => { if (payload && payload.confirm) throw new Error('store down'); return realPut(kind, ref, payload); };
+    try {
+      const trip = await roundTrip({ tamper: claimsOf({ sub: 'g-link-n4' }), lt: ltOf(start) });
+      assert.ok(ends(trip.callback, '#c=SIGNIN_UNAVAILABLE'), trip.callback.headers.location);
+    } finally { pending.put = realPut; }
+    reset();
+  });
+  await checkAsync('G2e N2a: the access log line carries the path without its query string (the lt and the device id never reach a log); the provider routes log no req.query / originalUrl elsewhere', async () => {
+    const fs = require('fs'), path = require('path');
+    const server = fs.readFileSync(path.join(__dirname, '..', '..', 'server.js'), 'utf8');
+    const block = server.slice(server.indexOf("log.info('request'"), server.indexOf("log.info('request'") + 700);
+    assert.ok(block.includes("path: (req.originalUrl || req.url).split('?')[0]"), 'the request log must cut the query string');
+    assert.ok(!/req.query/.test(block), 'the query object is not logged');
+    for (const file of ['routes/signin-provider.js', 'routes/signin-provider-connect.js']) {
+      const src = fs.readFileSync(path.join(__dirname, '..', '..', file), 'utf8');
+      assert.ok(!src.split('\n').some((line) => /log\.(info|warn|error|debug)\(/.test(line) && /req\.(query|originalUrl|url)/.test(line)), file + ' logs the address');
+    }
   });
   await checkAsync('G3 the lt is bound to its device and is single use: another device, a replay or a made-up lt is a finished sign-in and links nothing', async () => {
     reset();

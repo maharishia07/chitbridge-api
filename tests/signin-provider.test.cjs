@@ -98,7 +98,7 @@ world.people = {};
 const authStub = (req, res, next) => {
   const person = world.people[req.headers['x-test-as']];
   if (!person) return res.status(401).json({ error: 'Unauthorised' });
-  req.identity = person;
+  req.identity = person; req.session = { jti: String(req.headers['x-test-jti'] || 'jti-' + req.headers['x-test-as']), device_id: req.headers['x-device-id'] }; // the listed session the real auth hands on
   return next();
 };
 authStub.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
@@ -730,7 +730,7 @@ async function sectionD({ OAuth2Server, Events }) {
   await checkAsync('E · the handoff lives 60 s and is single use; a ticket five tries; a start row 10 minutes', async () => {
     resetWorld();
     const pending = require('../lib/signin-pending');
-    assert.deepStrictEqual(pending.KINDS, { start: 600, handoff: 60, ticket: 600, linkstart: 300 });
+    assert.deepStrictEqual(pending.KINDS, { start: 600, handoff: 60, ticket: 600, linkstart: 60 });
     const ref = provider.randomRef();
     await pending.put('handoff', ref, { a: 1 });
     assert.deepStrictEqual(await pending.take('handoff', ref), { a: 1 });

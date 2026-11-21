@@ -4685,6 +4685,16 @@
    "raised_by": []
   },
   {
+   "code": "LINK_CONFIRM_FAILED",
+   "status": "403",
+   "title": "Connection not confirmed",
+   "shopkeeper": "That connection could not be confirmed.",
+   "hint": "Start again from Settings.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "LINK_ENFORCED",
    "status": "403",
    "title": "Link required here",

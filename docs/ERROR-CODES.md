@@ -810,4 +810,5 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | REAUTH_FAILED | 401 | Could not confirm it is you | We could not confirm it is you. | Check your PIN or code and try again. | auth | 2026-11-21 |
 | SIGNIN_PROVIDER_NOT_ACCEPTED | 403 | Sign-in not accepted here | This business does not accept that way to sign in. | Use your mobile number or e-mail and the code we send you. | auth | 2026-11-21 |
 | SIGNIN_UNAVAILABLE | 503 | Sign-in could not finish | Sign-in could not finish. | Start again from the sign-in page. | auth | 2026-11-21 |
+| LINK_CONFIRM_FAILED | 403 | Connection not confirmed | That connection could not be confirmed. | Start again from Settings. | auth | 2026-11-21 |
 <!-- codes:end -->

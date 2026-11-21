@@ -2674,6 +2674,9 @@
   "POST /api/signin/provider/handoff": {
    "output_allowlist": true
   },
+  "POST /api/signin/provider/link/finish": {
+   "output_allowlist": true
+  },
   "POST /api/signin/provider/link/start": {
    "output_allowlist": true
   },

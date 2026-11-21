@@ -9,6 +9,8 @@
  *    a stolen session alone adds no provider. Every failure is the one blind 401 REAUTH_FAILED.
  * ⭐ SUBJECT BINDING. The `lt` (5 min, single use, hashed at rest, bound to this device and this account) is the ONLY thing that says whose account a callback may link; the link key comes from the checked ID token.
  *    Nobody else's account can be named by the browser. Another shop's rows are invisible (row security) and never said.
+ * ⭐ THE LINK IS WRITTEN ONLY BY A CONFIRM from the signed-in session that started it (N2, critic round 2): the callback keeps a 60-second confirm row and sends #k=<code>; POST /provider/link/finish with the bearer
+ *    session must carry the SAME account, session id (jti) and device as the start, or nothing is written. A start address replayed from another browser or session cannot create a link.
  * ⭐ THE SHOP'S SWITCH (GOV flag signin_providers) gates linking and sign-in alike through provider.signinMethodRefusal.
  * ⭐ AUDIT, NEVER A VALUE: link · unlink · refused link are signin_events rows with method and the keyed subject hash only; the notice mail names the provider and the date, never a subject.
  */
@@ -34,10 +36,14 @@ const WORDS = Object.freeze({
   LAST_WAY_IN: 'This is your only way to sign in. Set a PIN first, then disconnect it.',
   LINK_ENFORCED: 'Your business requires this sign-in. Ask the owner to change it.',
   SIGNIN_PROVIDER_NOT_ACCEPTED: 'This business does not accept that way to sign in.',
-  PROVIDER_OFF: 'That sign-in is not switched on here.'
+  PROVIDER_OFF: 'That sign-in is not switched on here.',
+  SIGNIN_UNAVAILABLE: 'Connecting could not finish. Try again in a moment.',
+  LINK_CONFIRM_FAILED: 'That connection could not be confirmed. Start again from Settings.'
 });
 const shopOf = (req) => auth.entityOf(req);
 const me = (req) => req.identity.identity_id;
+/** the listed session this request rides on (its jti), or '' for a token that carries none */
+const sessionOf = (req) => String((req.session && req.session.jti) || '');
 
 /** one signin_events row: method + keyed subject hash, never a value; a lost row is logged by the writer, never thrown */
 function audit(req, shop, identityId, action, method, code, key) {
@@ -66,7 +72,7 @@ async function reprove(req, res) {
   const body = req.body || {};
   const check = person && !endedStatus(person.status) ? await identityAuth.verifyCredential(query, person, { pin: body.pin, otp: body.otp }) : { ok: false };
   if (!check.ok) {
-    audit(req, shopOf(req), me(req), 'fail', 'pin', 'REAUTH_FAILED', null);
+    audit(req, shopOf(req), me(req), 'fail', body.otp && !body.pin ? 'otp' : 'pin', 'REAUTH_FAILED', null); // N5: the method the person tried
     refuse(req, res, 401, 'REAUTH_FAILED');
     return { sent: true };
   }
@@ -79,8 +85,10 @@ async function list(req, res) {
   res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
   const flags = await flagsOf(shopOf(req));
   const rows = await links.listOf(shopOf(req), me(req));
+  const self = (await identityAuth.rowsOfCandidates(query, [me(req)]))[0];
   const available = provider.registry().filter((row) => provider.configured(row)).map((row) => ({ key: row.key, label: row.label, live: provider.connectBuilt(), accepted: !provider.signinMethodRefusal(flags, row.key) }));
   return res.json({
+    reproof: self && self.pin_hash ? 'pin' : 'code', // the re-proof this person can give: the PIN they set, else a code sent to their own address
     links: rows.map((row) => ({ link_id: row.link_id, provider: row.provider, email: row.email, email_verified: row.email_verified === true, linked_at: row.linked_at, last_used_at: row.last_used_at })),
     providers: available
   });
@@ -94,12 +102,14 @@ async function startLink(req, res) {
   if (!row || !provider.configured(row) || !provider.connectBuilt()) return refuse(req, res, 404, 'PROVIDER_OFF');
   const dev = sessions.deviceOfSignin(req);
   if (!dev.device_id) return problem(req, res, { status: 400, code: 'NO_DEVICE', detail: 'This device must say who it is before it can connect an account.' });
+  const jti = sessionOf(req);
+  if (!jti) return problem(req, res, { status: 401, code: 'SESSION_EXPIRED', detail: 'Sign in again before connecting an account.' });
   const shop = shopOf(req);
   if (provider.signinMethodRefusal(await flagsOf(shop), row.key)) return refuse(req, res, 403, 'SIGNIN_PROVIDER_NOT_ACCEPTED');
   const proven = await reprove(req, res);
   if (proven.sent) return;
   const lt = provider.randomRef();
-  await pending.put('linkstart', lt, { provider: row.key, identity_id: me(req), entity_id: shop, device_id: dev.device_id });
+  await pending.put('linkstart', lt, { provider: row.key, identity_id: me(req), entity_id: shop, device_id: dev.device_id, jti });
   const url = provider.startUrl(row.key, { device_id: dev.device_id, lt, next: provider.nextOf(body.next) || '/app.html#/settings' });
   if (!url) return refuse(req, res, 404, 'PROVIDER_OFF');
   return res.json({ url });
@@ -108,33 +118,67 @@ async function startLink(req, res) {
 /** the start visit with an `lt`: the intent fields for the start row, or null (the visit is refused as a finished sign-in) */
 async function takeLinkStart(lt, device, key) {
   const held = await pending.take('linkstart', String(lt));
-  if (!held || held.device_id !== device || held.provider !== key) return null;
-  return { intent: 'link', identity_id: held.identity_id, entity_id: held.entity_id };
+  if (!held || held.confirm || held.device_id !== device || held.provider !== key) return null;
+  return { intent: 'link', identity_id: held.identity_id, entity_id: held.entity_id, jti: held.jti || '' };
 }
 
-/** the callback of an intent-link start row: write the link for the `lt`'s account and name the result (#c=) — never a session */
-async function finishLink(started, claims, req) {
+/** the checks both halves share: the lt's account is live, in this shop, and the shop still accepts the provider -> { person } or { word } (a result word for the person) */
+async function linkable(started, claims, req) {
   const shop = started.entity_id;
-  const key = Object.assign({ provider: started.provider }, claims);
+  const person = (await identityAuth.rowsOfCandidates(query, [started.identity_id]))[0];
+  if (!person || !identityAuth.isAccount(person) || endedStatus(person.status) || String(person.parent_entity_id || person.identity_id) !== String(shop)) return { word: 'SIGNIN_REFUSED' };
+  if (provider.signinMethodRefusal(await flagsOf(shop), started.provider)) {
+    audit(req, shop, started.identity_id, 'fail', started.provider, 'SIGNIN_PROVIDER_NOT_ACCEPTED', claims);
+    return { word: 'SIGNIN_PROVIDER_NOT_ACCEPTED' };
+  }
+  return { person };
+}
+
+/** the callback of an intent-link start row: NOTHING IS WRITTEN HERE (a start address replayed from another browser would otherwise link the victim's account). The checked claims wait in a 60-second confirm row,
+ *  found by a one-time code the browser carries to the signed-in page -> { word } (a refusal said at once) or { code } (the confirm code; the link is written by confirmLink) */
+async function finishLink(started, claims, req) {
   try {
-    const person = (await identityAuth.rowsOfCandidates(query, [started.identity_id]))[0];
-    if (!person || !identityAuth.isAccount(person) || endedStatus(person.status) || String(person.parent_entity_id || person.identity_id) !== String(shop)) return 'SIGNIN_REFUSED';
-    if (provider.signinMethodRefusal(await flagsOf(shop), started.provider)) {
-      audit(req, shop, started.identity_id, 'fail', started.provider, 'SIGNIN_PROVIDER_NOT_ACCEPTED', claims);
-      return 'SIGNIN_PROVIDER_NOT_ACCEPTED';
-    }
-    const done = await links.add(shop, started.identity_id, key);
-    if (!done.added) {
-      audit(req, shop, started.identity_id, 'fail', started.provider, done.code, claims);
-      return done.code;
-    }
-    audit(req, shop, started.identity_id, 'link', started.provider, null, claims);
-    notice(person, (provider.rowOf(started.provider) || {}).label || started.provider, 'connected to');
-    return 'linked';
+    const ok = await linkable(started, claims, req);
+    if (ok.word) return { word: ok.word };
+    const code = provider.randomRef();
+    await pending.put('linkstart', code, {
+      confirm: true,
+      provider: started.provider,
+      identity_id: started.identity_id,
+      entity_id: started.entity_id,
+      device_id: started.device_id,
+      jti: started.jti || '',
+      claims: { issuer: claims.issuer, tenant: claims.tenant, subject: claims.subject, subject_alt: claims.subject_alt, email: claims.email, email_verified: claims.email_verified, org: claims.org, name: claims.name }
+    });
+    return { code };
   } catch (failure) {
     log.error('signin_provider', { why: 'link failed: ' + String((failure && failure.code) || 'ERR') });
-    return 'PROVIDER_OFF';
+    return { word: 'SIGNIN_UNAVAILABLE' };
   }
+}
+
+/* POST /provider/link/finish { code } — the signed-in session that started the link writes it: same account, same session id, same device, or nothing is written */
+async function confirmLink(req, res) {
+  res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
+  const dev = sessions.deviceOfSignin(req);
+  const held = await pending.take('linkstart', String((req.body && req.body.code) || ''));
+  const jti = sessionOf(req);
+  // one blind answer for a made-up, spent, expired or someone-else's code (the row is spent either way)
+  if (!held || !held.confirm || !jti || held.jti !== jti || held.identity_id !== me(req) || held.device_id !== dev.device_id || String(held.entity_id) !== String(shopOf(req))) {
+    return refuse(req, res, 403, 'LINK_CONFIRM_FAILED');
+  }
+  const claims = held.claims || {};
+  const shop = held.entity_id;
+  const ok = await linkable(held, claims, req);
+  if (ok.word) return refuse(req, res, 403, ok.word === 'SIGNIN_REFUSED' ? 'LINK_CONFIRM_FAILED' : ok.word);
+  const done = await links.add(shop, held.identity_id, Object.assign({ provider: held.provider }, claims));
+  if (!done.added) {
+    audit(req, shop, held.identity_id, 'fail', held.provider, done.code, claims);
+    return refuse(req, res, done.code === 'LINK_EXISTS' ? 409 : 403, WORDS[done.code] ? done.code : 'LINK_CONFIRM_FAILED');
+  }
+  audit(req, shop, held.identity_id, 'link', held.provider, null, claims);
+  notice(ok.person, (provider.rowOf(held.provider) || {}).label || held.provider, 'connected to');
+  return res.json({ ok: true, linked: true });
 }
 
 /* DELETE /provider/links/:link_id — own link only; re-proof; not the last way in; not an enforced provider for staff */
@@ -168,4 +212,4 @@ const guarded = (handler) => async (req, res) => {
   }
 };
 
-module.exports = { list: guarded(list), startLink: guarded(startLink), unlink: guarded(unlink), takeLinkStart, finishLink, WORDS };
+module.exports = { list: guarded(list), startLink: guarded(startLink), confirmLink: guarded(confirmLink), unlink: guarded(unlink), takeLinkStart, finishLink, WORDS };
