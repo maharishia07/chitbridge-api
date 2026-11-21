@@ -7,6 +7,11 @@ module.exports = async function sectionF({ assert, crypto, http, apiBase, issuer
   const identityAuth = require('../../lib/identity-auth');
   const eventsLib = require('../../lib/signin-events');
   const realAuth = { rowsOfCandidates: identityAuth.rowsOfCandidates, issueToken: identityAuth.issueToken };
+  const provider = require('../../lib/signin-provider');
+  const policy = require('../../lib/policy');
+  const realPolicyGet = policy.get;
+  let shopFlags = { signin_providers: ['google', 'microsoft'] }; // the shop's own switch (GOV flag signin_providers)
+  policy.get = async () => { if (shopFlags instanceof Error) throw shopFlags; return shopFlags; };
   const realRecord = eventsLib.record;
   const written = [];
   const issued = [];
@@ -32,7 +37,7 @@ module.exports = async function sectionF({ assert, crypto, http, apiBase, issuer
     });
   const codeOf = (res) => new URLSearchParams(fragment(res)).get('h');
   const linkFor = (identity, extra) => Object.assign({ provider: 'google', issuer, tenant: '', subject: 'g-sub-1', link_id: 'bbbbbbbb-0000-4000-8000-000000000001', identity_id: identity.identity_id, entity_id: identity.identity_id }, extra);
-  const reset2 = () => { resetWorld(); written.length = 0; issued.length = 0; account = IDENTITY; };
+  const reset2 = () => { shopFlags = { signin_providers: ['google', 'microsoft'] }; provider._connectBuilt(true); resetWorld(); written.length = 0; issued.length = 0; account = IDENTITY; };
   const dev = { 'x-device-id': DEVICE };
 
   await checkAsync('F1 a valid ID token for a LINKED account with a VERIFIED e-mail gives the code door\'s own session body; the address held only a code; the code is single use', async () => {
@@ -164,7 +169,50 @@ module.exports = async function sectionF({ assert, crypto, http, apiBase, issuer
     assert.ok(body.providers.length > 0 && body.providers.every((p) => p.live === true));
     reset2();
   });
+  await checkAsync('H2 a provider is live:false while the connect step is not built: the button stays grey', async () => {
+    reset2();
+    provider._connectBuilt(false);
+    const body = JSON.parse((await rawGet(apiBase + '/api/signin/providers')).body);
+    assert.ok(body.providers.length > 0 && body.providers.every((p) => p.live === false), JSON.stringify(body));
+    reset2();
+  });
+  await checkAsync('M1 the shop switched Google off: a linked person is refused (403 SIGNIN_PROVIDER_NOT_ACCEPTED), no session; a fault reading the switch is a 503, not "not switched on" (M3)', async () => {
+    reset2();
+    world.links.push(linkFor(IDENTITY));
+    shopFlags = { signin_providers: ['microsoft'] };
+    let res = await post({ code: codeOf((await roundTrip({ tamper: claimsOf() })).callback) }, dev);
+    assert.deepStrictEqual([res.status, res.json.code], [403, 'SIGNIN_PROVIDER_NOT_ACCEPTED']);
+    assert.strictEqual(issued.length, 0);
+    shopFlags = new Error('database down');
+    res = await post({ code: codeOf((await roundTrip({ tamper: claimsOf() })).callback) }, dev);
+    assert.deepStrictEqual([res.status, res.json.code], [503, 'SIGNIN_UNAVAILABLE']);
+    assert.ok(/Start again from the sign-in page/.test(res.json.detail) && !/switched on/.test(res.json.detail));
+    reset2();
+  });
+  await checkAsync('M2 one device read: a header and a body that disagree are refused (400 DEVICE_MISMATCH) and nothing is opened; the same id twice is fine', async () => {
+    reset2();
+    world.links.push(linkFor(IDENTITY));
+    const code = codeOf((await roundTrip({ tamper: claimsOf() })).callback);
+    let res = await post({ code, device_id: 'device-other-0002' }, dev);
+    assert.deepStrictEqual([res.status, res.json.code], [400, 'DEVICE_MISMATCH']);
+    assert.strictEqual(issued.length, 0);
+    res = await post({ code: codeOf((await roundTrip({ tamper: claimsOf() })).callback), device_id: DEVICE }, dev);
+    assert.strictEqual(res.status, 200, res.body);
+    assert.strictEqual(issued[0].device, DEVICE, 'the session is listed under the device the check used');
+    reset2();
+  });
+  await checkAsync('L1 an unlink inside the 60 seconds revokes the outstanding code: the link is read again at the swap', async () => {
+    reset2();
+    world.links.push(linkFor(IDENTITY));
+    const code = codeOf((await roundTrip({ tamper: claimsOf() })).callback);
+    world.links.length = 0; // the person unlinked after the callback
+    const res = await post({ code }, dev);
+    assert.deepStrictEqual([res.status, res.json.code], [403, 'SSO_NOT_LINKED']);
+    assert.strictEqual(issued.length, 0);
+    reset2();
+  });
   Object.assign(identityAuth, realAuth);
+  policy.get = realPolicyGet;
   eventsLib.record = realRecord;
 
 };

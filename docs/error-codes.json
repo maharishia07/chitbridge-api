@@ -4024,8 +4024,7 @@
     "PATCH /api/books-grants/:id",
     "POST /api/books-grants",
     "POST /api/books-grants/:id/revoke",
-    "POST /api/books-grants/practice/baseline",
-    "POST /api/signin/provider/handoff"
+    "POST /api/books-grants/practice/baseline"
    ]
   },
   {
@@ -4405,6 +4404,16 @@
    "raised_by": []
   },
   {
+   "code": "LAST_WAY_IN",
+   "status": "409",
+   "title": "Last way in",
+   "shopkeeper": "This is your only way to sign in.",
+   "hint": "Set a PIN first, then disconnect it.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "LEADS_NOT_MIGRATED",
    "status": "503",
    "title": "Leads not migrated",
@@ -4673,6 +4682,36 @@
    "hint": "Leave the unit as it is.",
    "owner_area": "chits",
    "since": "2026-10-23",
+   "raised_by": []
+  },
+  {
+   "code": "LINK_ENFORCED",
+   "status": "403",
+   "title": "Link required here",
+   "shopkeeper": "Your business requires this sign-in.",
+   "hint": "Ask the owner to change it.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "LINK_EXISTS",
+   "status": "409",
+   "title": "Already connected",
+   "shopkeeper": "That account is already connected here.",
+   "hint": "Sign in with it, or use another account.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
+   "code": "LINK_NOT_FOUND",
+   "status": "404",
+   "title": "No such connection",
+   "shopkeeper": "There is no such connected account.",
+   "hint": "Reload the list and try again.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -5634,9 +5673,7 @@
    "hint": "Sign in again.",
    "owner_area": "person-session",
    "since": "2026-10-22",
-   "raised_by": [
-    "POST /api/signin/provider/handoff"
-   ]
+   "raised_by": []
   },
   {
    "code": "NO_KEY",
@@ -6608,7 +6645,8 @@
    "since": "2026-11-17",
    "raised_by": [
     "GET /api/signin/provider/:key/callback",
-    "GET /api/signin/provider/:key/start"
+    "GET /api/signin/provider/:key/start",
+    "GET /api/signin/providers"
    ]
   },
   {
@@ -6692,6 +6730,16 @@
    "hint": "Ask the owner for edit access.",
    "owner_area": "books",
    "since": "2026-10-23",
+   "raised_by": []
+  },
+  {
+   "code": "REAUTH_FAILED",
+   "status": "401",
+   "title": "Could not confirm it is you",
+   "shopkeeper": "We could not confirm it is you.",
+   "hint": "Check your PIN or code and try again.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
    "raised_by": []
   },
   {
@@ -7314,6 +7362,16 @@
    "raised_by": []
   },
   {
+   "code": "SIGNIN_PROVIDER_NOT_ACCEPTED",
+   "status": "403",
+   "title": "Sign-in not accepted here",
+   "shopkeeper": "This business does not accept that way to sign in.",
+   "hint": "Use your mobile number or e-mail and the code we send you.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "SIGNIN_REFUSED",
    "status": "400",
    "title": "Sign-in refused",
@@ -7326,6 +7384,16 @@
     "POST /api/catalogue/:bridge_id/order/confirm",
     "POST /api/catalogue/:bridge_id/support"
    ]
+  },
+  {
+   "code": "SIGNIN_UNAVAILABLE",
+   "status": "503",
+   "title": "Sign-in could not finish",
+   "shopkeeper": "Sign-in could not finish.",
+   "hint": "Start again from the sign-in page.",
+   "owner_area": "auth",
+   "since": "2026-11-21",
+   "raised_by": []
   },
   {
    "code": "SIGN_IN",

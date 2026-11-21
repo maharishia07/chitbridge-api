@@ -803,4 +803,11 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TARGET_CANNOT_HOLD | 400 | Cannot hold this work | That person cannot hold this kind of work (view-only, off shift, or the shop is in pull mode), so it stayed where it was. | Pick someone who can edit and is on shift. | chits | 2026-11-18 |
 | ACTOR_NOT_FOUND | 404 | Person not found | That person is not on your team. | Pick someone from your team list. | chits | 2026-11-18 |
 | BOOKS_GRANT_NOT_ASSIGNED | 403 | Client not assigned to you | This client is not assigned to you. Ask the partner to assign it. | Ask the partner to assign this client to you. | network | 2026-11-17 |
+| LAST_WAY_IN | 409 | Last way in | This is your only way to sign in. | Set a PIN first, then disconnect it. | auth | 2026-11-21 |
+| LINK_ENFORCED | 403 | Link required here | Your business requires this sign-in. | Ask the owner to change it. | auth | 2026-11-21 |
+| LINK_EXISTS | 409 | Already connected | That account is already connected here. | Sign in with it, or use another account. | auth | 2026-11-21 |
+| LINK_NOT_FOUND | 404 | No such connection | There is no such connected account. | Reload the list and try again. | auth | 2026-11-21 |
+| REAUTH_FAILED | 401 | Could not confirm it is you | We could not confirm it is you. | Check your PIN or code and try again. | auth | 2026-11-21 |
+| SIGNIN_PROVIDER_NOT_ACCEPTED | 403 | Sign-in not accepted here | This business does not accept that way to sign in. | Use your mobile number or e-mail and the code we send you. | auth | 2026-11-21 |
+| SIGNIN_UNAVAILABLE | 503 | Sign-in could not finish | Sign-in could not finish. | Start again from the sign-in page. | auth | 2026-11-21 |
 <!-- codes:end -->

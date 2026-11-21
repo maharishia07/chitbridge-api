@@ -69,14 +69,18 @@ const jtiOf = (token) => {
 // @does A one-time code from the provider hand-off and this device's id -> we check it, find the one account connected to that provider identity and start its session -> the same answer as the code sign-in, or a refusal in words.
 async function handoff(req, res) {
   res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
-  const device = door.deviceIdOf(req.headers['x-device-id']) || door.deviceIdOf(req.body && req.body.device_id);
+  /* M2: ONE device read, the session writer's own (header first, then body); the check and the session use the same value, and a header and a body that disagree are refused */
+  const dev = sessions.deviceOfSignin(req);
+  const device = door.deviceIdOf(dev && dev.device_id);
   if (!device) return problem(req, res, { status: 400, code: 'NO_DEVICE', detail: 'This device must say who it is before it can sign in.' });
+  const header = door.deviceIdOf(req.headers['x-device-id']);
+  if (header && header !== device) return problem(req, res, { status: 400, code: 'DEVICE_MISMATCH', detail: 'This device said two different things. Start again from the sign-in page.' });
   let decided;
   try {
     decided = await door.decide(String((req.body && req.body.code) || ''), device);
   } catch (failure) {
     log.error('signin_provider', { why: 'handoff failed: ' + String((failure && failure.code) || 'ERR') });
-    return refused(req, res, { refusal: 'PROVIDER_OFF', status: door.STATUS.PROVIDER_OFF, detail: door.WORDS.PROVIDER_OFF });
+    return refused(req, res, { refusal: 'SIGNIN_UNAVAILABLE', status: door.STATUS.SIGNIN_UNAVAILABLE, detail: door.WORDS.SIGNIN_UNAVAILABLE }); // M3: a fault of ours is a 503 in true words, never "not switched on"
   }
   if (decided.refusal) {
     const one = decided.payload && decided.payload.links && decided.payload.links.length === 1 ? decided.payload.links[0] : null;
@@ -87,7 +91,7 @@ async function handoff(req, res) {
   req.signinAccount = identity.identity_id;
   if (await overBudget(req, res)) return; // 429 RATE_LIMITED is already sent
   try {
-    const token = await identityAuth.issueToken(query, identity, sessions.deviceOfSignin(req));
+    const token = await identityAuth.issueToken(query, identity, dev);
     note(req, identity, 'in', null, jtiOf(token), decided.claims, decided.provider);
     return res.json({
       message: 'Verified successfully',

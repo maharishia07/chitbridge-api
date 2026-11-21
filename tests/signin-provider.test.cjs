@@ -77,10 +77,33 @@ const dbStub = {
       const [provider, issuer, tenant, subject] = params;
       return { rows: world.links.filter((l) => l.provider === provider && l.issuer === issuer && l.tenant === tenant && l.subject === subject) };
     }
+    if (/FROM public.signin_provider_link WHERE entity_id/.test(sql)) return { rows: world.links.filter((l) => l.entity_id === params[0] && l.identity_id === params[1]).map((l) => Object.assign({ email: null, email_verified: false, linked_at: 'now', last_used_at: null }, l)) };
+    if (/INSERT INTO public.signin_provider_link/.test(sql)) {
+      const [entity_id, identity_id, provider, issuer, tenant, subject, subject_alt, org, email, email_verified] = params;
+      if (world.links.some((l) => l.identity_id === identity_id && l.provider === provider)) return { rows: [] }; // the unique (identity_id, provider)
+      const link_id = 'cccccccc-0000-4000-8000-' + String(world.links.length + 1).padStart(12, '0');
+      world.links.push({ link_id, entity_id, identity_id, provider, issuer, tenant, subject, subject_alt, org, email, email_verified });
+      return { rows: [{ link_id }] };
+    }
+    if (/DELETE FROM public.signin_provider_link/.test(sql)) {
+      const at = world.links.findIndex((l) => l.link_id === params[0] && l.entity_id === params[1] && l.identity_id === params[2]);
+      return at < 0 ? { rows: [] } : { rows: world.links.splice(at, 1) };
+    }
     throw new Error('unexpected query in the stub: ' + sql);
   },
   withEntity: async (id, fn) => fn({ query: dbStub.query })
 };
+/* the credential door: the connect routes sit behind middleware/auth, which needs a signed session; a test seam stands in for it (header x-test-as = a person of world.people) — the real auth is proved by its own suites */
+world.people = {};
+const authStub = (req, res, next) => {
+  const person = world.people[req.headers['x-test-as']];
+  if (!person) return res.status(401).json({ error: 'Unauthorised' });
+  req.identity = person;
+  return next();
+};
+authStub.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const authPath = require.resolve('../middleware/auth');
+require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: authStub };
 const dbPath = require.resolve('../db');
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: dbStub };
 
@@ -382,10 +405,10 @@ async function sectionD({ OAuth2Server, Events }) {
     provider._reset(undefined);
   };
   /** one whole round trip: start → provider → callback; `tamper(token)` rewrites the ID token's claims before signing; returns every step */
-  async function roundTrip({ keepHooks, key = 'google', tamper, device = DEVICE, next, dropCookie, query, forgeId } = {}) {
+  async function roundTrip({ keepHooks, key = 'google', tamper, device = DEVICE, next, dropCookie, query, forgeId, lt } = {}) {
     if (!keepHooks) for (const event of [Events.BeforeTokenSigning, Events.BeforeResponse]) server.service.removeAllListeners(event);
     if (tamper) server.service.on(Events.BeforeTokenSigning, (token) => { if (token.payload.nonce !== undefined || token.payload.email === undefined) tamper(token); });
-    const startUrl = `${apiBase}/api/signin/provider/${key}/start?` + new URLSearchParams(Object.assign({}, device === null ? {} : { device_id: device }, next === undefined ? {} : { next })).toString();
+    const startUrl = `${apiBase}/api/signin/provider/${key}/start?` + new URLSearchParams(Object.assign({}, device === null ? {} : { device_id: device }, next === undefined ? {} : { next }, lt === undefined ? {} : { lt })).toString();
     const start = await rawGet(startUrl);
     const out = { start };
     if (start.status !== 302 || !/^https?:\/\/localhost:\d+\//.test(start.headers.location) || start.headers.location.startsWith(apiBase)) return out;
@@ -728,6 +751,7 @@ async function sectionD({ OAuth2Server, Events }) {
   });
 
   await require('./lib/signin-provider-handoff-scenes.cjs')({ assert, crypto, http, apiBase, issuer, roundTrip, claimsOf, world, resetWorld, logLines, fragment, rawGet, expectRefused, DEVICE, checkAsync });
+  await require('./lib/signin-provider-connect-scenes.cjs')({ assert, crypto, http, apiBase, issuer, roundTrip, claimsOf, world, resetWorld, logLines, fragment, rawGet, expectRefused, DEVICE, checkAsync });
 
   await new Promise((resolve) => api.close(resolve));
   await server.stop();

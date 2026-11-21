@@ -1,4 +1,4 @@
-// OWNS      the provider-sign-in doors: GET /api/signin/providers, GET /api/signin/provider/:key/start, GET /api/signin/provider/:key/callback, POST /api/signin/provider/handoff (P1a, routes/signin-provider-handoff.js)
+// OWNS      the provider-sign-in doors (and the connect step's three signed-in routes, handlers in routes/signin-provider-connect.js): GET /api/signin/providers, GET /api/signin/provider/:key/start, GET /api/signin/provider/:key/callback, POST /api/signin/provider/handoff (P1a, routes/signin-provider-handoff.js)
 // FLOW      page ──▶ start (device id, next) ──▶ start row + __Host-cb_sso ──▶ 302 provider ──▶ callback (cookie → row, code exchange, ID token checks, link lookup) ──▶ handoff row ──▶ 302 web #h=<one-time code>
 // CALLED BY server.js (mounted at /api/signin BEFORE routes/signin.js) · the web's sign-in page (P1a)
 // CARD      18-identity-sign-in-and-access/sign-in
@@ -27,6 +27,11 @@ const { deviceIdOf } = require('../lib/person-session');
 const { contract } = require('../lib/signin-provider-contract');
 const { schemaOptions } = require('../lib/signin-contract');
 const { handoff } = require('./signin-provider-handoff');
+const connect = require('./signin-provider-connect');
+const auth = require('../middleware/auth');
+
+/** a key cannot connect a provider: a person does (as every session route) */
+const personOnly = (req, res, next) => (req.api_key ? problem(req, res, { status: 403, code: 'KEY_CANNOT_SIGN_IN', detail: 'A key cannot sign in — sign in.' }) : next());
 
 const COOKIE = '__Host-cb_sso';
 const COOKIE_SECONDS = 600;
@@ -111,9 +116,12 @@ router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start
   const checks = await startChecks(req, row);
   if (checks.refusal) return refuseVisit(req, res, checks.refusal);
   try {
+    /* connect step: an `lt` (from the signed-in re-proof) turns this visit into a LINK for that one account; a spent, foreign or other-device lt is a finished sign-in */
+    const linking = typeof req.query.lt === 'string' && req.query.lt ? await connect.takeLinkStart(req.query.lt, checks.device, row.key) : null;
+    if (typeof req.query.lt === 'string' && req.query.lt && !linking) return refuseVisit(req, res, 'SSO_HANDOFF');
     const started = await provider.authRequest(row.key);
     const ref = provider.randomRef();
-    await pending.put('start', ref, { provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next });
+    await pending.put('start', ref, Object.assign({ provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next }, linking || {}));
     setCookie(res, ref);
     return res.redirect(302, started.url);
   } catch (failure) {
@@ -176,6 +184,10 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
   if (spent.refusal) return refuseVisit(req, res, spent.refusal);
   const answer = await checkAnswer(row, req.query, spent.started);
   if (answer.refusal) return refuseVisit(req, res, answer.refusal);
+  if (spent.started.intent === 'link') {
+    const word = await connect.finishLink(spent.started, answer.claims, req); // no session here: the result word only
+    return res.redirect(302, provider.webSigninUrl() + '#c=' + encodeURIComponent(word));
+  }
   try {
     const code = await keepHandoff(row, spent.started, answer.claims);
     return res.redirect(302, provider.webSigninUrl() + '#h=' + encodeURIComponent(code));
@@ -187,6 +199,11 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
 
 /* 4 · handoff: the page swaps the one-time #h= code for the session (P1a); the session is in the body, never an address */
 router.post('/provider/handoff', ...contract.checked('POST /provider/handoff', schemaOptions), handoff);
+
+/* 5-7 · connect: a signed-in person links a provider to their own account (re-proof every time), lists the links, unlinks */
+router.get('/provider/links', auth, personOnly, ...contract.checked('GET /provider/links', schemaOptions), connect.list);
+router.post('/provider/link/start', auth, personOnly, ...contract.checked('POST /provider/link/start', schemaOptions), connect.startLink);
+router.delete('/provider/links/:link_id', auth, personOnly, ...contract.checked('DELETE /provider/links/:link_id', schemaOptions), connect.unlink);
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;
