@@ -1720,6 +1720,13 @@
   "GET /api/books/fx-rates": {
    "status": 200,
    "example": {
+    "suggestion": {
+     "rate": 83.25,
+     "source": "manual",
+     "date": "2027-04-05",
+     "source_ref": null,
+     "days_earlier": 3
+    },
     "currency": "INR",
     "ready": true,
     "why": null,
