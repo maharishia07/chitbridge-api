@@ -4949,8 +4949,8 @@
     },
     "POST /api/till/catalogue": {
       "file": "till.js",
-      "trips": 7,
-      "wire": 19,
+      "trips": 8,
+      "wire": 20,
       "fired": true,
       "status": 200,
       "registered_only": true,

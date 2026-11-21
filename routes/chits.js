@@ -91,6 +91,7 @@ const services = require('../lib/services'); // ACC-271: rateOrNull, the one rea
 const taxEngine = require('../lib/tax'); // ⭐ moneyOf — the ONE reading of an issued invoice (the counter's CBTax.moneyOf)
 const taxCopy = require('../lib/tax-copy');
 const { tillMaySend } = require('../lib/chits-till-send'); // the till key's one send: a counter bill to ONE customer
+const receiptLines = require('../lib/receipt-lines'); /* WALK-D D-F-01..05: a goods-in that cannot move stock is refused in words */
 const sendMoneyScope = require('../lib/send-money'); /* ACC-206 A: which chits the engine bills at send, the engine call, the bridge verdict as data, the stamps */
 const billPaper = require('../lib/bill-paper'); /* CTRY-76: the paper a counter bill is, read once at send from the shop's pack — held, or a refused buyer tax id */
 const creditCap = require('../lib/credit-cap'); /* ACC-286: a counter credit note cannot take the credited total past its bill (409 CREDIT_NOTE_OVER_BILL) */
@@ -399,6 +400,7 @@ const SEND_STEPS = [
   sendSuspended,
   sendSeller,
   sendOffers,
+  sendReceiptLines,
   sendMoney,
   sendCeiling,
   sendPartCurrency,
@@ -1468,6 +1470,18 @@ function onlySelfRecipients(recipients) {
     recipients.length &&
     recipients.every((item) => item && (item.self === true || String(item.name || '').toLowerCase() === 'self'))
   );
+}
+
+/**
+ * WALK-D D-F-01..05: a goods-in that cannot move stock (no quantity, none or a negative cost, a quantity past the ceiling, a ghost product, a batch-kept item with no lot, an expired lot, a date that is not YYYY-MM-DD)
+ * is refused 400 in words, under the one error shape - never answered "sent" with the stock unmoved. The tests are lib/receipt-lines (pure, then one catalogue read).
+ */
+async function sendReceiptLines(sendState, req, res) {
+  const chit = { purpose: sendState.purpose, is_draft: sendState.is_draft, business_json: sendState.business_json, line_items: sendState.line_items };
+  const found = receiptLines.refusalOf(chit) || (await receiptLines.catalogueRefusal(chit, sendState.sender_id, withEntity));
+  if (!found) return;
+  res.locals.code = found.code;
+  return problem(req, res, { status: found.status, ...said({ error: 'A line could not be received', code: found.code, message: found.message, line: found.line, field: found.field }, 'CHIT_BAD_REQUEST') });
 }
 
 /** the engine could not price the send: a seller with NO PACK still sells (XC2-1119: money null, not taxed by us, the notice rides the answer), anything else is refused (503, or the pack-missing 422) */
@@ -6990,5 +7004,6 @@ module.exports.sendCashStep = sendCashStep; /* CTRY-77: tests/ctry-77-send-route
 router.holdersAmong = holdersAmong; /* SEC-FIX3 S4 — exported for tests/sec-fix3.test.cjs */
 module.exports.filtersReadable = filtersReadable; /* RAIL-135: tests/c11-10b-rail-shape.test.cjs */
 module.exports.statusBucketFilter = statusBucketFilter;
+module.exports.sendReceiptLines = sendReceiptLines; /* WALK-D: tests/walkd-goods-in-refused.test.cjs runs the real step over express */
 module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
 module.exports.declaredRetention = declaredRetention; /* RAIL-212 */

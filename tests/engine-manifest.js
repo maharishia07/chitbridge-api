@@ -168,6 +168,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  'receipt-lines.js', /* WALK-D: which goods-in lines cannot move stock - reads stock-from-chit and the catalogue, decides no money */
+  'default-tax-rate.js', /* WALK-D: a registered shop's new product takes the pack's standard_rate; the rate is the pack's, the engine prices */
   /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
   'stock-sweep.js',
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
