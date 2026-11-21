@@ -130,8 +130,8 @@ function routesOf(root) {
   routes.forEach((route) => (byFile[route.file] = byFile[route.file] || []).push(route));
   Object.values(byFile).forEach((list) => list.sort((left, right) => left.line - right.line));
   const found = {};
-  const add = (code, key) => ((found[code] = found[code] || new Set()).add(key));
-  routes.forEach((route) => ((route.errors && route.errors.codes) || []).forEach((code) => add(code, route.key)));
+  const addRoute = (code, key) => ((found[code] = found[code] || new Set()).add(key));
+  routes.forEach((route) => ((route.errors && route.errors.codes) || []).forEach((code) => addRoute(code, route.key)));
   const linesOf = {};
   const scanned = scanCodes(base);
   Object.keys(scanned).forEach((code) => scanned[code].at.forEach(([rel, line]) => {
@@ -141,7 +141,7 @@ function routesOf(root) {
     if (!route) return;
     const lines = (linesOf[rel] = linesOf[rel] || fs.readFileSync(path.join(base, rel), 'utf8').split('\n'));
     for (let at = route.line; at < line; at++) if (/^\S/.test(lines[at] || '')) return;
-    add(code, route.key);
+    addRoute(code, route.key);
   }));
   return Object.fromEntries(Object.keys(found).map((code) => [code, [...found[code]].sort()]));
 }

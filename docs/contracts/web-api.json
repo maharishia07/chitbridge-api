@@ -1915,6 +1915,14 @@
       "running_minor": 118000
      }
     ],
+    "months": [
+     {
+      "month": "2026-09",
+      "debit_minor": 118000,
+      "credit_minor": 0,
+      "closing_minor": 118000
+     }
+    ],
     "closing_minor": 118000
    },
    "optional": [

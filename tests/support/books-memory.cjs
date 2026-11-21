@@ -518,7 +518,7 @@ const fakeDb = {
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
     if (/FROM cb_attachment WHERE chit_id = ANY/.test(t)) return { rows: [] }; /* the evidence behind a books row (lib/books-evidence.attach): no file is held in memory */
     /* the repeating entries (b281, lib/books-recurring): in memory the table is NOT there unless a test hands R.use() its own store — the reader takes 42P01 as "not migrated" */
-    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; }
+    if (/FROM recurring_entry/.test(t)) { const e = new Error('relation "recurring_entry" does not exist'); e.code = '42P01'; throw e; } if (t.includes('/* ledger-months */') && fakeDb.T) return require('./ledger-months-memory.cjs')(fakeDb.T, t, v); /* ACC-381 */
     /* FIN-R1: the shop's default terms and every customer's own (lib/finance-terms.customerTerms) — T.shopTerms · T.parties[].terms */
     const T = fakeDb.T || { parties: [] };
     if (/^SELECT terms FROM books_setting/.test(t.trim())) return { rows: [{ terms: T.shopTerms || null }] };
