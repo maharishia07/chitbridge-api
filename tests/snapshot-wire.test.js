@@ -738,10 +738,10 @@ it('⭐⭐ the bill says how many products and how many items, on screen and on 
     'something outside cartCount() is adding line quantities again — that is how "0.25 items" got onto a bill');
   assert.ok(page.indexOf('data-testid="till-count"') > 0, 'the count is not on the screen');
   const slip = page.slice(page.indexOf('function slipHTML(bill, totals){'), page.indexOf('function showSlip'));
-  assert.ok(slip.indexOf("t('Products'") > 0 && slip.indexOf("t('Items'") > 0,
+  assert.ok(slip.indexOf("row('Products'") > 0 && slip.indexOf("row('Items'") > 0,
     'the printed slip does not say how many — the line a customer checks against the bag');
   /* ⚠️ and "Items" must never again label a rupee figure, on any of the three documents */
-  assert.ok(page.indexOf("t('Items', money(") < 0, '"Items" is labelling money again — it is a count word');
+  assert.ok(page.indexOf("row('Items', money(") < 0, '"Items" is labelling money again — it is a count word');
   assert.ok(page.indexOf("<span>Items</span><span>' + money(") < 0, '"Items" labels money in the totals block');
 });
 
