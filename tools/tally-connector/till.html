@@ -22761,13 +22761,13 @@ function dayCloseHTML(d){
     + solid + t('TAKEN', money(d.total), true) + solid
     + (d.taxed ? dash + '<div style="font-weight:700">Tax</div>'
         + Object.keys(d.rate).sort(function(a,b){ return Number(a)-Number(b); }).map(function(r){
-            return t('GST ' + r + '% on ' + money(d.rate[r].base), money(d.rate[r].tax)); }).join('')
+            return t(schemeWord() + ' ' + r + '% on ' + money(d.rate[r].base), money(d.rate[r].tax)); }).join('')
         + (d.returns
             /* B-F-25: TAKEN is net of returns, so with returns the tax lines are shown the same way: sold, returned, net */
-            ? t('Taxable on sales', money(d.taxable_sold || 0)) + t('GST on sales', money(d.tax_sold || 0))
-              + t('Taxable returned', '-' + money(d.taxable_back || 0)) + t('GST returned', '-' + money(d.tax_back || 0))
-              + t('Taxable, net', money(d.taxable)) + t('GST, net', money(d.tax))
-            : t('Taxable', money(d.taxable)) + t('GST total', money(d.tax))) : '')
+            ? t('Taxable on sales', money(d.taxable_sold || 0)) + t(schemeWord() + ' on sales', money(d.tax_sold || 0))
+              + t('Taxable returned', '-' + money(d.taxable_back || 0)) + t(schemeWord() + ' returned', '-' + money(d.tax_back || 0))
+              + t('Taxable, net', money(d.taxable)) + t(schemeWord() + ', net', money(d.tax))
+            : t('Taxable', money(d.taxable)) + t(schemeWord() + ' total', money(d.tax))) : '')
     + dash + '<div style="font-weight:700">How it was paid</div>'
     + (Object.keys(d.modes).length ? Object.keys(d.modes).map(function(k){ return t(esc(k), money(d.modes[k])); }).join('') : '<div>nothing taken</div>')
     + ((d.unasked || 0) > 0

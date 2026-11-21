@@ -39,7 +39,7 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
     assert.strictEqual(d.taxable_sold, 24); assert.strictEqual(d.taxable_back, 0);
   });
   await ok('B-F-25: the report prints sold, returned and net in words', () => {
-    assert.ok(/'sold ' \+ it\.sold \+ ', returned '/.test(h)); assert.ok(/Taxable on sales/.test(h) && /Taxable returned/.test(h) && /GST, net/.test(h));
+    assert.ok(/'sold ' \+ it\.sold \+ ', returned '/.test(h)); assert.ok(/Taxable on sales/.test(h) && /Taxable returned/.test(h) && h.indexOf("schemeWord() + ', net'") > 0);
   });
   await ok('B-F-26: the report date is the shop country\'s order (AU 21/11/2026), not the PC\'s', () => {
     const c = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz'], Object.assign({}, base, { window: { CBLocale: { REGIONS: { AU: { format: 'en-AU' }, US: { format: 'en-US' } }, timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
