@@ -2113,7 +2113,7 @@ async function compareRead(req) {
     try {
       const taxCopy = require('../lib/tax-copy'),
         taxLines = require('../lib/tax-lines'),
-        ledgerCopy = await taxCopy.ledgerFor(e, fetched.to.slice(0, 7));
+        ledgerCopy = await taxCopy.ledgerFor(e, fetched.to.slice(0, 7), { carriedItc: true });
       if ((ledgerCopy.dropped || []).length) throw new Error('ACC-266 C5: ' + ledgerCopy.dropped.length + ' bill(s) could not be read — a short month is not compared');
       fetched.ours.ret = Object.assign(PR.gstr3bBoxes(taxLines.gstr3b(ledgerCopy.ledger, ledgerCopy.me, ledgerCopy.bounds.period)), { short: 'GSTR-3B' });
     } catch (err) {

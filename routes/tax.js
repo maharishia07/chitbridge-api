@@ -105,7 +105,7 @@ router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
     const form = String(req.query.form || 'gstr1').toLowerCase();
     if (!GSTR_FORMS.includes(form)) return problem(req, res, Object.assign(taxSaid(400, 'BAD_FORM', 'form must be one of: ' + GSTR_FORMS.join(', ') + '.'), { field: 'form' }));
     const me = ctx(req);
-    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month, { carriedItc: form === 'gstr3b' });
     /* ACC-266 C5: a return built from a short month is wrong — say so instead of handing out the file */
     if ((dropped || []).length) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', droppedWords(dropped, droppedWhy), { dropped: dropped.slice(0, DROPPED_NAMED) }));
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);
