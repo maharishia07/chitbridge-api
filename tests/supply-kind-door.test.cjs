@@ -36,6 +36,8 @@ eq('the walk shop\'s slab "VAT 0% zero-rated" → zero_rated', suggest('VAT 0% z
 eq('the walk shop\'s slab "VAT exempt" → exempt', suggest('VAT exempt'), 'exempt');
 eq('AU "GST-free bread" → gst_free', suggest('GST-free bread', 'AU'), 'gst_free');
 ['Not zero-rated', 'Non-exempt 0%', 'not exempt', 'Zero-rated or exempt', 'Exempt and zero-rated', 'Exempted', 'Unexempt', 'Nonzero-rated', 'Free sample 0%', 'Tax free delivery', 'Standard 5%', '', 'VAT 0%'].forEach((name) => eq('"' + name + '" → nothing selected', suggest(name), null));
+['Not currently zero-rated', 'No longer exempt', 'Not yet exempt', 'Never zero-rated', "Isn't zero-rated", 'Exempt?? check with accountant', 'Zero-rated?', 'Maybe exempt', 'Not sure zero-rated', 'Exempt (check)', 'TBC exempt', 'Was not zero-rated last year'].forEach((name) => eq('hostile "' + name + '" → nothing selected', suggest(name), null));
+['Rent, not exempt', 'Zero-rated exports', 'VAT 0% zero-rated', 'Zero-rated (exports)', 'Standard 5% / zero-rated exports'].forEach((name) => eq('control "' + name + '" → ' + (/^Rent/.test(name) ? 'nothing' : 'zero_rated'), suggest(name), /^Rent/.test(name) ? null : 'zero_rated'));
 eq('AU "Free sample 0%" → nothing (the word "free" alone is not the kind GST-free)', suggest('Free sample 0%', 'AU'), null);
 eq('AU "Not GST-free" → nothing', suggest('Not GST-free', 'AU'), null);
 eq('AU "Input-taxed rent" → input_taxed', suggest('Input-taxed rent', 'AU'), 'input_taxed');

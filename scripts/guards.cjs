@@ -79,6 +79,7 @@ const GUARDS = [
   'privacy.test.cjs', // ⭐⭐ CO1 + MKT-SRV1: consent rows append-only; every verdict has a code; an out call / offer / WhatsApp without consent refused with it
   'consent-senders.test.cjs', // ⭐⭐ CO1-GATE: every provider send in lib/ routes/ asks lib/privacy.gate, or is EXEMPT with its reason
   'engines-pinned.test.js', // ⭐⭐⭐ every adopted engine is EXACTLY its chitbridge-engines release — no hand edit survives
+  'engine-calls-exist.test.cjs', // ⭐ EGM-T1: the api never calls an engine function its VENDORED copy lacks (the landing trap: tax-lines read gstReturns.zeroWordOf before the engines tag was adopted); red until the adopt lands
   'money-round.test.js', // one rounder (0 wrong in 1.74 M cases, per-currency decimals) and one price reader
   'google-availability.test.cjs', // one output shape: status → Google Merchant availability; nothing Google does not define (M53)
   'one-rounding-rule.test.cjs', // ⭐⭐⭐ no platform-owned file carries a second copy of the rule; cart/pick pages load money.js first; the kit carries it (2026-09-28)
