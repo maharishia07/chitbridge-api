@@ -6,9 +6,10 @@
  *
  * INFRA: plumbing that decides no money, tax or rule of its own: the backfill door and its date, the "not registered" answer, the quantity comparison of a credit note (units, not money), the import's bad-rows
  * file, the invite's remote refusal, a credit limit moved to minor units through money.toMinor.
- * PENDING: these two sum or check money for a page (the tenders of a bill against its total; the input tax the off-rail purchases posted). Whether that is engine (books/counter) or stays here is
+ * Added by readRed: products-import-rows (the import's answer sentence and row filters, RISK plain) and products-media-guard (picture type and who may read it: security, no money) are INFRA.
+ * PENDING: the five moved out of routes in read1129 (books-bs-shape: P&L/BS shapes; chits-send-bill: the send steps; tax-engine-line, tax-line-status: the tax engine's line input and status; till-credit-note-money: credit-note signs) pick or regroup money and tax figures that engines own, so cb-capability decides engine or not, as for the l16 four. And: these two sum or check money for a page (the tenders of a bill against its total; the input tax the off-rail purchases posted). Whether that is engine (books/counter) or stays here is
  * cb-capability's call, as for the l16 four; the money-no-arithmetic guard sees neither. Keep this list small and shrinking.
  */
-const INFRA = ['books-backfill.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js'];
-const PENDING = ['offrail-itc.js', 'tender-sum.js'];
+const INFRA = ['books-backfill.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js', 'products-import-rows.js', 'products-media-guard.js'];
+const PENDING = ['offrail-itc.js', 'tender-sum.js', 'books-bs-shape.js', 'chits-send-bill.js', 'tax-engine-line.js', 'tax-line-status.js', 'till-credit-note-money.js'];
 module.exports = { INFRA, PENDING };
