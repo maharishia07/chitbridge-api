@@ -960,6 +960,7 @@ const GUARDS = [
   'ye-f05-reopen-by-state.test.cjs', // YE-F-05: a year-closed month says by_year, no Reopen month
   'ye-f06-closed-evidence.test.cjs', // YE-F-06: closed year evidence (when, who, how, profit)
   'ye-f09-twelve-months.test.cjs', // YE-F-09: the practice row counts 12 months in a year
+  'ye-f07-overdue-return.test.cjs', // YE-F-07: an overdue BAS is named (firm row + To do)
   'vault-sections.test.js', // test sweep 7 Nov 2026: was in no runner, passes offline
   'vertical-readers-characterisation.test.cjs', // P1-14: the 21 trade-reader answers pinned; the 7 that change under the one resolver are listed
   'acc-215-half-step.test.cjs', // U1 (8 Nov, was run by no CI job): ACC-215 (Athi 2026-11-07, HALF step): an AU cash gap posts as round-off only up to ceil(step/2)-1
