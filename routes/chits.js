@@ -883,7 +883,7 @@ async function sendBody(sendState, req, res) {
      refused each one ("an entry in INR needs its rate to AUD"), so no sale ever posted. Decided below from the sender's row that
      the self-copy preference already reads (one query, not two). */
   const currency_code = (business_json && business_json.currency) || null;
-  Object.assign(sendState, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code });
+  Object.assign(sendState, { purpose, manual_subject, line_items, business_json, pageAsked, pageStamp, currency_code, reverse_charge: req.body.reverse_charge }); /* AQ-F-01: the bill-wide reverse-charge word, read by lib/rcm-lines */
 }
 /** the business data a send body carries: its business_json, else its Compose-panel schema_values wrapped as one, else null */
 function businessJsonOf(body) {

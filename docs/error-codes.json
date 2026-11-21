@@ -6753,6 +6753,16 @@
    "raised_by": []
   },
   {
+   "code": "RCM_INPUT_UNREADABLE",
+   "status": "422",
+   "title": "Reverse charge not understood",
+   "shopkeeper": "A reverse-charge answer on this bill could not be read, so this was not made. Nothing was saved.",
+   "hint": "Say true or false, or name the category on the line (gta, legal ...), then try again.",
+   "owner_area": "accounting",
+   "since": "2026-11-22",
+   "raised_by": []
+  },
+  {
    "code": "READ_ONLY",
    "status": "403",
    "title": "View only",

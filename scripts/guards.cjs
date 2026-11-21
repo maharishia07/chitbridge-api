@@ -1074,6 +1074,9 @@ const GUARDS = [
   'tax-line-modules-1129.test.cjs', // tax-line-status + tax-engine-line (moved out of tax-lines): RATED/ZERO/UNAVAILABLE, the refusal, the engine line's fallbacks
   'route-modules-1129.test.cjs', // the small modules moved out of the four big route files (till credit-note money, books statement shape, products media/import, chits send steps): one rule each, the refusal, the fail-closed case
   'tax-explicit-1129.test.cjs', // TAX-EXPLICIT (1129): every bill line is RATED, ZERO with a reason, or UNAVAILABLE (refused in words, TAX_LINE_UNAVAILABLE); IN 1,000 at 18% → 1,180 · exempt · AU GST-free · AE 5% · no rate · unreadable cess
+  'rcm-input-1129.test.cjs', // AQ-F-01 (1129): ONE resolver says which lines are reverse charge (lib/rcm-lines): the line's category, or reverse_charge:true + the pack's HSN list; HSN alone only asks; an unreadable word is a 422 RCM_INPUT_UNREADABLE
+  'rcm-return-1129.test.cjs', // AQ-F-03 (1129): a credit note on a reverse-charge bill posts Dr RCM payable / Cr Input per rate and takes 3.1(d) and the credit back in the 3B (needs the engines posting + gst-returns change)
+  'gstr1-rchrg-1129.test.cjs', // AQ-F-02 (1129): the seller's GSTR-1 rchrg is Y where the invoice's own RegRev is Y (needs the engines gst-returns change)
   'tax-zero-guard.test.cjs', // TAX-EXPLICIT (1129): no new `<taxish> || 0` / `?? 0` and no swallowing catch in the tax files unless tests/support/tax-zero-allow.json names it with its reason
   'walkr-1129.test.cjs', // WALK R (1129): zero-rated / exempt sales on their own ledgers and VAT201 boxes 4/5 (hand case in fils), the issuer posts its rail credit note, the buyer's note waits for the supplier list
   'walkt-1129.test.cjs', // WALK T (1129) T-F-01: VAT201 Box 9 counts only a bill's 5% lines (hand 12000 / 600 in fils, not 41000), 0% lines of the same bill out, a reversal nets away
