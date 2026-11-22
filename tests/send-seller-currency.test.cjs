@@ -89,13 +89,7 @@ async function send({ seller, purpose = 'order', stated, sender = SYD, business_
     sender_id: sender,
     purpose,
     business_json: business_json || (stated ? { currency: stated } : {}),
-<<<<<<< HEAD
-      line_items: lines || [{ particulars: 'Pump seal', quantity: 20, price: 650, gst_rate: 18 }],
-||||||| 01606c1f0
-    line_items: [{ particulars: 'Pump seal', quantity: 20, price: 650, gst_rate: 18 }],
-=======
     line_items: lines || [{ particulars: 'Pump seal', quantity: 20, price: 650, gst_rate: 18 }],
->>>>>>> fix/ap-1129
     receiverDetails: [{ kind: 'to', entity_id: seller, bridge_id: 'CB', display_name: 'x', all_role: 'receiver' }],
     /* what sendPrefs (which runs first) left: the buyer's stated money, else the SENDER's */
     currency_code: stated ? String(stated).toUpperCase() : senderMoney
@@ -133,18 +127,6 @@ const askedSellerMoney = () => asked.rows.some((s) => /^SELECT currency_code FRO
     const st = await send({ seller: CHE_LOCAL, stated: 'aud' });
     assert.strictEqual(st.currency_code, 'INR');
   });
-<<<<<<< HEAD
-  await t('⭐ AI-F-01: 10 x 65.00 USD between two AUD shops stays USD (carried, never relabelled A$650.00); a stated AUD or an unknown code still gets the sellers money', async () => {
-    const lines = [{ particulars: 'Pump seal', quantity: 10, price: 65 }];
-    const usd = await priced({ seller: MEL, stated: 'usd', lines });
-    assert.strictEqual(usd.st.currency_code, 'USD');
-    assert.strictEqual(usd.refused, false);
-    assert.deepStrictEqual([usd.st.moneyBlock && usd.st.moneyBlock.currency_code, usd.st.moneyBlock && usd.st.moneyBlock.total], ['USD', 650]); /* 10 x 65.00 = 650.00, 65000 cents, in US dollars */
-    assert.strictEqual((await send({ seller: MEL, stated: 'aud', lines })).currency_code, 'AUD');
-    assert.strictEqual((await send({ seller: MEL, stated: 'zzz', lines })).currency_code, 'AUD');
-  });
-||||||| 01606c1f0
-=======
   await t('⭐ AI-F-01: 10 x 65.00 USD between two AUD shops stays USD (carried, never relabelled A$650.00); a stated AUD or an unknown code still gets the sellers money', async () => {
     const lines = [{ particulars: 'Pump seal', quantity: 10, price: 65, gst_rate: 10 }];
     const usd = await priced({ seller: MEL, stated: 'usd', lines });
@@ -154,7 +136,6 @@ const askedSellerMoney = () => asked.rows.some((s) => /^SELECT currency_code FRO
     assert.strictEqual((await send({ seller: MEL, stated: 'aud', lines })).currency_code, 'AUD');
     assert.strictEqual((await send({ seller: MEL, stated: 'zzz', lines })).currency_code, 'AUD');
   });
->>>>>>> fix/ap-1129
   await t('a local seller whose row holds no currency: lib/regional.currencyFor, the one resolver, answers', async () => {
     const st = await send({ seller: CHE_BARE });
     assert.strictEqual(st.currency_code, 'INR');
