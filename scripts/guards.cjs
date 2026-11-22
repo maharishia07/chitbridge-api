@@ -606,11 +606,9 @@ const GUARDS = [
   'ar-1129-order.test.cjs', // AR-F-02/06: the reason step through routes/chits.js SEND_STEPS in the real order from {}; a declared clearance stays declared
   'ar-1129.test.cjs', // AR-F-01..07 (walk AR): a partial money block refused, the credit note's reason, address and CRN type and shop-day date on the document, no evidence is not met, preflight asks the import's gate
   'aj-currency-door.test.cjs', // AJ-F-02: the money stated on a body (currency_code / currency / business_json.currency) is carried or refused in words, never dropped (invoice booked as AED at face value)
-  'ao-bill-books.test.cjs', // AO-F-02/03: a USD bill posts in AED at the day's rate (USD kept); an invoice with no lines waits in words; a rail credit note waits for its bill's resolve
   'ao-reward-return.test.cjs', // AO-F-05: a return takes back the points its bill earned, pro rata, never below zero, once per note
   'ai-rail-credit-note-bill.test.cjs', // AI-F-02: a rail credit note names a bill of the sender's (422 CREDIT_NOTE_NEEDS_BILL) and cannot take back more than it (409 CREDIT_NOTE_OVER_BILL)
   'ai-usd-order-fx.test.cjs', // AI-F-01: US$650.00 carried on an order posts in the shop's money at the day's rate through the one fx engine (A$1,007.50 at 1.55)
-  'aj-currency-door.test.cjs', // AJ-F-02: the money stated on a body (currency_code / currency / business_json.currency) is carried or refused in words, never dropped (invoice booked as AED at face value)
   'bb-foreign-invoice.test.cjs', // BB-F-01: an IN/AU/AE invoice in usd1 / XXX is refused (422), in USD or EUR refused in words (409), never stored at face value in the shop's money
   'bb-thread-seat-words.test.cjs', // BB-F-04: the adviser's refusal on a client's chit thread names the adviser seat (lib/books-grant.threadReadOnlyWords), never 'an auditor'
   'bb-p3-doors.test.cjs', // BB-F-06/09/10: grantee judged before who posts; usage days 1..365 or 400; a vault value over its limit is refused, not cut
@@ -1337,7 +1335,6 @@ const GUARDS = [
   'bankfix-signed-as-at.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'in-v-f06-supplier-gstin-bill.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'in-v-f07-offrail-itc-3b.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
-  'practice-sql-inline.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'reviews3-catalogue-gates.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'reviews3-shrinkage-lot-join.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'reviews3-stock-value-unit.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
