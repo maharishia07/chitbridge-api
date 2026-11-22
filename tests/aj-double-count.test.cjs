@@ -19,7 +19,7 @@ function grab(name) {
   return src.slice(at, i + 1);
 }
 const grabConst = (name) => { const m = src.match(new RegExp('^const ' + name + ' = .*$', 'm')); assert.ok(m, name + ' is gone'); return m[0]; };
-const ctx = { require: (m) => require(path.join(root, m.replace(/^\.\.\//, ''))), Date, Array, Set, Map };
+const ctx = { require: (m) => require(path.join(root, m.replace(/^\.\.\//, ''))), Date, Array, Set, Map, isCounterTakings: require('../lib/till-credit-note-money').isCounterTakings };
 vm.createContext(ctx);
 const billRow = (row) => ({ no: row.business_json.bill_no, till: { id: row.business_json.till.id, name: null }, kind: 'sale', total: row.total, payments: [{ how: 'cash', amount: row.total }], refunds: [] });
 ctx.billRow = billRow;
