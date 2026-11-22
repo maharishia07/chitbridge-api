@@ -511,15 +511,11 @@
     },
     "may": {
      "ask": {
-      "ok": true,
-      "why": "read_only",
-      "say": "Your access is view-only. You can read this chit but not change it."
+      "ok": true
      }
     }
    },
    "optional": [
-    "may.ask.say",
-    "may.ask.why",
     "rail_chits[].business_json.bank_query",
     "rail_chits[].business_json.payment_advice"
    ]
@@ -567,10 +563,7 @@
       "group": {
        "code": "1300",
        "name": "Customers (Sundry Debtors)"
-      },
-      "change_minor": 0,
-      "change_bp": null,
-      "change_over": false
+      }
      }
     ],
     "liabilities": [
@@ -591,10 +584,7 @@
         "code": "2200",
         "name": "Output CGST"
        }
-      ],
-      "change_minor": 0,
-      "change_bp": null,
-      "change_over": false
+      ]
      }
     ],
     "equity": [
@@ -606,10 +596,7 @@
       "role": "profit_to_date",
       "prior_month_minor": -70000,
       "prior_year_minor": 0,
-      "group": null,
-      "change_minor": 0,
-      "change_bp": null,
-      "change_over": false
+      "group": null
      }
     ],
     "total_liabilities_minor": 188000,
@@ -752,21 +739,12 @@
     }
    },
    "optional": [
-    "assets[].change_bp",
-    "assets[].change_minor",
-    "assets[].change_over",
     "by_line.assets[].accounts[].term",
     "by_line.assets[].part",
     "by_line.assets[].term",
     "by_line.liabilities[].accounts[].term",
     "by_line.liabilities[].part",
     "by_line.liabilities[].term",
-    "equity[].change_bp",
-    "equity[].change_minor",
-    "equity[].change_over",
-    "liabilities[].change_bp",
-    "liabilities[].change_minor",
-    "liabilities[].change_over",
     "liabilities[].net_of",
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
@@ -825,12 +803,7 @@
      "estimated": true,
      "why": "This is the total the books owe for tax; the return for the period itself could not be read, so the amount and its date are an estimate.",
      "form": "GSTR-3B",
-     "short": "GST",
-     "earlier": {
-      "payable_minor": 0,
-      "before": "2027-04-01",
-      "counted": false
-     }
+     "short": "GST"
     },
     "series": [
      {
@@ -855,9 +828,7 @@
      }
     ]
    },
-   "optional": [
-    "gst.earlier"
-   ]
+   "optional": []
   },
   "GET /api/books/cheques": {
    "status": 200,
@@ -902,7 +873,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "a965e6db-5a2a-43c5-8c11-4075e2370b0e",
+      "snapshot_id": "fe5e9a83-9e0b-460e-9418-14fc8c4ec94e",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -912,7 +883,7 @@
        "bs"
       ],
       "lines": 22,
-      "created_at": "2026-09-29T10:01:05.000Z"
+      "created_at": "2026-09-29T10:01:03.000Z"
      }
     ]
    },
@@ -924,7 +895,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "a965e6db-5a2a-43c5-8c11-4075e2370b0e",
+     "snapshot_id": "fe5e9a83-9e0b-460e-9418-14fc8c4ec94e",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1439,14 +1410,6 @@
      "worst": "d90_plus",
      "no_terms_minor": 0,
      "terms": "ok"
-    },
-    "tb_control": {
-     "customer": {
-      "list_minor": 118000,
-      "tb_minor": 118000,
-      "differs_minor": 0
-     },
-     "supplier": null
     }
    },
    "optional": [
@@ -1467,8 +1430,7 @@
     "parties[].payable.bills[].early.record.body.lines[].party",
     "parties[].payable.bills[].held_words",
     "parties[].payable.early.record.body.lines[].party",
-    "payables",
-    "tb_control"
+    "payables"
    ],
    "also_optional": [
     "parties[].payable.bills[].disputed",
@@ -1608,7 +1570,7 @@
       "source": "manual",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:49.000Z"
+      "created_at": "2026-09-29T10:01:47.000Z"
      }
     ],
     "suggestion": {
@@ -1659,7 +1621,7 @@
     "missing": [],
     "gain_minor": 75000,
     "posted": {
-     "entry_id": "00000000-0000-4000-8000-000000000365",
+     "entry_id": "00000000-0000-4000-8000-000000000366",
      "entry_no": "MJ/2027-28/000003"
     }
    },
@@ -1710,6 +1672,7 @@
       "todo": "accept",
       "name": null,
       "candidates": [],
+      "wait": "acceptance",
       "source": {
        "chit_id": "bill1",
        "ref": null,
@@ -1779,10 +1742,7 @@
        "doc": null,
        "files": [],
        "count": 0,
-       "flag": null,
-       "flag_why": "No tax invoice on file",
-       "cite": "ato.gov.au",
-       "cite_status": "checked"
+       "flag": null
       }
      }
     ],
@@ -1797,9 +1757,6 @@
     "closing_minor": 118000
    },
    "optional": [
-    "lines[].evidence.cite",
-    "lines[].evidence.cite_status",
-    "lines[].evidence.flag_why",
     "lines[].source_chit_id"
    ]
   },
@@ -1824,17 +1781,9 @@
      "why": "no sales posted in this period",
      "prior": {
       "minor": null,
-      "why": "no sales posted in this period",
-      "currency": "INR",
-      "through": "2026-04-09",
-      "bills": 1,
-      "partial": false
+      "why": "no sales posted in this period"
      },
-     "change_bp": null,
-     "currency": "INR",
-     "through": "2027-04-09",
-     "bills": 1,
-     "partial": false
+     "change_bp": null
     },
     "bars": [
      {
@@ -2145,19 +2094,11 @@
       },
       "reopen": {
        "may": false,
-       "why": null,
-       "first": {
-        "fiscal_year": "2026-27",
-        "period": 1,
-        "start_date": "2026-04-01"
-       }
+       "why": null
       },
       "lock_trail": [],
       "before_books": true,
-      "profit_minor": -70000,
-      "open_below_locked": true,
-      "checked": 0,
-      "of": 0
+      "profit_minor": -70000
      }
     ],
     "books_start": {
@@ -2383,9 +2324,7 @@
       "due": "2025-10-28",
       "ended": true,
       "stagger": 1,
-      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
-      "state": "open",
-      "closed": false
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
      }
     ],
     "period": {
@@ -2397,9 +2336,7 @@
      "due": "2026-10-28",
      "ended": true,
      "stagger": 1,
-     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
-     "state": "open",
-     "closed": false
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
     },
     "boxes": [
      {
@@ -2472,14 +2409,10 @@
     "asked.stagger",
     "emirates",
     "needs",
-    "period.closed",
     "period.due_rule",
     "period.stagger",
-    "period.state",
-    "periods[].closed",
     "periods[].due_rule",
     "periods[].stagger",
-    "periods[].state",
     "staggers",
     "unsupported_input",
     "why"
@@ -2573,11 +2506,7 @@
       "group": "sundry_debtors",
       "dr_minor": 118000,
       "cr_minor": 0,
-      "net_minor": 118000,
-      "prior_net_minor": 100000,
-      "change_minor": 18000,
-      "change_bp": 1800,
-      "change_over": false
+      "net_minor": 118000
      }
     ],
     "over_rule": {
@@ -2588,16 +2517,9 @@
     "compare": null,
     "total_dr_minor": 297000,
     "total_cr_minor": 297000,
-    "balanced": true,
-    "bank": []
+    "balanced": true
    },
-   "optional": [
-    "bank",
-    "rows[].change_bp",
-    "rows[].change_minor",
-    "rows[].change_over",
-    "rows[].prior_net_minor"
-   ]
+   "optional": []
   },
   "GET /api/books/year/:fy/status": {
    "status": 200,
@@ -2647,14 +2569,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-11-16T20:43:06.646Z",
+      "created_at": "2026-11-17T05:23:08.202Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-11-16T20:43:06.646Z"
+       "at": "2026-11-17T05:23:08.202Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -2683,7 +2605,7 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-11-20",
+      "due_day": "2026-11-21",
       "assignee_user_id": "E1",
       "holders": [
        {
@@ -2693,7 +2615,7 @@
       ],
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-11-19T20:43:04.648Z",
+      "last_at": "2026-11-20T05:22:58.339Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2726,7 +2648,7 @@
       "why": null
      }
     },
-    "shop_day": "2026-11-21"
+    "shop_day": "2026-11-22"
    },
    "optional": []
   },
@@ -2741,13 +2663,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-11-20T20:43:04.624Z",
-      "due_day": "2026-11-20",
+      "due_at": "2026-11-21T05:22:58.201Z",
+      "due_day": "2026-11-21",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-11-21T20:43:04.625Z",
+      "created_at": "2026-11-22T05:22:58.206Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2758,7 +2680,7 @@
     "limit": 2,
     "late": 1,
     "today": 0,
-    "shop_day": "2026-11-21",
+    "shop_day": "2026-11-22",
     "may": {
      "write": {
       "may": true,
@@ -2793,7 +2715,6 @@
       "bridge_id": "CBX",
       "email": "meena@example.com",
       "phone": "+919840099999",
-      "otp_contact": null,
       "gstn": null,
       "city": "Madurai",
       "status": "active",
@@ -2869,11 +2790,7 @@
       "unbilled": {
        "n": 0,
        "minor": 0,
-       "currency": null,
-       "by_currency": [],
-       "no_currency": 0,
-       "unpriced": 0,
-       "cost_hidden": false
+       "currency": null
       },
       "contact_prefs": {
        "migrated": false,
@@ -2989,11 +2906,7 @@
     "parties[].may_trade.why",
     "parties[].supplier",
     "parties[].terms.customer",
-    "parties[].terms.supplier",
-    "parties[].unbilled.by_currency",
-    "parties[].unbilled.cost_hidden",
-    "parties[].unbilled.no_currency",
-    "parties[].unbilled.unpriced"
+    "parties[].terms.supplier"
    ]
   },
   "GET /api/crm/parties/:id": {
@@ -3006,7 +2919,6 @@
     "bridge_id": "CBX",
     "email": "meena@example.com",
     "phone": "+919840099999",
-    "otp_contact": null,
     "gstn": null,
     "city": "Madurai",
     "status": "active",
@@ -3177,11 +3089,11 @@
     "unbilled": {
      "n": 0,
      "minor": 0,
-     "currency": null,
-     "by_currency": [],
-     "no_currency": 0,
-     "unpriced": 0,
-     "cost_hidden": false
+     "currency": null
+    },
+    "bills": {
+     "n": 1,
+     "last_at": "2026-09-01T00:00:01.000Z"
     },
     "migrated": true,
     "followups": [],
@@ -3209,11 +3121,7 @@
     "may_trade.why",
     "supplier",
     "terms.customer",
-    "terms.supplier",
-    "unbilled.by_currency",
-    "unbilled.cost_hidden",
-    "unbilled.no_currency",
-    "unbilled.unpriced"
+    "terms.supplier"
    ]
   },
   "GET /api/crm/parties/:id #404": {
@@ -3242,7 +3150,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-11-19T20:43:04.536Z",
+      "due_at": "2026-11-20T05:22:57.432Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -3460,9 +3368,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-11-16T20:43:06.646Z",
+      "sent_at": "2026-11-17T05:23:08.202Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-11-17T20:43:06.646Z",
+      "first_bill_at": "2026-11-18T05:23:08.202Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -3487,7 +3395,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-11-17T20:43:06.646Z",
+        "at": "2026-11-18T05:23:08.202Z",
         "value": 480,
         "currency": "INR"
        }
@@ -4138,7 +4046,7 @@
     },
     "lines_assigned_n": 1,
     "client": null,
-    "created_at": "2026-11-21T19:43:04.971Z",
+    "created_at": "2026-11-22T04:23:00.025Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -4369,7 +4277,7 @@
       },
       "lines_assigned_n": 1,
       "client": null,
-      "created_at": "2026-11-21T19:43:04.971Z",
+      "created_at": "2026-11-22T04:23:00.025Z",
       "age_days": 0,
       "seen_status": null,
       "actions": {
@@ -4467,7 +4375,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-11-21T20:43:07.474Z"
+     "shared_at": "2026-11-22T05:23:11.335Z"
     }
    },
    "optional": []
@@ -4526,13 +4434,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T20:43:04.624Z",
-     "due_day": "2026-11-20",
+     "due_at": "2026-11-21T05:22:58.201Z",
+     "due_day": "2026-11-21",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-11-21T20:43:04.629Z",
-     "created_at": "2026-11-21T20:43:04.625Z",
+     "done_at": "2026-11-22T05:22:58.224Z",
+     "created_at": "2026-11-22T05:22:58.206Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -4755,7 +4663,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "a965e6db-5a2a-43c5-8c11-4075e2370b0e",
+    "snapshot_id": "fe5e9a83-9e0b-460e-9418-14fc8c4ec94e",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -4913,7 +4821,7 @@
      "source": "manual",
      "source_ref": null,
      "entered_by": "11111111-1111-4111-8111-111111111111",
-     "created_at": "2026-09-29T10:01:49.000Z"
+     "created_at": "2026-09-29T10:01:47.000Z"
     }
    },
    "optional": []
@@ -4938,7 +4846,7 @@
       "source": "official",
       "source_ref": "rates.csv",
       "entered_by": "11111111-1111-4111-8111-111111111111",
-      "created_at": "2026-09-29T10:01:50.000Z"
+      "created_at": "2026-09-29T10:01:48.000Z"
      }
     ]
    },
@@ -5375,7 +5283,8 @@
     ],
     "sheet": null,
     "sheets": null,
-    "header_row": 1
+    "header_row": 1,
+    "header_hint": null
    },
    "optional": [
     "sample[].*Code",
@@ -5425,7 +5334,7 @@
     },
     "refusal": null,
     "notes": [
-     "Suspense will hold A$6,600.00 until the open invoices and bills are moved in."
+     "Suspense will hold A$5,700.00 debit. A$2,200.00 debit of it clears when the open invoices and bills are moved in. This stays until you move it: Unknown Ledger A$3,500.00 debit (not moved in). Add the ledger under Shop ledgers, then move the amount from Suspense to it with a journal."
     ],
     "country": {
      "shop": "AU",
@@ -5470,7 +5379,8 @@
         "GST on Income = Taxable supply 10%"
        ],
        "dr_minor": 1523050,
-       "cr_minor": 0
+       "cr_minor": 0,
+       "unmoved_minor": 350000
       },
       "code": "tax_code"
      }
@@ -5509,6 +5419,7 @@
     "rows[].data.rec",
     "rows[].data.source_code",
     "rows[].data.suggest",
+    "rows[].data.unmoved_minor",
     "tax_codes",
     "totals"
    ],
@@ -5956,13 +5867,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T20:43:04.624Z",
-     "due_day": "2026-11-20",
+     "due_at": "2026-11-21T05:22:58.201Z",
+     "due_day": "2026-11-21",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-11-21T20:43:04.625Z",
+     "created_at": "2026-11-22T05:22:58.206Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -6120,9 +6031,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-11-21T20:43:04.623Z",
+     "at": "2026-11-22T05:22:58.200Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T20:43:04.623Z"
+     "created_at": "2026-11-22T05:22:58.200Z"
     }
    },
    "optional": []
@@ -6137,9 +6048,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-11-21T20:43:04.650Z",
+     "at": "2026-11-22T05:22:58.348Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T20:43:04.650Z"
+     "created_at": "2026-11-22T05:22:58.348Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -6148,13 +6059,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-11-24T00:00:00.000Z",
-     "due_day": "2026-11-24",
+     "due_at": "2026-11-25T00:00:00.000Z",
+     "due_day": "2026-11-25",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-11-21T20:43:04.650Z",
+     "created_at": "2026-11-22T05:22:58.349Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -6228,7 +6139,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "5615dca9-f02f-43e0-bf2a-2ce5dae6ac0b",
+    "send_ref": "eeaed046-3780-41ac-8054-c5498f00b382",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
