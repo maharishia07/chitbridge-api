@@ -30,9 +30,9 @@ function functionsOf(lines) {
   lines.forEach((line, index) => {
     if (/^\s*(?:if|for|while|switch|catch|else)\b/.test(line)) return;
     for (const shape of FN_DEFS) {
-      const hit = shape.exec(line);
-      if (!hit || KEYWORDS.has(hit[2])) continue;
-      const indent = hit[1].length;
+      const defMatch = shape.exec(line);
+      if (!defMatch || KEYWORDS.has(defMatch[2])) continue;
+      const indent = defMatch[1].length;
       let to = index + 1;
       if (!/;\s*(?:\/[*/].*)?$/.test(line.trim())) {
         for (let at = index + 1; at < lines.length; at++) {
@@ -44,7 +44,7 @@ function functionsOf(lines) {
           break;
         }
       }
-      found.push({ name: hit[2], from: index + 1, to, table: shape === FN_DEFS[FN_DEFS.length - 1] });
+      found.push({ name: defMatch[2], from: index + 1, to, table: shape === FN_DEFS[FN_DEFS.length - 1] });
       break;
     }
   });
