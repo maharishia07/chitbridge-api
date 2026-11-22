@@ -12,7 +12,11 @@ const path = require('path');
 const SCRIPTS = path.join(__dirname, '..', 'scripts');
 const TESTS = __dirname;
 const { GUARDS } = require('../scripts/guards-list.cjs');
-const parts = [1, 2, 3].map((n) => require('../scripts/guards-list-' + n + '.cjs').GUARDS_PART);
+const parts = [
+  require('../scripts/guards-list-1.cjs').GUARDS_PART,
+  require('../scripts/guards-list-2.cjs').GUARDS_PART,
+  require('../scripts/guards-list-3.cjs').GUARDS_PART,
+];
 const { guardsListText } = require('./support/guards-list-text.cjs');
 
 let pass = 0;
