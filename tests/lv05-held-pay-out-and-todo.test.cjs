@@ -2,7 +2,7 @@
  * lv05-held-pay-out-and-todo.test.cjs — LV-05 / LV-06 (lens verify 22 Nov), through real Express, the real route order, over the in-memory ledger.
  * HAND-COMPUTED  shop with books_owner_approves ON:
  *                the shop's Bookkeeper seat (manager hat, editor) paying a supplier OUT (POST /payments) = 403 OWNER_ONLY in words, nothing posted; money IN is not refused by the gate;
- *                the owner pays out (not refused); with the flag OFF the Bookkeeper pays out (unchanged).
+ *                the owner pays out (not refused); with the flag OFF the Bookkeeper is refused too (22 Nov decision item 5, plain words).
  *                GET /todo: the owner is told of the one held entry (kind entries_to_ok, count 1); a Bookkeeper seat and a view-only seat are told of none (they cannot accept it).
  * Fails on the parent: POST /payments had no held gate (the manager's payment out reached the door) and GET /todo listed the held action to every seat.
  * Run: BOOKS_ENGINES_SRC=… node tests/lv05-held-pay-out-and-todo.test.cjs
@@ -53,7 +53,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('flag on: the Bookkeeper seat recording money IN is not refused by the gate', !refused(await m('POST', '/payments', pay('in'))));
   ok('flag on: the owner pays out (not refused)', !refused(await o('POST', '/payments', pay('out'))));
   flag = 'off';
-  ok('flag off: the Bookkeeper pays out as before (not refused)', !refused(await m('POST', '/payments', pay('out'))));
+  ok('flag off: the Bookkeeper is still refused a payment out (22 Nov decision item 5: pay-outs are owner-only), in the plain words', refused(await m('POST', '/payments', pay('out'))));
   flag = 'on';
   const kinds = (r) => (Array.isArray(r.body) ? r.body : []).map((k) => k.kind);
   const ownerTodo = await o('GET', '/todo');
