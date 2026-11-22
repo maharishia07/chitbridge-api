@@ -42,7 +42,7 @@ t('the page loads it before its main script, with the missing-file hook', () => 
 console.log('\n== till-dayrep · the sums, as the bills were issued ==\n');
 const ctx = vm.createContext({
   esc: (s) => String(s), money: (n) => 'Rs ' + n, rmoney: (n) => Math.round(n * 100) / 100, r2: (n) => Math.round(n * 100) / 100,
-  hhmm: () => '10:00', bohniOf: () => null, schemeWord: () => 'GST', cbQuiet: () => {}, window: {}
+  hhmm: () => '10:00', bohniOf: () => null, schemeWord: () => 'GST', cbQuiet: () => {}, isReturnRow: (b) => !!(b && b.kind === 'credit_note'), window: {}
 });
 vm.runInContext(part, ctx);
 t('1 bill / 2 bills: no table says "1 bills"', () => { assert.strictEqual(ctx.dayRepCount(1, 'bill', 'bills'), '1 bill'); assert.strictEqual(ctx.dayRepCount(2, 'bill', 'bills'), '2 bills'); });

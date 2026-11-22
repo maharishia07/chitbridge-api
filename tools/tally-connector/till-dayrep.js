@@ -1,5 +1,5 @@
 /* app/till-dayrep.js — THE DAY REPORT'S AGGREGATION AND TABLES, a part of the till page (till.html) kept in its own file to hold the page's size row (2026-11-28; no behaviour changed).
- * Classic script, shared global scope with till.html: it reads the page's own money(), rmoney(), r2(), esc(), hhmm(), bohniOf(), schemeWord() and CBTax at call time.
+ * Classic script, shared global scope with till.html: it reads the page's own money(), rmoney(), r2(), esc(), hhmm(), bohniOf(), schemeWord(), isReturnRow() and CBTax at call time.
  *
  * OWNER     cb-counter (the till)
  * RISK      money (the day's takings as the owner reads them)
