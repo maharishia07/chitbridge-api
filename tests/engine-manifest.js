@@ -355,7 +355,7 @@ const INFRA_LIBS = [
   'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
-  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js',
+  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js', 'books-locked-wait.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
   'books-cashflow.js', 'books-side-items.js', /* SPEED 1129: which party items a control account's reader loads (open documents from today, every row for a past day): a choice of rows, no figure */
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
