@@ -81,7 +81,7 @@ async function asReader(reader) {
     await q('POST', '/enable', {});
     await X.B.postEntry(X.db, SHOP, { type: 'sale_bill', date: '2026-10-09', currency: 'INR', party: RAVI, source_chit_id: 'c0000000-0000-4000-8000-00000000000e', source_ref: 'chit:e', by_rate: [{ rate: 0, taxable: 1180, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
     await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-01', currency: 'INR', party: ANAND, source_chit_id: 'c0000000-0000-4000-8000-00000000000b', source_ref: 'chit:k', by_rate: [{ rate: 0, taxable: SUP_BILL / 100, cgst: 0, sgst: 0, igst: 0 }], paid: {}, round_off: 0 });
-    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', display_name: 'Ramesh' };
+    if (reader !== 'owner') who.current = { identity_id: '55555555-5555-4555-8555-555555555555', identity_type: 'actor', parent_entity_id: SHOP, access_level: 'editor', hat: 'manager', display_name: 'Ramesh' };
     for (const [side, party, amount] of [['in', RAVI, 200000], ['out', ANAND, SUP_PAY]]) {
       const pay = { party_id: party, direction: side, currency: 'INR', mode: 'cash', amount_minor: amount, allocate: 'oldest_first' };
       const reads = [];

@@ -714,7 +714,8 @@ router.post('/supplier-acceptance', auth, writeGate, ...checked('POST /supplier-
         ORDER BY (bridge_id = $1) DESC LIMIT 1`,
       [handle]
     );
-    if (!s.rows.length) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such supplier'));
+    /* LV-07 (SEC-92): the readiness of a shop is shown only to that shop or to one that lists it as a party, as the GET above: every other handle answers as an unknown one */
+    if (!s.rows.length || !(await mayReadPassport(req, s.rows[0].identity_id))) return problem(req, res, said({ status: 404, code: 'NOT_FOUND' }, 'Not found', 'No such supplier'));
 
     /**
      * ⚠️⚠️ THE SUMMARY IS TAKEN HERE, ON THE SERVER — NEVER ACCEPTED FROM THE CLIENT. A snapshot posted by the

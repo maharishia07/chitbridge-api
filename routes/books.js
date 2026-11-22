@@ -229,7 +229,7 @@ router.post('/backfill', auth, owner, on, ...checked('POST /backfill'), async (r
   }
 });
 // @does Nothing in -> we read the start day and how many bills before it are in the opening balances -> the start day and the words the Books screen says.
-router.get('/backfill', auth, on, ...checked('GET /backfill'), async (req, res) => {
+router.get('/backfill', auth, owner, on, ...checked('GET /backfill'), async (req, res) => {
   try {
     res.json(await require('../lib/books-backfill').status(ctx(req)));
   } catch (err) {
@@ -982,8 +982,7 @@ function knownMode(body, shop) {
 function allocateOf(body) {
   return body.allocate === 'none' ? 'none' : body.allocate === 'oldest_first' ? 'oldest_first' : null;
 }
-/** FIN-79: the direction a payment body names — in or out; left out it is in; anything else (both) is null, a question */
-const directionOf = (body) => (body.direction == null || body.direction === 'in' ? 'in' : body.direction === 'out' ? 'out' : null);
+const { directionOf, payOut } = require('../lib/pay-out-gate').make({ UUID, isOwner, isInHouseAccountant, ctx, withEntity, store: S, problem, refusalOf }); /* FIN-79 directionOf · AK-F-02 payOut: who may pay a supplier */
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode, fxRate) {
   const body = req.body || {},
@@ -1143,7 +1142,7 @@ const allocationsOf = (body, currency) =>
     ? body.allocations.filter((item) => item && typeof item === 'object').map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: moneyOps.roundMinor(item.amount_minor, currency) }))
     : null;
 // @does A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).
-router.post('/payments', auth, noKey, editor, onceOnly, on, ...checked('POST /payments'), async (req, res) => {
+router.post('/payments', auth, noKey, editor, payOut('body'), onceOnly, on, ...checked('POST /payments'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
@@ -1469,7 +1468,7 @@ router.patch('/payments/:id', auth, noKey, onceOnly, on, ...checked('PATCH /paym
 });
 /** POST /payments/:id/propose → { proposal: [{ against_ref, bill_no, due_date, open_minor, apply_minor, disputed }], on_account_minor } — B.proposeFor, the one function */
 // @does A payment id in -> we propose which open bills it should settle, oldest first -> the proposed lines and the amount left on account (editors).
-router.post('/payments/:id/propose', auth, noKey, editor, on, ...checked('POST /payments/:id/propose'), async (req, res) => {
+router.post('/payments/:id/propose', auth, noKey, editor, payOut('stored'), on, ...checked('POST /payments/:id/propose'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -1537,7 +1536,7 @@ async function confirmSteps(req, e, id, pairs) {
  * 200 { ok, duplicate: true, items, allocated_minor } from the stored rows and posts nothing; a first posting carries no `duplicate` key.
  */
 // @does A payment id and the chosen allocations in -> we post the settlement of those bills once, a repeat answers the first -> the allocated items (editors).
-router.post('/payments/:id/confirm', auth, noKey, editor, onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
+router.post('/payments/:id/confirm', auth, noKey, editor, payOut('stored'), onceOnly, on, ...checked('POST /payments/:id/confirm'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -2461,7 +2460,7 @@ router.post('/recurring/:id/skip', auth, owner, on, ...checked('POST /recurring/
 // @does Nothing in -> we read what needs doing in the books and the action for each -> a list of to-do kinds with counts.
 router.get('/todo', auth, noKey, on, ...checked('GET /todo'), async (req, res) => {
   try {
-    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books, undefined, require('../lib/books-approval').isBookkeeperSeat(req) ? byOf(req) : null)));
+    res.json(await forBooksDoor(req, ctx(req), 'todo', await require('../lib/books-todo').todo(ctx(req), req.books, undefined, require('../lib/books-approval').isBookkeeperSeat(req) ? byOf(req) : null, isOwner(req))));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

@@ -94,7 +94,7 @@ const SUPP = '33333333-3333-4333-8333-333333333333';
   await throws('a date a PERSON typed into a locked month is refused, in words', () => B.postEntry(db, SHOP, { type: 'expense', date: '2026-08-21', currency: 'INR', class: 'fuel', amount: 1, paid_from: 'cash', strict_date: true }), /locked/);
   await throws('opening a locked month needs a reason', () => B.setPeriod(db, SHOP, '2026-27', 5, 'open', SHOP, ''), /reason/);
   await B.setPeriod(db, SHOP, '2026-27', 4, 'hard_locked', SHOP, 'CA signed');
-  await throws('a hard-locked month cannot be opened again', () => B.setPeriod(db, SHOP, '2026-27', 4, 'open', SHOP, 'please'), /hard lock/);
+  await throws('AK-F-03: a hard-locked month with a later locked month stays shut (newest first)', () => B.setPeriod(db, SHOP, '2026-27', 4, 'open', SHOP, 'please'), /later month is locked/);
 
   /* ── a payment: record → propose → confirm; a dispute freezes a bill ── */
   const P = X.store; const pay = await P.insertPayment(db, SHOP, { party_id: CUST, direction: 'in', amount_minor: 60000, currency: 'INR', mode: 'upi', received_at: '2026-09-20' });

@@ -41,7 +41,7 @@ function stubHandle(answers) {
   ok('a soft lock with no later lock may reopen, with a reason', advice[0].reopen.may === true && /reason/.test(advice[0].reopen.why));
   const hardRows = rows.map((row, index) => (index < 2 ? Object.assign({}, row, { status: index === 0 ? 'soft_locked' : 'hard_locked' }) : row));
   const hardAdvice = month.periodAdvice(hardRows, figures, '2026-10-15', [], null);
-  ok('a hard lock is not reopened from the lock door (the owner reopen route is named), and an earlier soft lock cannot reopen under it', hardAdvice[1].reopen.may === false && hardAdvice[0].reopen.may === false && /hard lock/.test(hardAdvice[0].reopen.why) && /owner/.test(hardAdvice[0].reopen.why));
+  ok('AK-F-03: the newest hard lock may reopen (the owner, with a reason), and an earlier soft lock cannot reopen under it', hardAdvice[1].reopen.may === true && /owner/.test(hardAdvice[1].reopen.why) && hardAdvice[0].reopen.may === false);
   ok('months not locked counts only finished, unlocked months', month.monthsNotLocked(rows, '2026-10-15') === 2);
   const line = month.booksLockLine(rows, figures);
   ok('the lock line is the run of locked months from the books start', line.books_start.period === 1 && line.lock_date === '2026-07-31' && line.gaps.length === 0);

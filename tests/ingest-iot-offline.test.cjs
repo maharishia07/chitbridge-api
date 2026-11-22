@@ -26,8 +26,9 @@ function rowsFor(sql, p) {
   const s = String(sql).replace(/\s+/g, ' ').trim(); S.sql.push(s);
   if (/FROM identities a LEFT JOIN identities p/.test(s)) {
     if (!S.knownKey || p[0] !== require('crypto').createHash('sha256').update('device-key-1').digest('hex')) return [];
-    return [{ identity_id: ACTOR, parent_entity_id: SHOP, display_name: 'Pi', connector_type: S.type, status: S.status, connector_config: {}, shop_capabilities: S.caps }];
+    return [{ identity_id: ACTOR, parent_entity_id: S.parent || SHOP, display_name: 'Pi', connector_type: S.type, status: S.status, connector_config: {}, shop_capabilities: S.caps }];
   }
+  if (/^SELECT status FROM identities WHERE identity_id = \$1/.test(s)) return [{ status: p[0] === S.parent ? S.shopStatus : 'active' }];
   if (/SELECT capabilities FROM identities/.test(s)) return [{ capabilities: S.caps }];
   if (/SELECT bridge_id, display_name, currency_code, country FROM identities/.test(s))
     return [{ bridge_id: 'CBSHOP', display_name: 'Mayur', currency_code: S.currency, country: S.country }];
@@ -101,6 +102,11 @@ const KEY = { 'X-Bridge-Key': 'device-key-1' };
     r = await call(server, 'POST', '/api/connectors/erp-ingest', { payload: { a: 1 } }, KEY);
     ok('A4 … /erp-ingest refuses the same way', r.status === 401, r);
     ok('A5 … nothing minted, no heartbeat written', DELIVERED.length === 0 && !S.sql.some((s) => /UPDATE identities SET last_seen/.test(s)));
+    reset(); S.parent = '55555555-5555-4555-8555-555555555555'; S.shopStatus = 'erased'; DELIVERED = [];
+    r = await call(server, 'POST', '/api/connectors/ingest', { signal: 'temp', value: 4 }, KEY);
+    ok('A7 LV-08 the shop behind the key is erased → 403 in words, on /ingest', r.status === 403 && /closed/.test(r.body.message), r);
+    r = await call(server, 'POST', '/api/connectors/erp-ingest', { payload: { a: 1 } }, KEY);
+    ok('A8 … and on /erp-ingest; nothing minted', r.status === 403 && DELIVERED.length === 0, r);
     reset(); r = await call(server, 'POST', '/api/connectors/ingest', { signal: 'temp', value: 4, key: 'device-key-1' });
     ok('A6 the key may also ride in the body', r.status === 200, r);
 
