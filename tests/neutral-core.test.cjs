@@ -109,7 +109,7 @@ for (const dir of ['lib', 'routes', 'middleware']) {
   for (const full of sourceFiles(path.join(__dirname, '..', dir), [])) {
     const rel = path.relative(path.join(__dirname, '..'), full).split(path.sep).join('/');
     const raw = fs.readFileSync(full, 'utf8');
-    if (adopted.has(rel) || /ADOPTED from|DO NOT EDIT/.test(raw.slice(0, 400))) continue;
+    if (adopted.has(rel) || /ADOPTED from|DO NOT EDIT/.test(raw.slice(0, 1200))) continue;
     const hits = (stripComments(raw).match(API_LITERAL) || []).length;
     if (hits) found[rel] = hits;
   }

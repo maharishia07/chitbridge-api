@@ -174,7 +174,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
   'stock-sweep.js',
   'stock-void.js', /* AU-F-01: a withdrawn goods receipt's movements given back through stock-store.post - reads stock_movement, decides no money */
-  'stock-sweep.js', 'stock-post-lines.js', /* SPEED 1129 (stock-post-lines): one bill's stock lines through the guard and the store on one handle - the post loop's body, no arithmetic of its own */
+  'stock-post-lines.js', /* SPEED 1129 (stock-post-lines): one bill's stock lines through the guard and the store on one handle - the post loop's body, no arithmetic of its own */
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
      govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
      same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
@@ -960,6 +960,8 @@ const ENGINE_OTHER = [
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* red1129 (22 Nov): modules the batch-1129 lanes added with no bucket. Same rule: cb-capability decides engine / adoption / infra; listed here, said, never silently unclassified. */
+  'bill-number-taken.js', 'books-bill-ref.js', 'books-duplicate.js', 'chit-proposal-money.js', 'creator-edit.js', 'delivery-closed.js', 'home-facts-sold.js', 'policy-stock.js', 'reg-in-movein.js', 'request-log.js', 'signin-provider-door.js', 'signin-provider-link.js', 'stock-oversell.js',
   /* red1128 (21 Nov): modules the batch-1128 lanes added with no bucket. Whether each is engine, adoption or infra is cb-capability's call; listed here, said, never silently unclassified. */
   'account-budget.js', 'client-ip.js', 'einvoice-note.js', 'holds-stock.js', 'match-hold.js', 'message-client-id.js', 'return-overdue.js', 'shop-country.js', 'supplier-list.js',
   /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the

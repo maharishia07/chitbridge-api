@@ -17,7 +17,8 @@ const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm,
 /** doors that read a client_ref and are NOT guarded by the journal compare, each with why */
 const EXEMPT = {
   'post /opening': 'a second opening is refused by its own replay (opening:<ref> answers the first; a change goes through /opening/replace, which names a reason)',
-  'post /move-in/import': 'an import keyed by the file, not by a posted entry; it posts through its own proof (move-in-proof)'
+  'post /move-in/preview': 'the DRY RUN: nothing is written (routes/books.js doc line), the ref only keys the suspense it names; a repeat has nothing to replay or compare',
+  'post /move-in/import':'an import keyed by the file, not by a posted entry; it posts through its own proof (move-in-proof)'
 };
 /** the lib doors a route may hand its ref to instead of guardOf: the payments door compares the stored payment (books-event-guard.refuseOtherPayment) */
 const GUARDED_IN_LIB = /recordPayment\(/;

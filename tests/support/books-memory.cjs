@@ -500,6 +500,7 @@ function create() {
       && !T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(c.chit_id)))
       .map((c) => ({ chit_id: c.chit_id, ref: c.business_json.bill_no || null, by: c.business_json.money_override.by, at: c.business_json.money_override.at, why: c.business_json.money_override.why,
         step: c.business_json.money_override.step, unexplained_minor: c.business_json.money_override.unexplained_minor, words: null }))); },
+    async movedByLock() { return []; }, /* AC-F-02: no locked month in memory, so no entry was moved by one */
     async chitExists(db, e, id) { return T.chits.some((c) => c.entity_id === e && String(c.chit_id) === String(id)); },
     async moneyOverrideState(db, e, chit_id) { return { held: T.chits.some((c) => c.entity_id === e && String(c.chit_id) === String(chit_id) && c.business_json && c.business_json.money_override),
       resolved: T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(chit_id)) }; },

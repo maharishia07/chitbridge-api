@@ -291,7 +291,7 @@ it('A4/A5: a definer written from b904 on pins pg_temp (or empty) and is revoked
       const head = m[0].slice(0, m[0].indexOf('$' + m[3] + '$'));
       if (!/SECURITY\s+DEFINER/i.test(head)) continue;
       if (!/SET\s+search_path\s*(?:=|TO)\s*(?:''|""|[^;]*pg_temp)/i.test(head)) bad.push(f + ' ' + m[1] + ': no pg_temp in search_path');
-      if (!new RegExp('REVOKE\s+(?:ALL|EXECUTE)\s+ON\s+FUNCTION\s+' + m[1].replace(/\./g, '\.') + '[\s\S]*?FROM\s+PUBLIC', 'i').test(sql)) bad.push(f + ' ' + m[1] + ': not revoked from PUBLIC');
+      if (!new RegExp('REVOKE\\s+(?:ALL|EXECUTE)\\s+ON\\s+FUNCTION\\s+' + m[1].replace(/\./g, '\\.') + '[\\s\\S]*?FROM\\s+PUBLIC', 'i').test(sql)) bad.push(f + ' ' + m[1] + ': not revoked from PUBLIC');
     }
   });
   assert.strictEqual(bad.length, 0, bad.join('; '));

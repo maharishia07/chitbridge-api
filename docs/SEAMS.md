@@ -24,7 +24,7 @@ of file each thing is; this says what already does the job.
 | 108 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
-| 99 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 98 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 91 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 89 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -62,9 +62,9 @@ of file each thing is; this says what already does the job.
 | 64 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 63 | `body` | `books-acting.js` | a write's body: |
 | 63 | `named` | `bank-rec-log.js` | W15-71: |
+| 63 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 63 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 62 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
-| 62 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 62 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 61 | `facts` | `bill-steps.js` | MY state_log — |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
@@ -171,9 +171,9 @@ of file each thing is; this says what already does the job.
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `field` | `ui-field.js` | the part: |
 | 26 | `textOf` | `bank-statement-file.js` | the file's text: |
+| 26 | `payment` | `books-store.js` |  |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `side` | `books-grant-reports.js` |  |
-| 25 | `payment` | `books-store.js` |  |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `reply` | `private-flag.js` | Refused in words: |
 | 24 | `done` | `attach-ui.js` |  |

@@ -7173,3 +7173,4 @@ module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
 module.exports.declaredRetention = declaredRetention; /* RAIL-212 */
 module.exports.SEND_STEPS = SEND_STEPS; /* AP-F-08: tests/ap-1129-order.test.cjs runs the real step order */
 module.exports.sendLineRates = sendLineRates;
+module.exports.forgetCountry = () => _countryMemo.clear(); /* tests/money-paths.test.cjs: one sender id plays three countries, so the five-minute country memory is dropped when the test changes country */

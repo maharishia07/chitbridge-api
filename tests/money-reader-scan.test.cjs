@@ -28,6 +28,7 @@ const PATTERNS = [
 ];
 const ALLOWED = [
   { file: 'lib/counter-bill.js', any: true, why: 'the one pick: pickOf / billTotalSql / storedCopies read the raw copies here and nowhere else' },
+  { file: 'lib/chit-proposal-money.js', has: 'payload.summary && payload.summary.total_value', why: 'validator, moved out of chit-proposal.js by the LV lines split (batch 1129, 5af6824f3): a peer round\'s total is only checked to be a number the chit can hold and refused if not; nothing is shown, summed or stored' },
   { file: 'lib/chit-proposal.js', has: "UPDATE chit_detail SET total_value = $3", why: 'writer: the change order stores the engine total it was handed (ACC-206 A)' },
   { file: 'lib/cost.js', has: 'SELECT d.total_value, d.currency_code, h.summary_json', why: 'C1: selected only as the last arm when the header holds no money block (basis as placed); the pick is counterBill.taxableOf' },
   { file: 'lib/credit-cap.js', has: "h.summary_json -> 'total_value' AS legacy_total", why: 'selects the three copies and hands them to pickOf (credit-cap.js:58), no total of its own' },

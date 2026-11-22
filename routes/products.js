@@ -41,7 +41,7 @@ const defaults = require('../lib/defaults');
 /* ⭐ A SPREADSHEET CARRIES ANSWERS, NOT RECORDS — flatten on the way out, stamp on the way in. */
 const sheet = require('../lib/sheet');
 const orderInput = require('../lib/order-input'); // the shop's declared contract — the template is a projection of it
-const preflight = require('../lib/csv-preflight'); // read an upload BEFORE it becomes data — proposes, never decides
+const preflight = require('../lib/csv-preflight'), { applyDecisions } = require('../lib/csv-decisions'); // read an upload BEFORE it becomes data — proposes, never decides
 const xlsxRead = require('../lib/xlsx-read'); // ⭐ and the same, from a workbook ([TILL-109])
 const { rateLimit } = require('../lib/rate-limit');
 const { intFromEnv } = require('../lib/limits');
@@ -654,7 +654,7 @@ async function importPlan(req, entity_id) {
   if (rowErrors.length && !skipBad) return { refusal: { status: 409, ...words.fileProblems(report, rowErrors.length) } };
   const rejects = skipBad ? importRejects.rejectsOf(rowErrors) : [];
   const applied = dropRejected(
-    preflight.applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions }),
+    applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions }),
     rejects
   );
   if (applied.errors.length) return { refusal: { status: 400, ...words.choicesDoNotHold(applied.errors) } };
