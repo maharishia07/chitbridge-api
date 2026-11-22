@@ -26,8 +26,16 @@ const db = (all) => ({ async query(sql, params) { return { rows: runLatest(sql, 
   schema.hasTable = async () => true;
   await t('A: a clean sign-off with a timing item: statement differs from books, unexplained 0, tied', async () => {
     const out = await LOG.signedAsAt(db([row({ seq: 1 })]), E, '2026-06-30');
-    assert.deepStrictEqual(out.accounts[0], { account_id: 'a1', currency: 'AUD', period_to: '2026-06-30', statement_minor: 20336000, books_signed_minor: 20286000, unexplained_minor: 0, tied: true, made_at: '2026-07-02 09:00:00+00' });
+    assert.deepStrictEqual(out.accounts[0], { account_id: 'a1', currency: 'AUD', period_to: '2026-06-30', statement_minor: 20336000, books_signed_minor: 20286000, unexplained_minor: 0, apart_minor: 50000, tied: true, made_at: '2026-07-02 09:00:00+00' });
     assert.notStrictEqual(out.accounts[0].statement_minor, out.accounts[0].books_signed_minor, 'statement is NOT books here; the old "difference" word would have been wrong');
+  });
+  await t('BD-F-03: a sign-off stored as tied over statement 4,049.75 and books 4,749.75 carries the 700.00 they are apart (70000 paise), on the Bank line and on the Trial balance line', async () => {
+    const stored = row({ seq: 1, closing_bank_minor: 404975, closing_books_minor: 474975, difference_minor: 0, currency: 'INR' });
+    const out = await LOG.signedAsAt(db([stored]), E, '2026-06-30');
+    assert.strictEqual(out.accounts[0].apart_minor, 70000);
+    assert.strictEqual(out.accounts[0].unexplained_minor, 0);
+    const line = LOG.tbBankOf([stored], [stored], '2026-06-30', [{ code: '1500', debit_minor: 474975, credit_minor: 0 }], [{ account_id: 'a1', code: '1500', name: 'Bank', role: 'bank' }], 'INR')[0];
+    assert.strictEqual(line.apart_minor, 70000);
   });
   await t('B: a non-zero remainder shows its absolute value, either sign', async () => {
     for (const diff of [50000, -50000]) {
