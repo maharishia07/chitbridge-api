@@ -77,8 +77,8 @@ check('junk_fuzz is a reported column', reported.REPORTED_COLUMNS.includes('junk
 check('junk_fuzz reads only evidence junk_fuzz true', reported.junkFuzzColumn({ junk_fuzz: true }) === true && reported.junkFuzzColumn({}) === false && reported.junkFuzzColumn(undefined) === false && reported.junkFuzzColumn({ junk_fuzz: 'yes' }) === false);
 const evidence = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'docs', 'contracts', 'api-hardening-evidence-areas.json'), 'utf8'));
 check('the evidence file claims junk_fuzz only as true', Object.values(evidence.routes).every((entry) => entry.junk_fuzz === undefined || entry.junk_fuzz === true));
-const guards = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'guards.cjs'), 'utf8');
-check('this test is enrolled in guards.cjs', /'junk-fuzz\.test\.cjs'/.test(guards));
+const guards = require('./support/guards-list-text.cjs').guardsListText();
+check('this test is enrolled in guards-list.cjs', /'junk-fuzz\.test\.cjs'/.test(guards));
 
 /* the tool refuses a database that is not a throwaway cb_app one, and needs its inputs */
 const run = (env) => spawnSync(process.execPath, [path.join(__dirname, '..', 'tools', 'junk-fuzz.cjs'), '--base', 'http://127.0.0.1:1', '--plan', 'none.json'], { env: Object.assign({ PATH: process.env.PATH }, env), encoding: 'utf8' });

@@ -28,8 +28,8 @@ const t = (name, ok, why) => { if (ok) { pass++; console.log('  ok  ' + name); }
 console.log('\nreadability guard · only the api code THIS change touched (DISCIPLINES §6)');
 
 /* the gate lists this file — a guard outside scripts/guards.cjs is a guard nobody runs */
-const gate = fs.readFileSync(path.join(API, 'scripts/guards.cjs'), 'utf8');
-t('scripts/guards.cjs lists readability-guard.test.cjs', /'readability-guard\.test\.cjs'/.test(gate));
+const gate = require('./support/guards-list-text.cjs').guardsListText();
+t('scripts/guards-list.cjs lists readability-guard.test.cjs', /'readability-guard\.test\.cjs'/.test(gate));
 
 /**
  * ONE-TIME WAIVER (Athi, 19 Oct 2026): the iteration-1 mechanical pass reformats every file, so every legacy function "got worse" and the OWNS / CARD
