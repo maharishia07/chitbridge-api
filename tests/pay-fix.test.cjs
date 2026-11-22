@@ -249,7 +249,7 @@ const allocatedAgainst = (X, ref) => X.T.items.filter((i) => i.ref_kind === 'all
         r.ok === true && seen.entry != null && seen.entry === seen.register, JSON.stringify([r.ok, seen]));
       const srcPeriod = require('fs').readFileSync(path.join(H.API, 'lib', 'books-period.js'), 'utf8');
       ok('postOwn(handle, …) hands the caller\'s handle to postEntry; every in-transaction caller passes its handle (assets · dispose · depreciation · closing stock · tax close · tax pay · instalment · accrual reversal)',
-        /function postOwn\(handle, entity, event, by, system\) \{\s*return B\.postEntry\(handle, entity/.test(srcPeriod) && (srcPeriod.match(/postOwn\(\s*handle,\s*entity/g) || []).length >= 8 && !/postOwn\(entity,/.test(srcPeriod));
+        /function postOwn\(handle, entity, event, by, system(?:, natural)?\) \{[\s\S]*?return B\.postEntry\(handle, entity/.test(srcPeriod) && (srcPeriod.match(/postOwn\(\s*handle,\s*entity/g) || []).length >= 8 && !/postOwn\(entity,/.test(srcPeriod));
     } finally { Assets.use(null); X.store.insertEntry = wasInsert; }
   });
 

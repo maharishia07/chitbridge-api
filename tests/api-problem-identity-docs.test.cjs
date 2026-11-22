@@ -251,7 +251,7 @@ async function checkCodeFlow(port) {
   const ref = saved && saved.params[2];
   const parts = verifyLib.unpack(ref);
   check('a code is issued: 200 delivery sent, sent_to masked, expires_in 10 minutes', issued.status === 200 && issued.json && issued.json.delivery === 'sent' && issued.json.sent_to === '*****0000' && issued.json.expires_in === '10 minutes' && !issued.text.includes(S.VALUES.PHONE), issued.json);
-  check('what is kept is otp:<sha256>:<expiry>:0, and the code itself is nowhere in it', !!parts && parts.tries === 0 && parts.hash === sha(S.SHOP + ':PHONE:' + issued.json.dev_otp), ref);
+  check('what is kept is otp:<sha256>:<expiry>:0, and the code itself is nowhere in it', !!parts && parts.tries === 0 && parts.hash === (require('../lib/vaultcrypto').isConfigured() ? require('../lib/vaultcrypto').keyedCodeHash(S.SHOP + ':PHONE', String(issued.json.dev_otp)) : sha(S.SHOP + ':PHONE:' + issued.json.dev_otp)), ref);
   check('the expiry is ten minutes ahead', !!parts && Math.abs(parts.exp - (Date.now() + verifyLib.TTL_MS)) < 60000, parts);
   const type = async (code, tries, expiresIn) => {
     const pendingRef = verifyLib.pack(issued.json.dev_otp, S.SHOP + ':PHONE', Date.now() + (expiresIn === undefined ? verifyLib.TTL_MS : expiresIn), tries);

@@ -764,6 +764,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
       Object.assign(item, { groups: Array.isArray(item.groups) ? item.groups : [] })
     );
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
+    rows.forEach((item) => { delete item.otp_contact; }); /* lens-sec 1129 (23b4c8830): the login phone is never a party's contact; decorate has used it for a minted party's phone above, the column itself is not sent */
     res.json(Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     problem(req, res, failed(err, req, 'Get customers failed'));
