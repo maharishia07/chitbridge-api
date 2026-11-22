@@ -132,6 +132,17 @@ for (const [who, extra] of [['anonymous', {}], ['a stranger (viewer, no relation
     assert.ok(v.finishes.length === 1 && v.finishes[0].items[0].name === 'Adopted Widget', 'the finish is still served');
   });
 }
+/* P2WAVE-SEC EL-catalogue-01#L100: a CONTAINER's current content wins over the snapshot (catalogue-read referencedLine) and was never stripped: the public line carries none of it */
+t('⭐⭐⭐ [P2WAVE-SEC] a resolved container with buying-side keys reaches no public line', async () => {
+  const d = adoptedDeps({});
+  const cid = 'c-aw';
+  d.container = { itemContainerId: () => cid, resolveMany: async () => ({ [cid]: { content: { name: 'Adopted Widget', unit: 'pc', landed_cost: 4242.42, supplier_note: 'SECRET-CONTAINER', costPriceExGst: 3131.31 } } }) };
+  const v = await view.buildPublicView(d);
+  const line = v.lines.find((l) => l.origin === 'source');
+  assert.ok(line && line.fields.name === 'Adopted Widget', 'the container path was not taken');
+  const wire = JSON.stringify(v.lines);
+  ['4242.42', 'SECRET-CONTAINER', '3131.31', 'landed_cost', 'costPriceExGst'].forEach((x) => assert.ok(!wire.includes(x), 'a public line carries ' + x));
+});
 t('[CAT-241] the strip works on a clone: the source (resolve result) keeps its cost for the readers allowed to see it', async () => {
   await view.buildPublicView(adoptedDeps({}));
   assert.strictEqual(SRC_ITEM.unit_cost, 7777.77); assert.strictEqual(SRC_ITEM.supplier_note, 'SECRET-SUPPLIER-NOTE'); assert.ok(SRC_ITEM.variants[0].landed_cost);
