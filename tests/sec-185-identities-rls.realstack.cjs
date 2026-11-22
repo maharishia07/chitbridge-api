@@ -22,7 +22,7 @@ const identityAuth = require('../lib/identity-auth');
 let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
 const RUN = 'r5' + (Date.now() % 1e9).toString(36).padStart(6, '0');
-const B860 = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'RUN-2026-11-14-b860-identities-rls.sql'), 'utf8');
+const B860 = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'RUN-2026-11-14-b860-identities-rls.sql'), 'utf8').replace(/DO \$guard\$[\s\S]*?END \$guard\$;/, ''); /* the A2 guard is proved in tests/b860-guard.test.cjs; these stacks test the policies */
 const B857 = fs.readFileSync(path.join(__dirname, '..', 'migrations', 'b857_signin_candidates_definer.sql'), 'utf8');
 const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { return e.code || e.message; } };
 

@@ -18,7 +18,7 @@ let pass = 0, fail = 0;
 const ok = (what, cond, info) => { if (cond) { pass++; console.log('  ok   ' + what); } else { fail++; console.log('  FAIL ' + what + (info ? '\n         ' + String(info).slice(0, 300) : '')); } };
 const RUN = 'f13' + (Date.now() % 1e9).toString(36).padStart(6, '0');
 const MIG = path.join(__dirname, '..', 'migrations');
-const B860 = fs.readFileSync(path.join(MIG, 'RUN-2026-11-14-b860-identities-rls.sql'), 'utf8');
+const B860 = fs.readFileSync(path.join(MIG, 'RUN-2026-11-14-b860-identities-rls.sql'), 'utf8').replace(/DO \$guard\$[\s\S]*?END \$guard\$;/, ''); /* the A2 guard is proved in tests/b860-guard.test.cjs; these stacks test the policies */
 const B909 = fs.readFileSync(path.join(MIG, 'RUN-2026-11-22-b909-identities-creator-narrow.sql'), 'utf8');
 
 (async () => {
