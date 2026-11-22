@@ -90,8 +90,8 @@ function requiresOf(text, file, root) {
   return { aliases, members };
 }
 
-/** the call graph of a repo root: graph.codesIn(file, from, to) and graph.reach(file, from, to) → the codes raised by that span and everything it calls */
-function buildGraph(root, scanned, sourceFiles) {
+/** the file facts of a repo root, read once per file: its text, lines, functions and requires */
+function fileInfoOf(root, sourceFiles) {
   const fileInfo = {};
   const info = (file) => {
     if (fileInfo[file]) return fileInfo[file];
@@ -102,15 +102,13 @@ function buildGraph(root, scanned, sourceFiles) {
     return fileInfo[file];
   };
   sourceFiles.forEach(info);
-  const codesAt = {};
-  Object.keys(scanned).forEach((code) => scanned[code].at.forEach(([rel, line]) => ((codesAt[rel] = codesAt[rel] || []).push([line, code]))));
+  return { fileInfo, info };
+}
 
-  /** the spans a name stands for inside a file */
+/** what a name stands for inside a file: its spans, its column-0 tables (naming one is using it), and the route-keyed contract lines */
+function namedSpans(fileInfo) {
   const spansNamed = (file, name) => (fileInfo[file] ? fileInfo[file].fns.filter((fn) => fn.name === name).map((fn) => ({ file, from: fn.from, to: fn.to })) : []);
-
-  /** the column-0 tables a name stands for: naming one is using it */
   const tablesNamed = (file, name) => (fileInfo[file] ? fileInfo[file].fns.filter((fn) => fn.name === name && fn.table).map((fn) => ({ file, from: fn.from, to: fn.to })) : []);
-
   /** the lines of a file that open a table entry keyed by a route key ('POST /ask': { … refusals: NAME … }): what a route says about itself in its contract */
   const keyedIn = (file, key) => {
     const there = fileInfo[file];
@@ -118,56 +116,90 @@ function buildGraph(root, scanned, sourceFiles) {
     const open = "'" + key + "':";
     return there.lines.map((text, index) => (text.trimStart().startsWith(open) ? { file, from: index + 1, to: index + 1 } : null)).filter(Boolean);
   };
+  return { spansNamed, tablesNamed, keyedIn };
+}
 
-  /** the spans a span calls */
-  const callsOf = (span) => {
-    const here = fileInfo[span.file];
-    const out = [];
-    for (let at = span.from - 1; at < span.to && at < here.lines.length; at++) {
-      const line = bare(here.lines[at]);
-      for (const hit of line.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/g)) {
-        const target = here.requires.aliases[hit[1]];
-        if (target) out.push(...spansNamed(target, hit[2]));
-        const member = here.requires.members[hit[1]];
-        if (member && tablesNamed(member.file, member.member).length) out.push(...spansNamed(member.file, hit[2])); /* words.said(): a method of an object a module exports */
-        if (tablesNamed(span.file, hit[1]).length) out.push(...spansNamed(span.file, hit[2])); /* a method of an object written in this file */
-      }
-      for (const hit of line.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
-        if (KEYWORDS.has(hit[1])) continue;
-        out.push(...spansNamed(span.file, hit[1]));
-        const member = here.requires.members[hit[1]];
-        if (member) out.push(...spansNamed(member.file, member.member));
-      }
-      for (const hit of line.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*[,)]/g)) {
-        const target = here.requires.aliases[hit[1]];
-        if (target) out.push(...spansNamed(target, hit[2])); /* a helper handed over by name: router.get('/x', alias.handler) */
-      }
-      for (const hit of here.lines[at].matchAll(/require\(\s*'(\.[^']+)'\s*\)\s*\.\s*([A-Za-z_$][\w$]*)/g)) {
-        const target = resolveSpec(here.file, hit[1]);
-        if (target) out.push(...spansNamed(target, hit[2])); /* require('../lib/x').fn( written in place */
-      }
-      for (const hit of line.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)(?!\s*[(\w$])/g)) {
-        out.push(...tablesNamed(span.file, hit[1])); /* a contract table named in the body */
-        const member = here.requires.members[hit[1]];
-        if (member) out.push(...tablesNamed(member.file, member.member));
-      }
-      for (const hit of line.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)(?!\s*[(\w$])/g)) {
-        const target = here.requires.aliases[hit[1]];
-        if (target) out.push(...tablesNamed(target, hit[2]));
-      }
-      for (const hit of line.matchAll(/(?:^|[(,[:])\s*([A-Za-z_$][\w$]*)\s*(?=[,)\]}]|$)/g)) {
-        out.push(...spansNamed(span.file, hit[1])); /* a handler or helper handed over by name: router.post('/x', auth, handler) · padded(junk(verify, typed)) */
-        const member = here.requires.members[hit[1]];
-        if (member) out.push(...spansNamed(member.file, member.member));
-      }
-      for (const hit of here.lines[at].matchAll(/'((?:GET|POST|PUT|PATCH|DELETE) \/[^']*)'/g)) {
-        Object.values(here.requires.aliases).forEach((target) => out.push(...keyedIn(target, hit[1]))); /* contract.checked('POST /ask'): the contract line of that route */
-        Object.values(here.requires.members).forEach((member) => out.push(...keyedIn(member.file, hit[1])));
-      }
-      for (const hit of line.matchAll(/\bnew\s+([A-Za-z_$][\w$]*)/g)) out.push(...spansNamed(span.file, hit[1]));
+/** the call patterns of one line, each a small collector that pushes the spans it finds: (named, here, span, text, out) */
+const LINE_COLLECTORS = [
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*\(/g)) {
+      const target = here.requires.aliases[hit[1]];
+      if (target) out.push(...named.spansNamed(target, hit[2]));
+      const member = here.requires.members[hit[1]];
+      if (member && named.tablesNamed(member.file, member.member).length) out.push(...named.spansNamed(member.file, hit[2])); /* words.said(): a method of an object a module exports */
+      if (named.tablesNamed(span.file, hit[1]).length) out.push(...named.spansNamed(span.file, hit[2])); /* a method of an object written in this file */
     }
-    return out;
-  };
+  },
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\(/g)) {
+      if (KEYWORDS.has(hit[1])) continue;
+      out.push(...named.spansNamed(span.file, hit[1]));
+      const member = here.requires.members[hit[1]];
+      if (member) out.push(...named.spansNamed(member.file, member.member));
+    }
+  },
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)\s*[,)]/g)) {
+      const target = here.requires.aliases[hit[1]];
+      if (target) out.push(...named.spansNamed(target, hit[2])); /* a helper handed over by name: router.get('/x', alias.handler) */
+    }
+  },
+  (named, here, span, text, out, raw) => {
+    for (const hit of raw.matchAll(/require\(\s*'(\.[^']+)'\s*\)\s*\.\s*([A-Za-z_$][\w$]*)/g)) {
+      const target = resolveSpec(here.file, hit[1]);
+      if (target) out.push(...named.spansNamed(target, hit[2])); /* require('../lib/x').fn( written in place */
+    }
+  },
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)(?!\s*[(\w$])/g)) {
+      out.push(...named.tablesNamed(span.file, hit[1])); /* a contract table named in the body */
+      const member = here.requires.members[hit[1]];
+      if (member) out.push(...named.tablesNamed(member.file, member.member));
+    }
+  },
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/(?<![\w$.])([A-Za-z_$][\w$]*)\s*\.\s*([A-Za-z_$][\w$]*)(?!\s*[(\w$])/g)) {
+      const target = here.requires.aliases[hit[1]];
+      if (target) out.push(...named.tablesNamed(target, hit[2]));
+    }
+  },
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/(?:^|[(,[:])\s*([A-Za-z_$][\w$]*)\s*(?=[,)\]}]|$)/g)) {
+      out.push(...named.spansNamed(span.file, hit[1])); /* a handler or helper handed over by name: router.post('/x', auth, handler) · padded(junk(verify, typed)) */
+      const member = here.requires.members[hit[1]];
+      if (member) out.push(...named.spansNamed(member.file, member.member));
+    }
+  },
+  (named, here, span, text, out, raw) => {
+    for (const hit of raw.matchAll(/'((?:GET|POST|PUT|PATCH|DELETE) \/[^']*)'/g)) {
+      Object.values(here.requires.aliases).forEach((target) => out.push(...named.keyedIn(target, hit[1]))); /* contract.checked('POST /ask'): the contract line of that route */
+      Object.values(here.requires.members).forEach((member) => out.push(...named.keyedIn(member.file, hit[1])));
+    }
+  },
+  (named, here, span, text, out) => {
+    for (const hit of text.matchAll(/\bnew\s+([A-Za-z_$][\w$]*)/g)) out.push(...named.spansNamed(span.file, hit[1]));
+  }
+];
+
+/** the spans a span calls: every line of it read by each collector */
+function callsOfSpan(fileInfo, named, span) {
+  const here = fileInfo[span.file];
+  const out = [];
+  for (let at = span.from - 1; at < span.to && at < here.lines.length; at++) {
+    const raw = here.lines[at];
+    const text = bare(raw);
+    LINE_COLLECTORS.forEach((collect) => collect(named, here, span, text, out, raw));
+  }
+  return out;
+}
+
+/** the call graph of a repo root: graph.codesIn(file, from, to) and graph.reach(file, from, to) → the codes raised by that span and everything it calls */
+function buildGraph(root, scanned, sourceFiles) {
+  const { fileInfo, info } = fileInfoOf(root, sourceFiles);
+  const codesAt = {};
+  Object.keys(scanned).forEach((code) => scanned[code].at.forEach(([rel, line]) => ((codesAt[rel] = codesAt[rel] || []).push([line, code]))));
+  const named = namedSpans(fileInfo);
+  const callsOf = (span) => callsOfSpan(fileInfo, named, span);
 
   /** the codes written between two lines of a file */
   const codesIn = (file, from, to) => {
