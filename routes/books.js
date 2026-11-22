@@ -372,7 +372,7 @@ router.post('/check', auth, owner, on, ...checked('POST /check'), async (req, re
 // @does Nothing in -> we try again every posting that was waiting to reach the books -> how many were tried, posted and still waiting (owner only).
 router.post('/outbox/retry', auth, owner, on, ...checked('POST /outbox/retry'), async (req, res) => {
   try {
-    const out = await require('../lib/books-hooks').retryOutbox(ctx(req), 100);
+    const out = await require('../lib/books-hooks').retryOutbox(ctx(req), 100, { forward: !!(req.body && req.body.forward === true) }); /* forward: the OWNER's press — a locked-month item posts into the first open month */
     res.json({ tried: out.tried, posted: out.posted, still: out.still });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -1308,8 +1308,16 @@ router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked(
   try {
     const e = ctx(req),
       body = req.body || {};
-    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req), actingOf(req)));
-    res.status(201).json({ statement });
+    const LW = require('../lib/books-locked-wait');
+    /* AM-F-05 (Athi, 22 Nov): a sign-off for a period that ends in a LOCKED month waits on the Waiting list, in words; the owner's press posts it */
+    const made = await withEntity(e, async (handle) => {
+      const account = await bankAccountOf(handle, e, body.account);
+      const held = /^\d{4}-\d{2}-\d{2}$/.test(String(body.period_to || '')) ? await LW.heldIfLocked(handle, e, req.books, body.period_to) : null;
+      if (held) return { waiting: { words: await LW.parkStatement(handle, e, account, body, { by: byOf(req), acting: actingOf(req) }, held), posts_on: held.posts_on } };
+      return { statement: await BANK_LOG.appendStatement(handle, e, account, curOf(req), body, byOf(req), actingOf(req)) };
+    });
+    if (made.waiting) return res.status(202).json({ statement: null, waiting: made.waiting });
+    res.status(201).json({ statement: made.statement });
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
     if (err && err.code === 'CURRENCY_MISMATCH') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field } }); /* a statement in another currency than the account's (the same answer refusalOf gives) */

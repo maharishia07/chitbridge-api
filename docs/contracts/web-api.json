@@ -873,7 +873,7 @@
     ],
     "snapshots": [
      {
-      "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
+      "snapshot_id": "7ccd8d68-8164-4f56-8725-f2b3b46564fd",
       "label": "Tally H1",
       "source": "tally",
       "period_from": "2026-04-01",
@@ -895,7 +895,7 @@
    "example": {
     "currency": "INR",
     "snapshot": {
-     "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
+     "snapshot_id": "7ccd8d68-8164-4f56-8725-f2b3b46564fd",
      "label": "Tally H1",
      "source": "tally",
      "source_word": "Tally",
@@ -1672,6 +1672,7 @@
       "todo": "accept",
       "name": null,
       "candidates": [],
+      "wait": "acceptance",
       "source": {
        "chit_id": "bill1",
        "ref": null,
@@ -2568,14 +2569,14 @@
       "status": "sent",
       "reason": "No consent for offers on whatsapp. Ask them first.",
       "provider_msg_id": "wamid.1",
-      "created_at": "2026-11-16T13:55:55.116Z",
+      "created_at": "2026-11-17T00:09:00.094Z",
       "party_id": "10000000-0000-4000-8000-000000000001",
       "purpose": "marketing",
       "send_ref": "S1",
       "basis": {
        "code": "CONSENT",
        "pref_id": "pf1",
-       "at": "2026-11-16T13:55:55.116Z"
+       "at": "2026-11-17T00:09:00.094Z"
       },
       "party_name": "Chola Auto Care",
       "reason_code": "NO_CONSENT"
@@ -2604,7 +2605,7 @@
       "stage": "lead",
       "followup_id": "f-q1",
       "what": "Ring again",
-      "due_day": "2026-11-20",
+      "due_day": "2026-11-21",
       "assignee_user_id": "E1",
       "holders": [
        {
@@ -2614,7 +2615,7 @@
       ],
       "new": false,
       "last_outcome": "No answer",
-      "last_at": "2026-11-19T13:55:52.886Z",
+      "last_at": "2026-11-20T00:08:57.627Z",
       "late": true,
       "today": false,
       "may_call": true,
@@ -2647,7 +2648,7 @@
       "why": null
      }
     },
-    "shop_day": "2026-11-21"
+    "shop_day": "2026-11-22"
    },
    "optional": []
   },
@@ -2662,13 +2663,13 @@
       "party_name": "Name of 0002",
       "party_listed": true,
       "what": "Ring about the quote",
-      "due_at": "2026-11-20T13:55:52.859Z",
-      "due_day": "2026-11-20",
+      "due_at": "2026-11-21T00:08:57.598Z",
+      "due_day": "2026-11-21",
       "assignee_user_id": "E1",
       "assignee_name": "Who E1",
       "source": "manual",
       "done_at": "2026-09-09T00:00:00.000Z",
-      "created_at": "2026-11-21T13:55:52.860Z",
+      "created_at": "2026-11-22T00:08:57.599Z",
       "late": true,
       "today": false,
       "bucket": "late"
@@ -2679,7 +2680,7 @@
     "limit": 2,
     "late": 1,
     "today": 0,
-    "shop_day": "2026-11-21",
+    "shop_day": "2026-11-22",
     "may": {
      "write": {
       "may": true,
@@ -3147,7 +3148,7 @@
       "at": "2026-09-09T00:00:00.000Z",
       "followup_id": "f1",
       "what": "Call back",
-      "due_at": "2026-11-19T13:55:52.762Z",
+      "due_at": "2026-11-20T00:08:57.488Z",
       "interaction_id": "i1",
       "interaction_kind": "call",
       "direction": "out",
@@ -3365,9 +3366,9 @@
      {
       "party_id": "10000000-0000-4000-8000-000000000001",
       "name": "Chola Auto Care",
-      "sent_at": "2026-11-16T13:55:55.116Z",
+      "sent_at": "2026-11-17T00:09:00.094Z",
       "send_ref": "S1",
-      "first_bill_at": "2026-11-17T13:55:55.116Z",
+      "first_bill_at": "2026-11-18T00:09:00.094Z",
       "bills_n": 1,
       "money": {
        "by_currency": [
@@ -3392,7 +3393,7 @@
        {
         "chit_id": "c1",
         "bill_no": "B-1",
-        "at": "2026-11-17T13:55:55.116Z",
+        "at": "2026-11-18T00:09:00.094Z",
         "value": 480,
         "currency": "INR"
        }
@@ -4043,7 +4044,7 @@
     },
     "lines_assigned_n": 1,
     "client": null,
-    "created_at": "2026-11-21T12:55:53.238Z",
+    "created_at": "2026-11-21T23:08:58.037Z",
     "age_days": 0,
     "actions": {
      "accept": {
@@ -4274,7 +4275,7 @@
       },
       "lines_assigned_n": 1,
       "client": null,
-      "created_at": "2026-11-21T12:55:53.238Z",
+      "created_at": "2026-11-21T23:08:58.037Z",
       "age_days": 0,
       "seen_status": null,
       "actions": {
@@ -4372,7 +4373,7 @@
     "advice": {
      "chit_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1",
      "state": "sent",
-     "shared_at": "2026-11-21T13:55:56.035Z"
+     "shared_at": "2026-11-22T00:09:01.075Z"
     }
    },
    "optional": []
@@ -4431,13 +4432,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T13:55:52.859Z",
-     "due_day": "2026-11-20",
+     "due_at": "2026-11-21T00:08:57.598Z",
+     "due_day": "2026-11-21",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
-     "done_at": "2026-11-21T13:55:52.864Z",
-     "created_at": "2026-11-21T13:55:52.860Z",
+     "done_at": "2026-11-22T00:08:57.604Z",
+     "created_at": "2026-11-22T00:08:57.599Z",
      "late": false,
      "today": false,
      "bucket": "later"
@@ -4660,7 +4661,7 @@
   "POST /api/books/compare/snapshots": {
    "status": 200,
    "example": {
-    "snapshot_id": "f9a1a8b4-f836-4999-979b-13eae82c630b",
+    "snapshot_id": "7ccd8d68-8164-4f56-8725-f2b3b46564fd",
     "label": "Tally H1",
     "source": "tally",
     "period_from": "2026-04-01",
@@ -5860,13 +5861,13 @@
      "party_name": "Name of 0002",
      "party_listed": true,
      "what": "Ring about the quote",
-     "due_at": "2026-11-20T13:55:52.859Z",
-     "due_day": "2026-11-20",
+     "due_at": "2026-11-21T00:08:57.598Z",
+     "due_day": "2026-11-21",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "manual",
      "done_at": null,
-     "created_at": "2026-11-21T13:55:52.860Z",
+     "created_at": "2026-11-22T00:08:57.599Z",
      "late": true,
      "today": false,
      "bucket": "late"
@@ -6024,9 +6025,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Rang about the rate",
-     "at": "2026-11-21T13:55:52.858Z",
+     "at": "2026-11-22T00:08:57.596Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T13:55:52.858Z"
+     "created_at": "2026-11-22T00:08:57.596Z"
     }
    },
    "optional": []
@@ -6041,9 +6042,9 @@
      "kind": "call",
      "direction": "out",
      "body": "Demo booked",
-     "at": "2026-11-21T13:55:52.888Z",
+     "at": "2026-11-22T00:08:57.629Z",
      "by_user_id": "E1",
-     "created_at": "2026-11-21T13:55:52.888Z"
+     "created_at": "2026-11-22T00:08:57.629Z"
     },
     "followup": {
      "followup_id": "00000000-0000-4000-8000-000000000005",
@@ -6052,13 +6053,13 @@
      "party_name": "Name of 0012",
      "party_listed": true,
      "what": "Demo",
-     "due_at": "2026-11-24T00:00:00.000Z",
-     "due_day": "2026-11-24",
+     "due_at": "2026-11-25T00:00:00.000Z",
+     "due_day": "2026-11-25",
      "assignee_user_id": "E1",
      "assignee_name": "Who E1",
      "source": "interaction",
      "done_at": null,
-     "created_at": "2026-11-21T13:55:52.888Z",
+     "created_at": "2026-11-22T00:08:57.630Z",
      "late": false,
      "today": false,
      "bucket": "week"
@@ -6132,7 +6133,7 @@
    "status": 200,
    "example": {
     "key": "group:VIP",
-    "send_ref": "679171c6-a32e-4425-bc86-b446d28a4e3d",
+    "send_ref": "1ea67df8-c017-444c-af79-114872a1285c",
     "dry": true,
     "channel": "whatsapp",
     "purpose": "marketing",
