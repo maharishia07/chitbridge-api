@@ -491,6 +491,8 @@
     'Nothing chosen': 'कुछ चुना नहीं गया',
     'Reduce what they owe': 'उनका बकाया घटाएँ',
     'Give back {total} in {tender} against {no}?': '{no} के विरुद्ध {tender} में {total} लौटाएँ?',
+    'Take {take} off what {who} owes and keep the other {kept} as credit on the account, against {no}?': '{no} के विरुद्ध {who} के बकाये में से {take} घटाएँ और बाकी {kept} खाते में क्रेडिट के रूप में रखें?',
+    '{take} off what they owe, {kept} kept as credit': 'बकाये में से {take} घटाए, {kept} क्रेडिट के रूप में रखे गए',
     'Yes, give it back': 'हाँ, लौटाएँ',
     '{total} back in {tender}': '{tender} में {total} लौटाए',
     'Take {total} off what {who} owes, against {no}?': '{no} के विरुद्ध {who} के बकाया से {total} घटाएँ?',

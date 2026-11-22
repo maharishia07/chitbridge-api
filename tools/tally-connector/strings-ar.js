@@ -520,6 +520,8 @@
     'Nothing chosen': 'لم يتم اختيار شيء',
     'Reduce what they owe': 'خفض ما عليهم',
     'Give back {total} in {tender} against {no}?': 'إرجاع {total} عبر {tender} مقابل {no}؟',
+    'Take {take} off what {who} owes and keep the other {kept} as credit on the account, against {no}?': 'خصم {take} من المبلغ المستحق على {who} وإبقاء الباقي {kept} رصيدًا دائنًا في الحساب، مقابل {no}؟',
+    '{take} off what they owe, {kept} kept as credit': 'خُصم {take} من المستحق عليهم، وبقي {kept} رصيدًا دائنًا',
     'Yes, give it back': 'نعم، أرجِعه',
     '{total} back in {tender}': '{total} أُرجعت عبر {tender}',
     'Take {total} off what {who} owes, against {no}?': 'خصم {total} مما يدين به {who}، مقابل {no}؟',
