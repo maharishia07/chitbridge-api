@@ -101,65 +101,20 @@
     localWhy: 'Four digits. Works without internet.',
     line: 'Use a code instead',
     later: 'Not now',
-    /* SSO-1129 P1a: what a provider sign-in that did not finish says (the api's #e= codes and the hand-off's refusals); the fall-back is always the code */
-    /* connect (the #c= word after a signed-in person linked a provider): what Settings says */
-    connect: {
-      linked: 'Connected. You can now sign in with it.',
-      LINK_EXISTS: 'That account is already connected here.',
-      SIGNIN_PROVIDER_NOT_ACCEPTED: 'This business does not accept that way to sign in.',
-      SIGNIN_REFUSED: 'That could not be connected to your account.',
-      SIGNIN_UNAVAILABLE: 'Connecting could not finish. Try again in a moment.',
-      LINK_CONFIRM_FAILED: 'That connection could not be confirmed. Start again from Settings.',
-      SSO_HANDOFF: 'That took too long. Start again.',
-      fallback: 'That did not finish. Nothing was connected.'
-    },
-    sso: {
-      SSO_STATE: 'That sign-in took too long or was already used. Start again.',
-      SSO_MIXUP: 'That sign-in came from a different provider than you started with. Start again.',
-      SSO_TOKEN: 'The provider answer could not be trusted, so nobody was signed in. Use your code instead.',
-      SSO_CANCELLED: 'You stopped the sign-in at the provider.',
-      PROVIDER_OFF: 'That sign-in is not switched on here. Use your code instead.',
-      NO_DEVICE: 'This browser could not be recognised. Reload the page and try again.',
-      BAD_NEXT: 'That sign-in could not return to this page. Use your code instead.',
-      SSO_HANDOFF: 'That sign-in already finished or took too long. Start again.',
-      SSO_NOT_LINKED: 'No account here is connected to that sign-in. Sign in with your mobile number or e-mail and the code we send you, then connect it under Settings.',
-      SSO_EMAIL_UNVERIFIED: 'The provider has not confirmed that e-mail address, so nobody was signed in. Use your code instead.',
-      SSO_MANY: 'That sign-in is connected to more than one account. Use your mobile number or e-mail and the code we send you.',
-      SIGNIN_PROVIDER_NOT_ACCEPTED: 'This business does not accept that way to sign in. Use your code instead.',
-      SIGNIN_UNAVAILABLE: 'Sign-in could not finish. Start again from the sign-in page.',
-      SIGNIN_REFUSED: 'Sign-in failed. Check your details or ask for a new code.',
-      DEVICE_MISMATCH: 'This browser said two different things. Reload the page and try again.',
-      fallback: 'That sign-in did not finish. Use your mobile number or e-mail and the code we send you.'
-    }
   };
-  /**
-   * ⭐ P1a — WHAT THE PROVIDER'S REDIRECT LEFT IN THE ADDRESS, TAKEN OUT AT ONCE. The api sends the browser back to /app.html#h=<one-time code> (or #e=<CODE>).
-   * A fragment never goes to a server, but it stays in the address bar and the history: it is read here, ONCE, at load, and the address is replaced (never a session in a
-   * URL: the code is swapped for the session by a POST body, and a spent or expired code is refused). Only this page's own address is read.
-   */
-  var LANDED = (function () {
-    try {
-      var where = root.location;
-      if (!where || !/(^\/$|\/app\.html$)/.test(where.pathname || '')) return null;
-      var found = /^#(h|e|c|k)=([A-Za-z0-9_%.-]{1,200})$/.exec(where.hash || '');
-      if (!found) return null;
-      if (root.history && typeof root.history.replaceState === 'function') root.history.replaceState(null, '', where.pathname + where.search);
-      return { kind: found[1], value: decodeURIComponent(found[2]) };
-    } catch (_) {
-      return null;
-    }
-  })();
-
-  /**
-   * H1 (critic 21 Nov): the ONE consumer of what the provider's redirect left. A page that has its own sign-in screen (app.html) calls this at boot, before it picks #/login:
-   * it returns { kind: 'h'|'e'|'c'|'k', value } ONCE (then null) and the address is already cleared. 'h' = a one-time code to swap (machine.providerHandoff), 'e' = a refusal word, 'c' = the result of connecting, 'k' = a one-time confirm code the signed-in session spends (POST /provider/link/finish).
-   */
-  function takeLanded() {
-    var landed = LANDED;
-    LANDED = null;
-    return landed;
+  /* ⭐ OTHER WAYS TO SIGN IN is its own capability (app/signin-more-ways.js, loaded before this file): its words, landed code, row and address come through CBSignin.provider.
+     Absent → a loud console.warn with a code and no provider door; the window itself still signs in by mobile, e-mail, PIN and code. */
+  /* what a sign-in leaves (the claims, the session, the keeping of it) is app/signin-session.js, loaded before this file */
+  var SS = E.session;
+  if (!SS) throw new Error('CBSignin.mount needs /app/signin-session.js loaded before /app/signin-ui.js');
+  var jwtClaims = SS.claims, sessionOf = SS.of, verifyRefused = SS.refused, isCustomerOnApps = SS.customerOnApps, keep = SS.keep;
+  var P = E.provider;
+  if (!P) {
+    root.console.warn('SIGNIN_PROVIDER_MODULE_MISSING: /app/signin-more-ways.js was not loaded before /app/signin-ui.js; no provider sign-in is offered');
+    P = { words: { connect: {}, sso: {} }, take: function () { return null; }, soonRow: function () { return ''; }, isKey: function () { return false; }, start: function () { return ''; }, ask: function () {}, arrive: function () {} };
   }
-
+  WORDS.connect = P.words.connect;
+  WORDS.sso = P.words.sso;
   /**
    * ⭐ THE METHOD SLOTS (DECISIONS 2026-10-08: every sign-in method lives only in CBSignin). A slot is CONFIG, hidden by default:
    * a button is drawn only when the host switches the slot on (contract.methods[name] === true) AND gives onMethod — so nothing on
@@ -172,40 +127,12 @@
     sso: { label: 'Use company account' },
     passkey: { label: 'Use your passkey' }
   };
-  /**
-   * ⭐ SSO-1129 — THE "BEING SWITCHED ON" ROW (Athi 21 Nov: "SSO is integrated but not visible at registration / sign-in"). The api has the provider start and
-   * callback (SEC-112 P0, GET /api/signin/provider/:key/start|callback) but NOT yet the door that turns the callback's one-time code into a session
-   * (P1a route 4) nor register-through-provider (P1b), so a live "Continue with Google" would have ended in a dead page. P1a now ships route 4 and the api lists a provider with live:true only when it is configured AND the door is
-   * built: such a provider is a real button at SIGN-IN (askProviders → setLive); every other one, and every provider at registration (P1b), is
-   * SHOWN, greyed, with its sentence (grey-what-is-not-ready): Google and Microsoft only — Apple, SSO and passkey are not built and stay hidden.
-   * A host that switches a slot on (methods.google + onMethod) gets the real button instead; this row skips that provider. Back office and the
-   * customer app stay delinked: the row is drawn for a person's sign-in or registration, never for the till or a shop's customer.
-   * soonRow(intent, skip, live) → html. intent 'signin' | 'register'. One component: the registration form calls the same function.
-   * P1a: a provider the api's GET /api/signin/providers lists with live:true (config present AND the hand-off door built) is a real button at sign-in; every other one stays grey.
-   */
-  var SOON = {
-    signin: { google: ['Continue with Google', 'Google sign-in is being switched on.'], microsoft: ['Continue with Microsoft', 'Microsoft sign-in is being switched on.'] },
-    register: { google: ['Sign up with Google', 'Google sign-up is being switched on.'], microsoft: ['Sign up with Microsoft', 'Microsoft sign-up is being switched on.'] }
-  };
-  var SOON_ID = { signin: { google: 'SCR054-B11', microsoft: 'SCR054-B12' }, register: { google: 'SCR053-B03', microsoft: 'SCR053-B04' } };
+  /* the provider doors (the "More ways to sign in" row, the address to the provider) are /app/signin-ui.js's other half: app/signin-more-ways.js */
   function soonRow(intent, skip, live) {
-    var kind = SOON[intent] ? intent : 'signin';
-    addCss(); /* the registration page draws this without ever mounting the window */
-    var skipped = skip || [];
-    var rows = Object.keys(SOON[kind])
-      .filter(function (key) {
-        return skipped.indexOf(key) < 0;
-      })
-      .map(function (key) {
-        var words = SOON[kind][key];
-        if (kind === 'signin' && (live || []).indexOf(key) >= 0)
-          return '<button data-cbsid="' + SOON_ID[kind][key] + '" type="button" class="cbsi-m" data-cbsi="provider" data-provider="' + key + '" data-testid="signin-' + key + '">' + words[0] + '</button>';
-        return (
-          '<button data-cbsid="' + SOON_ID[kind][key] + '" type="button" class="cbsi-m cbsi-soon" disabled aria-disabled="true" data-testid="' + kind + '-' + key + '-soon" title="' + words[1] + '">' +
-          words[0] + '</button><p class="cbsi-said" data-testid="' + kind + '-' + key + '-why">' + words[1] + '</p>'
-        );
-      });
-    return rows.length ? '<div class="cbsi-soonrow" data-testid="' + kind + '-sso-soon">' + rows.join('') + '</div>' : '';
+    return P.soonRow(intent, skip, live, addCss);
+  }
+  function providerStart(c, key) {
+    return P.start(c, key, deviceOf(c));
   }
   function methodsOn(c) {
     var on = (c && c.methods) || {};
@@ -217,28 +144,6 @@
   }
 
   /* ── small helpers ──────────────────────────────────────────────────────────────────────────────────────────────── */
-  function jwtClaims(t) {
-    try {
-      var text = String(t || '').split('.')[1];
-      if (!text) return {};
-      text = text.replace(/-/g, '+').replace(/_/g, '/');
-      while (text.length % 4) text += '=';
-      var s = typeof root.atob === 'function' ? root.atob(text) : root.Buffer.from(text, 'base64').toString('utf8');
-      return (
-        JSON.parse(
-          decodeURIComponent(
-            Array.prototype.map
-              .call(s, function (label) {
-                return '%' + ('00' + label.charCodeAt(0).toString(16)).slice(-2);
-              })
-              .join('')
-          )
-        ) || {}
-      );
-    } catch (_) {
-      return {};
-    }
-  }
   /** the {ok,data,error} envelope, when a host wraps it (core.js unwrap) — the sign-in routes answer bare JSON */
   function unwrap(j) {
     return j && typeof j === 'object' && 'ok' in j && ('data' in j || 'error' in j)
@@ -288,72 +193,9 @@
     };
   }
 
-  /**
-   * sessionOf(answer) — the ONE reading of a verify answer into the session the apps keep (app.html sessPersist's shape:
-   * token · role · name · entity · bridgeId · duty) plus what the window learned (person, exp, device_id, surface, jti).
-   */
-  function sessionOf(r) {
-    var a = r || {},
-      claims = jwtClaims(a.token),
-      id = a.identity || a.entity || a.actor || {};
-    var role = claims.identity_type || id.identity_type || 'entity';
-    var name = id.display_name || claims.display_name || '';
-    var entity = role === 'entity' ? name : claims.parent_entity_name || (a.actor && a.actor.parent_entity) || '';
-    var bridgeId = role === 'entity' ? id.bridge_id || claims.bridge_id || '' : claims.parent_bridge_id || id.bridge_id || '';
-    var s = {
-      token: a.token || '',
-      role: role,
-      name: name,
-      entity: entity,
-      bridgeId: bridgeId,
-      person: {
-        id: id.user_id || claims.identity_id || null,
-        identity_id: id.identity_id || claims.identity_id || null,
-        kind: role === 'actor' ? 'employee' : role === 'customer' ? 'customer' : 'owner',
-        shop: id.entity_id || claims.parent_entity_id || claims.identity_id || null
-      },
-      exp: claims.exp || null,
-      device_id: claims.device_id || null,
-      surface: claims.surface || null,
-      jti: claims.jti || null
-    };
-    if (role === 'actor') s.duty = 'duty';
-    return s;
-  }
-  /** the verify answer carries no staff session: a failed status, no token, or a customer's token on the apps */
-  function verifyRefused(reply, answer, c) {
-    return reply.status < 200 || reply.status >= 300 || !answer.token || isCustomerOnApps(answer, c);
-  }
-  /** CUSTOMER-DELINK: a customer's token is never kept as the apps' session — only the shop page's own sign-in (need 'customer') may hold it */
-  function isCustomerOnApps(answer, c) {
-    return !!answer.token && sessionOf(answer).role === 'customer' && c.need !== 'customer';
-  }
   /** why a person is at the sign-in window: the page's own reason, else the one the frame kept when their access ended (BOOKS_GRANT_ENDED, ACCOUNT_SWITCHED_OFF: the server's sentence, read once) */
   function endedWhy(c) {
     return c.why ? String(c.why) : root.CBFrame && root.CBFrame.endedNote ? root.CBFrame.endedNote() : '';
-  }
-  /** the apps' session, stored (cb_sess) — the same keys app.html writes; then CBOnePerson.claim says whose this browser's work is */
-  function keep(c, s, store) {
-    /* a sign-in by the host's LOCAL credential (the till's counter PIN) carries no token — there is no session to keep */
-    if (!s || !s.token) return;
-    /* a host may hand its own store (io.store: a test, the practice lab) — then NOTHING here touches this browser's real session */
-    var own = !!store;
-    store = store || root.localStorage;
-    if (c.need === 'customer') {
-      var shop = c.shop || s.person.shop || '';
-      try {
-        (own ? store : root.sessionStorage || store).setItem('cb_cust@' + shop, JSON.stringify({ token: s.token, name: s.name }));
-      } catch (_) { /* storage blocked or full: the page works without it */ }
-      return;
-    }
-    var sess = { token: s.token, role: s.role, name: s.name, entity: s.entity, bridgeId: s.bridgeId };
-    if (s.duty) sess.duty = s.duty;
-    try {
-      store.setItem('cb_sess', JSON.stringify(sess));
-    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
-    try {
-      if (!own && root.CBOnePerson && root.CBOnePerson.claim) root.CBOnePerson.claim(root.CBOnePerson.who(sess));
-    } catch (_) { /* best effort: failing here changes nothing the user sees */ }
   }
 
   /** the sentence for a refused call: the page's words for the known codes, else the server's own sentence, else the shared refusal wording */
@@ -626,7 +468,7 @@
     }
     /** the api's list of ready providers → the keys whose button is live (a list that is not well formed switches nothing on) */
     function setLive(list) {
-      var keys = (Array.isArray(list) ? list : []).filter(function (p) { return p && p.live === true && typeof p.key === 'string' && SOON.signin[p.key]; }).map(function (p) { return p.key; });
+      var keys = (Array.isArray(list) ? list : []).filter(function (p) { return p && p.live === true && typeof p.key === 'string' && P.isKey(p.key); }).map(function (p) { return p.key; });
       return set({ live: keys });
     }
     /** the page came back from the provider with a one-time code: swap it for the session (the SAME answer as a code sign-in), or say in words why not */
@@ -708,7 +550,7 @@
     '.cbsi .cbsi-go,.cbsi .cbsi-m{height:46px;padding:0 16px;border-radius:10px;border:1px solid var(--green,#16693F);background:var(--green,#16693F);color:var(--on-green,var(--card,#fff));font:inherit;font-size:15px;font-weight:700;cursor:pointer;width:100%}' +
     '.cbsi .cbsi-go[disabled]{opacity:.6;cursor:default}' +
     '.cbsi .cbsi-m{background:var(--card,#fff);color:var(--ink,#1D1B16);border-color:var(--line,#DDD6C6)}' +
-    '.cbsi .cbsi-m[disabled]{opacity:.55;cursor:not-allowed}.cbsi-soonrow{display:flex;flex-direction:column;gap:6px;margin-top:10px}.cbsi-soonrow .cbsi-m{height:46px;padding:0 16px;border-radius:10px;border:1px solid var(--line,#DDD6C6);background:var(--card,#fff);color:var(--ink,#1D1B16);font:inherit;font-size:15px;font-weight:600}.cbsi-soonrow .cbsi-said{margin:0 0 4px}' +
+    '.cbsi .cbsi-m[disabled]{opacity:.55;cursor:not-allowed}.cbsi-soonrow{display:flex;flex-direction:column;gap:6px;margin-top:10px}.cbsi-soonrow .cbsi-m{height:46px;padding:0 16px;border-radius:10px;border:1px solid var(--line,#DDD6C6);background:var(--card,#fff);color:var(--ink,#1D1B16);font:inherit;font-size:15px;font-weight:600}.cbsi-soonrow .cbsi-said{margin:0 0 4px}.cbsi-more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:13.5px;color:var(--muted,var(--grey,#5E594D));text-decoration:underline;text-underline-offset:3px}.cbsi-more[open]>summary{margin-bottom:6px}.cbsi-more .cbsi-m{width:100%;margin-bottom:4px}' +
     '.cbsi .cbsi-ln{display:inline-block;background:none;border:0;padding:6px 0;color:var(--blue-i,var(--blue-d,#174A87));text-decoration:underline;text-underline-offset:3px;font:inherit;font-size:13.5px;cursor:pointer;text-align:start;min-height:40px}' +
     '.cbsi .cbsi-why{margin:0;padding:10px 13px;border-radius:10px;background:var(--red-t,#FBEAE3);border:1px solid var(--red-b,#E7B9A8);color:var(--red-i,#8E3517);font-size:13.5px}' +
     '.cbsi .cbsi-said{margin:0;font-size:13.5px;color:var(--muted,var(--grey,#5E594D))}' +
@@ -881,24 +723,6 @@
   /**
    * mount(host, contract) — the window, painted into `host`; the machine behind it is CBSignin.machine(contract).
    */
-  /** the api address that sends this browser to the provider (a top-level visit; the device id rides in the address because a visit has no header) */
-  function providerStart(c, key) {
-    var dev = deviceOf(c);
-    return dev && SOON.signin[key] ? (c.apiBase || '') + '/api/signin/provider/' + encodeURIComponent(key) + '/start?device_id=' + encodeURIComponent(dev) : '';
-  }
-  /** the providers the api says are ready: person windows only (never the till or a shop's customer; a host with its own transport keeps its own rules) */
-  function askProviders(m, c) {
-    if (c.need === 'customer' || c.surface === 'till' || c.surface === 'shop' || c.io || typeof root.fetch !== 'function') return;
-    try {
-      root
-        .fetch((c.apiBase || '') + '/api/signin/providers', { cache: 'no-store' })
-        .then(function (reply) { return reply.json(); })
-        .then(function (j) { m.setLive(unwrap(j).providers); })
-        .catch(function () {});
-    } catch (_) {
-      /* the list failing leaves every provider greyed, as before */
-    }
-  }
   function mount(host, c) {
     if (!host || !doc) return null;
     c = c || {};
@@ -941,14 +765,8 @@
     doc.addEventListener('click', onClick);
     doc.addEventListener('input', onInput);
     paint(host, m, c);
-    askProviders(m, c);
-    var landed = c.need !== 'customer' && c.surface !== 'till' && c.surface !== 'shop' && !c.io ? LANDED : null;
-    if (landed) {
-      LANDED = null;
-      if (landed.kind === 'h') m.providerHandoff(landed.value);
-      else if (landed.kind === 'e') m.refuse(m.words.sso[landed.value] || m.words.sso.fallback);
-      else LANDED = landed; /* a connect result belongs to Settings, not to a sign-in window */
-    }
+    P.ask(m, c, unwrap);
+    P.arrive(m, c);
     return {
       destroy: function () {
         m.close();
@@ -973,7 +791,7 @@
    ⚠️ NOT E.keep: E is the ENGINE (engine/signin.js), whose keep(surface, answer) the counter calls; assigning over it broke every till
    sign-in (14 Oct, till-pin and 10 more walks). [[feedback-namespace-after-assignment]] */
   E.keepSession = keep;
-  E.takeLanded = takeLanded;
+  E.takeLanded = P.take;
   E.jwtClaims = jwtClaims;
   E.transport = httpPost; /* the default transport, for a host that wraps it (the till: "offline" said in words first) */
   E.METHODS = METHODS;
