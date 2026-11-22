@@ -601,6 +601,9 @@ const GUARDS = [
   'ai-rail-credit-note-bill.test.cjs', // AI-F-02: a rail credit note names a bill of the sender's (422 CREDIT_NOTE_NEEDS_BILL) and cannot take back more than it (409 CREDIT_NOTE_OVER_BILL)
   'ai-usd-order-fx.test.cjs', // AI-F-01: US$650.00 carried on an order posts in the shop's money at the day's rate through the one fx engine (A$1,007.50 at 1.55)
   'ai-received-bill-locked-month.test.cjs', // AI-F-04b: a received bill moved out of a hard-locked month says so (needs fix/af-1129)
+  'am-summary-claim.test.cjs', // AM-F-03: a filed day summary claiming more than its bills is read from the bills, the gap told in words
+  'am-bank-twice.test.cjs', // AM-F-04/05: the same statement is not signed twice (409 STATEMENT_ALREADY_SIGNED); a locked month takes no sign-off (the entries' lock rule)
+  'am-relock.test.cjs', // AM-F-07: a soft lock pressed again on a soft-locked month is refused, the first record stays
   'api-problem-testing.test.cjs', // API-4 sweep, the test board: every refusal of routes/testing.js (33 routes) is a Problem with its old keys frozen; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-attachments.test.cjs', // API-4 sweep, the attachments: every refusal of routes/attachments.js (2 routes) is a Problem with its old keys frozen; a copy for every participant and one for an internal message; the S2 download headers; no 5xx says its cause; another shop's id answers as an unknown one (S35)
   'api-problem-bell.test.cjs', // API-4 sweep, the bell: every refusal of routes/events.js and routes/notifications.js (6 routes) is a Problem with its old keys frozen; the stream opens with a ticket in ?t= and ?ticket=, its frames and heartbeat unchanged; no answer says its cause; notif_dismissed has no foreign key, so a foreign log_id is no oracle

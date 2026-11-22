@@ -35,7 +35,8 @@ const ACCOUNTANT = Object.assign({}, STAFF, { hat: 'manager' });
   const chart = [{ account_id: ACCOUNT_ID, code: '1510', name: 'Bank', role: 'bank', is_group: false }];
   store.accounts = async () => chart;
   let booksBank = 500000; /* A$5,000.00 */
-  B.ledgerCtx = async () => ({});
+  B.ledgerCtx = async () => ({ pack: B.packOf(SETTING) });
+  B.ensureYear = async () => []; /* AM-F-05: the lock check reads the real period rows; proved in am-bank-twice.test.cjs */
   B.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: booksBank, credit_minor: 0 }] });
   const server = lab.appOf([{ mount: MOUNT, router: require(path.join(HERE, 'routes', 'books.js')) }]).listen(0);
   const port = server.address().port;

@@ -144,7 +144,8 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   /* =========================== POST /bank/statements =========================== */
   const chart = [{ account_id: ACCOUNT_ID, code: '1510', name: 'Bank', role: 'bank', is_group: false }];
   store.accounts = async () => chart;
-  B.ledgerCtx = async () => ({}); /* WALK U: the statement is signed only against the books' own figure on the period end (150000 here, the trial balance's debit less credit) */
+  B.ledgerCtx = async () => ({ pack: B.packOf({ country: 'IN', fy_start_month: 4, functional_currency: 'INR', pack_version: '1' }) }); /* WALK U: the statement is signed only against the books' own figure on the period end (150000 here, the trial balance's debit less credit) */
+  B.ensureYear = async () => []; /* AM-F-05: the lock check reads the real period rows; proved in am-bank-twice.test.cjs */
   B.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 150000, credit_minor: 0 }] });
   const STATEMENT = { account: '1510', period_from: '2026-10-01', period_to: '2026-10-31', opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' };
   const inserted = () => log.filter((one) => /INSERT INTO bank_rec_log/.test(one.sql));

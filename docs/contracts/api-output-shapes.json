@@ -20066,6 +20066,9 @@
           "slots": {},
           "live_capped": {
             "type": "boolean"
+          },
+          "summary_says_more": {
+            "type": "array"
           }
         },
         "additionalProperties": false
