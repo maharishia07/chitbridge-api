@@ -129,10 +129,10 @@ of file each thing is; this says what already does the job.
 | 33 | `next` | `cap-stock.js` | the next level: |
 | 33 | `columns` | `field-ledger.js` | columns(root, tables) → { table: |
 | 33 | `governance` | `home-facts.js` |  |
+| 33 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
 | 32 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
-| 32 | `known` | `knownerr.js` | known(err) → { status, body } · null: |
 | 32 | `customer` | `mintuserid.js` | silently becomes a second identity. |
 | 31 | `chip` | `screen-id.js` | var S = { app: |
 | 31 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
