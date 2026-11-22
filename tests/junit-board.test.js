@@ -178,7 +178,8 @@ function post(port, body, where) {
     const src = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'guards.cjs'), 'utf8');
     assert.ok(src.indexOf("const KEY = (f) => 'chitbridge-api/tests/' + f;") >= 0, 'guards.cjs no longer keys by the board path');
     assert.ok(/require\('\.\.\/lib\/junitresults'\)\.write\(/.test(src + fs.readFileSync(path.join(__dirname, '..', 'scripts', 'guards-run.cjs'), 'utf8')), 'guards.cjs writes its own JUnit instead of the one writer');
-    const list = src.slice(src.indexOf('const GUARDS'), src.indexOf('];', src.indexOf('const GUARDS')));
+    const listSrc = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'guards-list.cjs'), 'utf8');
+    const list = listSrc.slice(listSrc.indexOf('const GUARDS'), listSrc.indexOf('];', listSrc.indexOf('const GUARDS')));
     const files = [...list.matchAll(/'([^']+\.test\.c?js)'/g)].map((m) => m[1]);
     const board = new Set(require('../data/test-cases.json').cases.map((c) => c.case_key));
     const off = files.filter((f) => !board.has(GKEY(f)));
