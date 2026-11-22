@@ -26,7 +26,8 @@ const GUARDS = [
   'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
   'reviews1-boolean-words.test.cjs', // reviews1 EL F1: one boolean reader for is_draft / is_dispute / chit_wide / priority-flag
   'lv05-held-pay-out-and-todo.test.cjs', // LV-05/06: owner-approves refuses a Bookkeeper payment out; the To-do lists held entries only to the owner (real Express)
-  'seats-label-hat.test.cjs', 'pay-out-gate.test.cjs', // AK-F-02 + 22 Nov item 5: the Bookkeeper/Accountant label sets the manager hat (lib/access.labelHat) · lib/pay-out-gate.js unit — only the owner pays out, the accountant and a counter seat record money in only, stored direction read for propose/confirm, a failing read closes the door
+  'seats-label-hat.test.cjs',
+  'pay-out-gate.test.cjs', // AK-F-02 + 22 Nov item 5: the Bookkeeper/Accountant label sets the manager hat (lib/access.labelHat) · lib/pay-out-gate.js unit — only the owner pays out, the accountant and a counter seat record money in only, stored direction read for propose/confirm, a failing read closes the door
   'seat-matrix.test.cjs', // AK-F-02 (22 Nov): docs/SEAT-MATRIX.md is what the gates say (tools/seat-matrix.cjs), the contract's staff seats agree with them; a counter never pays a supplier
   'lv12-ai-skill-prototype-names.test.cjs', // LV-12: constructor / __proto__ / prototype are not skills (getSkill + POST /ai-draft, real route)
   'lv13-assist-container-gates.test.cjs', // LV-13: PUT /assist/container and /region-override are the owner's or a platform operator's; an ownerless container's override is the platform's
@@ -658,7 +659,9 @@ const GUARDS = [
   'cat239-adopt-cost-blind.test.cjs', // CAT-239: the adopt offer drops the supplier cost (any depth) for a cost-blind co-assist; a blind combo push is refused
   'rail146-chit-cost-blind.test.cjs', // RAIL-146: the chit reads (GET /:chit_id · /inbox · /folder · /sent · /rollup) carry no cost to a cost-blind co-assist; a sales chit stays priced; the owner's answer is untouched
   'rail146b-work-cost-blind.test.cjs', // RAIL-146b: the work reads (GET /api/work/list · /facts?unbilled=1 · /:chit_id) carry no purchase money to a cost-blind co-assist; a sales row stays priced; whole-body scan, fail closed
-  'ctr-178-stock-repost.test.cjs', 'stock-bill-one-transaction.test.cjs', 'books-cashflow-open-items.test.cjs', // (the last two: SPEED 1129, a bill's stock in ONE transaction; /cashflow on open documents) CTR-178: a counter sale whose after-commit stock post failed or was lost is found (no movement under its ref) and posted again; a post that still fails is said; sendStock and sendReplay call the sweep
+  'ctr-178-stock-repost.test.cjs',
+  'stock-bill-one-transaction.test.cjs',
+  'books-cashflow-open-items.test.cjs', // (the last two: SPEED 1129, a bill's stock in ONE transaction; /cashflow on open documents) CTR-178: a counter sale whose after-commit stock post failed or was lost is found (no movement under its ref) and posted again; a post that still fails is said; sendStock and sendReplay call the sweep
   'p2-ops-doors.test.cjs', // P2 lane 2 (12 Nov): OPS-85 the match reads past counter bills and drops closed orders · OPS-87 another-unit count is not 'awaited' · OPS-79 the trace says when it cut · OPS-6 the send answer names a receipt line with no product
   'ops-5-delivered-stock.test.cjs', // OPS-5 (ST-19): goods counted in against a supplier bill I received (deliver-lines, resale) post purchase rows GI:<delivery_id> once; own use / asset / charge / unmatched name / receipt already raised move nothing and say why
   'rail156-po-cost-blind.test.cjs', // RAIL-156 (enrolled by OPS-98): a cost-blind co-assist cannot SEND a priced buy-side chit (403 COST_BLIND); a quantity-only PO and every sale still go; the stand-in answers the engine's seller+buyer read
@@ -757,13 +760,15 @@ const GUARDS = [
   'shop-bookkeeper-approves.test.cjs', // SHOPBK slice A+B: the shop Bookkeeper seat (preset by hat, may.post, every owner-only door OWNER_ONLY, the opening only before the books run); books_owner_approves off = direct post, on = 202 held entry (event | journal) for that seat only, an unreadable setting never lets an entry through, staff cannot prepare lock/unlock/year_close/reverse, the setting is the owner's and defaults off; a held event with no date is frozen to the shop's today (withTheDate)
   'l1c-payment-gate.test.cjs', // LV sec-money-01 M2: POST /payments carries paymentGate: owner-approves shop + Bookkeeper seat = 403 OWNER_ONLY, nothing written; off / owner / unreadable setting
   'books-action-date.test.cjs', // SHOPBK-B: a held Day book event with no date is frozen to the shop's today
-  'lens2-1129.test.cjs', 'lensp2-1129.test.cjs', // LENS2 money-01 M2: prepare locks the body hash as well as the ref · LENS-P2: negative inlined in parentheses, accept one transaction, reward same-ref other-spend 409, counter period never back
+  'lens2-1129.test.cjs',
+  'lensp2-1129.test.cjs', // LENS2 money-01 M2: prepare locks the body hash as well as the ref · LENS-P2: negative inlined in parentheses, accept one transaction, reward same-ref other-spend 409, counter period never back
   'shop-bookkeeper.test.cjs', // SHOPBK slice A: the shop Bookkeeper seat, its owner-only doors, the opening only before the books run
   'books-split-modules.test.cjs', // batch 1123: policy-books · home-waiting · books-action-queue, one unit per rule each (closed when the table is absent)
   'people-writes-sec2.test.cjs', // SEC2: no answer of any /api/actors route holds a code (pin_state instead); every people write is the owner's (403 OWNER_ONLY + why); e-mail stored + edited; connector code through generateOTP('connector')
   'limit-settings.test.cjs', // SEC-125: a typo, empty, negative, huge numeric setting fails CLOSED to the safe default (164 checks; real server.js sign-in limiter, every converted site)
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
-  'request-log.test.cjs', 'request-log-keys.test.cjs', // ERR-14: seat and route on the request line, no e-mail; // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
+  'request-log.test.cjs',
+  'request-log-keys.test.cjs', // ERR-14: seat and route on the request line, no e-mail; // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
   'signin-contact.test.cjs', // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
   'signin-enumeration.test.cjs', // SEC-139: before a secret is proven an unknown account, a known one sent no secret and a wrong secret get ONE answer (and about the same time) on actors/login, entities/verify, signin/verify; no CHOOSE_IDENTITY list at verify; check-login one constant answer
   'sec-desk-why-and-verify-trips.test.cjs', // SEC-139 class + S8: a routing fault gives route.why one fixed sentence (no exception text in preview or raise); login/verify answers unknown, wrong, locked and expired alike with the same DB round trips
@@ -774,7 +779,8 @@ const GUARDS = [
   'p2-crm-lane1.test.cjs', // P2 lane 1: PATCH followup done must be a JSON boolean (CRM-239, BAD_FLAG); the door pass tests of CRM-233/237/243/251 pinned
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
-  'f13-creator-edit.test.cjs', 'sec-185-identities-sweep.test.cjs', /* F13: the one creator-edit rule, the b909 text, the refusal in words | */ // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
+  'f13-creator-edit.test.cjs',
+  'sec-185-identities-sweep.test.cjs', /* F13: the one creator-edit rule, the b909 text, the refusal in words | */ // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
   'signin-provider.test.cjs', // ⭐⭐ SEC-112 P0: provider sign-in — registry, stand-in rule, claim checks (S2/S3/S4), migrations b878-b880, user-id suggestions, start + callback against oauth2-mock-server (needs the dev dependency: CI installs it; absent outside CI = section D skipped, said)
   'sec-75-entity-schemas.test.cjs', // ⭐⭐ SEC-75: entity_schemas + schema_fields — the widened sweep ratchet and its break checks, the two held RUN files (b861 doors, b862 policies), the boot check, one defaultSchemaId, bound readers, the freeze through the definer, T8
   'bound-db.test.cjs', // ⭐ SEC-75: the offline shop-binding double keeps its claims (blank id, other-shop predicate, schema_id-only, the documented limits)
@@ -800,6 +806,7 @@ const GUARDS = [
   'actors-create-level.test.cjs',
   'actors-max-tasks-cap.test.cjs',
   'ai-box.test.cjs',
+  'books-events-batch.test.cjs', // red1129: the bank Add batch route, 15 checks
   'ad-f04-rail-tax-invoice.test.cjs', // red1129: enrolled by the integrator, green on sit-in
   'ad-f05-past-year-lock.test.cjs', // red1129: enrolled by the integrator, green on sit-in
   'aj-double-count.test.cjs', // red1129: enrolled by the integrator, green on sit-in
@@ -831,7 +838,8 @@ const GUARDS = [
   'marketing-plain-reason.test.cjs', // walk E (1128): marketing refusals read in plain words
   'readiness-registration-word.test.js', // E-F-02 (1128): the registration word comes from the country pack
   'supply-kind-1128.test.cjs', // supplykind-1128: supply kind follow-ups on the api path
-  'supply-kind-export.test.cjs', 'ag-counter-kinds.test.cjs', /* AG-F-01/02 (1129): a till bill's tax kind is the catalogue's */ // G-F-01 (1128): a sale that states it is an export lands on the export ledger
+  'supply-kind-export.test.cjs',
+  'ag-counter-kinds.test.cjs', /* AG-F-01/02 (1129): a till bill's tax kind is the catalogue's */ // G-F-01 (1128): a sale that states it is an export lands on the export ledger
   'till-never-ok-hold-1128.test.cjs', // walk F (1128): a till sale refused 422 with a code a retry cannot fix is held, not retried
   'till-park-agent-1129.test.cjs', // 1129 tillPark4xx: the shop PC's queue parks a refused entry once with the server's words; 503/429 retry; a 409 duplicate is sent; 401 stays re-sign-in
   'till-stock-warn-noslab-1129.test.cjs', // counterSmall (1129): till 'Only N in stock' warns never blocks; a stated rate is not 'No tax rate'
@@ -942,7 +950,8 @@ const GUARDS = [
   'schedule-apply-claim.test.cjs', // NET-98 critic MUST 3: two readers at one due moment lay a parked patch once (claim: FOR UPDATE SKIP LOCKED + guarded stamp)
   'mis-practice-marks.test.cjs', // MIS 0b/0c: the practice row's queries open and entries checked = the client's own page (review-mark openCount, coverage), a mark altered by a seal included
   'speed17-marks-key-uncast.test.cjs', // l17 speed: the marks key (entry_id) is compared as a uuid, never entry_id::text, so its index serves the practice read at depth
-  'sold-one-rule.test.cjs', 'aj-today-sales.test.cjs', /* AJ-F-08: today's sales one figure, net of credit notes, a return is no bill */ // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
+  'sold-one-rule.test.cjs',
+  'aj-today-sales.test.cjs', /* AJ-F-08: today's sales one figure, net of credit notes, a return is no bill */ // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
   'onerule-practice-page.test.cjs', // l16 onerule: the practice row equals the client's own page for every fact (months not locked = periodAdvice's rule, bank = unexplainedOf), every seeded client; real-Postgres on the 150-client seed: onerule-practice-page.realstack.cjs
   'net-98-reducers.test.cjs', // NET-98 S1: the pure reducers split out of the view's libs, one definition each (guard); the real-Postgres differential is net-98-differential.realstack.cjs (local stack)
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom
