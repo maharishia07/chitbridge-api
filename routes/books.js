@@ -2545,6 +2545,11 @@ route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, 
 router.get('/returns', auth, moneyReader, on, ...checked('GET /returns'), async (req, res) => {
   try {
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
+    /* AC-F-02: a document a locked month moved into (or out of) this period is said on the return, in the entry's own words */
+    const span = form && ((form.periods || []).find((item) => item.period === form.period) || (form.period && form.period.start ? form.period : null));
+    const inSpan = (day) => !!span && day >= span.start && day <= span.end;
+    const movedHere = span ? (await withEntity(ctx(req), (h) => S.movedByLock(h, ctx(req)))).filter((m) => inSpan(m.posting_date) || inSpan(m.doc_date)) : [];
+    if (movedHere.length) form.notes = (form.notes || []).concat(movedHere.map((m) => m.entry_no + ' · ' + m.words));
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
     // prettier-ignore
     res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, unsupported_input: form.unsupported_input, needs_answer: form.needs_answer, emirates: form.emirates, staggers: form.staggers });
