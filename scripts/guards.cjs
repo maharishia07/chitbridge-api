@@ -1124,6 +1124,7 @@ const GUARDS = [
   'al-move-in-gstin-sources.test.cjs', // AL-F-02/03 (1129): move-in source list greys Tally/Zoho with a sentence; the contacts preview and the write share ONE GSTIN check (party-fields.checkTaxId)
   'ap-1129-order.test.cjs', // AP-F-08: the rate list of the document's own day (a back-dated IN bill at 12/28, a note on it, a stated export) through routes/chits.js SEND_STEPS in the real order
   'ap-move-in.test.cjs', // AP-F-01..08 (1129): QBO Account # is the code, Business ID No. the ABN, title-row hint, reversed opening frees the file, locked month refuses an opening, MYOB greyed, body currency judged, rate outside the pack refused
+  'ay-till-1129.test.cjs', // AY-F-01 till half (1129): the till's credit note takes its supply and place of supply from the original bill it holds (or its frozen invoice), says in words when it cannot; the server steps give IGST for an inter bill, CGST+SGST for an intra one
   'till-day-returns-1129.test.cjs', // Walk U (1129) U-F-02: after a return the day close's rate rows, the F10 sheet and the returns line equal the books (a credit note's by_rate is taken back whatever shape the read gave); AU walk + IN 5%/18% in cents; api creditNoteMoney carries by_rate
   'ae-day-report-tax-word.test.cjs', // Walk AE: the till day report names the tax in the pack's word (VAT), never a fixed GST
   'ae-f18-expense-vat.test.cjs', // AE-F-18: Pay expense takes the pack's tax rate + supplier TRN; 420.00 at 5% inside posts Dr 400.00 / Dr input VAT 20.00 / Cr bank 420.00 (needs BOOKS_ENGINES_SRC)
