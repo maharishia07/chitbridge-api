@@ -4740,14 +4740,17 @@
     },
     "POST /api/signin/verify": {
       "file": "signin.js",
-      "trips": 7,
-      "wire": 10,
+      "trips": 11,
+      "wire": 18,
       "fired": true,
       "status": 200,
       "registered_only": true,
       "fixture_body": {
         "username": "till@shop",
         "pin": "1234"
+      },
+      "fixture_headers": {
+        "x-device-id": "round-trips-device-1"
       },
       "fixture_row": {
         "identity_id": "00000000-0000-4000-8000-000000000001",
@@ -4765,7 +4768,8 @@
         "parent_entity_id": "00000000-0000-4000-8000-000000000001",
         "user_id": "shop",
         "actor_role": "cashier"
-      }
+      },
+      "note": "22 Nov 2026 (red1129): fired WITH a device id now (SEC-113 fails a person sign-in without one: it answered 400 NO_DEVICE at 10 statements). A listed person session opens in 11 trips / 18 statements (K-SEC PR A); cb-speed to look for a cheaper open"
     },
     "POST /api/simulator/feedback": {
       "file": "simulator.js",
@@ -5778,6 +5782,41 @@
       "status": 200,
       "extra": true,
       "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "DELETE /api/signin/provider/links/:link_id": {
+      "file": "signin-provider.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/signin/provider/links": {
+      "file": "signin-provider.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "answered 503 on the stub"
+    },
+    "POST /api/signin/provider/handoff": {
+      "file": "signin-provider.js",
+      "trips": 50,
+      "wire": null,
+      "fired": false,
+      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+    },
+    "POST /api/signin/provider/link/finish": {
+      "file": "signin-provider.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/signin/provider/link/start": {
+      "file": "signin-provider.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
     }
   }
 }

@@ -26674,7 +26674,6 @@ function retHowOptions(ways, owed){
   var pick = function(tender){ return RET_HOW === tender ? ' selected' : ''; };
   var may = retOtherMay();
   return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>' + tx('Reduce what they owe') + '</option>' : '')
-  return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
     + Object.keys(ways).map(function(tender){
         var other = RET_FOR && retIsOther(RET_FOR, tender);   /* AF-F-01: another tender than the bill's own is greyed for a seat that may not approve it */
         return '<option value="' + esc(tender) + '"' + pick(tender) + (other && !may ? ' disabled' : '') + '>' + esc(tender) + '</option>';

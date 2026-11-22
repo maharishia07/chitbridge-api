@@ -15,7 +15,8 @@
   "GET /api/keys",
   "GET /api/repeat",
   "GET /api/repeat/:id",
-  "GET /api/tax/invoice/:chit_id"
+  "GET /api/tax/invoice/:chit_id",
+  "GET /api/simulator/content"
  ],
  "not_exercised": [
   "GET /api/actors/:id/tasks",
@@ -167,7 +168,8 @@
   }
  },
  "stub_artefacts": {
-  "GET /api/products": "the generic stub row has no real item shape, so the per-row work the route does on it is not a real loop (reviewed in api PR 1139)"
+  "GET /api/products": "the generic stub row has no real item shape, so the per-row work the route does on it is not a real loop (reviewed in api PR 1139)",
+  "GET /api/network-design/stores": "dated 22 Nov 2026 (red1129): +1 FLAT trip (4 at 10 and at 100 rows, not per row) for the suspended-member read fence, lens-sec 1129 (23b4c8830); cb-speed may fold it into the store read"
  },
  "routes": {
   "GET /.well-known/ctp.json": {
@@ -2775,10 +2777,10 @@
     "trips": 1
    },
    "10": {
-    "trips": 3
+    "trips": 4
    },
    "100": {
-    "trips": 3
+    "trips": 4
    },
    "grows": false,
    "exercised": false

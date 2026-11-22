@@ -20,7 +20,7 @@ const { ok, eq, done } = counter();
   const e = X.T.entries.find((x) => x.source_ref === 'walkin:C1:2026-09-15');
   ok('the late day posts (the standing rule)', late && late.ok && e, JSON.stringify(late));
   eq('…on 1 Oct, its own day kept as doc_date', [day(late.posting_date), day(late.doc_date), late.moved], ['2026-10-01', '2026-09-15', true]);
-  ok('…and the entry SAYS it moved: narration ends "September locked"', e && /September locked$/.test(e.narration || ''), e && e.narration);
+  ok('…and the entry SAYS it moved: narration says the locked month moved it (AC-F-02 words)', e && /September is locked, so it is in the books on 1 Oct$/.test(e.narration || ''), e && e.narration);
   const open = await X.B.postEntry(X.db, SHOP, ev('D-open', '2026-10-03'));
   const o = X.T.entries.find((x) => x.source_ref === 'walkin:C1:2026-10-03');
   ok('a day in an open month carries no note', open.ok && o && !/locked/.test(o.narration || ''), o && o.narration);

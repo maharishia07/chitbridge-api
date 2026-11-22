@@ -128,14 +128,14 @@ function txn(one, other, n, vars) {
   var count = Number(n) || 0;
   var cat = 'other';
   try {
-    cat = new Intl.PluralRules(CBLocale.locale()).select(count);
+    cat = new Intl.PluralRules((globalThis.CBLocale ? globalThis.CBLocale.locale() : undefined)).select(count);
   } catch (_) {
     cat = count === 1 ? 'one' : 'other';
   }
   var m = CBSTR[cbLang()] || {};
   /* the exact category, then the catch-all, then English — never a key on screen */
   var text = m[one + '\u0005' + cat] || m[one + '\u0005other'] || (count === 1 ? one : other);
-  var all = { count: CBLocale.number(count) };
+  var all = { count: globalThis.CBLocale ? globalThis.CBLocale.number(count) : String(count) };
   for (var k in vars || {}) if (Object.prototype.hasOwnProperty.call(vars, k)) all[k] = vars[k];
   return text.replace(/\{(\w+)\}/g, function (whole, key) {
     return Object.prototype.hasOwnProperty.call(all, key) ? bidiWrap(all[key]) : whole;

@@ -564,6 +564,8 @@ const fakeDb = {
     /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
     if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
     { const off = require('./books-offrail-memory.cjs').answer(fakeDb.T, t, v); if (off) return off; } /* V-F-07: lib/offrail-itc's read */
+    /* 1129: lib/books-evidence (the bill a ledger row came from) and lib/tax-copy (the bill's tax copy) read chit_header; no chit is held in memory */
+    if (/^SELECT chit_id, sent_at, business_json->'invoice' AS invoice FROM chit_header/.test(t.trim()) || /^SELECT h.chit_id, h.sender_entity_id, h.all_recipients, h.business_json/.test(t.trim())) return { rows: [] };
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };

@@ -70,7 +70,7 @@ function installStubs() {
   mock('db', db);
   mock('db/index', db);
   mock('lib/policy', { FLAGS: {}, BOUND: {}, patchKey: async () => ({}), get: async () => ({}), defaults: () => ({}), flagOf: () => null });
-  mock('lib/platformroot', { isPlatform: () => world.platform, isRoot: () => false });
+  mock('lib/platformroot', { isPlatform: () => world.platform, isRoot: () => false, ownerOrPlatform: () => (req, res, next) => next() }); /* LV-13: a route gate the mock must carry */
 }
 
 /* ── the scenarios: every error answer of routes/keys.js (and the shared gates in front of it) ─────────────── */

@@ -324,11 +324,11 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     ok('…both answer 200 with the SAME payment and the SAME entry; the second says duplicate', p1.status === 200 && p2.status === 200 && p2.body.payment.duplicate === true && p1.body.payment.duplicate === false
       && p2.body.payment.payment_id === p1.body.payment.payment_id && !!p2.body.posted && p2.body.posted.entry_no === p1.body.posted.entry_no && p2.body.payment.status === 'recorded', JSON.stringify([p1.body, p2.body]));
     const p3 = await q('POST', '/payments', Object.assign({}, body, { mode: 'cheque', amount_minor: 1 }));
-    ok('…the same ref with a different body is still the FIRST payment (its own status, not the new body\'s)', p3.status === 200 && p3.body.payment.payment_id === p1.body.payment.payment_id && p3.body.payment.status === 'recorded' && count()[0] - c0[0] === 1, JSON.stringify(p3.body));
+    ok('…the same ref with a DIFFERENT body is refused 409 EVENT_REF_REUSED, nothing written (AW-F-01: a changed amount or mode is not a replay)', p3.status === 409 && p3.body.code === 'EVENT_REF_REUSED' && count()[0] - c0[0] === 1, JSON.stringify(p3.body));
     /* the replay is answered BEFORE the new body is judged: a retry that arrives after its month was locked (or with a body
        that would now be refused) must still hear "recorded", not an error for a payment that exists */
     const p4 = await q('POST', '/payments', Object.assign({}, body, { received_at: '2099-01-01', party_id: STRANGER }));
-    ok('…a replay whose body would now be refused still answers 200 with the first payment', p4.status === 200 && p4.body.payment.duplicate === true && p4.body.payment.payment_id === p1.body.payment.payment_id, p4.status + ' ' + JSON.stringify(p4.body));
+    ok('…a replay with another party and day is the same: 409 EVENT_REF_REUSED, the first payment stands (AW-F-01)', p4.status === 409 && p4.body.code === 'EVENT_REF_REUSED' && count()[0] - c0[0] === 1, p4.status + ' ' + JSON.stringify(p4.body));
     const cq = { party_id: MALA, direction: 'in', amount_minor: 10000, mode: 'cheque', cheque: { number: '000777' }, received_at: '2026-09-21', client_ref: 'tap-chq' };
     const q1 = await q('POST', '/payments', cq), q2 = await q('POST', '/payments', cq);
     ok('a cheque tapped twice is held once', q1.body.payment.status === 'cheque_received' && q2.body.payment.duplicate === true && q2.body.payment.status === 'cheque_received' && q2.body.payment.payment_id === q1.body.payment.payment_id

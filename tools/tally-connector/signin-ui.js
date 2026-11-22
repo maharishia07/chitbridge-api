@@ -223,7 +223,7 @@
       if (!text) return {};
       text = text.replace(/-/g, '+').replace(/_/g, '/');
       while (text.length % 4) text += '=';
-      var s = typeof root.atob === 'function' ? root.atob(text) : Buffer.from(text, 'base64').toString('utf8');
+      var s = typeof root.atob === 'function' ? root.atob(text) : root.Buffer.from(text, 'base64').toString('utf8');
       return (
         JSON.parse(
           decodeURIComponent(

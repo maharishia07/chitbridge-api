@@ -15,7 +15,7 @@ const { ok, eq, done } = counter();
   const read = await q('GET', '/daybook');
   const sign = await q('POST', '/bank/statements', body);
   eq('the staff seat is refused the daybook read (403 OWNER_ONLY)', [read.status, read.body.code], [403, 'OWNER_ONLY']);
-  eq('…and refused the bank sign-off the same way, with the books\' own sentence', [sign.status, sign.body.code, sign.body.detail === read.body.detail], [403, 'OWNER_ONLY', true]);
+  eq('…and refused the bank sign-off the same way, with the bank-write sentence (walkU U-F-01 bankWriter: the owner or the shop accountant or bookkeeper)', [sign.status, sign.body.code, /keep or sign off a bank reconciliation/.test(sign.body.detail || '')], [403, 'OWNER_ONLY', true]);
   ok('…the sentence names who may (words, not a bare code)', /owner|accountant|auditor/.test(sign.body.detail || ''), sign.body.detail);
   R.asOwner();
   const mine = await q('POST', '/bank/statements', body);

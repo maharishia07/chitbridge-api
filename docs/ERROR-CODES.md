@@ -477,6 +477,19 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SSO_TOKEN | 401 | Sign-in not accepted | The provider answer could not be trusted, so nobody was signed in. | Start again. If it keeps happening, use your code or PIN. | auth | 2026-11-17 |
 | SSO_CANCELLED | 400 | Sign-in cancelled | You stopped the sign-in at the provider. | Start again, or use your code or PIN. | auth | 2026-11-17 |
 | PROVIDER_OFF | 404 | Provider sign-in is off | Signing in with an outside account is not switched on here. | Use your code or PIN. | auth | 2026-11-17 |
+| CREDIT_NOTE_BEFORE_BILL | 409 | Credit note dated before its bill | This credit note is dated before the bill it credits. A credit comes after the sale: fix the date on the note. | Fix the date on the note. | accounting | 2026-11-22 |
+| LAST_WAY_IN | 409 | Only way to sign in | This is your only way to sign in. Set a PIN first, then disconnect it. | Set a PIN first. | auth | 2026-11-22 |
+| LINK_ENFORCED | 403 | Sign-in required by the business | Your business requires this sign-in. Ask the owner to change it. | Ask the owner. | auth | 2026-11-22 |
+| LINK_EXISTS | 409 | Account already connected | That account is already connected here. | Use the connected account to sign in. | auth | 2026-11-22 |
+| REAUTH_FAILED | 401 | Could not confirm it is you | We could not confirm it is you. Check your PIN or code and try again. | Check your PIN or code. | auth | 2026-11-22 |
+| SIGNIN_PROVIDER_NOT_ACCEPTED | 403 | Sign-in method not accepted | This business does not accept that way to sign in. Use your mobile number or e-mail and the code we send you. | Use your code. | auth | 2026-11-22 |
+| SSO_EMAIL_UNVERIFIED | 403 | Provider e-mail not confirmed | The provider has not confirmed that e-mail address, so nobody was signed in. Sign in with your mobile number or e-mail and the code we send you. | Use your code. | auth | 2026-11-22 |
+| SSO_MANY | 409 | Connected to more than one account | That sign-in is connected to more than one account. Sign in with your mobile number or e-mail and the code we send you. | Use your code. | auth | 2026-11-22 |
+| LINK_CONFIRM_FAILED | 403 | Connection not confirmed | That connection could not be confirmed. Start again from Settings. | Start the connection again from Settings. | auth | 2026-11-22 |
+| LINK_NOT_FOUND | 404 | No such connected account | There is no such connected account. | Open the list of connected accounts and pick one. | auth | 2026-11-22 |
+| SIGNIN_UNAVAILABLE | 503 | Sign-in could not finish | Sign-in could not finish. Start again from the sign-in page. | Try again in a moment. | auth | 2026-11-22 |
+| SSO_HANDOFF | 401 | Sign-in already finished or expired | That sign-in already finished or took too long. Start again from the sign-in page. | Start again from the sign-in page. | auth | 2026-11-22 |
+| SSO_NOT_LINKED | 403 | No account connected to that sign-in | No account here is connected to that sign-in. Sign in with your mobile number or e-mail and the code we send you. | Sign in with your code, then connect it in Settings. | auth | 2026-11-22 |
 | PROVIDER_UNKNOWN | 404 | Unknown provider | That sign-in provider does not exist. | Use your code or PIN. | auth | 2026-11-17 |
 | BAD_NEXT | 400 | Page not allowed | That page cannot be opened after signing in. | Start again from the sign-in page. | auth | 2026-11-17 |
 | NO_KEY | 401 | No key sent | No key was sent. | Send the connector key in the X-Bridge-Key header. | connectors | 2026-10-22 |
