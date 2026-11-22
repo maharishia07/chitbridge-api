@@ -38,8 +38,8 @@ of file each thing is; this says what already does the job.
 | 81 | `again` | `signin-ui.js` |  |
 | 79 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 79 | `items` | `books-store.js` | PERF1: |
-| 79 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 79 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
+| 78 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 78 | `failed` | `service.js` | what every catch answers: |
 | 77 | `read` | `books-grant-drill.js` |  |
 | 77 | `rows` | `cap-settings.js` |  |
@@ -58,10 +58,10 @@ of file each thing is; this says what already does the job.
 | 65 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 64 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 64 | `view` | `country-ready.js` |  |
+| 64 | `named` | `bank-rec-log.js` | W15-71: |
 | 64 | `view` | `books-payables.js` | group: |
 | 64 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 63 | `body` | `books-acting.js` | a write's body: |
-| 63 | `named` | `bank-rec-log.js` | W15-71: |
 | 63 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 63 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 62 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
@@ -78,15 +78,15 @@ of file each thing is; this says what already does the job.
 | 52 | `status` | `books-backfill.js` | read: |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
+| 50 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
 | 50 | `gate` | `country-setup.js` | gate(h, entity): |
-| 49 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
-| 49 | `hold` | `orders.js` |  |
 | 49 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 48 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 48 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 48 | `rules` | `docnumber.js` | the rule set for a country — |
+| 48 | `hold` | `orders.js` |  |
 | 48 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 47 | `open` | `cap-attention.js` | a count pressed: |
 | 47 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
