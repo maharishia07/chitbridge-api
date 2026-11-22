@@ -13,7 +13,7 @@
  * Run: node tests/till-refund-tender-1129.test.cjs
  */
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
-const PAGE = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const PAGE = (fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-dayrep.js'), 'utf8')) /* the part files the till loads beside till.html (1128-1129 split) */.replace(/\r\n/g, '\n');
 function lift(name) {
   let i = PAGE.indexOf('\nfunction ' + name + '(');
   if (i < 0) i = PAGE.indexOf('\nasync function ' + name + '(');

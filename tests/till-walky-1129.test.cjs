@@ -23,9 +23,9 @@ const MAYA = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const aud = (v) => 'A$' + v.toFixed(2);
 const names = ['retPriorOf', 'retReducedBefore', 'retCustomerOwes', 'retOwedRefusal', 'retOwedFor', 'retPlan', 'retCustomerName', 'retPaidBy', 'retPaidWords'];
 const BODY = names.map(grab).join('\n') + '\nreturn { ' + names.join(', ') + ' };';
-const api = new Function('S', 'booksOn', 'booksMajor', 'CREDIT_SINCE', 'r2', 'rmoney', 'money', 'RET_PRIOR',
+const api = new Function('S', 'booksOn', 'booksMajor', 'CREDIT_SINCE', 'r2', 'rmoney', 'money', 'RET_PRIOR', 'tx', 'txf',
   'var RET_OWED = "owed";\n' + BODY)({ customers: [{ identity_id: MAYA, balance_minor: 2000 }] }, () => true, (m) => Number(m) / 100, {},
-  (v) => Math.round(v * 100) / 100, (v) => Math.round(v * 100) / 100, aud, null);
+  (v) => Math.round(v * 100) / 100, (v) => Math.round(v * 100) / 100, aud, null, (w) => w, (w, vars) => String(w).replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? vars[k] : m)));
 let fail = 0;
 const t = (name, fn) => { try { fn(); console.log('  ok ' + name); } catch (e) { console.log('  FAIL ' + name + '\n    ' + e.message.split('\n').slice(0, 3).join('\n    ')); fail++; } };
 

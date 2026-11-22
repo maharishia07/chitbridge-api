@@ -14,7 +14,7 @@
 // CARD      09-counter/billing-and-the-bill
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm');
-const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const till = (fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-dayrep.js'), 'utf8')) /* the part files the till loads beside till.html (1128-1129 split) */.replace(/\r\n/g, '\n');
 function sourceOf(name) {
   let start = till.indexOf('\nfunction ' + name + '(');
   if (start < 0) start = till.indexOf('\nasync function ' + name + '(');

@@ -13,7 +13,7 @@ const fs = require('fs'), path = require('path'), vm = require('vm');
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 process.env.NODE_ENV = 'test';
 const HERE = path.join(__dirname, '..');
-const till = fs.readFileSync(path.join(HERE, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const till = (fs.readFileSync(path.join(HERE, 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(HERE, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(HERE, 'tools', 'tally-connector', 'till-dayrep.js'), 'utf8')) /* the part files the till loads beside till.html (1128-1129 split) */.replace(/\r\n/g, '\n');
 function sourceOf(name) {
   let start = till.indexOf('\nfunction ' + name + '(');
   if (start < 0) start = till.indexOf('\nasync function ' + name + '(');

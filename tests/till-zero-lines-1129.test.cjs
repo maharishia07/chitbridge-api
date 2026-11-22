@@ -28,7 +28,7 @@ function tillWith(country, arabic) {
   const base = R.packFor(country);
   const pack = arabic ? Object.assign({}, base, { slip: Object.assign({}, base.slip, { reasons: ARABIC }) }) : base;
   const money = (x) => 'M' + Math.round(Number(x) * 100);
-  const context = { window: { CBTax: T }, CBTax: T, shopPack: () => pack, schemeWord: () => (country === 'AE' ? 'VAT' : 'GST'), esc: (x) => String(x), money, rmoney: (x) => Math.round(x * 100) / 100,
+  const context = { cbQuiet: () => {}, window: { CBTax: T }, CBTax: T, shopPack: () => pack, schemeWord: () => (country === 'AE' ? 'VAT' : 'GST'), esc: (x) => String(x), money, rmoney: (x) => Math.round(x * 100) / 100,
     isReturnRow: (b) => b.kind === 'credit_note', isExpenseRow: () => false };
   vm.createContext(context);
   vm.runInContext(NAMES.map(sourceOf).join('\n'), context);

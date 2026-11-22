@@ -20,6 +20,6 @@ const { ok, eq, done } = counter();
   const r = await X.B.postEntry(X.db, SHOP, { type: 'purchase_bill', date: '2026-09-15', currency: 'INR', party: SUP, by_rate: [{ rate: 10, taxable: 100, cgst: 5, sgst: 5 }], source_ref: 'chit:ai-d4', ref: 'D4', narration: 'Purchase' });
   const e = X.T.entries.find((x) => x.source_ref === 'chit:ai-d4');
   eq('posted 1 Oct, its own day kept as doc_date', [String(r.posting_date).slice(0, 10), String(r.doc_date).slice(0, 10)], ['2026-10-01', '2026-09-15']);
-  ok('the narration says "September locked"', !!e && /Purchase — September locked$/.test(e.narration || ''), e && e.narration);
+  ok('the narration says the locked month moved it', !!e && /Purchase — Dated 15 Sep; September is locked, so it is in the books on 1 Oct$/.test(e.narration || ''), e && e.narration);
   R.close(); done();
 })().catch((e) => { console.log('   FAIL ' + (e && e.stack || e)); process.exit(1); });

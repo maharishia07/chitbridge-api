@@ -80,7 +80,7 @@ async function send(db, state, delay) {
   ok('...the loser is told in words (409, naming the holder)', loser && knownerr.known(loser.refused).status === 409 && /already on another bill/.test(loser.refused.message));
 
   console.log('\n== wiring and files ==\n');
-  const route = fs.readFileSync(path.join(HERE, 'routes', 'chits.js'), 'utf8');
+  const route = require('../tools/chits-files.cjs').read(HERE); /* the chits route's code through the one list (chits-files.test) */
   ok('the route has the early step, in the step list after the bill-number rule', /sendBillNumber,\s*sendBillTaken,/.test(route));
   ok('both write transactions ask again under the number\'s lock', (route.match(/bill-number-taken'\)\.judge\([a-zA-Z]+, sendState, \{ locked: true \}\)/g) || []).length === 2);
   ok('the index\'s own refusal (23505 on bill_no) answers the same 409', /\/bill_no\/\.test\(String\(err\.constraint/.test(route));

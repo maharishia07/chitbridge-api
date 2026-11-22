@@ -13,7 +13,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm');
 const lib = path.join(__dirname, '..', 'lib');
 const T = require(path.join(lib, 'tax')), R = require(path.join(lib, 'regulation'));
-const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const till = (fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-dayrep.js'), 'utf8')) /* the part files the till loads beside till.html (1128-1129 split) */.replace(/\r\n/g, '\n');
 function sourceOf(name) {
   const start = till.indexOf('\nfunction ' + name + '(');
   if (start < 0) throw new Error('till has no function ' + name);
