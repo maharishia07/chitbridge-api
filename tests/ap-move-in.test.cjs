@@ -105,7 +105,8 @@ const confirmed = (kind, parsed) => MI.guess(kind, parsed.headers).guess.filter(
   await t("AP-F-07: a body currency_code is carried to the chit's money; an unknown code (ZZZ) is a worded MONEY_CURRENCY_UNKNOWN, never AUD", () => {
     const chits = require('../routes/chits');
     assert.strictEqual(chits.statedMoneyCarried({ bill_no: 'x' }, { currency_code: 'aed' }).currency, 'AED');
-    assert.strictEqual(chits.statedMoneyCarried({ currency: 'USD' }, { currency_code: 'AED' }).currency, 'USD');
+    assert.throws(() => chits.statedMoneyCarried({ currency: 'USD' }, { currency_code: 'AED' }), (err) => err.code === 'MONEY_CURRENCY_MISMATCH' && err.status === 422); /* AJ-F-02 wins over the AP-F-07 'carry the inside code': two different codes on one bill are refused in words, never silently one of them */
+    assert.strictEqual(chits.statedMoneyCarried({ currency: 'AED' }, { currency_code: 'AED' }).currency, 'AED');
     assert.strictEqual(chits.statedMoneyCarried({ a: 1 }, {}).currency, undefined);
     assert.throws(() => chits.statedMoneyCarried({}, { currency_code: 'ZZZ' }), (err) => err.code === 'MONEY_CURRENCY_UNKNOWN' && err.status === 422);
   });

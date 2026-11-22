@@ -69,7 +69,7 @@ t('⭐ an unknown shop country is NEVER given India\'s rules: ZZ · none · a wo
 t('a shop whose pack has no move-in map yet (US · IN today) → refused MOVE_IN_COUNTRY, never "every document held" (C2); IN: the lanes that carry tax', () => {
   const e = refusedWith(() => plan('items', { country: 'US', source_country: 'US' }), 'MOVE_IN_COUNTRY');
   assert.ok(/not ready for United States/.test(e.message), e.message);
-  refusedWith(() => plan('trial_balance', { country: 'IN', source_country: 'IN', rows: [] }), 'MOVE_IN_COUNTRY');
+  /* AL-F-02 (1129): India now HAS a move-in map (tax codes only, reg-in-movein), so IN is no longer refused here; US still has none */
 });
 t("⭐ behavioural guard: an IN shop with an IN stub map plans through IN's map — its own code lands at ITS rate, an unknown one is held, AU's GST is refused as foreign (never borrowed)", () => {
   IN.moveIn = { sources: ['qbo'], supplyKindFor: (s, c) => (String(c) === 'GST18' ? { id: 'taxable', name: 'Taxable 18%', rate: 18 } : undefined) };
