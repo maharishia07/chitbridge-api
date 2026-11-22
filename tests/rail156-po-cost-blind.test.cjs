@@ -49,6 +49,8 @@ require(path.join(API, 'lib', 'meter')).meter = async () => {};
 require(path.join(API, 'lib', 'tax-shelf')).readShelf = async () => null;
 require(path.join(API, 'lib', 'stock-from-chit')).postFor = async () => ({ failed: [], skipped: [] });
 require(path.join(API, 'lib', 'events')).notifyAfter = () => {};
+/* AI-F-02 (1129): a rail credit note must name one of the sender's bills (422 CREDIT_NOTE_NEEDS_BILL, tests/ai-rail-credit-note-bill.test.cjs proves that door); this file proves the COST door, so the bill door is stood in as open */
+require(path.join(API, 'lib', 'credit-cap')).holdUnderLock = async () => {};
 const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 
 /** the line the till sends once the rate is hidden: no price, total 0 */

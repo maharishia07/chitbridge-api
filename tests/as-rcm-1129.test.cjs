@@ -12,7 +12,10 @@
  */
 'use strict';
 if (!process.env.AS_RCM_RUN) {
-  console.log('HELD (AS-F-01): the engines place-of-supply change waits for Athi; nothing run. AS_RCM_RUN=1 runs the cases.');
+  console.log('HELD (AS-F-01): the engines place-of-supply change waits for Athi; the cases are not run. AS_RCM_RUN=1 runs the cases.');
+  /* the one check a held run makes: this file still carries the hold, so it cannot be mistaken for a green run of the cases (guards read the last "<n> checks" line) */
+  require('assert').ok(/HELD FOR ATHI/.test(require('fs').readFileSync(__filename, 'utf8')));
+  console.log('1 checks (the hold is in force; the cases did not run)');
   process.exit(0);
 }
 const TL = require('../lib/tax-lines');

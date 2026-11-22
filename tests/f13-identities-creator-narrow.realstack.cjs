@@ -34,7 +34,7 @@ const B909 = fs.readFileSync(path.join(MIG, 'RUN-2026-11-22-b909-identities-crea
 
     const plant = async (tag, createdBy, claimed, kind) => {
       const r = await owner.query(`INSERT INTO identities (bridge_id, display_name, email, user_id, identity_type, status, country, currency_code, created_by, last_active_at, entity_kind)
-        VALUES ($1, $2, $3, $4, 'entity', 'active', 'IN', 'INR', $5, $6, $7) RETURNING identity_id`, ['B' + RUN + tag, 'Store ' + tag + ' ' + RUN, RUN + tag + '@rls.test', 'u-' + tag + '-' + RUN, createdBy, claimed ? new Date() : null, kind || null]);
+        VALUES ($1, $2, $3, $4, 'entity', 'active', 'IN', 'INR', $5, $6, $7) RETURNING identity_id`, ['B' + RUN + tag, 'Store ' + tag + ' ' + RUN, RUN + tag + '@rls.test', 'u-' + tag + '-' + RUN, createdBy, claimed ? new Date() : null, kind || 'customer']);
       planted.push(r.rows[0].identity_id); return r.rows[0].identity_id;
     };
     const head = await plant('h', null, true), other = await plant('o', null, true);

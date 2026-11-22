@@ -518,6 +518,10 @@
    "optional": [
     "rail_chits[].business_json.bank_query",
     "rail_chits[].business_json.payment_advice"
+   ],
+   "also_optional": [
+    "may.ask.say",
+    "may.ask.why"
    ]
   },
   "GET /api/books/bank/rail #403": {
@@ -749,12 +753,21 @@
     "schedule_iii.equity_and_liabilities.heads[].ledgers[].role"
    ],
    "also_optional": [
+    "assets[].change_bp",
+    "assets[].change_minor",
+    "assets[].change_over",
     "by_line.assets[].accounts[].term",
     "by_line.assets[].part",
     "by_line.assets[].term",
     "by_line.liabilities[].accounts[].term",
     "by_line.liabilities[].part",
-    "by_line.liabilities[].term"
+    "by_line.liabilities[].term",
+    "equity[].change_bp",
+    "equity[].change_minor",
+    "equity[].change_over",
+    "liabilities[].change_bp",
+    "liabilities[].change_minor",
+    "liabilities[].change_over"
    ]
   },
   "GET /api/books/cashflow": {
@@ -828,7 +841,13 @@
      }
     ]
    },
-   "optional": []
+   "optional": [],
+   "also_optional": [
+    "gst.earlier",
+    "gst.earlier.before",
+    "gst.earlier.counted",
+    "gst.earlier.payable_minor"
+   ]
   },
   "GET /api/books/cheques": {
    "status": 200,
@@ -1434,7 +1453,13 @@
    ],
    "also_optional": [
     "parties[].payable.bills[].disputed",
-    "parties[].payable.bills[].held_words"
+    "parties[].payable.bills[].held_words",
+    "tb_control",
+    "tb_control.customer",
+    "tb_control.customer.differs_minor",
+    "tb_control.customer.list_minor",
+    "tb_control.customer.tb_minor",
+    "tb_control.supplier"
    ]
   },
   "GET /api/books/events": {
@@ -1758,6 +1783,11 @@
    },
    "optional": [
     "lines[].source_chit_id"
+   ],
+   "also_optional": [
+    "lines[].evidence.cite",
+    "lines[].evidence.cite_status",
+    "lines[].evidence.flag_why"
    ]
   },
   "GET /api/books/overview": {
@@ -2126,18 +2156,21 @@
     "years[].of"
    ],
    "also_optional": [
-    "periods[].sales_minor",
-    "periods[].profit_minor",
-    "periods[].return",
-    "periods[].lock.first",
-    "periods[].reopen.first",
-    "periods[].open_below_locked",
-    "periods[].checked",
-    "periods[].of",
-    "periods[].before_books",
     "books_start",
-    "lock_date",
     "gaps",
+    "lock_date",
+    "periods[].before_books",
+    "periods[].checked",
+    "periods[].lock.first",
+    "periods[].of",
+    "periods[].open_below_locked",
+    "periods[].profit_minor",
+    "periods[].reopen.first",
+    "periods[].reopen.first.fiscal_year",
+    "periods[].reopen.first.period",
+    "periods[].reopen.first.start_date",
+    "periods[].return",
+    "periods[].sales_minor",
     "years[].checked",
     "years[].of"
    ]
@@ -2416,6 +2449,12 @@
     "staggers",
     "unsupported_input",
     "why"
+   ],
+   "also_optional": [
+    "period.closed",
+    "period.state",
+    "periods[].closed",
+    "periods[].state"
    ]
   },
   "GET /api/books/returns #rail": {
@@ -2519,7 +2558,14 @@
     "total_cr_minor": 297000,
     "balanced": true
    },
-   "optional": []
+   "optional": [],
+   "also_optional": [
+    "bank",
+    "rows[].change_bp",
+    "rows[].change_minor",
+    "rows[].change_over",
+    "rows[].prior_net_minor"
+   ]
   },
   "GET /api/books/year/:fy/status": {
    "status": 200,
@@ -2907,6 +2953,12 @@
     "parties[].supplier",
     "parties[].terms.customer",
     "parties[].terms.supplier"
+   ],
+   "also_optional": [
+    "parties[].unbilled.by_currency",
+    "parties[].unbilled.cost_hidden",
+    "parties[].unbilled.no_currency",
+    "parties[].unbilled.unpriced"
    ]
   },
   "GET /api/crm/parties/:id": {
@@ -3122,6 +3174,12 @@
     "supplier",
     "terms.customer",
     "terms.supplier"
+   ],
+   "also_optional": [
+    "unbilled.by_currency",
+    "unbilled.cost_hidden",
+    "unbilled.no_currency",
+    "unbilled.unpriced"
    ]
   },
   "GET /api/crm/parties/:id #404": {

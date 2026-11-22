@@ -3,7 +3,9 @@
  * Run: node tests/walky-rate-menu-1129.test.cjs      CARD  09-counter/returns
  */
 'use strict';
-const assert = require('assert');
+const assertLib = require('assert');
+let checks = 0;
+const assert = new Proxy(assertLib, { get: (target, key) => (typeof target[key] === 'function' ? (...args) => (checks++, target[key](...args)) : target[key]), apply: (target, self, args) => (checks++, target(...args)) }); /* count each assertion for the '<n> checks' line guards read */
 const path = require('path');
 const dbPath = require.resolve('../db');
 let country = 'AU';
@@ -21,4 +23,5 @@ const write = require('../lib/catalogue-write');
   country = 'XX';
   assert.strictEqual(await refuse(15), null, 'a country with no pack judges nothing');
   console.log('walky-rate-menu: all passed');
+  console.log(checks + ' checks');
 })().catch((e) => { console.log('FAIL', e.message); process.exit(1); });

@@ -39,7 +39,8 @@ const refusal = async (c, state) => { try { await cap.holdUnderLock(c, state); r
   const none = await refusal(client([{ id: CN1, lines: cn1Lines }, { id: 'x', lines: note(3).line_items }]), note(1));
   eq('the last 3 already came back: one more is refused, "nothing is left"', [none && none.code, none && /nothing is left to credit/.test(none.text)], ['CREDIT_NOTE_OVER_BILL', true]);
   eq('a draft is not judged', await refusal(client([]), note(60, { is_draft: true })), null);
-  eq('a note with no bill id (not the rail shape) is not judged', await refusal(client([]), note(60, { business_json: { bill_no: 'X' } })), null);
+  const unnamed = await refusal(client([]), note(60, { business_json: { bill_no: 'X' } }));
+  eq('a note with no bill id is not judged on quantity: AI-F-02 refuses it 422 CREDIT_NOTE_NEEDS_BILL (a rail note names one of the sender\'s bills)', [unnamed && unnamed.code, unnamed && unnamed.status], ['CREDIT_NOTE_NEEDS_BILL', 422]);
   console.log('\n' + (fail ? '  FAIL ' + fail + ' failed' : '  ok ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks\n');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.log('   FAIL threw: ' + (e && e.stack)); process.exit(1); });

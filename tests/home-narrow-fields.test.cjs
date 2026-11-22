@@ -62,3 +62,4 @@ const sql = require('fs').readFileSync(require.resolve('../lib/select.js'), 'utf
 const block = sql.slice(sql.indexOf('const COUNT_COLS'), sql.indexOf('/** `status`'));
 for (const field of FIELDS) assert.ok(new RegExp('\\b' + field + '\\b').test(block), 'COUNT_COLS selects ' + field);
 console.log('home-narrow-fields: ok (' + FIELDS.length + ' fields traced, ' + wide.length + ' rows)');
+console.log(FIELDS.length + ' checks');

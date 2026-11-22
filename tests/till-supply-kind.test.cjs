@@ -32,7 +32,7 @@ function tillWith(country, charges) {
   const money = (x) => (country === 'AE' ? 'AED ' : 'A$') + Number(x).toFixed(2);
   const context = { window: { CBTax: T }, CBTax: T, shopPack: () => pack, shopTax: () => ({ charges }), schemeWord: () => (country === 'AE' ? 'VAT' : 'GST'), esc: (x) => String(x), money };
   vm.createContext(context);
-  vm.runInContext(['cbQuiet', 'packKinds', 'lineKindOf', 'kindWord', 'kindWordsOf', 'classesOf', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf'].map(sourceOf).join('\n'), context);
+  vm.runInContext(['cbQuiet', 'packKinds', 'lineKindOf', 'kindWord', 'kindWordsOf', 'classesOf', 'unratedBaseOf', 'unratedApart', 'noRateWord', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf', 'lineZeroWordOf'].map(sourceOf).join('\n'), context);
   return context;
 }
 

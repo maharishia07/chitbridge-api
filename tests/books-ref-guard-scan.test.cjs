@@ -18,7 +18,8 @@ const strip = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm,
 const EXEMPT = {
   'post /opening': 'a second opening is refused by its own replay (opening:<ref> answers the first; a change goes through /opening/replace, which names a reason)',
   'post /move-in/preview': 'the DRY RUN: nothing is written (routes/books.js doc line), the ref only keys the suspense it names; a repeat has nothing to replay or compare',
-  'post /move-in/import':'an import keyed by the file, not by a posted entry; it posts through its own proof (move-in-proof)'
+  'post /move-in/import':'an import keyed by the file, not by a posted entry; it posts through its own proof (move-in-proof)',
+  'post /events/batch': 'each line goes through the same event writer as POST /events (M().post, where the journal compare lives); the route only reads each line\'s client_ref to name its result',
 };
 /** the lib doors a route may hand its ref to instead of guardOf: the payments door compares the stored payment (books-event-guard.refuseOtherPayment) */
 const GUARDED_IN_LIB = /recordPayment\(/;

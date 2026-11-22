@@ -37,7 +37,7 @@ const { check, world } = lab;
     { account_id: CASH_ID, code: '1400', name: 'Cash', role: 'cash', is_group: false, parent_id: null }
   ];
   store.accounts = async () => chart;
-  B.ledgerCtx = async () => ({});
+  B.ledgerCtx = async () => ({ pack: B.packOf(SETTING), country: 'IN' }); /* AM-F-05 (1129): a sign-off asks the entries' lock rule, which needs the pack to find the fiscal year */
   B.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 111111, credit_minor: 0 }, { code: '1400', debit_minor: 5000, credit_minor: 0 }] });
   const server = lab.appOf([{ mount: MOUNT, router: require(path.join(HERE, 'routes', 'books.js')) }]).listen(0);
   const port = server.address().port;

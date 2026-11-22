@@ -50,6 +50,7 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /events` | The kinds of entry a person may make, with the words and the fields | yes | yes | yes | yes | reads | - | auth > noKey > on |
 | `POST /preview` | The voucher an event would make, nothing written | yes | yes | yes | yes | door | - | auth > noKey > on |
 | `POST /events` | Record an event as a journal entry | yes | yes | - | - | door | - | auth > noKey > ownerOrAccountant > on |
+| `POST /events/batch` | Record up to 100 events at once, one result per line (owner or accountant) | yes | yes | - | - | - | - | auth > noKey > ownerOrAccountant > on |
 | `POST /entries` | Post a manual journal entry | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
 | `POST /entries/:id/reverse` | Reverse an entry with a mirror entry | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
 | `POST /write-off` | Write off what a customer owes | yes | - | - | - | - | - | auth > owner > on |
@@ -107,4 +108,4 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /fx-revalue` | What revaluing the foreign balances at month end would post | yes | - | - | - | - | - | auth > noKey > on > owner |
 | `POST /fx-revalue` | Post the revaluation and its reversal (owner); idempotent | yes | - | - | - | - | - | auth > noKey > on > owner |
 
-100 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.
+101 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.
