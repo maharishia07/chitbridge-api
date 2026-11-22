@@ -1174,9 +1174,9 @@ document.addEventListener('fullscreenchange', function(){
   setTimeout(function(){ paint(false); }, 60);
 });
 document.addEventListener('keydown', function(e){
+  if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName || '') || (e.target && e.target.isContentEditable)) return;   /* EL-20 M1: typing in a box (caption, pairing code) is never a show shortcut */
   if (e.key === ' ') { setPlaying(!PLAYING); e.preventDefault(); }
-  if (e.key === 'ArrowRight') step(1);
-  if (e.key === 'ArrowLeft') step(-1);
+  if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1);
   if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
   if (e.key === 'd' || e.key === 'D') save();
   if (e.key === 'Escape' && document.body.classList.contains('show')) document.body.classList.remove('show');
