@@ -5,8 +5,8 @@
   "routes": 692,
   "no_does": 1,
   "not_started": 0,
-  "partial": 10,
-  "meets": 682,
+  "partial": 0,
+  "meets": 692,
   "columns": {
    "strict_input": {
     "applies": 353,
@@ -820,11 +820,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a6db706eba34bc52"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: readability split only: the clear gate (no uuid/not mine, withdrawn or rejected 409 CHIT_VOIDED, tender-on-bill 422 PAYMENT_TENDER_ON_BILL), the payment_cleared state_log row and the 404 moved verbatim into lib/chits-parts.js (paymentClearShut, paymentClearShutSaid, logPaymentCleared); same statuses, codes, order, one transaction.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -12980,11 +12979,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "256b92ea751e2e71"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: withFreshSupplierWait named step only (same freshWait call, same condition); no key or status change, internal to the bundle.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -29444,11 +29442,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "417243c5a5e37f78"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: mediaViaOwner/privateMediaGate/setMediaHeaders extracted verbatim (S12 private gate, MIME allowlist, nosniff, cache header same); signedInAs now logs a caught bad token at debug and still answers false; same 404 for any miss, no text in any answer.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -53081,11 +53078,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b4b515a7a4c9d34e"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: disputeSenderName and priorMessageAnswer extracted verbatim (B3 entity-name, F5b client_msg_id replay returns the first answer marked duplicate); same statuses and body keys.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "rail-thread.js"
    ],
@@ -68497,11 +68493,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9bcefc05ad365aab"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: video-link branch moved to addVideoLink unchanged (400 not-a-video-link, 404, the media row shape); picture path untouched.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -69245,11 +69240,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fe461699c4d9e910"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: applyDecisions moved to lib/csv-decisions.js and split into named steps; read against the old body: same checks in the same order, same error sentences, same new-field optional rule, same numeric/boolean skip; the route answers 400 choicesDoNotHold exactly as before.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -70339,11 +70333,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f600cd7abf38af82"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: supplierFieldsOf and addSellerOfBill extracted verbatim (AE-F-19 for_bill path, 404 noBusiness, same answer keys); response keys unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-bank-post.js",
@@ -73418,11 +73411,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1caf15134d5baae4"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: simLeadSecret extracted verbatim (N5: constant secret only in a test or local stack, else throws, no row written, fault answer); no status or key change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -76891,11 +76883,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "72dc93bb3fad2ecb"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: screenPairRefusal extracted verbatim: 403 TILL_SIGN_IN_FIRST for no person or a non-counter key, 403 OWNER_ONLY unless counter key, owner or manager; same order, same words.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "till.html"
@@ -81263,11 +81254,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9799ba80909b57a5"
+    "signed_off_by_date": "cb-api 2026-11-22 PR#1394 batch 1128 re-sign (resign1128), route diff 4d530c66a..HEAD read per route, 13 machine columns true in the committed register row, stage2: voidNotAllowed, withdrawGates, writeGates, logWithdrawn moved verbatim to lib/chits-parts.js: 404 then 403 CHIT_NOT_PERMITTED, per-copy statusGate refusals unchanged, replay (F5a) answer unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
