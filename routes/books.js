@@ -697,6 +697,7 @@ router.get('/dues', auth, moneyReader, onDues, ...checked('GET /dues'), async (r
       const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.';
       return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: no, legacy: { error: no, message: no } });
     }
+    if (req.query.side && ['customer', 'supplier'].indexOf(req.query.side) < 0) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Pick customer or supplier.', 'Pick customer or supplier.'); /* AX-F-07: a side that is neither was read as both */
     const e = ctx(req),
       asOf = agedAt(req);
     const sides = req.query.side === 'customer' ? ['debtors'] : req.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
@@ -773,8 +774,9 @@ router.get('/cashflow', auth, moneyReader, on, ...checked('GET /cashflow'), asyn
     if (await costBlindStops(req, res, ctx(req), REPORT_COST_BLIND_SAY)) return;
     const e = ctx(req),
       CF = require('../lib/books-cashflow');
-    const days = CF.HORIZONS.indexOf(Number(req.query.days)) >= 0 ? Number(req.query.days) : 7,
-      asOf = dateQ(req.query.asOf, today(req));
+    if (req.query.days !== undefined && CF.HORIZONS.indexOf(Number(req.query.days)) < 0) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Pick ' + CF.HORIZONS.join(' or ') + ' days.', 'Pick ' + CF.HORIZONS.join(' or ') + ' days.'); /* AX-F-07: a garbage horizon was read as 7 */
+    const days = req.query.days === undefined ? 7 : Number(req.query.days),
+      asOf = agedAt(req); /* AX-F-07: the cash held is as at a day that has happened (E1: the one rule for every as-at read), never a future day answering zeros */
     const cash = await withEntity(e, (h) => CF.read(h, e, req.books, { asOf, days }));
     // prettier-ignore
     res.json({ asOf: cash.asOf, days: cash.days, from: cash.from, to: cash.to, currency: cash.currency, opening_minor: cash.opening_minor, drawer_minor: cash.drawer_minor, bank_minor: cash.bank_minor, opening: cash.opening, in_minor: cash.in_minor, out_minor: cash.out_minor, closing_minor: cash.closing_minor, lowest: cash.lowest, shortfall: cash.shortfall, words: cash.words, uncounted: cash.uncounted, gst: cash.gst, series: cash.series });
@@ -1794,7 +1796,7 @@ router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries')
       against_ref: b.against_ref ? String(b.against_ref).slice(0, 120) : null
     };
     /* R12a, GOR-03: the same client_ref with ANOTHER journal is 409 EVENT_REF_REUSED naming the entry_no (the one compare, books-event-guard.onSeen, under the ref's lock); the same journal replays */
-    const out = await B.postEntry(null, entity, event, { onSeen: (handle, seen) => require('../lib/books-event-guard').onSeen(handle, entity, event, seen) });
+    const out = await B.postEntry(null, entity, event, require('../lib/books-event-guard').guardOf(entity, event));
     /* the writer's answer, key for key (a replay has duplicate and no doc_date; a switched-off ledger has off): named so the allow-list reads them */
     res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
@@ -1828,7 +1830,9 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
        200 with the first entry and duplicate: true. Its party document carries the same ref, so it too is one. */
     const ref = clientRef(b.client_ref);
     const writeOffMinor = minorOf(b, curOf(req)); /* a plain 400 "How much?" when it is not a whole number above nothing (the write-off posts nothing for 0 either) */
-    const out = await B.postEntry(null, ctx(req), {
+    if (!(writeOffMinor > 0)) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'How much?', 'How much?'); /* AX-F-08: 0 is the same question as -5 and "abc", not ledger words */
+    const entity = ctx(req);
+    const writeOff = {
       type: 'write_off',
       owner: true,
       party,
@@ -1841,7 +1845,8 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
       source_ref: ref ? 'wo:' + ref : null,
       doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
       by: byOf(req)
-    });
+    };
+    const out = await B.postEntry(null, entity, writeOff, require('../lib/books-event-guard').guardOf(entity, writeOff)); /* AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
     res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

@@ -477,6 +477,11 @@ const GUARDS = [
   'books-replay.test.cjs', // FIN-63 step 2: the fingerprint and the replay rule of a repeated confirm (pure; window 2 min, latest live batch by item_id)
   'books-payments.test.cjs', // ⭐⭐⭐ M26: /payments/preview + one-call record — W1–W4 (PAY D5, 24 h) → 409 unless acknowledged; allocations in the SAME tx; one client_ref posts once; outcome words
   'books-payment-replay-body.test.cjs', // AW-F-01: POST /payments, same client_ref + another amount = 409 EVENT_REF_REUSED (books-event-guard.refuseOtherPayment); same body still 200 duplicate
+  'books-ref-guard-doors.test.cjs', // AX-F-02: loans, instalment, accruals, closing stock, contra, write-off: same client_ref + another amount = 409 EVENT_REF_REUSED (books-period postOwn / guardOf)
+  'books-ref-guard-scan.test.cjs', // AX-F-02: static scan, every client_ref write door is guarded or exempt with a reason (a new door cannot forget)
+  'books-staff-advance-handle.test.cjs', // AX-F-01: staff_advance / advance_recovered read the chart on a handle (a null handle was a 500)
+  'walkax-credit-note-before-bill.test.cjs', // AX-F-03: a till credit note dated before its own bill = 409 CREDIT_NOTE_BEFORE_BILL
+  'walkax-reads-and-zero.test.cjs', // AX-F-07/08: cashflow garbage days + future asOf, dues garbage side, write-off 0 = "How much?"
   'books-bank-rail.test.cjs', // BR1: GET /bank/rail — my advice + bank-question copies, on-rail parties, may.ask by the rail ladder; one read each
   /* ⭐⭐ THE TWO-SIDED COUNTER BILL (2026-10-01) — broken once each by scripts/two-sided-breaks.cjs */
   'tax-copy.test.cjs', // who sells on each copy: a counter bill I RECEIVED is my purchase, never in my GSTR-1
