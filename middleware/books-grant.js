@@ -334,7 +334,6 @@ function frontOf(auth) {
 /** a request that names a client's books (X-Books-For) is for the books screens only: anywhere else the header would be ignored and the firm would act as ITSELF under a client banner, so it is refused, nothing done (ACC-176b) */
 
 const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the books screens use. Nothing was done.";
-const BOOKS_FOR_READ_ONLY = "This conversation is open to an auditor to read, not to write in. Nothing was done.";
 /** the grant kind the header names (the auditor's when none); the areas are the same for both today */
 const roleOfHeader = (req) => grants.roleOf(req.headers[ROLE_HEADER]) || grants.AUDITOR;
 /** the grants are the client's own consent: a firm acting for a client (X-Books-For) never creates or changes one, so a write on /api/books-grants that names a client's books is refused, nothing done (A15, 20 Nov) */
@@ -344,7 +343,8 @@ function refuseElsewhere(req, res, next) {
   if (req.headers[HEADER] === undefined || delegation.grantReaches(roleOfHeader(req), delegation.areaOfPath(req.path))) return next(); /* the grant's areas decide: a path outside every area the grant reaches is refused (today the only area is books) */
   if (evidencePath(req.path)) { /* RC-11: the routes themselves put the grant front in (routes/chits GET /:chit_id/messages); only a GET gets this far */
     if (req.method === 'GET') return next();
-    return problem(req, res, { status: 403, code: 'BOOKS_FOR_READ_ONLY', detail: BOOKS_FOR_READ_ONLY, legacy: { error: BOOKS_FOR_READ_ONLY, message: BOOKS_FOR_READ_ONLY } });
+    const said = grants.threadReadOnlyWords(grants.roleOf(roleNamed(req)) || grants.AUDITOR); /* BB-F-04: the seat that asked, from the one role reader (header, else the person's own seat) */
+    return problem(req, res, { status: 403, code: 'BOOKS_FOR_READ_ONLY', detail: said, legacy: { error: said, message: said } });
   }
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
