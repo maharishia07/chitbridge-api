@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.109.0 · money · sha256 0137a6afb47b46ceca304c687a3d3fc20fd60652719d02887abd9f2128219d39 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.110.0 · money · sha256 0137a6afb47b46ceca304c687a3d3fc20fd60652719d02887abd9f2128219d39 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · money. Edited ONLY in chitbridge-engines/src/money.js; every platform adopts a released version of it. */
 /*
  * OWNS      the one money type: an amount with its currency (the value type, ISO 4217 list and minor units, plus/minus/compare/times/allocate/round/format, assertMoneyShape), the one rounder and the one price reader; never converts

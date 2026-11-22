@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.109.0 · rollup · sha256 ad1213d25683e82aa5e80b04da188e60a85e4f2ebd044eb14e6b9057abe7a8fb — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.110.0 · rollup · sha256 ad1213d25683e82aa5e80b04da188e60a85e4f2ebd044eb14e6b9057abe7a8fb — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · rollup. Edited ONLY in chitbridge-engines/src/rollup.js; every platform adopts a released version of it. */
 (function (root) {
   'use strict';

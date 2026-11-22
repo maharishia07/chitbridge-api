@@ -16,7 +16,7 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /health` | The ledger's probe and to-do list: the waiting posts, the year, the country | yes | yes | yes | yes | reads | reads | auth > on |
 | `POST /check` | Run the nightly books check now | yes | - | - | - | - | - | auth > owner > on |
 | `POST /money-check/resolve` | Close the to-do item of a sale let through although the money did not add up (owner or editor) | yes | yes | yes | - | - | - | (contract) noKey > editor > on |
-| `POST /outbox/retry` | Try the waiting posts again | yes | - | - | - | - | - | auth > owner > on |
+| `POST /outbox/retry` | Try the waiting posts again; { forward: true } is the owner press that posts a locked-month day close or bank sign-off into the first open month | yes | - | - | - | - | - | auth > owner > on |
 | `GET /accounts` | The shop's chart of accounts | yes | yes | yes | yes | reads | reads | auth > on |
 | `POST /accounts` | Add a ledger to the chart under a group | yes | - | - | - | - | - | auth > owner > on |
 | `GET /daybook` | The day book: every entry of a date range, newest page first | yes | yes | - | - | reads | reads | auth > moneyReader > on |
