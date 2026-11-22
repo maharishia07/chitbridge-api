@@ -63,11 +63,10 @@ const call = (port, method, p, body) => new Promise((done) => {
   const c1 = await q('POST', '/year/2026-27/close', {});
   ok('close with months open → 422, the refusal in plain words, nothing written', c1.status === 422 && c1.body.ok === false && /Every month must be locked/.test(c1.body.error) && c1.body.refusals.length >= 1
     && X.T.periods.filter((p) => p.fiscal_year === '2026-27').every((p) => p.status === 'open'), JSON.stringify(c1.body));
-  /* AW-F-04: a year before the books began has no months to lock: the lock answers 404, so the refusal must not ask for them */
+  /* AW-F-04 / AZ-F-02, corrected 22 Nov (AD-F-05 + DECISIONS 22 Nov: a lock date covers a period whether or not entries exist, Xero / QuickBooks): a year before the books began CAN be locked (its months are made open, then locked), so the status asks for the locks like any year */
   const before = await q('GET', '/year/2025-26/status');
   const beforeMonths = (before.body.refusals || []).find((r) => r.name === 'months_open');
-  const noLock = await q('POST', '/periods/2025-26/1/lock', { reason: 'x' });
-  ok('AW-F-04 the lock route has no month in a year before the books (404), so the status does not ask for locks: it says the year is before the books', noLock.status === 404 && before.body.can_close === false && beforeMonths && /before these books began/.test(beforeMonths.why) && !/Every month must be locked|still open/.test(beforeMonths.why), noLock.status + ' ' + JSON.stringify(before.body.refusals));
+  ok('AW-F-04 (corrected) the year before the books names its months to lock, in the same words as any year (no "before these books" refusal; the lock itself is proved at the end)', before.body.can_close === false && beforeMonths && /Every month must be locked/.test(beforeMonths.why) && !/before these books/.test(beforeMonths.why), JSON.stringify(before.body.refusals));
   ok('AW-F-04 a year the books do hold still names its open months (2026-27)', /Every month must be locked/.test(mo.why));
   /* 3 · refused: Suspense not nil (an opening that does not balance) */
   const op = await q('POST', '/opening', { date: '2026-04-01', rows: [{ code: codeOfRole('cash'), dr_minor: 50000 }] });
@@ -79,9 +78,13 @@ const call = (port, method, p, body) => new Promise((done) => {
   WHO = STAFF; const c3 = await q('POST', '/year/2026-27/close', {}); WHO = OWNER;
   ok('a co-assist cannot close a year (403)', c3.status === 403);
   /* 4 · clear Suspense (the missing side of the opening: capital), then close */
+  /* AP-F-05: a new opening is dated in a month and a locked month takes no entry, so the cure opens the months again, newest first (W15-97), and locks them again after */
+  for (let p = 12; p >= 1; p--) await q('POST', '/periods/2026-27/' + p + '/unlock', { reason: 'balance the opening' });
   await q('POST', '/periods/2026-27/0/unlock', { reason: 'balance the opening' });
   const fix = await q('POST', '/opening', { date: '2026-04-01', rows: [{ code: codeOfRole('capital') || '3000', cr_minor: 50000 }] });
   ok('the other side of the opening goes in; Suspense is nil again', fix.status === 200, JSON.stringify(fix.body));
+  for (let p = 1; p <= 12; p++) await q('POST', '/periods/2026-27/' + p + '/lock', { reason: 'month done' });
+  await q('POST', '/periods/2026-27/0/lock', { reason: 'month done' });
   const tbBefore = await q('GET', '/trial-balance?asOf=2027-03-31');
   const cashBefore = tbBefore.body.rows.find((r) => r.code === codeOfRole('cash'));
   const ok1 = await q('POST', '/year/2026-27/close', {});

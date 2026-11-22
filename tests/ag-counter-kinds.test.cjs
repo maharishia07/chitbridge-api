@@ -4,7 +4,7 @@
  * OWNS      the proof of lib/counter-kinds (stamp + adopt) through the real chain: the catalogue shelf -> tax-lines.itemOf/resolveItem (the online sale's reader) -> the server's own check compute
  *           (tax-copy.serverCheckOf) -> the invoice's _cb.kinds -> books-hooks byRateOf -> the engines' posting -> the VAT 201 boxes. A till bill with NO _cb.kinds (the 1125 till) posts its zero-rated line
  *           to 4010 and its exempt line to 4030 (VAT 201 Box 4 / Box 5), not to 4000; the client's kind that disagrees with the catalogue is replaced, with a note on the bill; a kind-less credit note
- *           is filled from the catalogue (AG-F-02: the return then debits the kind's ledger 4010, not 4090); a credit note that carries a kind is left as sent (fill-only).
+ *           is filled from the catalogue (AG-F-02: the return then debits the kind's ledger 4010, not 4040 or 4090); a credit note that carries a kind is left as sent (fill-only).
  * CALLED BY scripts/guards.cjs · CI. No database, no browser. Run: CB_ENGINES_DIR=../chitbridge-engines node tests/ag-counter-kinds.test.cjs
  * HAND FIGURES (AED, walk AG bill C1/0001, prices include 5% VAT): Karak 2 x 10.50 = 21.00 + Dates 33.33 -> standard 54.33, VAT 2.59 (5433 x 5/105 = 258.7), taxable 51.74; Rice 30.00 + Gold 100.00 zero-rated = 130.00;
  * Bus 7.00 exempt. Box 1 taxable 5174 fils, Box 4 13000, Box 5 700; total 191.33. Return of Rice 30.00: Dr 4010 3000, Box 4 falls to 10000.
@@ -71,7 +71,8 @@ eq('a 0% product nobody answered, and one not in the catalogue, keep what the ti
 console.log('\n== AG-F-02: a return of a zero-rated line debits 4010 (the kind ledger), never 4090 ==\n');
 const creditLine = [line('r', 'Rice 5kg', 30)];
 const noKind = TL.invoiceFor(Object.assign(asked(creditLine), { purpose: 'credit_note' })).invoice;
-eq('a credit note whose line carries no kind posts to sales returns 4090 (what the walk saw)', rolesOf(H.byRateOf(noKind, 'AED').rows, 'return', { refund: { cash: 30 } }).filter((x) => /^4/.test(x)), ['4090:0/3000']);
+/* 1129 decision (22 Nov, engines R1-02 + AA-F-01): a return debits the SAME ledger the sale credited, and a 0% sale with no kind was credited to 4040 (sales_unanswered), so its credit note debits 4040 and the waiting pot nets out; 4090 (sales returns) is for a standard-rated return. Mirroring the sale is what keeps VAT201 Boxes 4 and 5 and the unanswered note right. */
+eq('a credit note whose line carries no kind debits 4040, the ledger the sale waited on (it was 4090 before AA-F-01)', rolesOf(H.byRateOf(noKind, 'AED').rows, 'return', { refund: { cash: 30 } }).filter((x) => /^4/.test(x)), ['4040:0/3000']);
 const stn = CK.stamp(creditLine, shelf, { note: true });
 const note = TL.invoiceFor(Object.assign(asked(stn.lines), { purpose: 'credit_note' })).invoice;
 eq('the note is filled from the catalogue, and the return debits 4010 3000 (Box 4 falls by 30.00)', rolesOf(H.byRateOf(note, 'AED').rows, 'return', { refund: { cash: 30 } }).filter((x) => /^4/.test(x)), ['4010:0/3000']);

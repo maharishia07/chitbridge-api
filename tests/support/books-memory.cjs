@@ -566,6 +566,8 @@ const fakeDb = {
     { const off = require('./books-offrail-memory.cjs').answer(fakeDb.T, t, v); if (off) return off; } /* V-F-07: lib/offrail-itc's read */
     /* 1129: lib/books-evidence (the bill a ledger row came from) and lib/tax-copy (the bill's tax copy) read chit_header; no chit is held in memory */
     if (/^SELECT chit_id, sent_at, business_json->'invoice' AS invoice FROM chit_header/.test(t.trim()) || /^SELECT h.chit_id, h.sender_entity_id, h.all_recipients, h.business_json/.test(t.trim())) return { rows: [] };
+    /* LENS-SEC 1129 (lib/money-check.resolve): is the credit note / corrected bill a chit of this shop? No chit is held in memory, so none is: the refusal (400) is what the route answers, never a 500 from a store with no answer */
+    if (/^SELECT 1 FROM chit_header WHERE entity_id = \$1 AND chit_id::text = \$2/.test(t.trim())) return { rows: [] };
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };

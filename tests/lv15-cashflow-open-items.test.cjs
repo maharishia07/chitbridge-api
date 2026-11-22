@@ -76,7 +76,9 @@ const inputFor = (recv, pay) => ({ asOf: ASOF, days: 30, currency: 'INR', openin
   const bounded = OPEN.rowsSql('$1::uuid', { account: '$2::uuid' });
   ok('openItems with no day: the statement has the account and no day bound', /x\.account_id = \$2::uuid/.test(bounded) && !/doc_date <=/.test(bounded));
   const cashSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-cashflow.js'), 'utf8'), storeSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-store.js'), 'utf8');
-  ok('read() asks openItems for both control accounts, never items() for the whole account', /store\.openItems\(db, entity, debtors\.account_id, null\)/.test(cashSrc) && /store\.openItems\(db, entity, cred\.account_id, null\)/.test(cashSrc) && !/store\.items\(db, entity, null, (debtors|cred)\.account_id\)/.test(cashSrc));
+  /* two speed folds (a12de0fc7 chooser, fcd40121b open items) met: the one chooser is books-side-items.read - from today the OPEN documents with no day cut-off, a past day every row (a bill paid since was open then; books-cashflow-open-items.test.cjs proves the past day), so read() asks the chooser for both control accounts and never store.items for the whole account itself */
+  const sideSrc = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-side-items.js'), 'utf8');
+  ok('read() asks the one chooser for both control accounts (open documents from today, every row for a past day), never items() itself', cashSrc.includes('sideItems.read(db, entity, settings, asOf, debtors.account_id, false)') && cashSrc.includes('sideItems.read(db, entity, settings, asOf, cred.account_id, false)') && !cashSrc.includes('store.items(db, entity, null, debtors.account_id)') && !cashSrc.includes('store.items(db, entity, null, cred.account_id)') && sideSrc.includes('store.openItems(db, entity, accountId, bounded ? asOf : null)'));
   ok('openItems with a day keeps its old call (dues): three params', /asOf \? \[e, account_id, asOf\] : \[e, account_id\]/.test(storeSrc));
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

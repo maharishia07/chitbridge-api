@@ -3712,9 +3712,9 @@ async function liveToday(db, entity_id, filed) {
   const found = await db.query(LIVE_BILLS_SQL, [entity_id, '2', BILLS_MAX]);
   const isToday = (row) => shopClock.bizDay(rungAt(row), zone) === today;
   const oldest = found.rows.length ? found.rows[found.rows.length - 1] : null;
+  const currency = (filed || []).some((sum) => sum && sum.key === today) ? await require('../lib/regional').currencyFor(entity_id) : null; /* a filed day of today is the only thing a claim can be made against; its gap is a difference in the shop's own minor units */
   const claims = [];
-  const summaries = liveSummaries(found.rows.filter(isToday), filed, today, found.rows.length < BILLS_MAX ? claims : null); /* a full live arm cannot say a bill is missing */
-  const currency = claims.length ? await require('../lib/regional').currencyFor(entity_id) : null;
+  const summaries = liveSummaries(found.rows.filter(isToday), filed, today, found.rows.length < BILLS_MAX ? claims : null, currency); /* a full live arm cannot say a bill is missing */
   return { summaries, claims: claims.map((claim) => claimWords(claim, currency)), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
 }
 
@@ -3733,23 +3733,25 @@ function inFiling(filing, bill, row) {
  * (bill_nos, else what arrived before it was filed), the day is read from the bills as they stand and the gap is told - never believed, never dropped.
  * Money in the summary's own decimals (rollup.totals), so the gap is the difference of two rollup figures. Returns null when the bills back the claim.
  */
-function claimGap(claimed, backed) {
+function claimGap(claimed, backed, currency) {
   const count = (Number(claimed.count) || 0) - backed.count;
-  const gross = Math.round(((Number(claimed.gross) || 0) - backed.gross) * 1e6) / 1e6;
-  return count > 0 || gross > 0.005 ? { count: Math.max(count, 0), gross: Math.max(gross, 0) } : null;
+  /* the money gap is a difference of two figures in the shop's own minor units, through the value type (minusMoney) - never a hand subtraction. A shop that states no currency has no money to compare (N1): the gap is then the bills not received, and the words leave the amount out. */
+  const cash = require('../lib/books-cashflow');
+  const gapMinor = currency ? require('../lib/books-money-ops').diffMinor(cash.toMinor(claimed.gross || 0, currency), cash.toMinor(backed.gross, currency), currency) : 0;
+  return count > 0 || gapMinor > 0 ? { count: Math.max(count, 0), gross: currency ? cash.fromMinor(Math.max(gapMinor, 0), currency) : null } : null;
 }
 
 /** the owner's sentence for a gap: "Summary says more than its bills: AED 100.00 · 5 bills not received" (the claim carries the counter, the day, and the numbers) */
 function claimWords(claim, currency) {
   const money = require('../lib/money');
-  const minor = money.toMinor(claim.gross, currency || 'XXX');
-  const amount = currency ? money.formatMoney({ amount_minor: minor, currency }, { display: 'code' }).replace(/ /g, ' ') : claim.gross.toFixed(2);
+  const minor = currency ? money.toMinor(claim.gross, currency) : null;
+  const amount = currency ? money.formatMoney({ amount_minor: minor, currency }, { display: 'code' }).replace(/ /g, ' ') + ' · ' : '';
   const bills = claim.count + (claim.count === 1 ? ' bill' : ' bills');
-  return Object.assign({}, claim, { gross_minor: currency ? minor : null, currency: currency || null, words: 'Summary says more than its bills: ' + amount + ' · ' + bills + ' not received' });
+  return Object.assign({}, claim, { gross_minor: currency ? minor : null, currency: currency || null, words: 'Summary says more than its bills: ' + amount + bills + ' not received' });
 }
 
 /** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at, unless the summary claims more than its bills (claims gets the gap) */
-function liveSummaries(todays, filed, today, claims) {
+function liveSummaries(todays, filed, today, claims, currency) {
   const rollup = require('../lib/rollup');
   const filedBy = new Map(); /* newest filing of today per counter (filed rows arrive newest first) */
   for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
@@ -3765,7 +3767,7 @@ function liveSummaries(todays, filed, today, claims) {
   }
   const overClaimed = new Map();
   for (const [till, filing] of claims ? filedBy : []) { /* no claims list = the bills could not all be read (live arm full): no judgement */
-    const gap = claimGap(filing.totals || {}, rollup.totals(inside.get(till) || []));
+    const gap = claimGap(filing.totals || {}, rollup.totals(inside.get(till) || []), currency);
     if (!gap) continue;
     overClaimed.set(till, inside.get(till) || []);
     if (!byTill.has(till)) byTill.set(till, { till: filing.till, rows: [] });
