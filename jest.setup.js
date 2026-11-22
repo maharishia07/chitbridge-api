@@ -26,9 +26,11 @@ process.env.NODE_ENV = process.env.NODE_ENV || 'test';
  * Someone who genuinely means to point at a remote test database sets CB_ALLOW_REMOTE_TEST_DB=1 and
  * owns that decision.
  */
+/* review EL-platform-01 F9: connectPlan's SECOND attempt is DB_POOLER_URL (a failed first connect falls to it), so a remote pooler URL in the shell defeats a local DATABASE_URL: both are checked */
 const _dbUrl = process.env.DATABASE_URL || '';
-const _isLocal = /@(localhost|127\.0\.0\.1|\[::1\]|host\.docker\.internal|postgres|db)(:\d+)?\//.test(_dbUrl);
-if (_dbUrl && !_isLocal && process.env.CB_ALLOW_REMOTE_TEST_DB !== '1') {
+const _isLocalUrl = (url) => /@(localhost|127\.0\.0\.1|\[::1\]|host\.docker\.internal|postgres|db)(:\d+)?\//.test(url);
+const _isLocal = (!_dbUrl || _isLocalUrl(_dbUrl)) && (!process.env.DB_POOLER_URL || _isLocalUrl(process.env.DB_POOLER_URL));
+if ((_dbUrl || process.env.DB_POOLER_URL) && !_isLocal && process.env.CB_ALLOW_REMOTE_TEST_DB !== '1') {
   throw new Error(
     'Refusing to run the jest suites: they TRUNCATE cb_* tables and DATABASE_URL is not a local host.\n' +
     'Point DATABASE_URL at a local test database, or set CB_ALLOW_REMOTE_TEST_DB=1 if you truly mean it.'
