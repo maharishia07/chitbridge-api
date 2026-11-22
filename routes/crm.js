@@ -133,6 +133,7 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
     if (!found) return problem(req, res, { status: 404, ...notYourParty() });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
+    let chitBills = 0, chitLast = null; /* LV-17: the party's bills counted by the server, never from a page of the timeline */
     /* the relationship: select.rows + measure.scorecard, exactly what /relationships/scorecard/:id answers — a local party has no chits */
     if (p.kind !== 'local') {
       const select = require('../lib/select'),
@@ -142,6 +143,12 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
       const rows = await select.rows(owner, { counterparty_id: p.party_id, limit: 5000 });
       const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
       rec.relationship = { relationship: card.relationship, completion: card.completion };
+      rows.forEach((row) => {
+        if (row.doc_kind !== 'bill') return;
+        chitBills++;
+        const at = crm.iso(row.created_at);
+        if (!chitLast || at > chitLast) chitLast = at;
+      });
     } else rec.relationship = null;
     /* points: a customer programme (reward-store, the same reader the customer's own pane uses) */
     rec.points = null;
@@ -156,8 +163,21 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
     /* the follow-ups: soft — before b276 the record is complete without them and says so */
     rec.migrated = true;
     rec.followups = [];
+    let ledBills = 0, ledLast = null;
     try {
-      rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id }));
+      rec.followups = await withEntity(owner, async (h) => {
+        /* the ledger's bills for this party in the SAME transaction (one trip), a missing table read as none */
+        const led = await require('../db').trySavepoint(
+          h,
+          () => h.query(`SELECT count(*)::int AS n, max(created_at) AS last FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill'`, [owner, p.party_id]),
+          { rows: [] }
+        );
+        if (led.rows[0]) {
+          ledBills = Number(led.rows[0].n) || 0;
+          ledLast = led.rows[0].last ? crm.iso(led.rows[0].last) : null;
+        }
+        return F.list(h, owner, { party_id: p.party_id });
+      });
     } catch (e) {
       if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false;
       else throw e;
@@ -168,11 +188,13 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
         moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage),
         may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
       });
+    /* the bills: the dearer of the chit bills and the ledger bills (the same rule the record always used on a page of the timeline), now over the WHOLE history */
+    rec.bills = { n: Math.max(chitBills, ledBills), last_at: [chitLast, ledLast].filter(Boolean).sort().pop() || null };
     await crm.withUnbilled([rec], owner, byOf(req), blind); /* CRM-D7: the SAME figure the list row carries (the one sum, work-rows.sumUnbilled); absent when the shop is truncated, hidden whole for a blind reader */
     rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     /* S34: the party's keys (lib/crm.js assemble, in its order: a supplier-only party has no customer or lead), then what this record adds */
     // prettier-ignore
-    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, unbilled: rec.unbilled, migrated: rec.migrated, followups: rec.followups, may: rec.may });
+    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, unbilled: rec.unbilled, bills: rec.bills, migrated: rec.migrated, followups: rec.followups, may: rec.may });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
