@@ -35002,7 +35002,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3794,
+   "line": 3795,
    "hash": "a8c0186a848ea76a",
    "does": "Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.",
    "errors": {
@@ -35116,7 +35116,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3529,
+   "line": 3530,
    "hash": "13e313233f2183a5",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.",
    "errors": {
@@ -35230,7 +35230,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1792,
+   "line": 1793,
    "hash": "065ab1b31029b6be",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the shop's counters and say which one is this caller -> the counters and me.",
    "errors": {
@@ -35344,7 +35344,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4169,
+   "line": 4170,
    "hash": "6188ec56258d1181",
    "does": "An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.",
    "errors": {
@@ -35460,7 +35460,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2469,
+   "line": 2470,
    "hash": "8ed32910605f3933",
    "does": "Optional counter and page in, a counter key or a shop sign-in -> we read the invoice-number blocks leased out and what became of each number -> a page of blocks.",
    "errors": {
@@ -35581,7 +35581,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4000,
+   "line": 4001,
    "hash": "4cc02b7049e1cf09",
    "does": "Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.",
    "errors": {
@@ -35700,7 +35700,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1802,
+   "line": 1803,
    "hash": "a93949be98bda80d",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the quick-key groups and their items for the shop -> the groups.",
    "errors": {
@@ -35818,7 +35818,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1845,
+   "line": 1846,
    "hash": "a21ada102b689cf4",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the products this counter has marked sold out, none for a shop login -> the hidden products.",
    "errors": {
@@ -35934,7 +35934,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1895,
+   "line": 1896,
    "hash": "84d5f66acbc70ed4",
    "does": "Nothing in, a counter key or a shop sign-in -> we read this counter's saved screen layout for its quick keys -> the config and when it changed.",
    "errors": {
@@ -36050,7 +36050,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1813,
+   "line": 1814,
    "hash": "71c23afad9c90376",
    "does": "A business date in, a counter key or a shop sign-in -> we read which quick-key groups are on for this counter that day -> the active groups.",
    "errors": {
@@ -36168,7 +36168,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2559,
+   "line": 2560,
    "hash": "b7945b493fc90536",
    "does": "A customer by identity or phone in, a counter key or a shop sign-in -> we add up that customer's reward points and recent entries -> the programme, points and entries.",
    "errors": {
@@ -36287,7 +36287,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2924,
+   "line": 2925,
    "hash": "34ca27a7c7ac2723",
    "does": "Nothing in, a counter key or a shop sign-in -> we list the shop screens (televisions) paired to the shop, never their keys -> the screens, their count and the limit.",
    "errors": {
@@ -36531,7 +36531,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3368,
+   "line": 3369,
    "hash": "f88e8f612e3e98a5",
    "does": "Optional detail flag in, a counter key or a shop sign-in -> we read the stock on hand per product, with batches and expiry on request -> the balances.",
    "errors": {
@@ -36649,7 +36649,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3598,
+   "line": 3599,
    "hash": "105f7e770bec40b9",
    "does": "Optional period, compare and page in -> we roll the counters' bills into the day, week or month, or the trend against last year -> the takings summary.",
    "errors": {
@@ -36768,7 +36768,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3969,
+   "line": 3970,
    "hash": "750f4ada473ad2b1",
    "does": "Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.",
    "errors": {
@@ -36882,7 +36882,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3100,
+   "line": 3101,
    "hash": "8822f90ab44821bf",
    "does": "Nothing in, a counter key or a shop sign-in -> we count the products the shop can sell and sample a spread of them so the counter can check its own copy -> the total and sample.",
    "errors": {
@@ -37000,7 +37000,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1962,
+   "line": 1963,
    "hash": "d226996ac18bd6b2",
    "does": "Optional days and quiet window in, a counter key or a shop sign-in -> we find products near expiry or quiet that are worth putting on offer -> the suggestions.",
    "errors": {
@@ -76598,7 +76598,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4040,
+   "line": 4041,
    "hash": "8e1f08ad996388b1",
    "does": "A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.",
    "errors": {
@@ -76718,7 +76718,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3440,
+   "line": 3441,
    "hash": "53a2bc50139bbfaf",
    "does": "A starter catalogue or an uploaded list in, a counter key or a shop sign-in -> we write the products through the shared catalogue writer, refusing a shop already started -> the products created.",
    "errors": {
@@ -76840,7 +76840,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1609,
+   "line": 1610,
    "hash": "e068c6a0b6558c0d",
    "does": "A paired counter's own key -> we close that counter for the day so it is no longer listed as open -> a confirmation.",
    "errors": {
@@ -76961,7 +76961,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1539,
+   "line": 1540,
    "hash": "23e3d51c1d0f82bc",
    "does": "A counter's health code in, a paired counter key or a shop sign-in -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.",
    "errors": {
@@ -77080,7 +77080,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2817,
+   "line": 2818,
    "hash": "b5d1d38fbdf85c1f",
    "does": "A counter id, name and takeover choice in, a signed-in owner only -> we connect that counter to the shop and give it a key, taking it over only if asked -> the key, the counter and the shop's name.",
    "errors": {
@@ -77198,7 +77198,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1704,
+   "line": 1705,
    "hash": "7aa0353c6b3693da",
    "does": "A product and a screen pick or offer opt-out in, a counter key or a shop sign-in -> we put the product on the shop screen or off it, or opt it out of an offer -> the product's flags.",
    "errors": {
@@ -77323,7 +77323,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2453,
+   "line": 2454,
    "hash": "7f3689362e7c81e7",
    "does": "How many invoice numbers it wants and how many it has left, from a counter key or a shop sign-in -> we reserve a block of numbers for this counter to print from, offline too -> the leased block.",
    "errors": {
@@ -77447,7 +77447,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2484,
+   "line": 2485,
    "hash": "2298fc9d88d7d7a9",
    "does": "A block id and unused numbers in, a counter key or a shop sign-in -> we close the block and say what became of every number -> the closed block.",
    "errors": {
@@ -77570,7 +77570,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4102,
+   "line": 4103,
    "hash": "8a112e94e9427f75",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {
@@ -77684,7 +77684,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2107,
+   "line": 2108,
    "hash": "1fe1075f4203d0d0",
    "does": "An offer and a product in, a counter key or a shop sign-in -> we move that product into or out of the offer, refusing a clash -> the updated offer.",
    "errors": {
@@ -77811,7 +77811,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2749,
+   "line": 2750,
    "hash": "c26ecf7c12cbf069",
    "does": "A screen name in, a signed-in person (not a key) -> we make a one-time pairing code for a new shop screen -> the code.",
    "errors": {
@@ -77932,7 +77932,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2860,
+   "line": 2861,
    "hash": "7f968bf151b7297c",
    "does": "A pairing code in, no key yet -> we swap a right code for the screen's own key and shut out repeated wrong guesses -> the screen's key and shop name.",
    "errors": {
@@ -78053,7 +78053,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2194,
+   "line": 2195,
    "hash": "8801009fddb9db3b",
    "does": "A product and a new price in, a counter key or a shop sign-in -> we change the shelf price in the shop's currency if the person may, and tell open counters -> the old and new price.",
    "errors": {
@@ -78178,7 +78178,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1862,
+   "line": 1863,
    "hash": "1f92e5b7b7666a92",
    "does": "A product and optional other counters in, a counter key or a shop sign-in -> we mark it sold out on this counter and the ones chosen -> the hidden entry.",
    "errors": {
@@ -78301,7 +78301,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1907,
+   "line": 1908,
    "hash": "287b7d754f2e98df",
    "does": "A screen layout in, a counter key or a shop sign-in -> we save it as this counter's quick-key layout -> the saved config.",
    "errors": {
@@ -78419,7 +78419,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1828,
+   "line": 1829,
    "hash": "7cc9a8b4f101a389",
    "does": "A business date and the groups to switch on in, a counter key or a shop sign-in -> we save which quick-key groups are active for this counter that day -> the saved state.",
    "errors": {
@@ -78537,7 +78537,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1880,
+   "line": 1881,
    "hash": "a1963fe17d788f40",
    "does": "A product in, a counter key or a shop sign-in -> we put it back on this counter and any others chosen -> what was restored.",
    "errors": {
@@ -78660,7 +78660,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2498,
+   "line": 2499,
    "hash": "ce2b954bd9af8e16",
    "does": "A product and a tax slab in, the owner only (a key or cashier is refused) -> we set that product's tax rate -> the product with its new rate.",
    "errors": {
@@ -78787,7 +78787,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2243,
+   "line": 2244,
    "hash": "8150ea58b444a534",
    "does": "Product ids from the cart in, a counter key or a shop sign-in, up to 200 -> we read the catalogue's current row for each, saying not found for a deleted one -> the current rows, never any money worked out.",
    "errors": {
@@ -78910,7 +78910,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3047,
+   "line": 3048,
    "hash": "25a182b5f21c3846",
    "does": "A counter's list of bills in, a counter key or a shop sign-in -> we check which the server already holds and which the counter must resend, changing nothing -> a verdict per bill.",
    "errors": {
@@ -79028,7 +79028,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2600,
+   "line": 2601,
    "hash": "0a6e72f6afb69950",
    "does": "A bill number, customer and spend in, a counter key or a shop sign-in -> we add the points earned and spend any redeemed once per bill, or note no customer -> the points now.",
    "errors": {
@@ -79155,7 +79155,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2675,
+   "line": 2676,
    "hash": "a51c77c0c4211825",
    "does": "Two customers (from, to) in, a counter key or a shop sign-in -> we move the points from one identity to the other so they are not lost -> how many points moved.",
    "errors": {
@@ -79279,7 +79279,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2990,
+   "line": 2991,
    "hash": "e8dec48d423da49f",
    "does": "A screen id and name in, a counter key or a shop sign-in -> we rename that shop screen, an empty name restoring its default -> the screen's new name.",
    "errors": {
@@ -79401,7 +79401,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 2969,
+   "line": 2970,
    "hash": "5ff14e252baed951",
    "does": "A screen id in, a counter key or a shop sign-in -> we switch that shop screen off, refusing a counter's own key -> a confirmation.",
    "errors": {
@@ -79523,7 +79523,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3199,
+   "line": 3200,
    "hash": "63b65103abc91dc0",
    "does": "Shop name, address, phone, e-mail or tax number in, a counter key or a shop sign-in -> we save only those listed fields and say what changed, refusing others with the reason -> the shop's details.",
    "errors": {
@@ -79643,7 +79643,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1675,
+   "line": 1676,
    "hash": "19e892df06056a1f",
    "does": "Break or billing in, a paired counter key or a shop sign-in -> we note what this counter is doing, if it holds the counter -> whether it was recorded.",
    "errors": {
@@ -79762,7 +79762,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1410,
+   "line": 1411,
    "hash": "9242148e07fe2c3c",
    "does": "A product and available or unavailable in, a counter key or a shop sign-in -> we mark the product's counter status, never retired -> the product's new status.",
    "errors": {
@@ -79886,7 +79886,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 1468,
+   "line": 1469,
    "hash": "3ea5be212fa949c2",
    "does": "Up to 500 product ids and a status in, a counter key or a shop sign-in -> we mark them all available or unavailable in one go -> how many changed.",
    "errors": {
