@@ -1000,7 +1000,7 @@
   "bridge": "The crossing — what the layers DO, not a place, so every file here also sits on another row. ⭐ IDENTIFY — a typed name resolves to one identity, or 404. Never best-effort. ⭐ CROSS — one copy per participant, never shared, with clearances, governance and the retention floor frozen onto each. ⭐ PROTECT — RLS then refuses rows that are not yours. ⚠ KNOWN GAP — not tamper-evident. Ownership is proven; byte-identity is not, and that is what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "How a chit leaves the building. routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1). CARD 23-connectors-and-integrations/connector-actors OWNS the 14 connector routes (/api/connectors): make one · its connections · its key · health · and the two doors a device and an ERP agent call with their own key. CALLED BY server.js (app.use('/api/connectors')).\" ⭐ IoT and ERP are two shapes of one connection — which is why co-assist, IoT, ERP and Tally all land here. · The files are ADAPTER (one per foreign system), KIT (the spine) and CHANNEL (how a chit reaches a person). ⚠ IoT has no adapter yet — its 2 file(s) are the signal blueprint and lifecycle scripts."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 139 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 2839 cases read from a test file, plus 1628 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 139 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 2844 cases read from a test file, plus 1628 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -86921,7 +86921,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · unit · 70 lines. Run: node chitbridge-api/tests/error-trace.test.cjs",
+   "note": "test.guard · unit · 74 lines. Run: node chitbridge-api/tests/error-trace.test.cjs",
    "layer": "engine",
    "test_type": "unit",
    "group": "test.guard",
@@ -86936,7 +86936,7 @@
     "lib/helper.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T06:24:54+05:30"
+   "changed_at": "2026-11-22T14:31:03+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/every-test-is-enrolled.test.cjs",
@@ -98846,6 +98846,33 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/policy-stock.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "lib/policy-stock.js: the shop's \"selling below zero\" switch (OPS-121): the FLAGS row negative_stock and its CARD row.",
+   "claim": "lib/policy-stock.js: the shop's \"selling below zero\" switch (OPS-121): the FLAGS row negative_stock and its CARD row.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 24 lines. Run: node chitbridge-api/tests/policy-stock.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/policy-stock.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T14:10:33+05:30"
+  },
+  {
    "case_key": "chitbridge-api/tests/ppl-21-login-format.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -108256,6 +108283,109 @@
    ]
   },
   {
+   "case_key": "chitbridge-api/tests/signin-provider-connect.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "routes/signin-provider-connect.js: connect, list and unlink a provider sign-in (SEC-112 P1a), at the handler, with no database and no network.",
+   "claim": "routes/signin-provider-connect.js: connect, list and unlink a provider sign-in (SEC-112 P1a), at the handler, with no database and no network.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 100 lines. Run: node chitbridge-api/tests/signin-provider-connect.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/identity-auth.js",
+    "lib/logger.js",
+    "lib/policy.js",
+    "lib/signin-events.js",
+    "lib/signin-pending.js",
+    "lib/signin-provider-link.js",
+    "lib/signin-provider.js",
+    "routes/signin-provider-connect.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T14:29:34+05:30",
+   "needs": [
+    "a database (via signin-pending.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/signin-provider-door.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "lib/signin-provider-door.js: who may be signed in after a provider's callback (SEC-112 P1a).",
+   "claim": "lib/signin-provider-door.js: who may be signed in after a provider's callback (SEC-112 P1a).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 32 lines. Run: node chitbridge-api/tests/signin-provider-door.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/signin-pending.js",
+    "lib/signin-provider-door.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T14:10:33+05:30",
+   "needs": [
+    "a database (via signin-pending.js)"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/signin-provider-handoff.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "routes/signin-provider-handoff.js: POST /api/signin/provider/handoff (SEC-112 P1a): the one-time code → a session through the ONE session writer.",
+   "claim": "routes/signin-provider-handoff.js: POST /api/signin/provider/handoff (SEC-112 P1a): the one-time code → a session through the ONE session writer.",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · integration · 60 lines. Run: node chitbridge-api/tests/signin-provider-handoff.test.cjs",
+   "layer": "engine",
+   "test_type": "integration",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "api",
+    "engine"
+   ],
+   "subjects": [
+    "lib/identity-auth.js",
+    "lib/signin-events.js",
+    "lib/signin-provider-door.js",
+    "routes/signin-provider-handoff.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T14:29:34+05:30",
+   "needs": [
+    "a database (via signin-provider-door.js)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/signin-provider.realstack.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -109244,6 +109374,33 @@
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
    "changed_at": "2026-10-23T11:00:25+05:30"
+  },
+  {
+   "case_key": "chitbridge-api/tests/stock-below-zero.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "lib/stock-below-zero.js refusal(): a movement that asks to be refused below zero is refused in words, before any write (AT-F-03).",
+   "claim": "lib/stock-below-zero.js refusal(): a movement that asks to be refused below zero is refused in words, before any write (AT-F-03).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 39 lines. Run: node chitbridge-api/tests/stock-below-zero.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/stock-below-zero.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T14:29:34+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/stock-bill-one-transaction.test.cjs",
@@ -123316,7 +123473,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T13:16:58+05:30"
+   "changed_at": "2026-11-22T14:10:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/lib/theme-measure.cjs",
@@ -143900,7 +144057,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · static · 182 lines. Run: node chitbridge-web/tests/country-literals.test.cjs",
+   "note": "test.guard · static · 184 lines. Run: node chitbridge-web/tests/country-literals.test.cjs",
    "layer": "web",
    "test_type": "static",
    "group": "test.guard",
@@ -143913,7 +144070,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T22:45:28+05:30"
+   "changed_at": "2026-11-22T14:26:47+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/country-tax-pick.test.cjs",
