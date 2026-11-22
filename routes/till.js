@@ -2454,7 +2454,8 @@ function rateAnswer(out) {
  */
 const invoiceLease = require('../lib/invoice-lease');
 /** the counter id the caller is: the key's own id when it has one (a key may lease only for itself), else the asked one; upper-cased as the register keeps it */
-const leaseTillOf = (req, asked) => String((req.till && req.till.id) || asked || '').toUpperCase();
+/* LV-11: the holder shape (lib/holder.js) names a key's counter `counter`; it never had an `id`, so this read was always the ASKED id and the 'own id only' fence below never ran */
+const leaseTillOf = (req, asked) => String((req.till && req.till.counter) || asked || '').toUpperCase();
 /** a refusal of the lease library (status, code and words are its own) becomes the problem answer; anything else is the door's usual failure */
 const leaseFault = (e, req) => (e && e.refused ? { status: e.status, ...relayed({ code: e.code, message: e.message, error: 'refused' }) } : failed(e, req));
 /** the lease library's two reads of the caller: is this counter one of the shop's (from its identity row, read once) and the shop's transaction handle */
@@ -2467,7 +2468,7 @@ router.post('/invoice-lease', auth, auth.requireScope('till'), ...checked('POST 
     const entity_id = auth.entityOf(req);
     const body = req.body || {};
     const till_id = leaseTillOf(req, body.till_id);
-    if (req.till && req.till.id && body.till_id && String(body.till_id).toUpperCase() !== till_id) return problem(req, res, { status: 403, ...said('LEASE_NOT_YOUR_COUNTER', 'Forbidden', 'A counter can only ask for its own invoice numbers.') });
+    if (req.till && req.till.counter && body.till_id && String(body.till_id).toUpperCase() !== till_id) return problem(req, res, { status: 403, ...said('LEASE_NOT_YOUR_COUNTER', 'Forbidden', 'A counter can only ask for its own invoice numbers.') });
     const notReady = await leaseNotReady();
     if (notReady) return problem(req, res, notReady);
     const facts = await invoiceLease.shopFactsOf(query, entity_id);
@@ -2485,7 +2486,7 @@ router.get('/invoice-lease/report', auth, auth.requireScope('till'), ...checked(
     if (badPaging) return refuseBad(req, res, badPaging + ' must be a whole number from 1.');
     const notReady = await leaseNotReady();
     if (notReady) return problem(req, res, notReady);
-    const till = req.till && req.till.id ? leaseTillOf(req) : req.query.till_id ? String(req.query.till_id).toUpperCase() : null;
+    const till = req.till && req.till.counter ? leaseTillOf(req) : req.query.till_id ? String(req.query.till_id).toUpperCase() : null;
     const report = await withEntity(entity_id, (db) => invoiceLease.reportFor(db, entity_id, { till_id: till, limit: req.query.limit, page: req.query.page }, new Date()));
     res.json(report);
   } catch (e) {
@@ -2500,7 +2501,7 @@ router.post('/invoice-lease/close', auth, auth.requireScope('till'), ...checked(
     if (notReady) return problem(req, res, notReady);
     const body = req.body || {};
     if (!UUID_RE.test(String(body.lease_id))) return refuseBad(req, res, 'lease_id must be the id of a block.');
-    const closed = await withEntity(entity_id, (db) => invoiceLease.closeLease(db, entity_id, { lease_id: String(body.lease_id), unused: body.unused }, new Date().toISOString()));
+    const closed = await withEntity(entity_id, (db) => invoiceLease.closeLease(db, entity_id, { lease_id: String(body.lease_id), unused: body.unused, by: { owner: require('../lib/owner').isOwner(req), till_id: leaseTillOf(req) } }, new Date().toISOString()));
     res.json(Object.assign({ ok: true }, closed));
   } catch (e) {
     problem(req, res, leaseFault(e, req));
