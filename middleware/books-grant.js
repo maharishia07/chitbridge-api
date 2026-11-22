@@ -307,6 +307,8 @@ async function actOn(req, res, next) {
   /* S2-F-09: no role named and no grant under the look we gave (SEC-117: a firm owner without X-Books-Role gets the auditor look) is not "no access" — the other view may hold it. Same code, words that say what to do. */
   const roleUnnamed = !String(req.headers[ROLE_HEADER] || '').trim();
   if (!verdict.allowed && roleUnnamed && verdict.code === 'BOOKS_GRANT_NONE') return refuse(req, res, verdict.status, verdict.code, CHOOSE_VIEW_WORDS);
+  /* AT-F-05: the owner revoked the auditor look and gave the adviser one: the default (auditor) row is ended, the adviser row is live: say "choose a view", never "ended" */
+  if (!verdict.allowed && roleUnnamed && verdict.code === 'BOOKS_GRANT_ENDED' && (await grants.liveInOtherRole(entityOfReal(req.identity), String(req.headers[HEADER]).trim().toLowerCase(), grants.roleOf(roleNamed(req))))) return refuse(req, res, 403, 'BOOKS_GRANT_NONE', CHOOSE_VIEW_WORDS);
   if (!verdict.allowed) return refuse(req, res, verdict.status, verdict.code, verdict.words);
   req.realIdentity = req.identity;
   req.identity = syntheticOf(req.realIdentity, verdict.grant);

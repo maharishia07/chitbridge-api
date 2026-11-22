@@ -58,6 +58,22 @@ const gate = (db, to, from, copy, extra) => railStatus.statusGate(db, BUYER, CHI
   t('buyer has not accepted (pending): the void goes through', (await railStatus.statusGate(sellerDb('pending', 'credit_note'), SELLER, CHIT, 'cancelled', ME, { copy: 'sent', from: 'pending' })).ok === true);
   t('an ordinary invoice void after acceptance is unchanged (by design, RAIL header)', (await railStatus.statusGate(sellerDb('accepted', 'invoice'), SELLER, CHIT, 'cancelled', ME, { copy: 'sent', from: 'pending' })).ok === true);
 
+  console.log('\n== AT-F-01 (1129): an order the BUYER withdrew is not accepted by the seller ==');
+  const buyerSide = (senderStatus, sender) => ({ query: async (text) => {
+    if (/SELECT sender_entity_id FROM chit_header/.test(text)) return { rows: [{ sender_entity_id: sender || BUYER }], rowCount: 1 };
+    if (/FROM chit_participants/.test(text)) return { rows: [{ entity_id: BUYER, current_status: senderStatus }, { entity_id: SELLER, current_status: 'delivered' }], rowCount: 2 };
+    return { rows: [], rowCount: 0 };
+  } });
+  const sellerGate = (db, to, from) => railStatus.statusGate(db, SELLER, CHIT, to, ME, { copy: 'received', from });
+  for (const [from, to] of [['delivered', 'accepted'], ['cancelled', 'accepted'], ['delivered', 'in_progress'], ['accepted', 'completed']]) {
+    const g = await sellerGate(buyerSide('cancelled'), to, from);
+    t('buyer withdrew: seller ' + from + ' -> ' + to + ' refused withdrawn_by_sender', g.ok === false && g.why === 'withdrawn_by_sender', JSON.stringify({ ok: g.ok, why: g.why }));
+  }
+  t('the words say the buyer withdrew it and name the way out', /buyer withdrew/.test(railStatus.withdrawnBySenderSaid().message) && /Reject/.test(railStatus.withdrawnBySenderSaid().message));
+  t('buyer did NOT withdraw (sent copy pending): seller accepts as before', (await sellerGate(buyerSide('pending'), 'accepted', 'delivered')).ok === true);
+  t('buyer withdrew: the seller may still reject it (confirming the withdrawal)', (await sellerGate(buyerSide('cancelled'), 'rejected', 'delivered')).ok === true);
+  t('a seller who cancelled ITS OWN copy may reopen it (M8 unchanged: the buyer has not cancelled)', (await sellerGate(buyerSide('pending'), 'accepted', 'cancelled')).ok === true);
+
   console.log('\n== M1 + F7 + L-F-07 + N5: the three-way match holds a bill billed above what was received ==');
   /* world: PO 100 x 1,000 INR = 100,000; received 60 (60,000); their bill 100 units, total 100,000 */
   let WORLD;
