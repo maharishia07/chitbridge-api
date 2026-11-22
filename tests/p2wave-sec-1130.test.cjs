@@ -57,6 +57,29 @@ process.env.DATABASE_URL = '';
   t('60,000 newlines then a bad byte: refused, and fast (old pattern: about a second)', [refused, Date.now() - t0 < 100], [false, true]);
   t('a wrapped base64 body, a data: URL and a padded tail still pass', ['QUJD\r\nREVG\n' + 'A'.repeat(100) + '==\n', 'data:image/png;base64,QUJD'].map((x) => re.test(x)), [true, true]);
   t('the text is capped at the base64 of the 6 MB limit plus breaks', typeof b64.maxLength === 'number' && b64.maxLength > 8e6 && b64.maxLength < 9e6, true);
+  console.log('\n-- EL-platform-08#L87 parts that DECLARE size 0 are still held to the total budget --');
+  const X = require(path.join(API, 'lib/xlsx-read.js'));
+  const F = require(path.join(__dirname, 'xlsx-fixture.cjs'));
+  const MB = 1024 * 1024;
+  const wbxml = '<workbook><sheets><sheet name="S" sheetId="1" r:id="rId1"/></sheets></workbook>';
+  const rels = '<Relationships><Relationship Id="rId1" Target="worksheets/sheet1.xml"/></Relationships>';
+  const bomb = F.zip([
+    { name: 'xl/workbook.xml', text: wbxml, deflate: true },
+    { name: 'xl/_rels/workbook.xml.rels', text: rels },
+    { name: 'xl/worksheets/sheet1.xml', text: '<worksheet><sheetData></sheetData>' + ' '.repeat(50 * MB) + '</worksheet>', deflate: true },
+    { name: 'xl/sharedStrings.xml', text: '<sst>' + ' '.repeat(50 * MB) + '</sst>', deflate: true }
+  ]);
+  for (let at = bomb.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02])); at >= 0; at = bomb.indexOf(Buffer.from([0x50, 0x4b, 0x01, 0x02]), at + 4)) bomb.writeUInt32LE(0, at + 24); /* every central entry now declares usize 0 */
+  let said = null;
+  try { X.sheetRows(bomb); } catch (e) { said = e.userMessage || e.message; }
+  t('two 50 MB parts that declare 0 are refused as too large, not read', /too large/i.test(said || ''), true);
+  console.log('\n-- L-sec-platform-05#L92 the hand-made csv files guard a formula cell --');
+  const MI = require(path.join(API, 'lib/move-in.js'));
+  const skipped = MI.skippedCsv([{ line: 3, what: '=HYPERLINK("http://x","y")', why: '+cmd|calc' }, { line: 4, what: '-12.50', why: 'plain' }]);
+  t('skipped rows: a formula opener gets an apostrophe, a plain number does not', [skipped.includes('"\'=HYPERLINK'), skipped.includes('"\'+cmd'), skipped.includes('"-12.50"')], [true, true, true]);
+  const PR = require(path.join(API, 'lib/parallel-run.js'));
+  const auditor = PR.csv({ parts: { pl: { title: '@SUM(A1)', lines: [{ status: 'differs', name: '=1+1', their_line: 'x', their_code: '', our_codes: [], theirs_minor: -1250, ours_minor: 0, diff_minor: -1250, why: '\tTab' }] } } }, 'AUD');
+  t('the auditor file: formula-led cells guarded, the negative figure stays a number', [auditor.includes('"\'@SUM(A1)"'), auditor.includes('"\'=1+1"'), auditor.includes('"-12.50"')], [true, true, true]);
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
