@@ -28,7 +28,7 @@ const t = (name, ok, why) => { if (ok) { pass++; console.log('  ok  ' + name); }
 console.log('\nreadability guard · only the api code THIS change touched (DISCIPLINES §6)');
 
 /* the gate lists this file — a guard outside scripts/guards.cjs is a guard nobody runs */
-const gate = fs.readFileSync(path.join(API, 'scripts/guards-list.cjs'), 'utf8');
+const gate = require('./support/guards-list-text.cjs').guardsListText();
 t('scripts/guards-list.cjs lists readability-guard.test.cjs', /'readability-guard\.test\.cjs'/.test(gate));
 
 /**

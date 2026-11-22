@@ -36,7 +36,7 @@ const KNOWN_NOT_ENROLLED = {
 const MAX_KNOWN = 4;
 
 const read = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
-const guardsText = read(path.join(API, 'scripts', 'guards-list.cjs'));
+const guardsText = require('./support/guards-list-text.cjs').guardsListText();
 const ciText = read(path.join(API, '.github', 'workflows', 'ci.yml'));
 const proofText = read(path.join(API, 'deploy', 'proof.sh'));
 

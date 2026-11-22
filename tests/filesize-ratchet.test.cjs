@@ -24,7 +24,7 @@ const t = (name, ok, why) => { if (ok) { pass++; console.log('  ok  ' + name); }
 
 console.log('\nfile-size ratchet · no file grows, a new file is at most 500 lines (MNT-58)');
 
-const gate = fs.readFileSync(path.join(API, 'scripts/guards-list.cjs'), 'utf8');
+const gate = require('./support/guards-list-text.cjs').guardsListText();
 t('scripts/guards-list.cjs lists filesize-ratchet.test.cjs', /'filesize-ratchet\.test\.cjs'/.test(gate));
 t('filesize.baseline.json is committed', fs.existsSync(path.join(API, 'filesize.baseline.json')));
 

@@ -213,7 +213,7 @@ const withExtraLine = (table, line) => {
     assert(EXPOSES.test('SELECT * FROM entity_schemas WHERE entity_id = $1') && EXPOSES.test('SELECT default_value FROM schema_fields sf') && !EXPOSES.test('SELECT field_key, field_name FROM schema_fields WHERE schema_id = $1'));
   });
   await check('the offline guard is listed in scripts/guards-list.cjs and the CI step names the realstack file', () => {
-    assert(/sec-75-entity-schemas\.test\.cjs/.test(read('scripts/guards-list.cjs')));
+    assert(/sec-75-entity-schemas\.test\.cjs/.test(require('./support/guards-list-text.cjs').guardsListText()));
     assert(/tests\/sec-75-entity-schemas\.realstack\.cjs/.test(read('.github/workflows/ci.yml')) && /RUN-2026-11-14-b861-entity-schemas-fns\.sql/.test(read('.github/workflows/ci.yml')));
   });
 
