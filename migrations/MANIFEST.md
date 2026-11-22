@@ -169,3 +169,4 @@ committed `migrations/bNN_*.sql` only** — no more ad-hoc Supabase DDL.
 | file | run on | by | note |
 |---|---|---|---|
 | b908_identities_auth_fail_grant.sql | SIT (done by the db lane), then production BEFORE the 1128 api lands | Athi | after b900; column grants on identities.auth_fail_count / auth_fail_at for cb_app (SEC-186 DBs refuse sign-in without it) |
+| RUN-2026-11-22-b909-identities-creator-narrow.sql | SIT: sit-root = no-op (no b860 there), so the hole stays open until b860 + b909 run; then production AFTER RUN-2026-11-14-b860 and the 1129 api | Athi | F13: the creator arm of identities RLS no longer deletes, and updates only an unclaimed or network-provisioned identity; idempotent, rollback in the header |

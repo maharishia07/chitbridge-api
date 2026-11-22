@@ -355,6 +355,12 @@ jobs:
           CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/sec-185-identities-rls.realstack.cjs
+      - name: F13 · identities creator arm (migrations/RUN-2026-11-22-b909, applied by the test as the owner and taken off again) - the shop that minted an identity cannot delete it and cannot change it once claimed (network-provisioned stores excepted); real Postgres as cb_app
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          CB_OWNER_DB_URL: postgres://postgres:postgres@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/f13-identities-creator-narrow.realstack.cjs
       - name: l16 ident - the books name readers (namesOf) under identities row security - own tree, granted and revoked firm people, nobody else; b860 off, on, and with the grant-party arm; real Postgres as cb_app
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
