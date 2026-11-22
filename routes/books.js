@@ -1282,10 +1282,11 @@ router.get('/bank/rail', auth, moneyReader, on, ...checked('GET /bank/rail'), as
    Writes are the editor's (a viewer, the auditor, cannot); the read is any login with the Ledger on (the ACC-176 guest actor reads at viewer level). Before b864: 503 in words, the page keeps its marks on the device. ── */
 const BANK_LOG = require('../lib/bank-rec-log');
 /** the bank ledger a body or query names (code, role or id) inside this transaction, or the 404 */
-async function bankAccountOf(handle, e, key) {
-  const account = BANK_LOG.accountIn(await S.accounts(handle, e), key);
+async function bankAccountOf(handle, e, key, write) {
+  const chart = await S.accounts(handle, e),
+    account = BANK_LOG.accountIn(chart, key);
   if (!account) throw Object.assign(new Error('That bank account was not found.'), { code: 'BOOKS_NOT_FOUND' });
-  return account;
+  return write ? BANK_LOG.bankOnly(chart, account) : account; /* BA-F-07: a mark or a sign-off only on a bank ledger */
 }
 /** POST /bank/marks { account, file_hash?, marks: [{ act: accept|undo|note|attach, key, how?, chits?, ledger?, text?, ref? }] } → { marks: [row], by, at } — editor; insert-only, one transaction. `by` and `at` are the server's. */
 // @does A bank account and marks (accept, undo, note, attach) in -> we append them to that account's reconciliation log -> the saved marks (editors).
@@ -1293,7 +1294,7 @@ router.post('/bank/marks', auth, noKey, editor, bankWriter, on, ...checked('POST
   try {
     const e = ctx(req),
       body = req.body || {};
-    const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account), body, byOf(req), actingOf(req)));
+    const marks = await withEntity(e, async (handle) => BANK_LOG.appendMarks(handle, e, await bankAccountOf(handle, e, body.account, true), body, byOf(req), actingOf(req)));
     res.status(201).json({ marks });
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
@@ -1306,7 +1307,7 @@ router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked(
   try {
     const e = ctx(req),
       body = req.body || {};
-    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account), curOf(req), body, byOf(req), actingOf(req)));
+    const statement = await withEntity(e, async (handle) => BANK_LOG.appendStatement(handle, e, await bankAccountOf(handle, e, body.account, true), curOf(req), body, byOf(req), actingOf(req)));
     res.status(201).json({ statement });
   } catch (err) {
     if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
