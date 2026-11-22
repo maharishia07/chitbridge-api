@@ -7713,6 +7713,16 @@
    "raised_by": []
   },
   {
+   "code": "STOCK_SHORT",
+   "status": "409",
+   "title": "Not enough on the shelf",
+   "shopkeeper": "This bill takes more of a product than the shelf shows, and your shop refuses a sale below zero.",
+   "hint": "Lower the quantity, or enter the goods you received first; the owner can allow selling below zero in Settings.",
+   "owner_area": "chits",
+   "since": "2026-11-22",
+   "raised_by": []
+  },
+  {
    "code": "STORAGE_FULL",
    "status": "varies",
    "title": "Storage full",
