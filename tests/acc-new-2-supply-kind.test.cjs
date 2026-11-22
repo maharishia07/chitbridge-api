@@ -52,7 +52,7 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   ok('AU · "zero_rated" → 422 listing taxable, gst_free, input_taxed', r.status === 422 && /taxable, gst_free, input_taxed/.test(said(r)), JSON.stringify(r));
   /* IN: the pack defines none */
   r = await post(bill('IN', 'gst_free'));
-  ok('IN · any named kind → 422 (the pack defines none), said so', r.status === 422 && r.body.code === 'SUPPLY_KIND_UNKNOWN' && /no supply kinds/.test(said(r)) && r.body.kinds.length === 0, JSON.stringify(r));
+  ok('IN · an AU word (gst_free) → 422 listing the IN pack own kinds nil, exempt, non_gst (red1128: the IN pack defines kinds since tax01)', r.status === 422 && r.body.code === 'SUPPLY_KIND_UNKNOWN' && /nil, exempt, non_gst/.test(said(r)), JSON.stringify(r));
   /* the kinds each pack DOES define pass, spelt as the engine spells them */
   r = await post(bill('AE', 'zero_rated')); ok('AE · "zero_rated" → 200', r.status === 200, JSON.stringify(r));
   r = await post(bill('AE', 'Zero-Rated')); ok('AE · "Zero-Rated" (the engine spelling) → 200', r.status === 200, JSON.stringify(r));

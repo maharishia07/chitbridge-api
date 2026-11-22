@@ -200,7 +200,7 @@ async function stopByReply() {
     });
     await kase('MK-03', 'the party who agreed IS handed to the one sender (one outbound row, logged even though the provider is not set up)', async () => {
       const rows = await rowsFor(A, people[0].phone);
-      expect(dry.may === 1 && real.members === 3 && rows.length === 1 && rows[0].status === 'refused' && /not set|not configured/i.test(rows[0].reason || ''), 'may ' + dry.may + ' of ' + real.members + ' · rows ' + JSON.stringify(rows));
+      expect(dry.may === 1 && real.members === 3 && rows.length === 1 && rows[0].status === 'refused' && /not set|not configured|not connected/i.test(rows[0].reason || ''), 'may ' + dry.may + ' of ' + real.members + ' · rows ' + JSON.stringify(rows));
     });
     await kase('MK-06', 'the Groups numbers are the CRM page\'s party count: segments.customers = the customers CRM lists = Σ the four segments', async () => {
       const seg = ok(await j('/api/crm/segments', { token: A.token }), 'segments').b, page = ok(await j('/api/crm/parties', { token: A.token }), 'crm').b;

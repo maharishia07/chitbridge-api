@@ -48,6 +48,7 @@ const ALLOWED = {
   'books.js /party/:id/statement': 'one party\'s statement over a date range — its lines carry a running balance a page would break (keyset later, as /ledger)',
   'books.js /trial-balance': 'one row per account — bounded by the chart',
   'books.js /bank/rail': 'one range\'s bank-vs-rail reconciliation summary',
+  'books.js /year/:fy/status': 'one year\x27s status — the year\x27s twelve month rows are read for closed_with, the answer is one object',
   'books.js /periods': 'the year\'s periods — twelve rows',
   'books.js /fx-revalue': 'one revaluation proposal',
   'chits.js /rollup': 'grouped sums over my chits — one row per group',

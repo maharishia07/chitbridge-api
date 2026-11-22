@@ -159,29 +159,7 @@ function screenView(body) {
 }
 router.screenView = screenView; /* tests/screen-snapshot.test.cjs asserts the allow-list directly too */
 
-/**
- * M127: DOES THIS SHOP HOLD STOCK? The shop's own DATA decides, never its trade (Athi: "the data decides, not the trade").
- * Two signals, both already in the platform: the shop has RECEIVED stock (a stock_movement of reason opening or purchase - what a
- * Receive / GRN posts, lib/stock-from-chit), or a product of its own says it is kept per batch (item_data.batch_tracked true - the
- * product's word that lotfields.tracksBatch honours first). Neither => false. One read; a table not migrated yet, or a read that
- * fails, answers null (unknown) and the counter then shows Receive and Despatch as usual - it never hides on a guess.
- */
-async function holdsStockOf(entity_id) {
-  try {
-    if (!(await require('../lib/schema').hasTable('stock_movement'))) return null;
-    const found = await withEntity(entity_id, (db) =>
-      db.query(
-        `SELECT (EXISTS (SELECT 1 FROM stock_movement WHERE entity_id = $1 AND reason IN ('opening','purchase'))
-            OR EXISTS (SELECT 1 FROM catalogue_items WHERE entity_id = $1 AND is_active = true AND item_data->>'batch_tracked' = 'true')) AS held`,
-        [entity_id]
-      )
-    );
-    return !!(found.rows[0] && found.rows[0].held);
-  } catch (e) {
-    log.fellBack('till holdsStockOf: the read failed — answered with nothing', e);
-    return null;
-  }
-}
+const { holdsStockOf } = require('../lib/holds-stock'); /* M127: does this shop hold stock? the one reader (moved to lib so Home's Operations card asks the same question, WALK-H H-F-05) */
 
 /**
  * GET /snapshot — everything a counter needs to bill offline, in one call (the story is at the top of this file). The handler only hands the
@@ -225,7 +203,7 @@ async function takeSnapshot(req) {
 /** section 1 — the shop as its own books know it (the slip's header, and what decides tax invoice vs cash memo), its policy flags, the counter series this key holds, and the shared reads */
 async function readShopSection(snap) {
   const { entity_id, since } = snap.asked;
-  snap.row = (await query(`SELECT display_name, gstn, country, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
+  snap.row = (await query(`SELECT display_name, gstn, country, timezone, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
   snap.flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
   /* CTR-170: a shop with a tax number is registered (its scheme flag says how); only a shop that IS there and has none asks the ONE reader (ACC-198, as
      books-hooks does, a minute cached) — 'unknown' when nobody said, never a guess. No row (a key whose shop is gone) asks nothing: there is nobody to ask. */
@@ -475,13 +453,21 @@ function liveCountRead(db, entity_id) {
 }
 
 /**
+ * ⭐ IN-F-01 (21 Nov): THE BUYER'S TAX ID HAS TWO HOMES — identities.gstn (the add-customer door) and party_tax_id (the party editor,
+ * CRM-47). The counter read only the first, so a GSTIN saved on the party screen never reached the bill: a registered buyer was billed
+ * as a walk-in (B2C, shop state, no buyer GSTIN). One answer, in the same query (no extra trip): the identity's own, else the party's
+ * row of any pack's own tax-id word (tax-shelf.taxIdWordsOfPacks, pack order). party_tax_id is in the baseline (b274).
+ */
+const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM party_tax_id t WHERE t.owner_entity_id = $1 AND t.party_id = i.identity_id
+                                  AND t.scheme = ANY($2::text[]) ORDER BY array_position($2::text[], t.scheme) LIMIT 1))`;
+/**
  * ⚠️ THE NAME AND THE NUMBER ARE ON identities. customer_list is the join and carries only the relationship —
  * owner_entity_id, customer_identity_id, groups, and how often they have transacted.
  * ⚠️ owner_entity_id, NOT entity_id. The old query used the wrong column name and threw on every snapshot.
  */
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, i.gstn, c.groups, c.last_txn_at,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -495,7 +481,7 @@ function customersRead(db, entity_id) {
           WHERE c.owner_entity_id = $1
           ORDER BY c.last_txn_at DESC NULLS LAST
           LIMIT 2000`,
-    [entity_id]
+    [entity_id, taxShelf.taxIdWordsOfPacks()] /* $2: each pack's own tax-id word (GSTIN first) */
   );
 }
 
@@ -742,6 +728,8 @@ function customerCore(x) {
   if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
   /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */
   if (x.gstn && String(x.gstn).trim()) out.gstin = String(x.gstn).trim().toUpperCase();
+  /* IN-F-07 (r.46(d)): the buyer's address, only when the party holds one, so a row without one keeps its shape */
+  if (x.address && String(x.address).trim()) out.address = String(x.address).trim();
   return out;
 }
 
@@ -1280,6 +1268,8 @@ function taxBlock(shelf) {
 function shopBlock(row, flags, particulars, holdsStock, registration) {
   const { party, gstin, country, stateSplit, shopMoney, slipFooter } = particulars;
   return {
+    /* E-F-06: the shop's own IANA zone (identities.timezone) — the one the web's CB_SHOP_TZ reads; null = none stated (never guessed) */
+    timezone: row.timezone || null,
     /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
     slip_footer: slipFooter,
     ...shopIdentity(party, row),
@@ -1368,6 +1358,8 @@ function shopMoneyBlock(row, country, shopMoney) {
     money_why: shopMoney ? null : { code: 'NO_MONEY', why: countrySetup.MONEY_UNSTATED },
     /* STD2: the pack's word for the tax number (profile.taxIdWordOf — the ONE reader); null = no pack, the counter says "Tax number" */
     tax_id_word: cbProfile.taxIdWordOf(country),
+    /* AE-F-05/20 (B-F-26): the shop's own IANA zone (its row, else its country pack's first) - every time the counter writes is read in it, never the PC's; additive */
+    timezone: countrySetup.clockOf({ country, timezone: row.timezone }).zone,
     fy_start_month: countrySetup.fyStartOf(country) /* N4: the year roll-up passes the pack's own start month (null = unstated), never April */
   };
 }
@@ -1486,10 +1478,8 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), ...checked('POST /st
       return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + STOCK_BULK_MAX + ' products in one change.') });
     }
     if (COUNTER_STATUSES.indexOf(input.status) < 0) return refuseBad(req, res, "status must be 'available' or 'unavailable'");
-
     const stamp = itemstatus.stamp({ status: input.status, note: input.note }, { actor_name: input.by });
     const saved = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids: input.ids, merge: stamp }));
-
     shopChanged(entity_id, 'stock ' + input.status + ' ×' + saved.rows.length);
     res.json({
       ok: true,
@@ -1727,7 +1717,6 @@ router.post('/flags', auth, auth.requireScope('till'), ...checked('POST /flags')
     if (!item_id) return refuseBad(req, res, 'item_id required');
     const offerOptOut = body.offer_id != null;
     if (!offerOptOut && body.screen === undefined) return refuseBad(req, res, 'nothing to set — pass screen, or offer_id with excluded');
-
     const saved = await withEntity(entity_id, (db) =>
       offerOptOut ? setOfferOptOut(db, entity_id, item_id, body) : setScreenPick(db, entity_id, item_id, body)
     );
@@ -2129,7 +2118,6 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
     const entity_id = auth.entityOf(req);
     const input = offerItemInput(req.body);
     if (!input.offer_id || !input.item_id) return refuseBad(req, res, 'offer_id and item_id required');
-
     const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
 
     const refusal = moveRefusal(done);
@@ -2413,7 +2401,7 @@ function slabPatchOf(item_data, slab) {
   const before = Object.assign({}, item_data || {});
   const after = taxSlab.setOn(Object.assign({}, before), slab);
   const patch = {};
-  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key]) patch[key] = after[key] === undefined ? null : after[key];
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key] && !(after[key] === undefined && before[key] === null)) patch[key] = after[key] === undefined ? null : after[key];
   return patch;
 }
 /**
@@ -2666,18 +2654,20 @@ function mayEarn(holder, prog) {
 function rewardSettled(holder, prog, spend, settled) {
   const before = settled.before,
     added = settled.added;
-  const after = before.points - spend + added;
+  /* D-F-12: a replay answers what the first call recorded (lib/reward-store settledBefore), never the sum again; a settle that names neither (a stand-in) is the first call's own sum */
+  const after = settled.after != null ? settled.after : before.points - spend + added;
+  const spent = settled.spent != null ? settled.spent : spend;
   return {
     ok: true,
     holder: holder,
     programme: prog.name,
     added: added,
-    spent: spend,
+    spent: spent,
     points: after,
     worth: rewards.liability(prog, after),
     /* ⚠️ SAID, NOT HIDDEN: the spend was honoured because it had already come off the bill */
-    overspent: spend > before.points ? spend - before.points : 0,
-    says: rewards.billSays(prog, { added: added, spent: spend, balance: after }, {})
+    overspent: !settled.replayed && spend > before.points ? spend - before.points : 0,
+    says: rewards.billSays(prog, { added: added, spent: spent, balance: after }, {})
   };
 }
 
@@ -2756,6 +2746,12 @@ function pairCode() {
   }
 }
 
+/** why this request may not mint a screen pairing code (403 said), or null: a person must be signed in, a key other than a counter's may not, and (S9: a screen key lasts a year) only the owner or a manager hat may; a counter key keeps its own narrow right */
+function screenPairRefusal(req, holder, viaCounter) {
+  if (!req.identity || (holder && !viaCounter)) return said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.');
+  const mayMint = viaCounter || require('../lib/owner').isOwner(req) || require('../lib/owner').isManager(req);
+  return mayMint ? null : said('OWNER_ONLY', 'Forbidden', 'Only the owner or a manager can pair a screen.');
+}
 /** the shop asks for a code — one per screen, so two televisions can be revoked apart */
 // @does A screen name in, a signed-in person (not a key) -> we make a one-time pairing code for a new shop screen -> the code.
 router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
@@ -2777,8 +2773,9 @@ router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
      */
     const holder = req.till && req.till.key; /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
     const viaCounter = !!(holder && holder.scopes.includes('till'));
-    if (!req.identity || (holder && !viaCounter))
-      return problem(req, res, { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.') });
+    const shutSaid = screenPairRefusal(req, holder, viaCounter);
+    if (shutSaid) return problem(req, res, { status: 403, ...shutSaid });
+    /* S9: a screen key lasts a year, so only the owner or a manager hat may mint one (a cashier on the act hat may not); a counter key keeps its own narrow right above */
     const entity_id = auth.entityOf(req);
     const shop = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
@@ -2894,7 +2891,7 @@ router.post('/pair/claim', ...checked('POST /pair/claim'), async (req, res) => {
       days: 365,
       parent: pending.parent || null
     });
-    PAIR_MISSES.delete(address);
+    /* S9: a success does not clear the wrong-guess count: one device's good code must not hand a guesser at the same address a fresh budget (the count lapses on its own) */
     res.json({ key: minted.key, shop: { entity_id: pending.entity_id, name: pending.name } });
   } catch (e) {
     problem(req, res, failed(e, req));
@@ -3464,7 +3461,7 @@ router.post('/catalogue', auth, auth.requireScope('till'), catalogueMintLimiter,
     const already = await alreadyStarted(entity_id, text);
     if (already) return problem(req, res, { status: 409, ...already });
 
-    const plan = catalogueStartPlan(text, await nestedCatwrite.codesInUse(entity_id));
+    const plan = catalogueStartPlan(text, await nestedCatwrite.codesInUse(entity_id), await require('../lib/shop-country').shopCountryOf(entity_id));
     if (plan.refusal) return problem(req, res, { status: 400, ...plan.refusal });
     const items = plan.items;
     /* categories and products in ONE transaction: a refused write leaves no category behind (CAT-124 F1) */
@@ -3507,7 +3504,7 @@ async function alreadyStarted(entity_id, text) {
  * ⚠️ ROWS A PERSON HAS ALREADY APPROVED. The header reconciliation is csv-preflight's job and it
  * produces a report somebody agrees to; this is the step after that, never a second guess at it.
  */
-function catalogueStartPlan(text, existing) {
+function catalogueStartPlan(text, existing, country) {
   const blueprints = require('../lib/catalogue-blueprint');
   if (Array.isArray(text.products) && text.products.length) {
     const approved = blueprints.rowsToProducts(text.products, text.blueprint, existing, { unitOf: require('../lib/units').unitOf });
@@ -3524,7 +3521,7 @@ function catalogueStartPlan(text, existing) {
     const words = 'Choose a product list, or send the products you want added.';
     return { refusal: said('TILL_BAD_REQUEST', 'nothing to mint', words, { choices: Object.keys(blueprints.BLUEPRINTS) }) };
   }
-  return { items: blueprints.mint(blueprint.key, existing), from: 'blueprint:' + blueprints.pin(blueprint), refused: [] };
+  return { items: blueprints.mintPlan(blueprint.key, existing, { country: country == null ? '' : country }).items, from: 'blueprint:' + blueprints.pin(blueprint), refused: [] };
 }
 
 /**

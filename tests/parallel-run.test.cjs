@@ -90,8 +90,11 @@ const byName = (lines, n) => lines.find((l) => l.name === n || l.their_name === 
   const srv = app.listen(0), port = srv.address().port, q = (m, p, b) => call(port, m, '/api/books' + p, b);
   const K = require('../lib/books-hooks'); let DAY = '2026-10-05'; const realDay = K.dayOf;
   K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? DAY : realDay(ts, c));
-  require('../lib/tax-copy').ledgerFor = async () => ({ bounds: { period: '092026' }, me: { Gstin: '33AAAAA0000A1Z5' },
-    ledger: { output: { taxable: 1500, igst: 0, cgst: 135, sgst: 135, cess: 0 }, itc: { igst: 0, cgst: 45, sgst: 45, cess: 0 }, net: {} } });
+  /* F1 (1128): the rail's GSTR-3B is the engine's, read from the month's ROWS (real frozen invoices): a sale of 1,500.00 at 18% (CGST 135 + SGST 135) and a purchase of 500.00 at 18% (ITC 45 + 45) */
+  const TLR = require('../lib/tax-lines'), selfParty = { Country: 'IN', Gstin: '33AAAAA0000A1Z5', State: '33', Pos: '33', RegType: 'regular' }, otherParty = { Country: 'IN', Gstin: '33BBBBB1111B1Z2', State: '33', Pos: '33', RegType: 'regular' };
+  const railBill = (id, sells, seller, buyer, price) => ({ chit_id: id, direction: sells ? 'sent' : 'received', sells, invoice: TLR.invoiceFor({ lines: [{ name: 'x', quantity: 1, price, gst_rate: 18, hsn: '1006' }], seller, buyer, chit_id: id, at: '2026-09-10' }).invoice, provisional: false, seller: Object.assign({ entity_id: sells ? 'me' : 'sup' }, seller), buyer: Object.assign({ entity_id: sells ? 'cus' : 'me' }, buyer), at: '2026-09-10T05:00:00Z' });
+  const railLedger = TLR.ledger([railBill('r1', true, selfParty, otherParty, 1500), railBill('r2', false, otherParty, selfParty, 500)], { RegType: 'regular' });
+  require('../lib/tax-copy').ledgerFor = async () => ({ bounds: { period: '092026' }, me: { Gstin: '33AAAAA0000A1Z5', Country: 'IN', RegType: 'regular' }, ledger: railLedger });
   try {
     console.log('\nparallel-run · an Indian shop beside a Tally trial balance');
     await X.store.saveSetting(X.db, SHOP, { enabled: false });

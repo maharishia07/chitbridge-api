@@ -47,8 +47,8 @@ function outside(src, re, gate, allow) {
   }
   return out;
 }
-
-const G1 = body(PAGE, 'async function becomeShop(');
+/* the door is becomeShop and the one helper that talks to the shop-PC program (readability split, batch 1126): one gate, from the helper to the end of becomeShop */
+const G1 = (() => { const at = body(PAGE, 'function agentHeldAnswer(').at, end = body(PAGE, 'async function becomeShop(').end; return { at, end, text: PAGE.slice(at, end) }; })();
 
 console.log('\nG1 · ONE DOOR TO A SHOP — the page\n');
 
@@ -93,8 +93,8 @@ it('the person crosses the reload as a PENDING sign-in, adopted only onto their 
 it('every inlet goes through the door: sign-in, #key= link, ⚙ key box, both sign-outs, closing the counter', () => {
   const need = [
     ['usignBecome', /becomeShop\(\{ token: pending\.token/],
-    ['pickHost', /becomeShop\(\{ key: k, marker/],
-    ['settingsKeySave', /becomeShop\(\{ key: val \}\)/],
+    ['takeKeyFromAddress', /becomeShop\(\{ key: k, fixed: wantFixed, marker/],
+    ['settingsKeySave', /becomeShop\(\{ key: val, fixed: true \}\)/],
     ['signoutDo', /becomeShop\(\{ key: null, force: !!force/],
     ['signoutCloudDo', /return becomeShop\(\{ key: null \}\)/],
   ];
@@ -195,7 +195,7 @@ it('⚠️ the move happens ONCE and only into an EMPTY slot — a later switch 
 });
 
 it('⚠️⚠️ parked bills are read again once the shop is known (they were read before the key and then saved over)', () => {
-  const ld = body(PAGE, 'async function load(').text;
+  const ld = body(PAGE, 'async function loadFirstTime(').text;
   assert.ok(/whoLoad\(\); breakLoad\(\); changedLoad\(\); parkedLoad\(\);/.test(ld), 'load() does not re-read parked bills after pickHost');
 });
 
@@ -492,7 +492,7 @@ it('⭐ a browser holding a key keeps the person session on sign-in (the move fo
   assert.ok(/!onAgent\(\)/.test(kb) && /!personOn\(\)/.test(kb), 'keyedBrowser() is not "a browser, a key, no person"');
   /* 2026-10-08: the window's onIn (usignIn) holds the token as `answer.token`; the shelf moved to v4 when /app/signin-ui.js joined the boot path */
   assert.ok(/if \(\(personOn\(\) \|\| keyedBrowser\(\)\) && answer\.token\)/.test(body(PAGE, 'async function usignIn(').text), 'a keyed browser\'s sign-in drops the session again');
-  assert.ok(/const SHELF = 'cb-till-v7'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');   /* v5: HX1 /config.js · v6: FX-F10W2 /app/their-bill.js */
+  assert.ok(/const SHELF = 'cb-till-v9'/.test(fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8')), 'the service-worker shelf was not bumped for the new boot path');   /* v5: HX1 /config.js · v6: FX-F10W2 /app/their-bill.js · v7: F5 W1a rate menu · v8: 1128 /app/till-dayrep.js */
 });
 
 it('⭐ the move is also asked from load(), once the shop is known from the store itself — a reload mid-move finishes it without a line', () => {
@@ -501,9 +501,9 @@ it('⭐ the move is also asked from load(), once the shop is known from the stor
 
 console.log('\nH20/T1 · THE OWNER SIGNED IN ON HOME OPENS THE COUNTER SIGNED IN — through the one door, no second pairing path\n');
 
-it('⭐⭐ pickHost spends the apps\' session (cb_sess) through becomeShop({ token }) — once per sign-in, never when a key or the same shop\'s session is held', () => {
-  const ph = body(PAGE, 'async function pickHost(').text, ho = body(PAGE, 'function appSessionHandoff(').text;
-  assert.ok(/if \(!CloudHost\.key\) \{\s*var ho = appSessionHandoff\(CloudHost\.person\);[\s\S]{0,400}becomeShop\(ho\)/.test(ph), 'pickHost does not hand the app session to the door');
+it('⭐⭐ pickHost spends the apps\' session (cb_sess) through becomeShop({ token }) — once per sign-in, never when a FIXED counter, or the same shop\'s session or key, is held', () => {
+  const ph = body(PAGE, 'async function spendAppSession(').text, ho = body(PAGE, 'function appSessionHandoff(').text + body(PAGE, 'function appSessionRead(').text;
+  assert.ok(/if \(!CloudHost\.key \|\| !tillFixed\(\)\) \{[^\n]*\n\s*var ho = appSessionHandoff\(CloudHost\.person, keyShopHeld\(\)\);[\s\S]{0,400}becomeShop\(ho\)/.test(ph), 'pickHost does not hand the app session to the door');
   assert.ok(!/enrol|till\/key|ls\.set\('cb_till_person'/.test(ho), 'the hand-over mints a key or writes the session beside the door');
   assert.ok(/cb_sess/.test(ho) && /exp\) \* 1000 < Date\.now\(\)/.test(ho) && /String\(have\.entity_id\) === String\(ent\)\) return null/.test(ho) && /cb_till_handoff/.test(ho), 'expired / same-shop / already-spent guards are missing');
   assert.ok(/token: sess\.token,\s*idn:[\s\S]{0,400}who:/.test(ho), 'the hand-over does not name the person (the cashier must be adopted)');

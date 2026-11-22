@@ -145,8 +145,8 @@ it('⭐ English IS the key, so a missing translation stays readable', () => {
    * it. A key-based layer degrades to "till.save_print" on screen, which is worse than the English it replaced.
    */
   /* tx() moved to the shared shell with CB Accounts (web PR #7, 2026-10-02) so app.html and accounts.html use ONE copy —
-     read it wherever it is declared, app.html first */
-  const app = ['app.html', 'app/accounts-shell.js']
+     read it wherever it is declared, app.html first; since the customer app was delinked (web d430bd65) the shared copy is app/cb-words.js */
+  const app = ['app.html', 'app/accounts-shell.js', 'app/cb-words.js']
     .map((f) => { try { return fs.readFileSync(path.join(WEB, f), 'utf8'); } catch (_) { return ''; } })
     .find((t) => t.indexOf('function tx(') >= 0) || '';
   const fn = app.indexOf('function tx(') >= 0 ? app.slice(app.indexOf('function tx('), app.indexOf('function tx(') + 400) : '';

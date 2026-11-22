@@ -278,6 +278,11 @@
     }
    },
    {
+    "via": "query",
+    "sql": "SELECT installation_key, ctp_endpoint, region, active, hosted_locally, domain, label FROM installation",
+    "params": null
+   },
+   {
     "via": "withEntity:SHOP",
     "sql": "SELECT current_status FROM chit_status WHERE chit_id = $1 AND entity_id = $2 AND direction = 'received'",
     "params": [
@@ -1287,6 +1292,13 @@
     "params": [
      "24B"
     ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace, jsonb_build_object('particulars', li.value->>'particulars', 'quantity', li.value->'quantity', 'unit', li.value->>'unit') AS line FROM chit_header h JOIN chit_detail d ON d.entity_id = h.entity_id AND d.chit_id = h.chit_id CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(d.line_items) = 'array' THEN d.line_items ELSE '[]'::jsonb END) AS li(value) WHERE lower(CASE WHEN jsonb_typeof(li.value->'item_data'->'lot') = 'object' THEN COALESCE(li.value->'item_data'->'lot'->>'batch', li.value->'item_data'->'lot'->>'serial') WHEN jsonb_typeof(li.value->'item_data'->'lot') = 'string' THEN li.value->'item_data'->>'lot' ELSE li.value->'item_data'->>'batch' END) = lower($1)",
+    "params": [
+     "24B"
+    ]
    }
   ]
  },
@@ -1376,6 +1388,13 @@
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace FROM chit_header h JOIN chit_line l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id WHERE h.summary_json->'trace' IS NOT NULL AND l.removed = false AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))",
+    "params": [
+     "rice"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace, jsonb_build_object('particulars', li.value->>'particulars', 'quantity', li.value->'quantity', 'unit', li.value->>'unit') AS line FROM chit_header h JOIN chit_detail d ON d.entity_id = h.entity_id AND d.chit_id = h.chit_id CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(d.line_items) = 'array' THEN d.line_items ELSE '[]'::jsonb END) AS li(value) WHERE lower(CASE WHEN jsonb_typeof(li.value->'item_data'->'lot') = 'object' THEN COALESCE(li.value->'item_data'->'lot'->>'batch', li.value->'item_data'->'lot'->>'serial') WHEN jsonb_typeof(li.value->'item_data'->'lot') = 'string' THEN li.value->'item_data'->>'lot' ELSE li.value->'item_data'->>'batch' END) = lower($1)",
     "params": [
      "rice"
     ]
@@ -1475,6 +1494,13 @@
    {
     "via": "withEntity:SHOP",
     "sql": "SELECT DISTINCT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace FROM chit_header h JOIN chit_line l ON l.entity_id = h.entity_id AND l.chit_id = h.chit_id WHERE h.summary_json->'trace' IS NOT NULL AND l.removed = false AND (lower(l.flags->'lot'->>'batch') = lower($1) OR lower(l.flags->'lot'->>'serial') = lower($1))",
+    "params": [
+     "rice"
+    ]
+   },
+   {
+    "via": "withEntity:SHOP",
+    "sql": "SELECT h.chit_id, h.sender_entity_id, h.sender_entity_display_name, h.all_recipients, h.summary_json->'trace' AS trace, jsonb_build_object('particulars', li.value->>'particulars', 'quantity', li.value->'quantity', 'unit', li.value->>'unit') AS line FROM chit_header h JOIN chit_detail d ON d.entity_id = h.entity_id AND d.chit_id = h.chit_id CROSS JOIN LATERAL jsonb_array_elements(CASE WHEN jsonb_typeof(d.line_items) = 'array' THEN d.line_items ELSE '[]'::jsonb END) AS li(value) WHERE lower(CASE WHEN jsonb_typeof(li.value->'item_data'->'lot') = 'object' THEN COALESCE(li.value->'item_data'->'lot'->>'batch', li.value->'item_data'->'lot'->>'serial') WHEN jsonb_typeof(li.value->'item_data'->'lot') = 'string' THEN li.value->'item_data'->>'lot' ELSE li.value->'item_data'->>'batch' END) = lower($1)",
     "params": [
      "rice"
     ]

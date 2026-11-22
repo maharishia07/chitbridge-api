@@ -133,6 +133,14 @@
     "pass": true
    }
   },
+  "POST /api/entities/me/preview-token": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": true
+   }
+  },
   "PATCH /api/entities/profile": {
    "strict_input": {
     "pass": true
@@ -4129,8 +4137,7 @@
   },
   "GET /api/books/dues": {
    "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
+    "pass": true
    }
   },
   "GET /api/books/party/:id/bills": {

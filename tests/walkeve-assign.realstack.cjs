@@ -130,7 +130,7 @@ const undo = async (token, previous, order) => {
   const readOwn = await lookAt(Ar.token, C[8]);
   ok('W18 the assigned Bookkeeper reads the client books under the practice adviser grant: past the gates (not 401/403)', open(readOwn), JSON.stringify(readOwn).slice(0, 300));
   const readOther = await lookAt(Ar.token, C[10]);
-  ok('W18 an unassigned client is refused to him (403, nothing opened)', readOther.status === 403, JSON.stringify(readOther).slice(0, 300));
+  ok('W18 an unassigned client is OPEN to him, to pick up (STAFFPICK, Athi 21 Nov: mine + unassigned; not 401/403 on the assignment gate)', open(readOther), JSON.stringify(readOther).slice(0, 300));
   const readAuditorSeat = await lookAt(Au.token, C[9]);
   ok('W18 the same assignment under the Auditor preset (commenter) does NOT reach the adviser grant: 403 (the cause of the walk: the seat, not the assignment)', readAuditorSeat.status === 403, JSON.stringify(readAuditorSeat).slice(0, 300));
   const handed = await bulk(M.token, [id[8]], B2.id);

@@ -32,6 +32,8 @@
  "DELETE /api/chits/:chit_id/payment": [
   401,
   404,
+  409,
+  422,
   500
  ],
  "DELETE /api/chits/:chit_id/purge": [
@@ -372,7 +374,7 @@
   400,
   401,
   403,
-  404,
+  422,
   500
  ],
  "GET /api/books/events": [
@@ -1449,6 +1451,7 @@
  "GET /api/tax/gstr": [
   400,
   401,
+  403,
   422,
   500
  ],
@@ -1892,6 +1895,7 @@
  "POST /api/actors/set-pin": [
   400,
   401,
+  409,
   500
  ],
  "POST /api/actors/suggest-key": [
@@ -2992,6 +2996,10 @@
   500,
   503
  ],
+ "POST /api/entities/me/preview-token": [
+  401,
+  500
+ ],
  "POST /api/entities/populations": [
   400,
   401,
@@ -3758,6 +3766,7 @@
  "POST /api/signin/pin": [
   400,
   401,
+  409,
   500
  ],
  "POST /api/signin/renew": [

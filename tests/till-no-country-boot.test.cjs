@@ -13,7 +13,7 @@ function grab(n) {
   for (; i < h.length; i++) { if (h[i] === '{') d++; else if (h[i] === '}' && --d === 0) break; }
   return h.slice(at, i + 1);
 }
-const FNS = ['billMoney', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop', 'billWhen', 'billStopMoney', 'noDayMoney', 'dayInZone', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry', 'bandWordsOf'];
+const FNS = ['billMoney', 'stateOfTaxId', 'moneyOf', 'noCountryMoney', 'walkInNote', 'moneyStop', 'billWhen', 'billStopMoney', 'noDayMoney', 'dayInZone', 'shopDayOf', 'tzOpt', 'shopTz', 'shopOwnTz', 'shopPack', 'docCountry', 'bandWordsOf', 'packKinds', 'lineKindOf'];
 function page(shop) {
   const ctx = {
     window: { CBTax: require('../lib/tax'), CBRegulation: require('../lib/regulation') },

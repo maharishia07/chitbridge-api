@@ -293,7 +293,7 @@ asyncCheck.push(async () => {
   check('H-mx-002 a manager seat is not staff: hand-over of held work is not gated', assignBulk.staffMayTry(mgr, body) === false);
   check('H-mx-002 a non-manager seat is still staff', assignBulk.staffMayTry(act, body) === true);
   let code = null;
-  await assignBulk.staffGateIn(heldBy([{ x: 1 }]), act, 'P', body, ['c1']).catch((e) => { code = e.code; });
+  await assignBulk.staffGateIn(heldBy([{ assigned_to_actor_id: 'OTHER' }]), act, 'P', body, ['c1']).catch((e) => { code = e.code; });
   check('H-mx-002 staff meeting a row held by someone else is refused ASSIGN_HELD_BY_OTHER', code === 'ASSIGN_HELD_BY_OTHER');
 });
 asyncCheck.push(async () => {

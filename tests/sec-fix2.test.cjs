@@ -35,14 +35,15 @@ const CUST = 'cccccccc-0000-4000-8000-00000000000c'; // a storefront customer of
 const ITEM = '17e17e17-0000-4000-8000-000000000017';   // S's item, its picture under S's prefix
 const EVIL = '17e17e17-0000-4000-8000-000000000018';   // S's item that NAMES a key under R's prefix (the C4 scenario)
 const R_ITEM = '17e17e17-0000-4000-8000-000000000019'; // R's public item (in the network store)
+const M1 = '11111111-1111-4111-8111-111111111111', M9 = '99999999-9999-4999-8999-999999999999'; /* S12: a media id is a UUID */
 const KEY_S = S + '/2026/10/m1', KEY_R = R + '/2026/10/m9';
 const ACTORS = {
   'a-vw': { parent: S, access_level: 'viewer', whole_entity: false, hat: 'view_only' },
   'a-ed': { parent: S, access_level: 'editor', whole_entity: false, hat: 'act' },
 };
 const STORED = {
-  [ITEM]: { name: 'Rice 25kg', price: 1200, media: [{ id: 'm1', key: KEY_S, kind: 'image', mime: 'image/png' }], image: 'http://api/api/products/media/' + ITEM + '/m1' },
-  [EVIL]: { name: 'Mirror', price: 10, media: [{ id: 'm9', key: KEY_R, kind: 'image', mime: 'image/png' }] },
+  [ITEM]: { name: 'Rice 25kg', price: 1200, media: [{ id: M1, key: KEY_S, kind: 'image', mime: 'image/png' }], image: 'http://api/api/products/media/' + ITEM + '/' + M1 },
+  [EVIL]: { name: 'Mirror', price: 10, media: [{ id: M9, key: KEY_R, kind: 'image', mime: 'image/png' }] },
 };
 const SQL = [];
 function rowsFor(sql, p) {
@@ -158,15 +159,15 @@ const sawSql = (re) => SQL.some((x) => re.test(x.s));
   t('storage-object.get without an owner is refused (the owner is not optional)', threw && threw.code === 'NOT_OWNER', threw ? threw.message : 'no error');
 
   SQL.length = 0;
-  r = await call('GET', '/api/products/media/' + EVIL + '/m9', null);
+  r = await call('GET', '/api/products/media/' + EVIL + '/' + M9, null);
   t('public GET /products/media on an item naming another shop\'s key → 404, bytes never read', r.status === 404 && !sawSql(/SELECT bytes/), show(r));
-  r = await call('GET', '/api/products/media/' + ITEM + '/m1', null);
+  r = await call('GET', '/api/products/media/' + ITEM + '/' + M1, null);
   t('public GET /products/media on the shop\'s own key → 200 with the bytes', r.status === 200 && r.raw.toString() === 'png-bytes', show(r));
   SQL.length = 0;
-  r = await call('DELETE', '/api/products/' + EVIL + '/media/m9', owner);
+  r = await call('DELETE', '/api/products/' + EVIL + '/media/' + M9, owner);
   t('DELETE /products/:id/media/:mid on another shop\'s key → the item entry goes, the OBJECT is never deleted', r.status === 200 && !sawSql(/DELETE FROM media_blobs/), show(r));
   SQL.length = 0;
-  r = await call('DELETE', '/api/products/' + ITEM + '/media/m1', owner);
+  r = await call('DELETE', '/api/products/' + ITEM + '/media/' + M1, owner);
   t('DELETE on the shop\'s own key deletes the object', r.status === 200 && sawSql(/DELETE FROM media_blobs/), show(r));
 
   console.log('\n— C6 · the network store reads the edges, the order needs a flag and a customer —');

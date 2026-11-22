@@ -51,12 +51,14 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
 
   /* ── OFF: every door is a 404 ── */
   const ROUTES = [['GET', '/health'], ['GET', '/accounts'], ['POST', '/accounts'], ['GET', '/daybook'], ['GET', '/ledger/1300'], ['GET', '/party/' + CUST + '/statement'],
-    ['GET', '/dues'], ['GET', '/trial-balance'], ['GET', '/pl'], ['GET', '/bs'], ['POST', '/payments'], ['POST', '/payments/' + CUST + '/propose'], ['POST', '/payments/' + CUST + '/confirm'],
+    ['GET', '/trial-balance'], ['GET', '/pl'], ['GET', '/bs'], ['POST', '/payments'], ['POST', '/payments/' + CUST + '/propose'], ['POST', '/payments/' + CUST + '/confirm'],
     ['POST', '/cheques/' + CUST + '/status'], ['GET', '/cheques'], ['POST', '/entries'], ['POST', '/entries/' + CUST + '/reverse'], ['POST', '/write-off'], ['POST', '/opening'],
     ['POST', '/periods/2026-27/6/lock'], ['POST', '/periods/2026-27/6/unlock'], ['GET', '/periods'], ['GET', '/packs'], ['POST', '/packs'], ['GET', '/packs/' + CUST],
     ['GET', '/packs/' + CUST + '/file'], ['POST', '/packs/' + CUST + '/ack'], ['POST', '/setting'], ['POST', '/check'], ['POST', '/outbox/retry'], ['POST', '/parties/' + CUST + '/dispute']];
   const offs = [];
   for (const [m, p] of ROUTES) { const r = await q(m, p, {}); if (r.status !== 404) offs.push(m + ' ' + p + ' → ' + r.status); }
+  const dueOff = await q('GET', '/dues'); /* WALK S S-F-07: a read with nothing yet answers empty, 200 (empty is not missing) — the one off read that does */
+  ok('books OFF: GET /dues is 200 and empty, not a 404', dueOff.status === 200 && dueOff.body && Array.isArray(dueOff.body.parties) && dueOff.body.parties.length === 0, JSON.stringify(dueOff));
   ok('books OFF: all ' + ROUTES.length + ' routes answer 404 (the web\'s Ledger door stays shut)', offs.length === 0, offs.join(' · '));
   const st = await q('GET', '/status');
   /* MOVED 2026-09-30 (critic M1): this asserted `migrated === false` for a shop with NO ROW — the very confusion that made the
@@ -266,7 +268,7 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const fdb = { query: async (text, params) => {
     const t = text.replace(/\s+/g, ' ');
     if (/^SAVEPOINT|^RELEASE|^ROLLBACK/.test(t)) return { rows: [] };
-    if (/FROM customer_list WHERE customer_list_id/.test(t)) return { rows: [{ customer_list_id: params[0], customer_identity_id: CUST, legal_name: null, nickname: null, credit_days: null }] };
+    if (/FROM customer_list WHERE customer_list_id/.test(t)) return { rows: [{ customer_list_id: params[0], customer_identity_id: CUST, legal_name: null, nickname: null, credit_days: null, state_code: null }] };
     if (/SELECT scheme, value FROM party_tax_id/.test(t)) return { rows: [] };
     if (/JOIN identities i ON i.identity_id = t.party_id/.test(t)) return { rows: [{ party_id: SUPP, display_name: 'Kumar Traders' }] };
     return { rows: [] };

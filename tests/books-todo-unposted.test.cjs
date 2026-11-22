@@ -144,7 +144,7 @@ const quiet = () => { const L = require(path.join(H.API, 'lib', 'logger')); cons
     while ((m = re.exec(src))) starts.push({ kind: m[1], at: m.index });
     starts.forEach((c, i) => { calls[c.kind] = src.slice(c.at, i + 1 < starts.length ? starts[i + 1].at : src.length); });
     const BT = require(path.join(H.API, 'lib', 'books-todo'));
-    const withButton = (text) => /\{\s*label:\s*'[^']+',\s*screen:\s*'[^']+',\s*call:\s*'[^']+'/.test(text || '');
+    /* red1128: a label may be a literal plus one name (return_overdue: 'Open ' + first.form) */ const withButton = (text) => /\{\s*label:\s*'[^']+'(?:\s*\+\s*[\w.]+)?,\s*screen:\s*'[^']+',\s*call:\s*'[^']+'/.test(text || '');
     const listed = BT.KINDS.filter((k) => k !== KIND);
     ok('every listed KIND but ' + KIND + ' has an add-call in the file (a kind built another way is not guarded: this goes red)', listed.every((k) => calls[k]), JSON.stringify(listed.filter((k) => !calls[k])));
     const lost = Object.keys(calls).filter((k) => k !== KIND && !withButton(calls[k]));

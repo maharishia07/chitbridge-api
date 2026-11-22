@@ -75,6 +75,9 @@ function generalise(values, path, optional) {
     const all = [].concat.apply([], real.filter(Array.isArray));
     if (!all.length) return [];
     if (all.every((x) => x && typeof x === 'object' && !Array.isArray(x))) return [mergeElements(all, path + '[]', optional)];
+    /* a list that holds BOTH plain values and objects (the expense form: a pick's options are words, a choice's are { v, l }) is stood for by one of each, since the matcher lets an element be any one of them */
+    const objsIn = all.filter((x) => x && typeof x === 'object' && !Array.isArray(x)), plain = all.find((x) => x !== null && x !== undefined && !(typeof x === 'object' && !Array.isArray(x)));
+    if (objsIn.length && plain !== undefined) return [plain, mergeElements(objsIn, path + '[]', optional)];
     return [all.find((x) => x !== null && x !== undefined) === undefined ? null : all.find((x) => x !== null && x !== undefined)];
   }
   if (first && typeof first === 'object') {

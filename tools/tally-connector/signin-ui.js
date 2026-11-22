@@ -82,12 +82,15 @@
     pin1: 'Your new PIN',
     pin2: 'Type it again',
     save: 'Save PIN',
+    customerOnly: 'This sign-in is for the staff of a shop. Customers sign in on the shop page itself.',
     signedIn: function (name) {
       return name + ' is signed in.';
     },
     sent: 'Code sent.',
     noAccount: 'No account found. Check the number or e-mail.',
     tooMany: 'Too many tries. Wait 15 minutes.',
+    pinSet: 'You already have a PIN. Sign in with it, and change it in Settings with your current PIN.',
+    expired: 'Your sign-in timed out. Sign in again.',
     working: 'Working…',
     register: 'New shop? Register',
     pinName: 'Your PIN',
@@ -225,6 +228,14 @@
     if (role === 'actor') s.duty = 'duty';
     return s;
   }
+  /** the verify answer carries no staff session: a failed status, no token, or a customer's token on the apps */
+  function verifyRefused(reply, answer, c) {
+    return reply.status < 200 || reply.status >= 300 || !answer.token || isCustomerOnApps(answer, c);
+  }
+  /** CUSTOMER-DELINK: a customer's token is never kept as the apps' session — only the shop page's own sign-in (need 'customer') may hold it */
+  function isCustomerOnApps(answer, c) {
+    return !!answer.token && sessionOf(answer).role === 'customer' && c.need !== 'customer';
+  }
   /** why a person is at the sign-in window: the page's own reason, else the one the frame kept when their access ended (BOOKS_GRANT_ENDED, ACCOUNT_SWITCHED_OFF: the server's sentence, read once) */
   function endedWhy(c) {
     return c.why ? String(c.why) : root.CBFrame && root.CBFrame.endedNote ? root.CBFrame.endedNote() : '';
@@ -253,6 +264,17 @@
     } catch (_) { /* best effort: failing here changes nothing the user sees */ }
   }
 
+  /** the sentence for a refused call: the page's words for the known codes, else the server's own sentence, else the shared refusal wording */
+  function refusalWords(words, failed) {
+    var said = failed.body || {}, code = said.code;
+    if (code === 'NO_ACCOUNT') return words.noAccount;
+    if (failed.status === 429) return words.tooMany;
+    if (code === 'PIN_ALREADY_SET') return words.pinSet; /* 409: a first-PIN write on a person who has one — the change-PIN door (PUT /api/actors/change-pin, current PIN) is the way */
+    if (code === 'SESSION_EXPIRED') return words.expired;
+    /* a NAMED refusal (DEVICE_REVOKED, AMBIGUOUS_NAME, …) already carries the sentence the server chose — say that, not "wrong code" */
+    if (code && said.message) return String(said.message);
+    return E.refusal({ status: failed.status, message: said.message || said.error });
+  }
   /* ── the state machine ──────────────────────────────────────────────────────────────────────────────────────────── */
   function machine(c, io) {
     c = c || {};
@@ -320,15 +342,6 @@
       emit();
       return S;
     }
-    function refusalOf(r) {
-      var b = r.body || {},
-        code = b.code;
-      if (code === 'NO_ACCOUNT') return W.noAccount;
-      if (r.status === 429) return W.tooMany;
-      /* a NAMED refusal (DEVICE_REVOKED, AMBIGUOUS_NAME, …) already carries the sentence the server chose — say that, not "wrong code" */
-      if (code && b.message) return String(b.message);
-      return E.refusal({ status: r.status, message: b.message || b.error });
-    }
     /* the secret typed before a choice of account, kept in this closure only until the person picks (never in S, never painted) */
     var held = null;
 
@@ -343,7 +356,7 @@
       S.asks++;
       return post('/api/signin/ask', a.body).then(function (reply) {
         var b = reply.body || {};
-        if (reply.status < 200 || reply.status >= 300) return set({ busy: false, why: refusalOf(reply) });
+        if (reply.status < 200 || reply.status >= 300) return set({ busy: false, why: refusalWords(W, reply) });
         var resolved = String(typedId);
         return set({
           busy: false,
@@ -437,18 +450,18 @@
       set({ busy: true, why: '' });
       S.verifies++;
       return post('/api/signin/verify', body).then(function (reply) {
-        var b = reply.body || {};
-        if (reply.status === 409 && b.code === 'CHOOSE_IDENTITY' && Array.isArray(b.choices) && b.choices.length) {
+        var answer = reply.body || {};
+        if (reply.status === 409 && answer.code === 'CHOOSE_IDENTITY' && Array.isArray(answer.choices) && answer.choices.length) {
           held = code;
-          return set({ busy: false, at: 'choose', choices: b.choices, said: '' });
+          return set({ busy: false, at: 'choose', choices: answer.choices, said: '' });
         }
         held = null;
-        if (reply.status < 200 || reply.status >= 300 || !b.token) return set({ busy: false, why: refusalOf(reply) });
-        var s = sessionOf(b);
+        if (verifyRefused(reply, answer, c)) return set({ busy: false, why: isCustomerOnApps(answer, c) ? W.customerOnly : refusalWords(W, reply) });
+        var s = sessionOf(answer);
         S.sent = null; /* ⚠️ the code is spent: nothing here asks for it again */
-        S.answer = b; /* the verify body as it came — handed to onIn beside the session */
-        if (b.requires_pin_setup === true) return set({ busy: false, at: 'setpin', localPin: false, token: b.token, session: s, said: W.setWhy });
-        return signedIn(s, b);
+        S.answer = answer; /* the verify body as it came — handed to onIn beside the session */
+        if (answer.requires_pin_setup === true) return set({ busy: false, at: 'setpin', localPin: false, token: answer.token, session: s, said: W.setWhy });
+        return signedIn(s, answer);
       });
     }
     function setPin(a, b) {
@@ -475,7 +488,9 @@
           );
       }
       return post('/api/signin/pin', { pin: p.value, confirm_pin: p.value }, S.token).then(function (reply) {
-        if (reply.status < 200 || reply.status >= 300) return set({ busy: false, why: refusalOf(reply) });
+        var said = reply.body && reply.body.code;
+        if (said === 'PIN_ALREADY_SET' || said === 'SESSION_EXPIRED') return set({ busy: false, at: 'credential', token: null, session: null, why: refusalWords(W, reply) }); /* the set-PIN step is over: back to the box, in words */
+        if (reply.status < 200 || reply.status >= 300) return set({ busy: false, why: refusalWords(W, reply) });
         return signedIn(S.session, S.answer || null);
       });
     }

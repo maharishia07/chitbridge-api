@@ -84,7 +84,7 @@ const listed = async (token, client) => (((await call(token, 'GET', '/api/books-
   const pool = await call(M.token, 'POST', '/api/chits/assign-bulk', { plug: 'client', role: 'adviser', subject_ids: [C1.id], target_actor_id: null });
   const after = await books(A.token, C1), aThread = await thread(A.token, job);
   ok('3 setup: before the hand-off A reads the client\'s books (not 403) and the pool hand-off is 200', before !== 403 && pool.status === 200, before + ' ' + pool.status);
-  ok('3 R3d the books close at once: 403 BOOKS_GRANT_NOT_ASSIGNED', after.status === 403 && after.body && after.body.code === 'BOOKS_GRANT_NOT_ASSIGNED', JSON.stringify(after));
+  ok('3 R3d the pool: the books are no longer held by A, but an unassigned client is open to a staff seat to pick up (STAFFPICK, Athi 21 Nov): not BOOKS_GRANT_NOT_ASSIGNED', !(after.body && after.body.code === 'BOOKS_GRANT_NOT_ASSIGNED') && after.status !== 401, JSON.stringify(after));
   ok('3 R3e the job thread closes at once: 404', aThread.status === 404, JSON.stringify(aThread));
   ok('3 M and the owner still read the thread', (await thread(M.token, job)).status === 200 && (await thread(P.token, job)).status === 200);
 

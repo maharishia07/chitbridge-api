@@ -3,7 +3,7 @@
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8');
 const grab = n => new RegExp('function ' + n + '\\([\\s\\S]*?\\n}\\n').exec(h)[0];
-const ctx = { Date, window: {}, Intl, isNaN, shopTz: () => 'Asia/Kolkata', shopPack: () => null, cbQuiet() {} };
+const ctx = { Date, window: {}, Intl, isNaN, shopTz: () => 'Asia/Kolkata', shopPack: () => null, cbQuiet() {}, docCountry: () => 'IN' /* shopFmt (the till's one date formatter, taken with tzOpt) reads the shop's country */ };
 vm.createContext(ctx);
 vm.runInContext(['tzOpt', 'shopDayOf', 'dayInZone', 'hhmm', 'sinceWord'].map(grab).join('\n'), ctx);
 const now = Date.now();

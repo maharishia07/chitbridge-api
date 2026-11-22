@@ -181,6 +181,7 @@ const NOT_MONEY = [
   ['catalogue-columns.js', 'best = { canonical: k, score:', 'a header-match SCORE'],
   ['csv-preflight.js', 'confidence: Math.round(best.score', 'a header-match SCORE'],
   ['till.html', 'n.items', 'a COUNT of items on a summary'],
+  ['till.html', 'count.items', 'a COUNT of items on the slip (the same count, in slipCountRowsHTML)'],
   ['till.html', 'left / Math.max(1, w - left)', 'a layout RATIO'],
   /* the ADOPTED gst-returns engine (v1.20.0, written only by adopt.cjs): s.50 interest calls money.round first; the Math.round is its own fallback for a host with no money engine, which the API always has. Fix upstream, not here. */
   ['gst-returns.js', 'M && M.round ? M.round(raw) : Math.round(raw * 100) / 100', 'the released engine fallback when money.round is absent'],

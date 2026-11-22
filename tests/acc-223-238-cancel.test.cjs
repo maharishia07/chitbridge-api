@@ -287,6 +287,7 @@ const COUNTRY = {
     use(bill('l1', 'cancelled'), sellEntry);
     const a = await K.takeBackCancelled(shop, 'l1', 'u1');
     eq(cc + ' T7 · bill of 15 Oct, Oct locked, Nov open → reversal on 1 Nov, moved, the original stays in Oct', [a.ok, String(a.posting_date), a.moved, String(e7a.posting_date).slice(0, 10)], [true, '2026-11-01', true, DAY]);
+    CLOCK.set('2027-07-02T06:00:00Z'); /* red1128: locking Nov needs Nov to have ended (K-F-01 refuses the running month), so the later day is set BEFORE the lock, not after */
     await lock(C.novPeriod, 'locked');
     /* c7ce4d432 (H-h2-003): an owner's reversal never lands ahead of the shop's day, so the next two cases stand on a day after the dates they expect (the shop's real day is before 1 Dec) */
     CLOCK.set('2027-07-02T06:00:00Z');
@@ -370,7 +371,7 @@ const COUNTRY = {
         const got = [];
         for (const to of ['accepted', 'pending', 'in_progress', 'completed']) { const r = await ask(id, to); got.push([r.code, r.body.code, r.moved === true]); }
         const words = (await ask(id, 'accepted')).body.message;
-        eq(cc + ' RAIL-173 (' + how + ' after post) · accepted, pending, in progress, completed: each 409 taken_back, nothing moved', got, ['accepted', 'pending', 'in_progress', 'completed'].map(() => [409, 'taken_back', false]));
+        eq(cc + ' RAIL-173 (' + how + ' after post) · accepted, pending, in progress: each 409 taken_back; completed: 400, the rail table never lets a cancelled or rejected bill go straight to completed (M8, engines v1.106.0, red1128); nothing moved', got, ['accepted', 'pending', 'in_progress', 'completed'].map((to) => (to === 'completed' ? [400, null, false] : [409, 'taken_back', false])));
         eq(cc + ' RAIL-173 (' + how + ') · status stays ' + how + '; books unchanged: 1 purchase, 1 reversal, every account 0', [stat(id), entriesOf(shop, id).length, reversalsOf(shop, purchase).length, JSON.stringify(netByRole(shop)) === netThen, chitNet(purchase)], [how, 1, 1, true, 'every account 0']);
         ok(cc + ' RAIL-173 (' + how + ') · the words tell the sender to send it again as a new bill', /^This bill was .* after it was booked/.test(words) && /send it again as a new bill/.test(words), words);
       }

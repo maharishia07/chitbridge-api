@@ -209,7 +209,7 @@ function slabMenuRow_(rawSlab, allowedRates) {
   if (!slab || slab.rate == null) return null;
   var rate = Number(slab.rate);
   if (allowedRates && allowedRates.indexOf(rate) < 0) return null;
-  return { id: slab.id, name: slab.name || '', rate: rate, nil_kind: slab.nil_kind || null, suggested: false };
+  return { id: slab.id, name: slab.name || '', rate: rate, nil_kind: slab.nil_kind || null, tax_kind: slab.tax_kind || null, suggested: false };
 }
 /** the live slabs that CAN be cited today, by rate: when the pack dates its menu (menuAsOf), a dead 12% is never offered */
 function slabMenuRows_(slabs, taxPack) {
@@ -312,4 +312,81 @@ function cbSlabMenuHTML(menu, opts) {
   if (!menu.rows.length)
     return '<div class="sub" data-testid="rate-none">' + esc(slabT_('No {t} slab yet — Catalogue setup › Tax', { t: menu.scheme || slabT_('tax') })) + '</div>';
   return '<div class="slab-menu" data-testid="rate-menu">' + menu.rows.map((row) => slabMenuButton_(row, menu, opts)).join('') + '</div>';
+}
+
+/** the pack's table of supply kinds, or null when its tax section names none */
+function supplyKindTable(pack) {
+  var taxPack = slabTaxPack_(pack);
+  return taxPack && taxPack.supplyKinds && typeof taxPack.supplyKinds === 'object' ? taxPack.supplyKinds : null;
+}
+/** the pack's own question row for a 0% rate (returns first, then its tax section), or null */
+function unknownKindRow(pack) {
+  var taxPack = slabTaxPack_(pack);
+  return (pack && pack.returns && pack.returns.unknownKind) || (taxPack && taxPack.unknownKind) || null;
+}
+/** the pack's supply kinds that sit at rate 0, each as { id, name, short, why } */
+function zeroRateKinds(table) {
+  return Object.keys(table)
+    .map(function (id) {
+      return table[id];
+    })
+    .filter(function (kind) {
+      return kind && Number(kind.rate) === 0;
+    })
+    .map(function (kind) {
+      return { id: kind.id, name: kind.name || kind.id, short: kind.short || kind.name || kind.id, why: kind.why || '' };
+    });
+}
+/**
+ * ⭐ THE 0% QUESTION (supply kind, AE-F-11; Athi 21 Nov 2026: ask the owner, never a default). A rate of 0 is not an answer: is it zero-rated, exempt, nil-rated? The shop PACK says what the
+ * kinds are and how to ask (its own `supplyKinds` rows at rate 0 and its `unknownKind` question); nothing here knows a country or a kind word.
+ * cbKindAskOf(pack) → { ask, kinds: [{ id, name, short, why }] } or null when the pack names no 0% kind (then no question is asked: the old behaviour, unchanged).
+ * cbKindAskHTML(ask, { chosen, suggested, pick, cls, tid, sid }) → the question and ONE button per kind. No button is preselected and there is no "confirm all": each answer is its own tap.
+ * `pick(kindId)` returns the host's onclick (a string); `suggested` is a kind id read from the slab's OWN NAME by the server, shown as a hint on its button (still one tap, never saved by itself).
+ */
+function cbKindAskOf(pack) {
+  var table = supplyKindTable(pack);
+  if (!table) return null;
+  var row = unknownKindRow(pack);
+  var kinds = zeroRateKinds(table);
+  if (!kinds.length) return null;
+  return { ask: (row && row.ask) || slabT_('What kind of sale is this at 0%?'), kinds: kinds };
+}
+/** one kind's button: the tap that answers the 0% question (✓ when it is the chosen one; a hint when the slab's own name suggested it) */
+function cbKindButtonHTML(kind, opts, chosen, screenId) {
+  var on = chosen === kind.id;
+  var hint = opts.suggested === kind.id && !on ? ' <span class="sub" data-testid="kind-suggested">' + esc(slabT_('from the name')) + '</span>' : '';
+  return (
+    '<button type="button" class="' + esc((opts.cls || 'act quiet') + (on ? ' on' : '')) + '" data-testid="kind-pick-' + esc(kind.id) + '" aria-pressed="' + (on ? 'true' : 'false') + '" title="' + esc(kind.why) + '" data-cbsid="' + screenId + '"' +
+    ' onclick="' + esc(opts.pick ? opts.pick(kind.id) : '') + '">' + (on ? '✓ ' : '') + esc(kind.short) + '</button>' + hint
+  );
+}
+/** cbKindAskHTML(question, opts) → the 0% question and one button per kind, the chosen one marked, its reason under it */
+function cbKindAskHTML(question, opts) {
+  opts = opts || {};
+  if (!question || !question.kinds || !question.kinds.length) return '';
+  var chosen = opts.chosen || '';
+  var screenId = esc(opts.sid || 'SCR046-B03');
+  var buttons = question.kinds
+    .map(function (kind) {
+      return cbKindButtonHTML(kind, opts, chosen, screenId);
+    })
+    .join(' ');
+  var picked = question.kinds.filter(function (kind) {
+    return kind.id === chosen;
+  })[0];
+  return (
+    '<div class="kind-ask" data-testid="' + esc(opts.tid || 'kind-ask') + '"><div class="sub">' + esc(question.ask) + '</div><div class="slab-menu">' + buttons + '</div>' +
+    (picked && picked.why ? '<div class="sub" data-testid="kind-why">' + esc(picked.why) + '</div>' : '<div class="sub" data-testid="kind-none">' + esc(slabT_('Until you answer, a sale at 0% is not filed under any of them.')) + '</div>') +
+    '</div>'
+  );
+}
+/** the words on a category's tax chip: the slab's name when it has no rate, else the pack's tax word and the rate ("GST 18%") */
+function cbcatTaxChipWords(t) {
+  if (t.rate === null || t.rate === undefined) return t.name || '?';
+  return ((typeof packWord === 'function' && packWord('taxName')) || 'Tax') + ' ' + t.rate + '%';
+}
+/** the pack's own question for a 0% rate (one button per kind), or null when the rate is not 0 or the page has no such question */
+function cbKindQuestionFor(rate) {
+  return Number(rate) === 0 && typeof cbKindAskOf === 'function' && typeof shopReg === 'function' ? cbKindAskOf(shopReg()) : null;
 }

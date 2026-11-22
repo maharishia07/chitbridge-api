@@ -89,6 +89,13 @@ router.get('/content', ...contract.checked('GET /content'), async (req, res) => 
   }
 });
 
+/** N5: the secret a tour token is signed with: its own, else one derived from JWT_SECRET, else the constant only in a test or local stack; throws when none (never signs with a guessable key elsewhere) */
+function simLeadSecret() {
+  const devOtp = require('../lib/dev-otp');
+  const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : (devOtp.isTestRun() || devOtp.isLocalStack()) ? 'sim-lead-dev-only' : '');
+  if (!SIM_SECRET) throw new Error('SIM_JWT_SECRET and JWT_SECRET are both unset: no tour token is signed');
+  return SIM_SECRET;
+}
 // POST /api/simulator/lead — the gate. { name, email, org? } → { token, leadId }.
 // @does A name, e-mail and optional organisation (public) -> we record the visitor as a lead and let them into the simulator -> a token and lead id.
 router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (req, res) => {
@@ -100,11 +107,11 @@ router.post('/lead', ...contract.checked('POST /lead', schemaOptions), async (re
     if (name.length < 2 || !email.includes('@')) {
       return problem(req, res, { status: 400, ...words.leadFieldsMissing() });
     }
+    const SIM_SECRET = simLeadSecret(); /* fail closed: a fault answer, no row written */
     const ins = await query('INSERT INTO sim_leads (name, email, org) VALUES ($1, $2, $3) RETURNING id', [name, email, org]);
     const leadId = ins.rows[0].id;
     // S1 (reviewer 2026-07-13) — a marketing tour lead is NOT a platform credential. NEVER sign it with the identity
     // secret (JWT_SECRET) or it becomes a valid platform token. Use a SEPARATE secret so auth.js can never verify it.
-    const SIM_SECRET = process.env.SIM_JWT_SECRET || (process.env.JWT_SECRET ? process.env.JWT_SECRET + '::sim-lead-v1' : 'sim-lead-dev-only');
     const token = jwt.sign({ kind: 'sim_lead', leadId, email }, SIM_SECRET, { expiresIn: process.env.JWT_TTL || '7d' });
     notify(`New tour lead: ${name}`, `<p><b>${esc(name)}</b> opened the tour.</p><p>Email: ${esc(email)}<br>Org: ${esc(org || '—')}</p>`);
     res.json({ token, leadId });

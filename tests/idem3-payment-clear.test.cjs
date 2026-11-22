@@ -35,9 +35,13 @@ const call = (port, p, key) => new Promise((done) => {
   const X = H.load({ auth: authStub });
   const rows = new Map();
   let clears = 0;
+  let trail = 0; /* RAIL-1128 M2: the state_log row the clear now writes */
   const realQuery = X.db.query;
   X.db.query = async (text, v) => {
     const sql = String(text);
+    /* RAIL-1128 M2: the pre-read of my copy (taxCopy.copyOn) and the trail row it writes: a live bill, a payment mark on it, no tender parts */
+    if (/SELECT h[.]chit_id, h[.]sender_entity_id/.test(sql) && /WHERE h[.]chit_id = [$]1 AND h[.]entity_id = [$]2/.test(sql)) return { rows: [{ chit_id: v[0], current_status: 'received', business_json: { payment: { method: 'cash' } } }] };
+    if (/INSERT INTO state_log/.test(sql)) { trail++; return { rows: [] }; }
     if (/UPDATE chit_header SET business_json/.test(sql)) { clears++; return { rows: [{ chit_id: v[0] }] }; }
     if (!/idempotency_key/.test(sql)) return realQuery(text, v);
     const slot = v[0] + '\n' + (/^\s*INSERT/.test(sql) ? v[1] : /idem_key = \$3/.test(sql) ? v[2] : v[1]);
@@ -59,9 +63,9 @@ const call = (port, p, key) => new Promise((done) => {
     const bare = await call(port, URL);
     ok('no key → 422 IDEMPOTENCY_KEY_REQUIRED, nothing cleared', bare.status === 422 && bare.body.code === 'IDEMPOTENCY_KEY_REQUIRED' && clears === 0, bare.status + ' clears ' + clears + ' ' + JSON.stringify(bare.body).slice(0, 200));
     const first = await call(port, URL, 'U1');
-    ok('key U1 → 200 "Payment cleared", cleared once', first.status === 200 && first.body.message === 'Payment cleared' && clears === 1, first.status + ' clears ' + clears);
+    ok('key U1 → 200 "Payment cleared", cleared once', first.status === 200 && first.body.message === 'Payment cleared' && clears === 1 && trail === 1, first.status + ' clears ' + clears + ' trail ' + trail);
     const again = await call(port, URL, 'U1');
-    ok('U1 again → the same status and body, a replay, still cleared once', again.status === first.status && JSON.stringify(again.body) === JSON.stringify(first.body) && again.headers['x-idempotent-replay'] === 'true' && clears === 1, 'clears ' + clears);
+    ok('U1 again → the same status and body, a replay, still cleared once', again.status === first.status && JSON.stringify(again.body) === JSON.stringify(first.body) && again.headers['x-idempotent-replay'] === 'true' && clears === 1 && trail === 1, 'clears ' + clears + ' trail ' + trail);
     const other = await call(port, '/api/chits/' + OTHER + '/payment', 'U1');
     ok('U1 on another chit → 422 IDEMPOTENCY_CONFLICT, still once', other.status === 422 && other.body.code === 'IDEMPOTENCY_CONFLICT' && clears === 1, other.status + ' ' + JSON.stringify(other.body).slice(0, 200));
   } finally { srv.close(); }

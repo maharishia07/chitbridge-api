@@ -2436,10 +2436,10 @@
     "trips": 8
    },
    "10": {
-    "trips": 10
+    "trips": 11
    },
    "100": {
-    "trips": 10
+    "trips": 11
    },
    "grows": false,
    "exercised": true
@@ -2449,10 +2449,10 @@
     "trips": 1
    },
    "10": {
-    "trips": 12
+    "trips": 13
    },
    "100": {
-    "trips": 12
+    "trips": 13
    },
    "grows": false,
    "exercised": false
@@ -2670,10 +2670,10 @@
     "trips": 9
    },
    "10": {
-    "trips": 11
+    "trips": 12
    },
    "100": {
-    "trips": 11
+    "trips": 12
    },
    "grows": false,
    "exercised": true
@@ -2683,10 +2683,10 @@
     "trips": 15
    },
    "10": {
-    "trips": 17
+    "trips": 18
    },
    "100": {
-    "trips": 17
+    "trips": 18
    },
    "grows": false,
    "exercised": true
@@ -2992,13 +2992,13 @@
   },
   "GET /api/products/lists": {
    "0": {
-    "trips": 4
+    "trips": 5
    },
    "10": {
-    "trips": 4
+    "trips": 5
    },
    "100": {
-    "trips": 4
+    "trips": 5
    },
    "grows": false,
    "exercised": true
@@ -3008,10 +3008,10 @@
     "trips": 3
    },
    "10": {
-    "trips": 3
+    "trips": 4
    },
    "100": {
-    "trips": 3
+    "trips": 4
    },
    "grows": false,
    "exercised": false

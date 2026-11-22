@@ -62,10 +62,10 @@ t('GST-free income merges to 4020 sales_gst_free and keeps their code; the sente
   assert.deepStrictEqual([r.data.code, r.data.source_code], ['4020', '205']);
   assert.ok(/BAS G3/.test(r.why) && /keeps Xero code 205/.test(r.why), r.why);
 });
-t('input-taxed income merges to 4030 sales_input_taxed (BAS label from the engine: G1)', () => {
+t('input-taxed income merges to 4030 sales_input_taxed (BAS label from the engine: G4)', () => {
   const r = at(plan([['206', 'Residential Rent Income', 'Revenue', 'Input Taxed']]), 2);
   assert.deepStrictEqual([r.action, r.data.code, r.data.source_code], ['merge', '4030', '206']);
-  assert.ok(/BAS G1/.test(r.why), r.why);
+  assert.ok(/BAS G4/.test(r.why), r.why); /* red1128: the engine reads the input-taxed label as G4 (law check 21 Nov, engines reg-au) */
 });
 t('a TAXABLE revenue account is never folded into Sales: it is added as its own ledger', () => {
   const r = at(plan([['210', 'Consulting', 'Revenue', 'GST on Income']]), 2);

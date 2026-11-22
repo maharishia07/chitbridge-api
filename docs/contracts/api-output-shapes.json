@@ -2500,6 +2500,9 @@
               "return_due_30": {
                 "type": "number"
               },
+              "return_overdue": {
+                "type": "number"
+              },
               "bas_due_30": {
                 "type": "number",
                 "deprecated": true,
@@ -4373,7 +4376,6 @@
         "type": "object",
         "required": [
           "events",
-          "picks",
           "pending",
           "golden"
         ],
@@ -4383,9 +4385,6 @@
             "items": {
               "type": "object"
             }
-          },
-          "picks": {
-            "type": "object"
           },
           "pending": {
             "type": "array",
@@ -4398,6 +4397,12 @@
           },
           "may": {
             "type": "object"
+          },
+          "picks": {
+            "type": [
+              "object",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -5318,6 +5323,7 @@
           "needs": {
             "type": "string"
           },
+          "needs_answer": {},
           "emirates": {},
           "staggers": {
             "type": "object"
@@ -10111,6 +10117,9 @@
                   },
                   "total": {
                     "type": "number"
+                  },
+                  "vat": {
+                    "type": "number"
                   }
                 },
                 "additionalProperties": false,
@@ -10121,7 +10130,15 @@
               },
               "note": {
                 "type": "string"
-              }
+              },
+              "setoff": {},
+              "unanswered": {
+                "type": "number"
+              },
+              "tax_differs": {},
+              "einvoice": {},
+              "table13": {},
+              "payment": {}
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -10213,6 +10230,35 @@
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
+              },
+              "isup_rev": {
+                "type": "object",
+                "required": [
+                  "txval",
+                  "iamt",
+                  "camt",
+                  "samt",
+                  "csamt"
+                ],
+                "properties": {
+                  "txval": {
+                    "type": "number"
+                  },
+                  "iamt": {
+                    "type": "number"
+                  },
+                  "camt": {
+                    "type": "number"
+                  },
+                  "samt": {
+                    "type": "number"
+                  },
+                  "csamt": {
+                    "type": "number"
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
               }
             },
             "additionalProperties": false,
@@ -10281,6 +10327,70 @@
                 },
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
+              },
+              "itc_rev": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ty",
+                    "iamt",
+                    "camt",
+                    "samt",
+                    "csamt"
+                  ],
+                  "properties": {
+                    "ty": {
+                      "type": "string"
+                    },
+                    "iamt": {
+                      "type": "number"
+                    },
+                    "camt": {
+                      "type": "number"
+                    },
+                    "samt": {
+                      "type": "number"
+                    },
+                    "csamt": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
+              },
+              "itc_inelg": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "ty",
+                    "iamt",
+                    "camt",
+                    "samt",
+                    "csamt"
+                  ],
+                  "properties": {
+                    "ty": {
+                      "type": "string"
+                    },
+                    "iamt": {
+                      "type": "number"
+                    },
+                    "camt": {
+                      "type": "number"
+                    },
+                    "samt": {
+                      "type": "number"
+                    },
+                    "csamt": {
+                      "type": "number"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "x-closed-by": "recordings"
+                }
               }
             },
             "additionalProperties": false,
@@ -16113,6 +16223,15 @@
           "pack": {
             "type": "object"
           },
+          "asks": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "asked": {
+            "type": "object"
+          },
           "tax_checked": {},
           "notice": {}
         },
@@ -17859,6 +17978,12 @@
             "items": {
               "type": "object"
             }
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -20048,6 +20173,12 @@
               "null"
             ]
           },
+          "seen_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "side": {
             "type": [
               "string",
@@ -20106,6 +20237,12 @@
             ]
           },
           "total_minor": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "tax_minor": {
             "type": [
               "number",
               "null"
@@ -22976,6 +23113,9 @@
           },
           "ctp": {
             "type": "object"
+          },
+          "duplicate": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -23692,6 +23832,31 @@
           "is_draft": true,
           "purpose": " order "
         }
+      }
+    },
+    "POST /api/entities/me/preview-token": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "token",
+          "expires_in"
+        ],
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "expires_in": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 5,
+      "open": [],
+      "example": {
+        "url": "/api/entities/me/preview-token",
+        "body": {}
       }
     },
     "POST /api/flags": {
@@ -35533,7 +35698,8 @@
           },
           "restored": {
             "type": "boolean"
-          }
+          },
+          "books": {}
         },
         "additionalProperties": false
       },
@@ -37267,7 +37433,13 @@
             "type": "object"
           },
           "mark_actions": {},
-          "mark_vocabulary": {}
+          "mark_vocabulary": {},
+          "carried": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
         },
         "additionalProperties": false
       },
@@ -37459,6 +37631,9 @@
           "months": {},
           "next": {
             "type": "string"
+          },
+          "closed_with": {
+            "type": "object"
           }
         },
         "additionalProperties": false
@@ -38237,6 +38412,7 @@
           "bill",
           "flags",
           "refusals",
+          "needs",
           "code",
           "duplicate"
         ],
@@ -38283,6 +38459,7 @@
               "type": "string"
             }
           },
+          "needs": {},
           "code": {},
           "duplicate": {}
         },
@@ -42962,6 +43139,15 @@
             "type": "object"
           },
           "rederived": {
+            "type": "object"
+          },
+          "asks": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "asked": {
             "type": "object"
           },
           "tax_checked": {},
@@ -50271,7 +50457,8 @@
                 "label",
                 "vertical",
                 "capabilities",
-                "is_default"
+                "is_default",
+                "ready"
               ],
               "properties": {
                 "key": {
@@ -50288,6 +50475,9 @@
                 },
                 "capabilities": {},
                 "is_default": {
+                  "type": "boolean"
+                },
+                "ready": {
                   "type": "boolean"
                 }
               },

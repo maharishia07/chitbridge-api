@@ -21,11 +21,11 @@ const grab = (name) => {
 };
 /** the page's receive functions over a stub RCV; `engine` = true loads lib/lotfields as CBLots (the one key normaliser) */
 const mk = (engine) => {
-  const ctx = { RCV: { lines: [] }, r2: (x) => Math.round((Number(x) || 0) * 100) / 100, paintReceive: () => {},
+  const ctx = { RCV: { lines: [] }, RCV_BAL: {}, r2: (x) => Math.round((Number(x) || 0) * 100) / 100, paintReceive: () => {},
     rcvDefaultRate: () => null, window: engine ? { CBLots: require(path.join(API, 'lib', 'lotfields.js')) } : {}, esc: (x) => String(x) };
   ctx.CBLots = ctx.window.CBLots;
   vm.createContext(ctx);
-  vm.runInContext(['lineFor', 'rcvBatchOf', 'rcvLineFor', 'rcvAdd', 'rcvDiff', 'rcvCounted'].map(grab).join(NL), ctx);
+  vm.runInContext(['lineFor', 'rcvBatchOf', 'rcvLineFor', 'rcvLastCost', 'rcvAdd', 'rcvDiff', 'rcvCounted'].map(grab).join(NL), ctx);
   return ctx;
 };
 const PILL = { item_id: 'p1', name: 'Paracetamol 500', unit: 'strip', price: 10 };

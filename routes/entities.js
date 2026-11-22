@@ -44,7 +44,7 @@ function platformGate(req, res, next) {
   if (require('../lib/platformroot').refuseUnlessPlatform(req, res)) next();
 }
 const { sendOtpEmail } = require('../lib/notify'); // shared OTP email sender (F2 — extracted from here)
-const { currencyRefusal } = require('../lib/govresolve'); // resolve the entity's governance from attributes
+const { currencyRefusal, setupReady } = require('../lib/govresolve'); // resolve the entity's governance from attributes
 
 // ⚠️ ONE generator (lib/bridgeid.js). This was SIX copies and the CSPRNG hardening reached only one of them —
 //    not this one, which is where every entity's bridge id is minted. Same call site, now a strong PRNG.
@@ -256,7 +256,9 @@ router.get('/constitutions', ...checked('GET /constitutions'), async (req, res) 
     try {
       const r = await query(`SELECT constitution_key AS key, version, label, vertical, capabilities, is_default
         FROM constitution WHERE active = true ORDER BY is_default DESC, label`);
-      res.json(Object.assign({ constitutions: r.rows }, spin));
+      /* GREY-VERT: each setup says whether it is ready (govresolve.setupReady); a not-ready one is shown grey at sign-up, never chosen */
+      const rows = r.rows.map((row) => Object.assign({}, row, { ready: setupReady(row.key) }));
+      res.json(Object.assign({ constitutions: rows }, spin));
     } catch (e) {
       /* STD2: never silent — the catalogue is unread, so the person sees no vertical chooser (the default setup applies); the countries still paint. Logged with the request id, nothing of the cause is answered */
       softFault(req, e);
@@ -752,6 +754,24 @@ router.get('/me/can-see-costs', auth, async (req, res) => {
     res.json({ can_see_costs: await cost.canRead(req, entity_id), is_owner: req.identity.identity_type === 'entity', may_set_rate: require('../lib/rate-door').setsRate(req), may_set_tax_id: taxIdDoor.mayChangeTaxId(req) });
   } catch (err) {
     problem(req, res, failed(err, req, 'Read failed'));
+  }
+});
+
+/**
+ * POST /entities/me/preview-token — CUSTOMER-DELINK 2 (Athi 21 Nov 2026): the owner's "preview my shop" needs a key the CUSTOMER page may hold. The staff session never leaves the staff side;
+ * this hands over a 15-minute token for THIS shop (lib/preview-token.js: aud cb-shop-preview) that opens one read — GET /api/catalogue/:shop?preview=1, a cost-blind view — and is refused by auth
+ * and every other door. The shop is the caller's own (auth.entityOf, the shop the auth decision already proved), never a body or path value; an owner and a co-assist of the shop may ask (the preview was theirs before), a
+ * key is refused by auth's scope list. Read-shaped: hat-gate SELF_SCOPED_EXACT lets a view-only hat ask (it writes nothing).
+ */
+// @does Signed-in staff -> we mint a 15-minute token bound to their own shop -> the preview-only token the customer page holds, and how long it lives.
+router.post('/me/preview-token', auth, ...checked('POST /me/preview-token'), (req, res) => {
+  try {
+    /* no database read: auth has already refused a closed business, and the shop is the caller's own entity (the reader checks the claim against the shop it serves) */
+    const minted = require('../lib/preview-token').mint(auth.entityOf(req));
+    res.set('Cache-Control', 'no-store');
+    res.json({ token: minted.token, expires_in: minted.expires_in });
+  } catch (err) {
+    problem(req, res, failed(err, req, 'Preview key failed'));
   }
 });
 

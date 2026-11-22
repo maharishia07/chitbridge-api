@@ -44,6 +44,7 @@ function world(status, notes) {
     const one = String(sql).replace(/\s+/g, ' ').trim(); log.push({ sql: one, params });
     if (/^SELECT current_status FROM chit_status/.test(one)) return { rows: [{ current_status: status }] };
     if (one === lock.LOCK_SQL) return { rows: [] };
+    if (/^SELECT purpose FROM chit_header WHERE chit_id/.test(one)) return { rows: [{ purpose: 'sale' }] }; /* red1128: RAIL-1128 L-F-02 asks the purpose first; the sale being cancelled is no credit note, so its taken-by-buyer check passes */
     if (/WHERE h\.chit_id = \$1 AND h\.entity_id = \$2 AND h\.sender_entity_id = \$2 AND h\.purpose = ANY/.test(one)) return { rows: [{ chit_id: BILL, bill_no: 'B-1', till_id: 'C1' }] };
     if (/DISTINCT ON \(h\.chit_id\)/.test(one)) return { rows: notes.map((id) => ({ chit_id: id })) };
     throw new Error('unexpected sql ' + one.slice(0, 90));

@@ -208,8 +208,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   setMigrated(false); M.fakeDb.countryRow = { country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', timezone: 'Asia/Kolkata', policy_flags: { gst_registration: 'regular' } };
   let st = await b('GET', '/status');
   ok('GET /status (off): country.books true — nothing is asked of a shop that was fine yesterday', st.status === 200 && st.body.country && st.body.country.books === true && st.body.country.required === false && st.body.country.pack === 'IN', JSON.stringify(st.body.country));
-  let bad = []; for (const [m, p] of ROUTES) { const x = await b(m, p, {}); if (x.status !== 404) bad.push(m + ' ' + p + ' → ' + x.status); }
-  ok('books OFF, India: the routes still answer the quiet 404 (' + ROUTES.length + ')', bad.length === 0, bad.join(' · '));
+  let bad = []; for (const [m, p] of ROUTES) { const x = await b(m, p, {}); if (x.status !== (m === 'GET' && p === '/dues' ? 200 : 404)) bad.push(m + ' ' + p + ' → ' + x.status); }
+  ok('books OFF, India: the routes still answer the quiet 404, except GET /dues: the batch answers it 200 and empty with the ledger off (dues-ledger-off-empty) (' + ROUTES.length + ')', bad.length === 0, bad.join(' · '));
 
   console.log('— a pack-less country: said on every route —');
   M.fakeDb.countryRow = { country: 'BR', currency_code: 'BRL', gstn: null, timezone: 'America/Sao_Paulo', policy_flags: {} }; CS._reset();

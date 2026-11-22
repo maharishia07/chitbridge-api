@@ -7,7 +7,7 @@
  * CARD      06-catalogue-pim/import-export-workbook-preflight
  */
 const assert = require('assert');
-const P = require('../lib/csv-preflight');
+const P = require('../lib/csv-preflight'), { applyDecisions } = require('../lib/csv-decisions');
 const CSV = require('../lib/csv');
 
 let pass = 0, fail = 0;
@@ -303,7 +303,7 @@ console.log('\ncsv-preflight · the commit half — a decision per column');
 
 const decide = (csvText, decisions, template) => {
   const p = CSV.parseCSV(csvText);
-  return P.applyDecisions({ headers: p.headers, rows: p.rows.map((r) => p.headers.map((h) => r[h])), template: template || CART, decisions });
+  return applyDecisions({ headers: p.headers, rows: p.rows.map((r) => p.headers.map((h) => r[h])), template: template || CART, decisions });
 };
 
 t('a mapped column lands on the field the person chose', () => {
@@ -519,7 +519,7 @@ process.exit(fail ? 1 : 0);
  */
 t('⭐⭐ an identifier stays TEXT even when every value is digits — the leading zero survives', () => {
   const tpl = CSV.templateFor({ schema: { properties: { name: {} } }, orderInput: { preset: 'cart', pipeline: 'commerce' } });
-  const out = P.applyDecisions({
+  const out = applyDecisions({
     headers: ['Item', 'HSN Code'],
     rows: [['Tea', '09024090'], ['Coffee', '09011110']],
     template: tpl,
@@ -533,7 +533,7 @@ t('⭐⭐ an identifier stays TEXT even when every value is digits — the leadi
 
 t('a genuine measure is still inferred as a number', () => {
   const tpl = CSV.templateFor({ schema: { properties: { name: {} } }, orderInput: { preset: 'cart', pipeline: 'commerce' } });
-  const out = P.applyDecisions({
+  const out = applyDecisions({
     headers: ['Item', 'Net Weight'],
     rows: [['Tea', '250'], ['Coffee', '500']],
     template: tpl,

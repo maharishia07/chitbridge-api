@@ -45,6 +45,8 @@ const sc = require(path.join(API, 'lib', 'schema')); sc.hasColumn = async () => 
 let BOOKS = 0, TOLD = 0, USED = [], USE_OK = true;
 const hooks = require(path.join(API, 'lib', 'books-hooks')); hooks.afterChit = () => { BOOKS++; return Promise.resolve({}); }; hooks.takeBackCancelled = async () => null;
 const ctp = require(path.join(API, 'lib', 'ctpreturn')); ctp.onStatusMoved = async () => { TOLD++; return null; };
+/* 1128 M5: the move stages its event for the other installation INSIDE its own transaction (stageStatus, the outbox), no longer after it through onStatusMoved: the tell is counted there, with one remote party so the stage does something */
+ctp.remoteParties = async () => [{ entity_id: 'remote' }]; ctp.stageStatus = async () => { TOLD++; return { queued: 1, seq: 1 }; }; ctp.kick = () => {};
 require(path.join(API, 'lib', 'bill-use')).set = async (e, c, body) => { USED.push(body.use); return USE_OK ? { ok: true, use: body } : { ok: false, status: 409, message: 'already accepted' }; };
 require(path.join(API, 'lib', 'chit-crossing')).crossing = async () => null;
 require(path.join(API, 'lib', 'bill-privacy')).writeStep = async () => null;

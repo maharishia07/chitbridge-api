@@ -38,6 +38,7 @@ function world({ status, bill, notes }) {
       if (one === lock.LOCK_SQL) return { rows: [] };
       if (/WHERE h\.chit_id = \$1 AND h\.entity_id = \$2 AND h\.sender_entity_id = \$2 AND h\.purpose = ANY/.test(one)) return { rows: bill ? [bill] : [] };
       if (/DISTINCT ON \(h\.chit_id\)/.test(one)) return { rows: (notes || []).map((id) => ({ chit_id: id })) };
+      if (one.indexOf('SELECT purpose FROM chit_header WHERE chit_id') === 0) return { rows: [{ purpose: 'invoice' }] }; /* RAIL-1128 L-F-02: the credit-note-taken check reads the purpose; an invoice asks no further */
       throw new Error('unexpected sql ' + one.slice(0, 90));
     }
   };

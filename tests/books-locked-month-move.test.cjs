@@ -11,7 +11,7 @@ const { ok, eq, done } = counter();
 
 (async () => {
   console.log('\n══ a bank line in a locked month, posted in the next open month ══\n');
-  const R = await rig(); if (!R) return;
+  const R = await rig(null, '2026-12-10'); if (!R) return;
   const { X, q } = R, T = X.T;
   const entryOf = (ref) => T.entries.find((e) => e.source_ref === ref);
   const day = (value) => String(value).slice(0, 10);

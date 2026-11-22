@@ -26,4 +26,9 @@ t('$10 is not read as $1 followed by 0', () => {
   const params = []; for (let i = 0; i < 10; i++) params.push('v' + (i + 1));
   assert.strictEqual(db.inlineSql('SELECT $10, $1', params), "SELECT 'v10', 'v1'");
 });
+t("F8: a $n inside an author's quoted literal is left alone (also with '' inside), a real one next to it is bound", () => {
+  assert.strictEqual(db.inlineSql("SELECT '$1', $1", ['v']), "SELECT '$1', 'v'");
+  assert.strictEqual(db.inlineSql("SELECT 'it''s $1', $1", ['v']), "SELECT 'it''s $1', 'v'");
+  assert.doesNotThrow(() => db.inlineSql("SELECT '$2'", ['v']));   /* a literal '$2' must not demand a second value */
+});
 console.log(`read-batch: ${n} passed, ${f} failed`); process.exit(f ? 1 : 0);

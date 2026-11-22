@@ -72,9 +72,9 @@ const { ok, eq, done } = counter();
   const again = await q('POST', '/preview', { event: CASES[0][1] });
   ok('previewing an event already posted says so (duplicate) and still writes nothing', again.body.duplicate && again.body.duplicate.entry_no && again.body.ok === true);
 
-  /* ── 4. a locked month is refused — in the preview and in the post ── */
-  await q('POST', '/periods/2026-27/7/lock', { reason: 'GSTR-1 filed' });
-  const lockedBody = { kind: 'expense', class: 'fuel', amount: 100, paid_from: 'cash', date: '2026-10-06', client_ref: 'p-lock' };
+  /* red1128: September (month 6) is locked, the rig's day is 10 Oct, so the month has ended (K-F-01 refuses locking the running month) */ /* ── 4. a locked month is refused — in the preview and in the post ── */
+  await q('POST', '/periods/2026-27/6/lock', { reason: 'GSTR-1 filed' });
+  const lockedBody = { kind: 'expense', class: 'fuel', amount: 100, paid_from: 'cash', date: '2026-09-06', client_ref: 'p-lock' };
   const s0 = snap();
   const lp = await q('POST', '/preview', { event: lockedBody });
   ok('preview, locked month: ok false, PERIOD_LOCKED, one plain sentence, no lines', lp.status === 200 && lp.body.ok === false && lp.body.code === 'PERIOD_LOCKED' && lp.body.refusals.length === 1 && /locked|open it again/i.test(lp.body.refusals[0]) && lp.body.lines.length === 0, JSON.stringify(lp.body));

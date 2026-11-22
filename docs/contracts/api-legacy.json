@@ -2961,12 +2961,28 @@
     },
     {
      "scenario": "ledger-off",
-     "status": 404,
+     "status": 422,
      "body_keys": {
-      "error": "Not found"
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not found"
+      "code": "NO_COUNTRY",
+      "error": "Set the shop country first. The books never open on a guess.",
+      "message": "Set the shop country first. The books never open on a guess.",
+      "type": "https://chitbridge.com/problems/no_country",
+      "title": "No country set",
+      "status": 422,
+      "detail": "Set the shop country first. The books never open on a guess.",
+      "hint": "Set the country in Country setup.",
+      "request_id": "req-test"
      }
     },
     {
@@ -5043,79 +5059,91 @@
     },
     {
      "scenario": "key-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "error": "Cannot compute",
-      "code": "GSTR_REFUSED",
-      "message": "A return needs the shop GSTIN (15 characters).",
-      "type": "https://chitbridge.com/problems/gstr_refused",
-      "title": "Return cannot be built",
-      "status": 422,
-      "detail": "A return needs the shop GSTIN (15 characters).",
-      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      },
      "fixture": {
-      "error": "Cannot compute",
-      "code": "GSTR_REFUSED",
-      "message": "A return needs the shop GSTIN (15 characters).",
-      "type": "https://chitbridge.com/problems/gstr_refused",
-      "title": "Return cannot be built",
-      "status": 422,
-      "detail": "A return needs the shop GSTIN (15 characters).",
-      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      }
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "error": "Cannot compute",
-      "code": "GSTR_REFUSED",
-      "message": "A return needs the shop GSTIN (15 characters).",
-      "type": "https://chitbridge.com/problems/gstr_refused",
-      "title": "Return cannot be built",
-      "status": 422,
-      "detail": "A return needs the shop GSTIN (15 characters).",
-      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      },
      "fixture": {
-      "error": "Cannot compute",
-      "code": "GSTR_REFUSED",
-      "message": "A return needs the shop GSTIN (15 characters).",
-      "type": "https://chitbridge.com/problems/gstr_refused",
-      "title": "Return cannot be built",
-      "status": 422,
-      "detail": "A return needs the shop GSTIN (15 characters).",
-      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      }
     },
     {
      "scenario": "viewer-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "error": "Cannot compute",
-      "code": "GSTR_REFUSED",
-      "message": "A return needs the shop GSTIN (15 characters).",
-      "type": "https://chitbridge.com/problems/gstr_refused",
-      "title": "Return cannot be built",
-      "status": 422,
-      "detail": "A return needs the shop GSTIN (15 characters).",
-      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      },
      "fixture": {
-      "error": "Cannot compute",
-      "code": "GSTR_REFUSED",
-      "message": "A return needs the shop GSTIN (15 characters).",
-      "type": "https://chitbridge.com/problems/gstr_refused",
-      "title": "Return cannot be built",
-      "status": 422,
-      "detail": "A return needs the shop GSTIN (15 characters).",
-      "hint": "Check the shop's GSTIN in Country setup, then try again.",
+      "error": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "message": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "may": false,
+      "why": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner, the shop's accountant or bookkeeper, or the shop's auditor may read these figures.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      }
     },
@@ -14594,6 +14622,32 @@
       "hint": "Try again in a moment.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the owner or a manager can pair a screen.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or a manager can pair a screen.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the owner or a manager can pair a screen.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner or a manager can pair a screen.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -14685,18 +14739,6 @@
     },
     {
      "scenario": "claim-code-unknown",
-     "status": 404,
-     "body_keys": {
-      "error": "No such code",
-      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
-     },
-     "fixture": {
-      "error": "No such code",
-      "message": "That code is wrong or has expired. Ask ChitBridge for a new one."
-     }
-    },
-    {
-     "scenario": "claim-code-unknown-again",
      "status": 404,
      "body_keys": {
       "error": "No such code",
@@ -24293,6 +24335,58 @@
      "fixture": {
       "error": "Not found"
      }
+    },
+    {
+     "scenario": "payment-clear-on-withdrawn-bill",
+     "status": 409,
+     "body_keys": {
+      "error": "This bill was withdrawn",
+      "message": "This bill is rejected, so its payment mark is not changed here.",
+      "type": "https://chitbridge.com/problems/chit_voided",
+      "title": "This bill was withdrawn",
+      "status": 409,
+      "code": "CHIT_VOIDED",
+      "detail": "This bill is rejected, so its payment mark is not changed here.",
+      "hint": "Open the bill to see its status.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "This bill was withdrawn",
+      "message": "This bill is rejected, so its payment mark is not changed here.",
+      "type": "https://chitbridge.com/problems/chit_voided",
+      "title": "This bill was withdrawn",
+      "status": 409,
+      "code": "CHIT_VOIDED",
+      "detail": "This bill is rejected, so its payment mark is not changed here.",
+      "hint": "Open the bill to see its status.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "payment-clear-tender-on-bill",
+     "status": 422,
+     "body_keys": {
+      "error": "The tender is on the bill",
+      "message": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "type": "https://chitbridge.com/problems/payment_tender_on_bill",
+      "title": "The tender is on the bill",
+      "status": 422,
+      "code": "PAYMENT_TENDER_ON_BILL",
+      "detail": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "hint": "Record money received later at the counter, against the bill.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The tender is on the bill",
+      "message": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "type": "https://chitbridge.com/problems/payment_tender_on_bill",
+      "title": "The tender is on the bill",
+      "status": 422,
+      "code": "PAYMENT_TENDER_ON_BILL",
+      "detail": "This bill carries its own tender — it is not cleared here; a refund is a credit note.",
+      "hint": "Record money received later at the counter, against the bill.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -28409,7 +28503,7 @@
      }
     },
     {
-     "scenario": "bulk-job-clients-by-a-plain-actor",
+     "scenario": "bulk-whole-chits-by-a-plain-actor",
      "status": 403,
      "body_keys": {
       "error": "Forbidden",

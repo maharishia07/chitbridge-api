@@ -146,7 +146,7 @@ function editor(req, res, next) {
  */
 const CS = require('../lib/country-setup');
 /** the gate middleware: the country first (422 with its sentence), then the ledger switch (404 when off); sets req.books and req.booksCountry */
-async function on(req, res, next) {
+async function gateOn(req, res, next, whenOff) {
   try {
     const e = ctx(req);
     let st = null;
@@ -154,7 +154,10 @@ async function on(req, res, next) {
       st = await CS.gate(h, e);
       return B.settingOf(h, e);
     });
-    if (!s || !s.enabled) return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: SAID.notFound } });
+    if (!s || !s.enabled) {
+      if (whenOff) return await whenOff(req, res, e, st); /* WALK S S-F-07: a read of a shop with nothing yet answers empty, 200 (empty is not missing) */
+      return problem(req, res, { status: 404, code: 'LEDGER_OFF', detail: 'This shop has not switched the ledger on.', legacy: { error: SAID.notFound } });
+    }
     req.books = s;
     req.booksCountry = st || null;
     next();
@@ -162,6 +165,15 @@ async function on(req, res, next) {
     problem(req, res, refusalOf(err, req));
   }
 }
+const on = (req, res, next) => /* the ledger-off refusal is status: 404 LEDGER_OFF, written in gateOn; the register reads a route's statuses from the gate's own text */ gateOn(req, res, next, null);
+/** GET /dues with the ledger off: nobody owes anybody yet — the same shape, empty (a side not asked for stays null) */
+const onDues = (req, res, next) =>
+  /* status: 404 LEDGER_OFF when the shop has no ledger and the read is not the dues one (see gateOn) */ gateOn(req, res, next, async (rq, rs, e, st) => {
+    const sides = rq.query.side === 'customer' ? ['debtors'] : rq.query.side === 'supplier' ? ['creditors'] : ['debtors', 'creditors'];
+    rq.books = rq.books || {};
+    rq.booksCountry = st || null;
+    rs.json({ currency: B.curOf({ country: st && st.country && st.country.code }), asOf: agedAt(rq), parties: [], total_minor: 0, needs: { customer: sides.includes('debtors') ? Needs.sumNeeds([]) : null, supplier: sides.includes('creditors') ? Needs.sumNeeds([]) : null } });
+  });
 /**
  * ⭐ FIN-63 (5 Nov): A MONEY DOOR TAKES ONE KEY PER ATTEMPT. `client_ref` stops a second tap on POST /payments, but confirm had no replay
  * guard at all: a retry after a lost answer settled the bills twice from the same receipt. The four writes the web keys (web #447
@@ -505,6 +517,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
       await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
       markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
       if (markSide) for (const item of lines) item.mark = markSide.byId[String(item.entry_id)] || null;
+      if (a.role === 'retained' && !party) base.carried = await B.carriedLine(h, e, from); /* YE-F-04: the roll that opens it, named — a computed line, not an entry */
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {
@@ -652,7 +665,7 @@ async function forReader(req, e, answer) {
  * account), so oldest_due, the age buckets, the interest and the early-pay offer all read what is really owed; balance_minor is the engine's by_party.
  */
 // @does Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.
-router.get('/dues', auth, moneyReader, on, ...checked('GET /dues'), async (req, res) => {
+router.get('/dues', auth, moneyReader, onDues, ...checked('GET /dues'), async (req, res) => {
   try {
     /* ?finance=1 (CB Finance · Collections): + credit_limit_minor · credit_limit_from · over_limit · interest_minor · interest_state · last_remind.
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
@@ -1768,7 +1781,7 @@ router.get('/events', auth, noKey, on, ...checked('GET /events'), (req, res) => 
 router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req, res) => {
   try {
     const out = await M().preview(ctx(req), req.books, req.body || {}, { owner: isOwner(req) || isInHouseAccountant(req) /* W25: the same seats POST /events lets post, so the first step tells the truth */, by: byOf(req) });
-    res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, duplicate: out.duplicate });
+    res.json({ ok: out.ok, kind: out.kind, voucher: out.voucher, date: out.date, lines: out.lines, balanced: out.balanced, totals: out.totals, credit: out.credit, bill: out.bill, flags: out.flags, refusals: out.refusals, code: out.code, needs: out.needs || null, duplicate: out.duplicate });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2113,7 +2126,7 @@ async function compareRead(req) {
     try {
       const taxCopy = require('../lib/tax-copy'),
         taxLines = require('../lib/tax-lines'),
-        ledgerCopy = await taxCopy.ledgerFor(e, fetched.to.slice(0, 7));
+        ledgerCopy = await taxCopy.ledgerFor(e, fetched.to.slice(0, 7), { carriedItc: true });
       if ((ledgerCopy.dropped || []).length) throw new Error('ACC-266 C5: ' + ledgerCopy.dropped.length + ' bill(s) could not be read — a short month is not compared');
       fetched.ours.ret = Object.assign(PR.gstr3bBoxes(taxLines.gstr3b(ledgerCopy.ledger, ledgerCopy.me, ledgerCopy.bounds.period)), { short: 'GSTR-3B' });
     } catch (err) {
@@ -2179,7 +2192,7 @@ router.post('/periods/:fy/:p/:act', auth, owner, on, ...checked('POST /periods/:
     if (!/^\d{4}(-\d{2})?$/.test(fy) || !/^\d{1,2}$/.test(p) || ['lock', 'unlock'].indexOf(act) < 0) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const b = req.body || {};
     const status = act === 'unlock' ? 'open' : b.hard === true ? 'hard_locked' : 'soft_locked';
-    const r = await B.setPeriod(null, ctx(req), fy, Number(p), status, byOf(req), b.reason);
+    const r = await B.setPeriod(null, ctx(req), fy, Number(p), status, byOf(req), b.reason, { amendTax: act === 'unlock' && b.amend_tax === true });
     res.json({ ok: true, period: { fiscal_year: r.fiscal_year, period: r.period, status: r.status } });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
@@ -2210,16 +2223,20 @@ router.post('/year/:fy/reopen', auth, owner, on, ...checked('POST /year/:fy/reop
     res.json({ ok: year.ok, fiscal_year: year.fiscal_year, reopened: year.reopened });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
-/** GET /year/:fy/status → { fiscal_year, closed, can_close, can_close_if_lodged, reclosing, refusals, warnings, months, next } — what a close would say, nothing written */
+/** GET /year/:fy/status → { fiscal_year, closed, closed_with? { at, by, by_name, how, profit_minor? } (a closed year's evidence), can_close, can_close_if_lodged, reclosing, refusals, warnings, months, next } — what a close would say, nothing written */
 // @does A financial year in -> we read what a close would say, writing nothing -> closed, can_close, the refusals and the months.
 router.get('/year/:fy/status', auth, moneyReader, on, ...checked('GET /year/:fy/status'), async (req, res) => {
   try {
     if (!/^\d{4}(-\d{2})?$/.test(req.params.fy)) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const e = ctx(req);
-    const st = await withEntity(e, (h) => B.yearState(h, e, req.params.fy, { warn: true, req }));
+    const { st, closedEvent } = await withEntity(e, async (h) => {
+      const state = await B.yearState(h, e, req.params.fy, { warn: true, req });
+      return { st: state, closedEvent: state.closed ? await S.yearCloseEvent(h, e, state.fiscal_year) : null };
+    });
     res.json({
       fiscal_year: st.fiscal_year,
-      closed: st.closed, returns_lodged: st.returns_lodged === true, reclosing: st.reclosing === true && !st.closed,
+      closed: st.closed,
+      ...(st.closed ? { closed_with: require('../lib/books-year-past').closedWith(closedEvent, st.rows, st.carry, req.reads_money, curOf(req)) } : {}), /* YE-F-06: the closed year's evidence */ returns_lodged: st.returns_lodged === true, reclosing: st.reclosing === true && !st.closed,
       can_close: st.can_close && !st.closed, can_close_if_lodged: st.can_close_if_lodged && !st.closed,
       refusals: st.closed ? [] : st.refusals,
       warnings: st.closed ? [] : st.warnings || [],
@@ -2243,7 +2260,7 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
       const byMonth = new Map(all.map((item) => [item.fiscal_year + '|' + Number(item.period), item]));
       const withSales = !req.reads_money ? [] : figures.filter((x) => x.entries > 0 && byMonth.get(x.fiscal_year + '|' + x.period) && Number(x.period) >= 1);
       const monthlyPl = await B.profitAndLossMonths(h, e, withSales.map((x) => { const month = byMonth.get(x.fiscal_year + '|' + x.period); return { from: E.ymd(month.start_date), to: E.ymd(month.end_date) }; })); /* ONE read of the lines for every month, the P&L engine once per month */
-      withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); });
+      withSales.forEach((item, n) => { item.sales_minor = Number(monthlyPl[n].total_income_minor || 0); item.profit_minor = Number(monthlyPl[n].profit_minor || 0); /* C-F-01: income less expenses, before tax, from the same P&L read: a month of rent and fees is a loss, not "no income" */ });
       const marks = req.query.marks ? await require('../db').trySavepoint(h, () => require('../lib/books-period-choices').checkedByMonth(h, e, all, figures), null) : null; /* a read that fails inside the transaction is rolled back to its savepoint: the picker then names no count. ?marks=1: each month's checked n of m (review-mark's rule, one read) */
       return { rows: all, figures, setting: books, taxStates: await P().returnStatesFor(h, e, books, all), trail: await S.lockTrail(h, e, fy), marks };
     });
@@ -2542,7 +2559,7 @@ router.get('/returns', auth, moneyReader, on, ...checked('GET /returns'), async 
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
     // prettier-ignore
-    res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, unsupported_input: form.unsupported_input, emirates: form.emirates, staggers: form.staggers });
+    res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, unsupported_input: form.unsupported_input, needs_answer: form.needs_answer, emirates: form.emirates, staggers: form.staggers });
   } catch (err) {
     if (err && err.code === 'RETURN_FROM_RAIL') {
       const pack = err.pack || null;

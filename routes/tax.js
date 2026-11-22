@@ -10,6 +10,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { taxSaid, countryWords, faultOf, readFault, taxContract: contract } = require('../lib/tax-contract'); // the contract (each route's operation) and the words of a refusal
 const auth = require('../middleware/auth');
+const moneyReader = (req, res, next) => require('./books').gates.moneyReader(req, res, next); /* M-F-03: the returns are read by the same seats as the TB, P&L and BS (the ONE books-read gate, lib/books-readers); lazy so tax.js loads without books.js */
 const T = require('../lib/tax-lines');
 const C = require('../lib/tax-copy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
@@ -100,12 +101,12 @@ function droppedWords(dropped, reasons) {
 /** GET /api/tax/gstr?month=YYYY-MM&form=gstr1|gstr3b — the offline-tool JSON (GSTR-1 from the adopted engine, ACC-225). Validate before filing. */
 const GSTR_FORMS = ['gstr1', 'gstr3b']; /* the returns this file builds; absent → gstr1 (the contract's default), a form GIVEN and not one of these is a 400, never gstr1 (ACC-334) */
 // @does Signed-in shop with a month and form gstr1 or gstr3b -> we build the return from its ledger and refuse a short month -> the offline filing JSON, to validate before filing.
-router.get('/gstr', auth, ...checked('GET /gstr'), async (req, res) => {
+router.get('/gstr', require('../middleware/books-grant'), auth, moneyReader, ...checked('GET /gstr'), async (req, res) => {
   try {
     const form = String(req.query.form || 'gstr1').toLowerCase();
     if (!GSTR_FORMS.includes(form)) return problem(req, res, Object.assign(taxSaid(400, 'BAD_FORM', 'form must be one of: ' + GSTR_FORMS.join(', ') + '.'), { field: 'form' }));
     const me = ctx(req);
-    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month);
+    const { bounds, me: meParty, ledger, dropped, dropped_why: droppedWhy } = await C.ledgerFor(me, req.query.month, { carriedItc: form === 'gstr3b' });
     /* ACC-266 C5: a return built from a short month is wrong — say so instead of handing out the file */
     if ((dropped || []).length) return problem(req, res, taxSaid(422, 'GSTR_REFUSED', droppedWords(dropped, droppedWhy), { dropped: dropped.slice(0, DROPPED_NAMED) }));
     const out = form === 'gstr3b' ? T.gstr3b(ledger, meParty, bounds.period) : T.gstr1(ledger, meParty, bounds.period);

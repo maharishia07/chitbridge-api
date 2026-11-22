@@ -235,7 +235,11 @@ const tally = {};
         ? Object.assign({}, now, { message: old.message }) : now;
       /* S35 (deliberate, batch 2026-11-11): a login that holds NO copy of the chit is told the one 404 on dispute and message, where the route said 403 (same word for unknown, another shop's and not yours). ONLY that: stranger, those three actions, 403 → 404 with the one sentence. */
       const s35 = /^stranger/.test(x.name) && /^(dispute|message_external|message_internal)$/.test(x.a) && o.status === 403 && x.after.status === 404 && x.after.body.message === 'Chit not found or you do not have access';
-      const ok = s35 || o.status === x.after.status && strip(o.body, o.body) === strip(saidNow(o.body, x.after.body), o.body);
+      /* RAIL-1128 M8 (deliberate, batch 1128): a withdrawn copy (rejected / cancelled) never jumps to completed: it was never accepted, so the freeze and the books hook would run on a bill nobody took (the engine table still lists it; the api refuses it, lib/chit-move). ONLY that: (a) the action complete on such a copy, 200 before, now 400 (the wrong-step refusal); (b) any other refusal from there lists allowed_transitions without 'completed'. */
+      const withdrawn = /, (rejected|cancelled)$/.test(x.name);
+      const m8 = withdrawn && ((x.a === 'complete' && o.status === 200 && x.after.status === 400 && /^Cannot move from (rejected|cancelled) to completed$/.test(String(x.after.body.message)))
+        || (o.status === 400 && x.after.status === 400 && Array.isArray(o.body.allowed_transitions) && o.body.allowed_transitions.includes('completed') && JSON.stringify(Object.assign({}, o.body, { allowed_transitions: o.body.allowed_transitions.filter((w) => w !== 'completed') })) === JSON.stringify(o.body.allowed_transitions && Object.assign({}, o.body, { allowed_transitions: x.after.body.allowed_transitions })) && o.body.message === x.after.body.message));
+      const ok = s35 || m8 || o.status === x.after.status && strip(o.body, o.body) === strip(saidNow(o.body, x.after.body), o.body);
       if (ok) same++;
       t(x.name + ' · ' + x.a + ': before ' + o.status + ' = after ' + x.after.status + ', same body but `why`', ok,
         'before ' + o.status + ' ' + strip(o.body).slice(0, 160) + '\n       after  ' + x.after.status + ' ' + strip(x.after.body).slice(0, 160));

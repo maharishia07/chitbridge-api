@@ -450,11 +450,11 @@ async function main() {
     ok('concurrency: an accept racing a revoke leaves EXACTLY ONE outcome: posted and accepted, or withdrawn with nothing posted, never both and never a post after the revoke', raceRevoke.status === 200 && raceClosing === 1 && ((raceState.state === 'accepted' && raceEntries === 1 && raceAccept.status === 200) || (raceState.state === 'withdrawn' && raceEntries === 0 && raceAccept.status === 409)), JSON.stringify([raceAccept.status, raceRevoke.status, raceState.state, raceClosing, raceEntries]));
 
     /* a locked month at accept, then unlock, lock and year close through the same flow (the second firm) */
-    const periodsNow = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;
-    const todayRow = ((periodsNow.periods || periodsNow.rows || periodsNow) || []).find((row) => row.start_date <= day && day <= row.end_date && Number(row.period) >= 1);
-    ok('the periods answer holds the month of today (a test that cannot find it fails, never skips)', !!todayRow, JSON.stringify(periodsNow).slice(0, 300));
-    const fy = todayRow.fiscal_year; const periodNo = Number(todayRow.period);
-    const lockedAt = await reviewed(Y2, Z2, M1, 'jlocked');
+    const periodsNow = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body; /* K-F-01: a running month is never locked: lock the latest OPEN month that has ended, journal dated inside it */
+    const endedRow = ((periodsNow.periods || periodsNow.rows || periodsNow) || []).filter((row) => Number(row.period) >= 1 && String(row.end_date).slice(0, 10) < day && row.status === 'open').sort((x, y) => String(y.end_date).localeCompare(String(x.end_date)))[0];
+    ok('the periods answer holds an open month that has ended (a test that cannot find it fails, never skips)', !!endedRow, JSON.stringify(periodsNow).slice(0, 300));
+    const fy = endedRow.fiscal_year; const periodNo = Number(endedRow.period);
+    const lockedAt = await reviewed(Y2, Z2, M1, 'jlocked', { body: Object.assign({}, journal('jlocked').body, { date: String(endedRow.start_date).slice(0, 10) }) });
     const ownerLock = await call(ownerOf(M1), 'POST', '/api/books/periods/' + fy + '/' + periodNo + '/lock', { body: {} });
     const lockedAccept = await accept(M1, lockedAt);
     const stillWaiting = (await asOwner(M1, 'GET', '/' + lockedAt.id)).body;

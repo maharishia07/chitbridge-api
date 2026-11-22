@@ -379,6 +379,8 @@ const auth = async (req, res, next) => {
 };
 
 auth.softIdentity = softIdentity;
+const { previewIdentity } = require('./auth-preview'); // the preview-token read, a part file (CUSTOMER-DELINK 2)
+auth.previewIdentity = previewIdentity;
 module.exports = auth;
 /** a listed person session: a person token that carries a jti (not a key, not the shop's auto-raise token) */
 const isPersonSession = (claims) => claims.kind !== 'api_key' && claims.kind !== 'auto' && !!claims.jti;

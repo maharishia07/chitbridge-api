@@ -76,7 +76,7 @@ function post(port, body) {
     const row = ids.find((i) => i.user_id === '~acmetraders.cus-0001');
     assert.strictEqual(row.otp_contact, '9840012345'); assert.strictEqual(row.gstn, '33ABCDE1234F1Z5');
     const till = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-    assert.ok(/i\.otp_contact AS phone, i\.gstn/.test(till), 'till snapshot no longer reads otp_contact/gstn');
+    assert.ok(/i\.otp_contact AS phone, \$\{BUYER_TAX_ID_SQL\} AS gstn/.test(till), 'till snapshot no longer reads otp_contact/gstn');
     assert.ok(/FROM customer_list c/.test(till));
   });
   await ita('re-adding the same name (typed differently) -> 409 already in your customer list', async () => {

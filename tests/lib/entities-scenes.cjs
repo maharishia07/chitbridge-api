@@ -110,6 +110,8 @@ function extras(tools) {
     X('can-see-costs-owner', 'GET ' + at('/me/can-see-costs'), 200, {}),
     X('can-see-costs-staff', 'GET ' + at('/me/can-see-costs'), 200, { setup: { who: STAFF, sqlRows: row(/SELECT can_see_costs/, { can_see_costs: true }) } }),
     X('can-see-costs-fails', 'GET ' + at('/me/can-see-costs'), 500, { setup: { who: STAFF, sqlRows: sqlState('XX000', SECRET_SQL) } }),
+    X('preview-token-owner', 'POST ' + at('/me/preview-token'), 200, {}),
+    X('preview-token-fails', 'POST ' + at('/me/preview-token'), 500, { patch: { previewToken: { mint: () => { throw new Error(SECRET_SQL); } } } }),
     X('lookup-missing', 'GET ' + at('/lookup'), 400, {}),
     X('lookup-none', 'GET ' + at('/lookup'), 404, { url: at('/lookup?user_id=ghost') }),
     X('lookup-found', 'GET ' + at('/lookup'), 200, { url: at('/lookup?user_id=Shop-B'), setup: { sqlRows: answering(/FROM identities/, [{ identity_id: OTHER, bridge_id: 'BBBB3333', display_name: 'Shop B', user_id: 'shop-b' }]) } }),

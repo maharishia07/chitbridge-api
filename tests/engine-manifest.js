@@ -168,6 +168,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
      which is the test for adoption rather than engine. */
   'stock-from-chit.js',
+  'receipt-lines.js', /* WALK-D: which goods-in lines cannot move stock - reads stock-from-chit and the catalogue, decides no money */
+  'default-tax-rate.js', /* WALK-D: a registered shop's new product takes the pack's standard_rate; the rate is the pack's, the engine prices */
   /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
   'stock-sweep.js',
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
@@ -209,6 +211,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'starter-fields.js',
 ];
 const INFRA_LIBS = [
+  'profilemap.js', /* red1128: the one-line door engines v1.107.0 country.js requires for the adopted profile-map.js (lib/profilemap.js) */
   /* C11 10b/10d (2026-11-12): input-shape and wording helpers of the chit routes (RAIL-79 dispute sentence, RAIL-177/81 send lines, RAIL-135 list filters) and the one team-membership reader (ORD-80). Each decides no money, tax or rule. */
   'business-status.js', // R2-03: whether a business is erased or closed — the one read the auth judge and the sign-in door share
   'dispute-alert.js',
@@ -268,7 +271,7 @@ const INFRA_LIBS = [
   'pricing-contract.js',
   /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
   'chits-contract.js',
-  'chits-input.js',
+  'chits-input.js', 'chits-parts.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
   /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
@@ -556,6 +559,7 @@ const INFRA_LIBS = [
   'policy.js',             // reads policy flags; the flags are the governance, this is the reader
   'reqctx.js',             // request-scoped actor context (AsyncLocalStorage)
   'holder.js',             // M04: req.till — who holds a request (key / person / actor); built by middleware/auth, one shape
+  'preview-token.js',      // CUSTOMER-DELINK 2: the owner's 15-minute preview token (aud cb-shop-preview), request plumbing, no business rule
   'jwt-verify.js',         // E10: the ONE jwt.verify — JWT_SECRET then JWT_SECRET_PREV; request plumbing, no business rule
   'limiter-key.js', 'rate-limit.js', 'code-cooldown.js', // SEC-79 the limiters' bucket key · API-16 the one limiter factory (429 problem+json) · SEC audit 2026-11-16 one shopper code per contact a minute; request plumbing, no business rule
   'consent-standing.js',  // SEC audit 2026-11-16: which consent row stands (the customer's withdrawal outranks a staff yes); consent rows and SQL, no money or tax - beside privacy.js
@@ -594,7 +598,11 @@ const ENGINE_OTHER = [
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
-  'country-setup.js',
+  'country-setup.js', 'country-setup-merge.js', 'country-setup-clean.js', 'csv-decisions.js', 'books-hooks-use.js', 'profile-payee.js', 'work-unbilled.js', /* batch 1126 size splits: part files of country-setup · books-hooks · profile · work-rows - parts of infra files, no rule of an engine */
+  'books-advice-in.js',       /* B-F-17: a received payment advice read as my receipt - split from books-hooks.js, the chit decides, the posting is recordChitPayment; infra, no rule of an engine */
+  'books-moved-role.js',      /* F-66 (batch 1126): a ledger role handed back when the pack moved its code - chart bookkeeping of books.js, the pack's rule stays in the engine */
+  'consent-counts.js',        /* A-F-58: the one count of who agreed to offers, beside consent-standing.js - rows and SQL, no money or tax */
+  'country-asks.js',          /* AE-F-03: the questions a pack puts at setup and the answers kept per shop - beside country-setup.js, the pack decides which questions exist */
   'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
   'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
@@ -619,7 +627,7 @@ const ENGINE_OTHER = [
   'bill-privacy.js',
   /* [BOOKS v2] the five books engines, ADOPTED from chitbridge-engines v1.8.1 (engines.lock.json) — written only by
      tools/adopt.cjs, never edited here: the chart and roles, the debit/credit rules, open items, the reads, the pack. */
-  'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'bookpack.js',
+  'accounts-packs.js', 'posting.js', 'receivables.js', 'ledger.js', 'ledger-read.js', 'bookpack.js',
   /* ⭐ CS1 (2026-10-12): the registry of country packs, the India pack and the Australia pack (AU1), ADOPTED from chitbridge-engines (engines.lock.json) — first adoption on the server;
      CL1 (2026-10-12): the UAE pack (AE1) with them, reg-in · regulation at v1.37.0 — the tax bundle below carries the packs ahead of tax-packs, which reads the registry;
      BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
@@ -947,6 +955,8 @@ const ENGINE_OTHER = [
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* red1128 (21 Nov): modules the batch-1128 lanes added with no bucket. Whether each is engine, adoption or infra is cb-capability's call; listed here, said, never silently unclassified. */
+  'account-budget.js', 'client-ip.js', 'einvoice-note.js', 'holds-stock.js', 'match-hold.js', 'message-client-id.js', 'return-overdue.js', 'shop-country.js', 'supplier-list.js',
   /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the
      receivable rule is engine (books) or adoption (counter) needs cb-capability's call. */
   'upi-waiting.js',
@@ -1006,11 +1016,9 @@ const TILL_SHIPPABLE = {
   'govcontext.js': 'govcontext.browser.js', // ⭐ country from the device, for a counter with no shop yet // ⭐ the jurisdiction LAYER — what a country requires of a shop  // ⚠️ a GSTIN checked where it is typed — and named: '33 · Tamil Nadu'          // ⚠️ counted or measured — a plate is a thing, a kilo is a magnitude       // 'oru' and 'ஒரு' are one; a counter reads what is said to it
   'gs1.js':       'gs1.js',            // a barcode is scanned at the counter, so the key parser is at the counter
   'lots.js':      'lotfields.js',      // a lot's fields travel with the goods, not with the server
-
   /* copied out of lib/ — already UMD, so they load as they are */
   'rewards.js':   'rewards.js',        // a tender, computed while the customer is still standing there
   'screen.js':    'screen-kit.js',     // how the counter looks — themes, tiles, layouts, key sizes
-
   /* ⚠️ MASTERED IN chitbridge-web, copied INTO lib/ — the direction is the opposite of the five above, and
      guarding the lib copy would be guarding the wrong file. */
   'search.js':    'search-engine.js', // finding a product cannot wait for a network
@@ -1019,13 +1027,11 @@ const TILL_SHIPPABLE = {
   'tax.js':       'tax.js',            // and for tax: a bill printed offline is still a legal document — ADOPTED (chitbridge-engines), with tax-slab
   'locale.js':    'locale.browser.js', // region → language, currency, format
   'variant.js':   'variant.browser.js',// what makes two of the same product a different LINE
-
   /* ⚠️ THE ONE THIRD-PARTY FILE ON THE COUNTER. qrcode-generator 1.4.4 (MIT), copied from node_modules so the
      version is pinned in package.json and an upgrade shows up in a diff. A UPI QR is most needed with the line
      down, which is exactly when a CDN cannot be reached. */
   'qr.js':        'vendor:qrcode-generator',
 };
-
 /**
  * ⭐ WANTED NEXT, AND WHY — measured DB-free, not yet carried. This is not a plan; it is the shortlist the
  * plan would choose from, so the choosing is done against facts rather than memory.

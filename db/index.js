@@ -371,7 +371,8 @@ function inlineLiteral(v) {
 }
 function inlineSql(text, params) {
   const p = params || [];
-  const out = String(text).replace(/\$(\d+)/g, (m, n) => { const i = Number(n) - 1; if (i < 0 || i >= p.length) throw new Error('readBatch: $' + n + ' has no value'); return inlineLiteral(p[i]); });
+  /* VERIFY-GF-DB F8: a '$1' inside an author's quoted literal is text, not a placeholder; literals pass through untouched ('' is an escaped quote) */
+  const out = String(text).replace(/'(?:[^']|'')*'|\$(\d+)/g, (m, n) => { if (n === undefined) return m; const i = Number(n) - 1; if (i < 0 || i >= p.length) throw new Error('readBatch: $' + n + ' has no value'); return inlineLiteral(p[i]); });
   /* one statement per entry: a ';' followed by more SQL (outside a literal) is refused */
   if (/;\s*\S/.test(out.replace(/'[^']*'/g, ''))) throw new Error('readBatch: one statement per entry');
   return out;

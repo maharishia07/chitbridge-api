@@ -138,6 +138,15 @@ function memoryTemplates() {
   ok('the check is a READ: no chit and no entry changed', JSON.stringify(X.T.chits) === chitsBefore && X.T.entries.length === entriesBefore);
   X.T.identities[X.T.identities.length - 1].policy_flags.gst_registration = 'composition';
   ok('a composition shop (same GSTIN) charges none → lists none — the gate is tax-shelf.chargesTax, never "has a GSTIN"', kinds(await todo()).indexOf('bills_unrated') < 0);
+  /* supply kind, India 1.1.0 (Athi 21 Nov Q2: ask the owner): the catalogue's 0% slabs and items with no kind are ONE to-do row, the pack's own question, never a default; a composition shop is asked nothing */
+  X.T.kindless = { [SHOP]: { slabs: [{ id: 's9', name: 'Exempt goods' }], items: 1 } };
+  const zk0 = get(await todo(), 'zero_kind_unanswered');
+  ok('a composition shop charges none: the 0% question is not asked of it', !zk0);
+  X.T.identities[X.T.identities.length - 1].policy_flags.gst_registration = 'regular';
+  const zk = get(await todo(), 'zero_kind_unanswered');
+  ok('a registered India shop (pack 1.1.0): 1 slab + 1 product at 0% with no kind is ONE row of 2, the pack question in its words, the button opens the catalogue, the slab listed with its name suggestion', !!zk && zk.count === 2 && /Is this sale nil-rated, exempt or outside GST?/.test(zk.words) && zk.action.screen === 'catalogue' && zk.items.length === 1 && zk.items[0].id === 's9' && zk.items[0].suggested === 'exempt', JSON.stringify(zk));
+  X.T.kindless = { [SHOP]: { slabs: [], items: 0 } };
+  ok('answered (nothing waits): the row is gone', !get(await todo(), 'zero_kind_unanswered'));
   X.T.identities[X.T.identities.length - 1].policy_flags.gst_registration = 'regular';
   X.T.chits.filter((c) => c.chit_id === 'bill-70' || c.chit_id === 'bill-73').forEach((c) => { c.line_items[0].gst_rate = 5; }); /* both copies of bill-73 */
   ok('once the bill’s line carries a rate, the row is gone', kinds(await todo()).indexOf('bills_unrated') < 0);

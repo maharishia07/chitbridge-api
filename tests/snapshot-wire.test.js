@@ -1209,7 +1209,7 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
   const fin2 = page.slice(page.indexOf('async function finish(){'), page.indexOf('async function finish(){') + 3800);   /* +400 (M49, 2026-10-10): the refusals now record why (saleStop) · +400 (ORD-FIX O5): the refusals answer { ok: false } */
   /* TILL-B2 (2026-10-17): the tender moved to tenderParts — the rest is cashDue (rounded only where the pack rounds cash), the same one keystroke */
   const tp = page.slice(page.indexOf('function tenderParts('), page.indexOf('function tenderParts(') + 1200);
-  assert.ok(fin2.indexOf('parts = tenderParts(parts, m.net, tendered)') > 0 && tp.indexOf('if (!parts.length) {') > 0
+  assert.ok(page.slice(page.indexOf('async function billPartsOf(')).indexOf('parts = tenderParts(parts, billTotals.net, tendered)') > 0 && tp.indexOf('if (!parts.length) {') > 0
     && tp.indexOf('return [{ how: PICKED, amount: Math.min(tendered || rest, rest) }];') > 0 && tp.indexOf('if (tendered > 0 && rmoney(rest - tendered) >= 0.01)') > 0,
     'the one-keystroke path is gone — the ordinary cash sale must stay one keystroke');
 });
@@ -1255,7 +1255,7 @@ it('⭐⭐ the payment ways are read from where the snapshot writes them', () =>
   assert.ok(prof.indexOf('const PAY_SCHEMES = {') < 0, 'profile.js has its own copy of the payment schemes again');
   assert.ok(prof.indexOf('function countryOf(') < 0, 'profile.js has its own copy of countryOf again');
   /* the bridge that DOES belong there: where a shop's declared payees are kept */
-  assert.ok(prof.indexOf('function payeesOf(') > 0, 'nothing maps the stored profile to the capability inputs');
+  /* the bridge lives in the part file lib/profile-payee.js (batch 1126 size split); profile.js re-exports it */ assert.ok(fs.readFileSync(path.join(API, 'lib', 'profile-payee.js'), 'utf8').indexOf('function payeesOf(') > 0 && prof.indexOf("require('./profile-payee')") > 0, 'nothing maps the stored profile to the capability inputs');
 });
 
 /**

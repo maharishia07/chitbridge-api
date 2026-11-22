@@ -43,6 +43,7 @@ async function main() {
     const got = await list(port, who);
     check(label + ': 200 (it answered ' + got.status + ')', got.status === 200 && got.json && got.json.actors.length === 3, got.text.slice(0, 200));
     check(label + ': no auth_ref, password, key_jti or enrol anywhere in the body', SECRETS.every((secret) => !got.text.includes(secret)), got.text.slice(0, 300));
+    if (who === STAFF) { check(label + ': S11 a colleague gets no connector config at all (owner and manager only)', got.json.actors.every((person) => person.connector_config == null), got.text.slice(0, 300)); continue; }
     const shown = got.json.actors[0].connector_config;
     check(label + ': the shown keys stay (adapter, version, host, kit_id, counters, base_url, auth_type)', shown.adapter === 'tally' && shown.version === '1.4' && shown.host === 'BACKOFFICE' && shown.kit_id === 'kit-1' && shown.counters.pushed === 3 && shown.base_url === 'https://erp.example.com' && shown.auth_type === 'token', JSON.stringify(shown));
     check(label + ': only the shown keys are there', Object.keys(shown).sort().join() === 'adapter,auth_type,base_url,counters,host,kit,kit_id,version', Object.keys(shown).join());

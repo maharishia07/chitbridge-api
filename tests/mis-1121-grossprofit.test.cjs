@@ -15,11 +15,11 @@ const DIRECT = { AU: ['cost_of_sales'], AE: ['cost_of_sales'], IN: ['direct_expe
 for (const [country, groups] of Object.entries(DIRECT)) {
   const pack = require(path.join(__dirname, '..', 'lib', 'reg-' + country.toLowerCase()));
   const direct = (pack.expense_classes || []).filter((e) => groups.includes(e.group)).map((e) => e.role);
-  assert.ok(direct.includes('wages'), country + ': the pack files wages as a direct cost');
+  assert.ok(!direct.includes('wages'), country + ': wages are an operating expense since engines v1.102.0 (F-66)');
   for (const role of direct) assert.ok(R.COST_OF_SALES_ROLES.includes(role), country + ': ' + role + ' is a direct cost in the pack but not in the gross-profit list');
 }
-const g = R.grossOf([{ role: 'sales', amount_minor: 13734000 }], [{ role: 'wages', amount_minor: 5395115 }, { role: 'rent', amount_minor: 100000 }], 'AUD');
-assert.deepStrictEqual(g, { sales_minor: 13734000, cost_of_sales_minor: 5395115, gross_profit_minor: 8338885 }); /* 137,340.00 - 53,951.15 = 83,388.85; rent stays an operating expense */
+const g = R.grossOf([{ role: 'sales', amount_minor: 13734000 }], [{ role: 'freight_inward', amount_minor: 5395115 }, { role: 'wages', amount_minor: 4000000 }, { role: 'rent', amount_minor: 100000 }], 'AUD');
+assert.deepStrictEqual(g, { sales_minor: 13734000, cost_of_sales_minor: 5395115, gross_profit_minor: 8338885 }); /* 137,340.00 - 53,951.15 = 83,388.85; wages (6015) and rent stay operating expenses (batch 1126) */
 console.log('mis-1121-grossprofit: ok (gross 83,388.85)');
 
 /* F-67: the year box counts the months from the books' start to today — Jul (before the books) and Dec–Jun (to come) are not months of "0 of N locked". Hand: Aug, Sep, Oct, Nov = 4. */

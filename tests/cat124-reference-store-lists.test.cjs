@@ -111,7 +111,7 @@ const ALL = Object.keys(BP.BLUEPRINTS);
   await okA('R6 GET /lists reads the stores through the one reader', () => {
     const route = fs.readFileSync(path.join(API, 'routes', 'products.js'), 'utf8');
     const body = route.slice(route.indexOf("router.get('/lists'"), route.indexOf("router.get('/lists/adopt'") > 0 ? undefined : route.indexOf("router.get('/lists'") + 7000);
-    assert.ok(/refLists\.readStoreLists\(\{ query, withEntity \}\)/.test(body) && /refLists\.cardOf\(BP, item, stored\.get\(item\)\)/.test(body));
+    assert.ok(/refLists\.readStoreLists\(\{ query, withEntity \}\)/.test(body) && /refLists\.cardOf\(/.test(body) && /stored\.get\(item\)/.test(body)); /* fix-leak 1128: the card takes the shop's country list; the store rows only where the list is unchanged */
   });
   console.log('\n' + (pass + fail) + ' checks · ' + pass + ' passed · ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

@@ -19,7 +19,7 @@ test('a governed id is <country>-<scheme>-<key>, never a uuid', () => {
 
 test('the layer becomes definition-shaped rows — live, entity-less, rules carrying the rate; a slab without a rate is dropped', () => {
   const rows = G.slabsFromLayer(IN, 'IN');
-  assert.equal(rows.length, 3, 'IN-GST-BAD has no rate and must not be served');
+  assert.equal(rows.length, 7, 'IN-GST-BAD has no rate and must not be served; the list is the pack menu in force (IN-F-04): 0, 0.25, 1.5, 3, 5, 18, 40');
   const r18 = rows.find((r) => r.definition_id === 'IN-GST-18');
   assert.equal(r18.kind, 'tax'); assert.equal(r18.sub_kind, 'gst_slab'); assert.equal(r18.status, 'live');
   assert.equal(r18.entity_id, null);
@@ -74,7 +74,7 @@ test('jurisdictionFor: identities.country wins; no country is null whatever the 
 test('governedSlabsFor reads the layer for the jurisdiction and serves its slabs', async () => {
   const deps = { query: async () => ({ rows: [{ country: 'IN' }] }), regionLayer: async (c) => (c === 'IN' ? IN : null) };
   const rows = await G.governedSlabsFor('e1', deps);
-  assert.equal(rows.length, 3);
+  assert.equal(rows.length, 7);
   const none = await G.governedSlabsFor('e1', { query: async () => ({ rows: [{ country: 'US', currency_code: 'USD' }] }), regionLayer: async () => null });
   assert.deepEqual(none, []);
 });
@@ -90,6 +90,6 @@ test('⭐ an INR sub-region with no tax block of its own (TN, HI) inherits India
   const TN = { region_code: 'TN', currency: 'INR', jurisdiction: {} };
   const deps = { query: async () => ({ rows: [{ country: 'TN' }] }), regionLayer: async (c) => (c === 'IN' ? IN : c === 'TN' ? TN : null) };
   const rows = await G.governedSlabsFor('e1', deps);
-  assert.equal(rows.length, 3);
+  assert.equal(rows.length, 7);
   assert.equal(rows[0].governance.jurisdiction, 'IN');
 });

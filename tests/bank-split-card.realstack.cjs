@@ -156,14 +156,16 @@ async function main() {
     /* BB04-4: a locked month is refused (last: it locks the month) */
     const periods = (await call(ownerOf(M1), 'GET', '/api/books/periods')).body;
     const rows = Array.isArray(periods.periods || periods.rows || periods) ? (periods.periods || periods.rows || periods) : [];
-    const todayRow = rows.find((r) => String(r.start_date).slice(0, 10) <= day && String(r.end_date).slice(0, 10) >= day) || rows.find((r) => r.status === 'open');
-    if (!todayRow) ok('BB04-4 a period row covering today was found', false, JSON.stringify(periods).slice(0, 300));
+    /* K-F-01: a month still running is never locked, so the month locked here is the latest OPEN one that has ended, and the settlements are dated inside it */
+    const todayRow = rows.filter((r) => Number(r.period) >= 1 && r.status === 'open' && String(r.end_date).slice(0, 10) < day).sort((x, y) => String(y.end_date).localeCompare(String(x.end_date)))[0];
+    const inLocked = todayRow ? { date: String(todayRow.start_date).slice(0, 10) } : {};
+    if (!todayRow) ok('BB04-4 an open period that has ended was found', false, JSON.stringify(periods).slice(0, 300));
     else {
       const fy = todayRow.fiscal_year || periods.fiscal_year;
       const lk = await call(ownerOf(M1), 'POST', '/api/books/periods/' + fy + '/' + Number(todayRow.period) + '/lock', { body: {} });
-      const locked = await own(settle(6, { fee: 54.55, fee_tax_minor: 545 }));
+      const locked = await own(settle(6, { fee: 54.55, fee_tax_minor: 545, ...inLocked }));
       ok('BB04-4 the owner locks the month; the settlement is refused in the ledger\'s words (409 PERIOD_LOCKED), nothing posted', lk.status === 200 && locked.status === 409 && /lock/i.test(JSON.stringify(locked.body)) && (await stored(M1, '%' + ref(6))).length === 0, JSON.stringify([lk.status, locked.status, locked.body]));
-      const viaAdv = await adv(A, M1, 'POST', '/events', settle(7));
+      const viaAdv = await adv(A, M1, 'POST', '/events', settle(7, inLocked));
       ok('BB04-4 the adviser who may post meets the same refusal, same code', viaAdv.status === 409 && code(viaAdv) === code(locked), JSON.stringify([viaAdv.status, viaAdv.body]));
     }
   } finally { server.close(); }

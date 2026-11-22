@@ -21,6 +21,10 @@ const t = (name, fn) => (async () => { try { await fn(); console.log('  \x1b[32m
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'ai-vision-test';
 process.env.ANTHROPIC_API_KEY = 'test-key-not-used';
 
+/* 1128 sec3 S8 (7c50fbc84, on purpose): the platform spend ceiling FAILS CLOSED when its read errors, so these checks need a database that answers it. A stand-in answers: no spend today, nothing on the ledger, no wallet. No model is called either way. */
+const dbPath = require.resolve('../db');
+const dbAnswer = (sql) => (/ai_global_spend_today/.test(sql) ? { rows: [{ spent: 0 }] } : /FROM usage_ledger WHERE entity_id/.test(sql) ? { rows: [{ h: 0, d: 0, spent: 0 }] } : { rows: [] });
+require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: { query: async (q) => dbAnswer(String(q)), withEntity: async (_e, fn) => fn({ query: async (q) => dbAnswer(String(q)) }), readBatch: async () => [] } };
 const ai = require('../lib/ai');
 
 /** Intercept the model call and hand back its body — no network, no spend. */

@@ -103,15 +103,18 @@ ok('sourceFromRow: null without items (the caller then uses the code seed); a ro
 });
 
 const shelf = require('../lib/tax-shelf');
-ok('shelfFromRows: NO GSTIN, NO GST (no shelf) unless a governed slab names another scheme; with a GSTIN the shelf carries slabs, categories, face, items', () => {
+ok('shelfFromRows: NO GSTIN, NO GST (no shelf) unless the shop pack collects without a tax id (TAX01-4); with a GSTIN the shelf carries slabs, categories, face, items', () => {
   const defs = { rows: [{ kind: 'category', name: 'C' }] };
   assert.strictEqual(shelf.shelfFromRows({ defs, items: { rows: [] }, gstn: '  ', face: null, gov: [] }), null);
   const got = shelf.shelfFromRows({ defs, items: { rows: [{ item_id: 1 }] }, gstn: '29ABCDE1234F1Z5', face: null, gov: [] });
   assert.deepStrictEqual(got.face, {});
   assert.strictEqual(got.categories.length, 1);
   assert.strictEqual(got.items.length, 1);
-  const vat = shelf.shelfFromRows({ defs, items: { rows: [] }, gstn: '', face: {}, gov: [{ scheme: 'VAT', id: 'v' }] });
-  assert.ok(vat, 'a VAT-type governed slab is not gated on a GSTIN');
+  /* TAX01-4: the exception is the pack's (reg-us collect_without_tax_id), read from the shop's country; a slab row's own scheme is no test (the rows never carry it) */
+  const us = shelf.shelfFromRows({ defs, items: { rows: [] }, gstn: '', zone: { country: 'US' }, face: {}, gov: [] });
+  assert.ok(us, 'a pack that collects without a tax id is not gated on one');
+  const vat = shelf.shelfFromRows({ defs, items: { rows: [] }, gstn: '', zone: { country: 'AE' }, face: {}, gov: [{ scheme: 'VAT', id: 'v' }] });
+  assert.strictEqual(vat, null, 'AE with no TRN: no shelf, as the invoice charges none');
 });
 
 /* ── THE GUARD: one definition each, and the shop's own read goes through it ───────────────────────────────────────────── */

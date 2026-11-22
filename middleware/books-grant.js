@@ -112,7 +112,7 @@ const adviserDoor = (method, fullPath) => (ADVISER_TESTS.find((item) => item.tes
  * THE AUDITOR'S EVIDENCE READS (RC-11, ISA 230; DECISIONS 19 Nov): the auditor reads, READ ONLY, the review/sign-off record of the books under audit (the action queue and one action with its steps) and the message thread of a chit of those books. Listed by METHOD and full path;
  * the adviser reads them too. Posting stays refused, and says why (BOOKS_FOR_READ_ONLY). The thread route keeps the EXTERNAL messages only for a grant (routes/chits GET /:chit_id/messages): the client's internal notes are not audit evidence.
  */
-const EVIDENCE_PATHS = [/^\/api\/books-actions\/?$/, /^\/api\/books-actions\/[^/]+\/?$/, /^\/api\/chits\/[^/]+\/messages\/?$/];
+const EVIDENCE_PATHS = [/^[/]api[/]tax[/]gstr[/]?$/ /* M-F-02 (21 Nov): GSTR-1 / 3B are returns, read like the books' own returns by an adviser or auditor grant (GRANT_READS); the route gates them with moneyReader */, /^\/api\/books-actions\/?$/, /^\/api\/books-actions\/[^/]+\/?$/, /^\/api\/chits\/[^/]+\/messages\/?$/];
 const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
 /** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */

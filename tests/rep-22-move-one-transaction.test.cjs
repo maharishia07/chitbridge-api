@@ -50,7 +50,9 @@ const { moveStatus } = require(path.join(API, 'lib', 'chit-move'));
   ok('the status read and the write ran in the SAME transaction', iRead >= 0 && iUpdate >= 0 && LOG[iRead].tx === LOG[iUpdate].tx, iRead + '/' + iUpdate + ' ' + JSON.stringify(LOG.map((x) => x.tx)));
   ok('the header read ran in that transaction too (validation + copy for the freeze)', iHeader >= 0 && iUpdate >= 0 && LOG[iHeader].tx === LOG[iUpdate].tx);
   const firstTx = iRead >= 0 ? LOG[iRead].tx : -1;
-  ok('budget: exactly ONE transaction is opened before the status write (the read is not its own)', iUpdate >= 0 && new Set(LOG.slice(0, iUpdate + 1).map((x) => x.tx)).size === 1 && LOG[0].tx === firstTx, JSON.stringify(LOG.slice(0, iUpdate + 1).map((x) => x.tx)));
+  /* 1128 (M5/N7, on purpose): what the transaction needs from OTHER connections is read BEFORE it opens, on the pool (tx 0): the memoised installation list (one cold read per TTL). Those are not a transaction; the budget is: exactly ONE transaction is opened, and it holds the status read. */
+  const txsBefore = new Set(LOG.slice(0, iUpdate + 1).map((x) => x.tx).filter((t) => t !== 0));
+  ok('budget: exactly ONE transaction is opened before the status write (the read is not its own; the pool pre-read of the installation list is not a transaction)', iUpdate >= 0 && txsBefore.size === 1 && txsBefore.has(firstTx), JSON.stringify(LOG.slice(0, iUpdate + 1).map((x) => x.tx)));
   ok('that transaction holds at least the 3 statements (read, header, write)', LOG.filter((x) => x.tx === firstTx).length >= 3, String(LOG.filter((x) => x.tx === firstTx).length));
   done();
 })().catch((e) => { console.error = origErr; console.error(e); process.exit(1); });

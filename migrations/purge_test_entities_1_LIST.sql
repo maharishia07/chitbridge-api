@@ -1,5 +1,6 @@
 -- purge_test_entities · step 1 of 3 — LIST what would go. Read-only. ONE result set.
 -- A test entity is one the e2e suite minted: e2e.<ts>.<n>@test.example, e2eco-<id>, <name>@test-cb.com, the pool accounts.
+-- A10: the ROUTINE now deletes by identities.is_test = true only; this list still shows the NAME patterns, so compare the two: a row here that the routine will not take is a shop to look at by hand.
 -- ⚠️ Read every row before step 3. A real business must NOT appear here. If one does, STOP and tell Claude.
 WITH test_entities AS (
   SELECT identity_id, identity_type, user_id, display_name, email, created_at

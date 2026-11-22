@@ -1,10 +1,10 @@
 {
  "version": 1,
  "stage": "2b",
- "updated": "2026-11-21",
- "total": 691,
+ "updated": "2026-11-22",
+ "total": 692,
  "not_meeting": 0,
- "codes_total": 776,
+ "codes_total": 788,
  "codes_pending": 0,
  "raw_error_writes": 1,
  "routes_without_does": 1,
@@ -19,36 +19,14 @@
  },
  "reported_failing": {
   "bfla_role_check": 0,
-  "parameterised_query": 0,
-  "rate_limited": 512,
-  "role_matrix": 627,
-  "junk_fuzz": 50,
+  "parameterised_query": 1,
+  "rate_limited": 513,
+  "role_matrix": 628,
+  "junk_fuzz": 51,
   "resource_cap": 0,
   "audit_logged": 347,
   "stale_write_refused": 62,
-  "documented_example": 689
+  "documented_example": 690
  },
- "debt": [
-  {
-   "route": "POST /api/signin/ask",
-   "opened": "2026-11-07",
-   "expires": "2026-11-21",
-   "pr": "API-47",
-   "reason": "2026-11-08: error_shape and codes_registered are cured (ask answers every refusal as a Problem; l2/signin-error-shape). Still red: output_allowlist and trips_budgeted (the speed and hardening-evidence areas). Not re-signed: a route is signed only when all 13 columns pass."
-  },
-  {
-   "route": "POST /api/signin/verify",
-   "opened": "2026-11-07",
-   "expires": "2026-11-21",
-   "pr": "API-47",
-   "reason": "2026-11-08: error_tests and status_codes are cured (the gate names 403/409/503, each tested; l2/signin-error-shape). Still red: output_allowlist and trips_budgeted (the speed and hardening-evidence areas). Not re-signed: a route is signed only when all 13 columns pass."
-  },
-  {
-   "route": "POST /api/pricing/price",
-   "opened": "2026-11-08",
-   "expires": "2026-11-22",
-   "pr": "API-43",
-   "reason": "2026-11-08 Athi (PM/ATHI-DECISIONS API-43 holds on pricing/price): keyed outward, an unknown body key is IGNORED until a /v2 path with notice. strict_input reads no by decision, so the signed route (PR#989) is partial again; re-sign when /v2 closes it."
-  }
- ]
+ "debt": []
 }

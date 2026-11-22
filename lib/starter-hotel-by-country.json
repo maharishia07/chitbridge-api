@@ -1,0 +1,209 @@
+{
+  "_about": "The hotel starter list shown to a shop outside India, by the shop country (batch 1128 fixLeak). DATA, read by lib/catalogue-blueprint.js localised(); \"home\" is the country the built-in (Chennai) list belongs to. The empty-string key is the NEUTRAL set for a shop with no country or one with no set of its own. Unpriced on purpose.",
+  "home": "IN",
+  "sets": {
+    "AU": {
+      "outcome": "a counter that can take a café order and print a bill today",
+      "categories": [
+        "Breakfast",
+        "Mains",
+        "Drinks",
+        "Bakery"
+      ],
+      "starter": [
+        [
+          "Eggs on toast",
+          "plate",
+          "Breakfast"
+        ],
+        [
+          "Avocado toast",
+          "plate",
+          "Breakfast"
+        ],
+        [
+          "Porridge",
+          "plate",
+          "Breakfast"
+        ],
+        [
+          "Chicken parmigiana",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Fish and chips",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Meat pie",
+          "piece",
+          "Mains"
+        ],
+        [
+          "Garden salad",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Flat white",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Long black",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Tea",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Lamington",
+          "piece",
+          "Bakery"
+        ],
+        [
+          "Muffin",
+          "piece",
+          "Bakery"
+        ]
+      ]
+    },
+    "AE": {
+      "outcome": "a counter that can take a cafeteria order and print a bill today",
+      "categories": [
+        "Starters",
+        "Mains",
+        "Drinks",
+        "Sweets"
+      ],
+      "starter": [
+        [
+          "Hummus and bread",
+          "plate",
+          "Starters"
+        ],
+        [
+          "Falafel",
+          "plate",
+          "Starters"
+        ],
+        [
+          "Fattoush",
+          "plate",
+          "Starters"
+        ],
+        [
+          "Shawarma plate",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Grilled chicken",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Rice and lamb",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Mixed grill",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Arabic coffee",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Karak tea",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Fresh juice",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Luqaimat",
+          "plate",
+          "Sweets"
+        ],
+        [
+          "Umm Ali",
+          "piece",
+          "Sweets"
+        ]
+      ]
+    },
+    "": {
+      "outcome": "a counter that can take a food order and print a bill today",
+      "categories": [
+        "Mains",
+        "Sides",
+        "Drinks",
+        "Desserts"
+      ],
+      "starter": [
+        [
+          "Main dish A",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Main dish B",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Main dish C",
+          "plate",
+          "Mains"
+        ],
+        [
+          "Side dish A",
+          "plate",
+          "Sides"
+        ],
+        [
+          "Side dish B",
+          "plate",
+          "Sides"
+        ],
+        [
+          "Hot drink",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Tea",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Cold drink",
+          "cup",
+          "Drinks"
+        ],
+        [
+          "Dessert A",
+          "piece",
+          "Desserts"
+        ],
+        [
+          "Dessert B",
+          "piece",
+          "Desserts"
+        ]
+      ]
+    }
+  }
+}

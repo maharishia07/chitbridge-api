@@ -1,14 +1,11 @@
 {
   "limit": 80,
-  "long_functions": 111,
-  "worst_complexity": 98,
-  "worst_at": "routes/catalogue.js POST /:bridge_id/order/confirm",
+  "long_functions": 108,
+  "worst_complexity": 103,
+  "worst_at": "lib/tax-engine.browser.js determine_",
   "long": {
     "lib/adopt.js": [
       "consider"
-    ],
-    "lib/ai.js": [
-      "invokeSkill"
     ],
     "lib/assign.js": [
       "byPerson"
@@ -52,7 +49,6 @@
       "importLeads"
     ],
     "lib/csv-preflight.js": [
-      "applyDecisions",
       "matchHeader",
       "preflight"
     ],
@@ -206,8 +202,7 @@
       "POST /starter-columns"
     ],
     "routes/relationships.js": [
-      "GET /suppliers/availability",
-      "POST /suppliers"
+      "GET /suppliers/availability"
     ],
     "routes/schemas.js": [
       "GET /fields",

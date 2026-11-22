@@ -75,13 +75,13 @@ const { ok, eq, done } = counter();
   ok('a journal that does not balance is refused (422) and posts nothing', unbal.status === 422 && !T.entries.some((e) => e.narration === 'Off by a rupee'), JSON.stringify(unbal.body));
 
   /* ── locked month, owner only, plain questions ── */
-  await q('POST', '/periods/2026-27/7/lock', { reason: 'GSTR-1 filed' });
+  await q('POST', '/periods/2026-27/6/lock', { reason: 'GSTR-1 filed' });
   const nl = T.entries.length;
   const locked = [];
-  for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-L', date: '2026-10-06' }) }); if (r.status !== 409 || r.body.code !== 'PERIOD_LOCKED') locked.push(name + ' → ' + r.status); }
+  for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-L', date: '2026-09-06' }) }); if (r.status !== 409 || r.body.code !== 'PERIOD_LOCKED') locked.push(name + ' → ' + r.status); }
   ok('a locked month refuses every event (409 PERIOD_LOCKED)', locked.length === 0, locked.join(' · '));
   ok('…and leaves nothing behind', T.entries.length === nl);
-  await q('POST', '/periods/2026-27/7/unlock', { reason: 'test' });
+  await q('POST', '/periods/2026-27/6/unlock', { reason: 'test' });
   R.asStaff();
   const refused = [];
   for (const [name, body] of EVENTS) { const r = await q('POST', '/events', { event: Object.assign({}, body, { client_ref: body.client_ref + '-S' }) }); if (r.status !== 403) refused.push(name + ' → ' + r.status); }
@@ -134,7 +134,7 @@ const { ok, eq, done } = counter();
   const dnt = entryOf('ev:debit_note:dn2');
   ok('with tax (5 %, same state): the input tax comes back — Dr supplier ₹105 · Cr Purchase returns ₹100 · Cr CGST ₹2.50 · Cr SGST ₹2.50', dnTax.status === 200 && dnt && JSON.stringify(linesOf(dnt)) === JSON.stringify([['2100', 10500, 0], ['5090', 0, 10000], ['2210', 0, 250], ['2211', 0, 250]]), JSON.stringify(dnt ? linesOf(dnt) : dnTax.body));
   const dnNoGst = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn3', lines: [{ name: 'x', qty: 1, unit_price: 10, gst_rate: 18 }] }) });
-  ok('a taxed difference with no supplier tax number is asked for it (400), never posted with the tax guessed', dnNoGst.status === 400 && /number is needed/.test(dnNoGst.body.message) && !entryOf('ev:debit_note:dn3'), JSON.stringify(dnNoGst.body));
+  ok('a taxed difference with no supplier tax number is asked for it (400), never posted with the tax guessed', dnNoGst.status === 400 && /GSTIN is needed/.test(dnNoGst.body.message) && !entryOf('ev:debit_note:dn3'), JSON.stringify(dnNoGst.body));
   /* ── CTRY-139 · a DEBIT NOTE is never price-banded: a 500 rate difference on an apparel line (hsn 6109) at 18% keeps the ORIGINAL bill's 18% (the band would read the delta's own value, 5%): Dr supplier 590.00 · Cr Purchase returns 500.00 · Cr CGST 45.00 · Cr SGST 45.00 (hand-worked) ── */
   const dnApparel = await q('POST', '/events', { event: Object.assign({}, DN, { client_ref: 'dn4', supplier_gstin: '33AAAAA0000A1Z5', my_gstin: '33BBBBB0000B1Z5', lines: [{ name: 'Rate difference', qty: 1, unit_price: 500, gst_rate: 18, hsn: '6109' }] }) });
   const dnApp = entryOf('ev:debit_note:dn4');

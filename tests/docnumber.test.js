@@ -69,10 +69,8 @@ it('⚠️⚠️ a credit note draws its OWN series, and an unknown kind must ne
   assert.ok(/^C\//.test(credit), 'a credit note is tagged C: ' + credit);
   assert.ok(D.check(credit, 'IN').ok, credit + ' (' + credit.length + ') is over the limit');
 
-  /* ⚠️ AND THE TRAP ITSELF, ASSERTED. A kind nobody registered still silently becomes a sale number — so this
-     is the behaviour to know about, not a bug to be surprised by later. Register the kind. */
-  assert.strictEqual(D.compose({ country: 'IN', prefix: 'C1', kind: 'nonsense', at: AT, seq: 7 }), sale,
-    'an unregistered kind no longer falls back to the sale series — if that changed deliberately, move this line');
+  /* red1128: the trap is CLOSED (VERIFY-TAX-01 row 16, engines v1.107.0): a kind nobody registered used to become a sale number silently; compose now throws naming the kinds. */
+  assert.throws(() => D.compose({ country: 'IN', prefix: 'C1', kind: 'nonsense', at: AT, seq: 7 }), /unknown kind "nonsense"/, 'an unregistered kind is refused, never the sale series');
 });
 
 it('⚠️ a credit note spends one more character than a sale, so its till-id ceiling is one lower', () => {

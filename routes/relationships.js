@@ -35,9 +35,7 @@ const customerGroups = require('../lib/customer-groups'); // the one segment exp
 const orderInput = require('../lib/order-input');
 /* ⭐ SPEC-books-v2 §4: the party fields (legal name, party no, credit days/limit, state, tax ids) live ON these lists */
 const partyFields = require('../lib/party-fields');
-const { liveSql, hiddenSql, restoredAnswer } = require('../lib/party-live');
-const { restore } = require('../lib/party-restore');
-const SL_HIDDEN = hiddenSql('sl'); // the mirror: a removed supplier row (CRM-247)
+const { liveSql, restoredAnswer } = require('../lib/party-live');
 const SL_NOT_SYSTEM = require('../lib/party-live').notSystemSql('sl'); // the installation root is not one of the shop's suppliers (the same rule lib/crm.js assemble applies)
 const { textOf } = require('../lib/input-hygiene');
 const SL_LIVE = liveSql('sl'); // the live-row predicate on the supplier_list alias `sl`, spelled once like A_BUSINESS (a constant in the SQL, never an interpolated call) // CRM-247: a deleted party's one predicate, the way back, and the answer's words
@@ -142,25 +140,27 @@ async function addLocalSupplier(db, owner, name, fields) {
   return Object.assign({ local }, await listSupplier(db, owner, local.identity_id, fields));
 }
 
-/**
- * listSupplier(db, owner, partyId, fields) → { dup: true } (already on the live list) · { restored: true } (it was DELETED: CRM-247 brings the same record back, nothing new is written) · {} (the row was added).
- * The one place both doors (a name, a ChitBridge business) look at the list before they write.
- */
-async function listSupplier(db, owner, partyId, fields) {
-  const held = await db.query(`SELECT ${SL_HIDDEN} AS hidden FROM supplier_list sl WHERE sl.owner_entity_id = $1 AND sl.supplier_entity_id = $2`, [owner, partyId]);
-  if (held.rows.length > 0) {
-    if (!held.rows[0].hidden) return { dup: true };
-    await restore(db, owner, partyId);
-    return { restored: true };
-  }
-  await db.query(
-    `INSERT INTO supplier_list (owner_entity_id, supplier_entity_id, supply_kind, category, nickname, notes, preferred, added_via)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'manual')`,
-    [owner, partyId, fields.kind, fields.category, fields.nickname, fields.notes, fields.preferred]
-  );
-  return {};
-}
+/* listSupplier: lib/supplier-list.js — the one write of a supplier row (a name, a business and a received bill all use it) */
+const { listSupplier } = require('../lib/supplier-list');
 
+/** ⭐ AE-F-19 · ADD THE SELLER OF THIS BILL AND POST IT: the seller's own key (the sender of my received copy), never a minted twin of the same name; then the parked bill posts */
+async function addSellerOfBill(req, res, owner, forBill, fields) {
+  const { kind, category, nickname, notes, preferred } = fields;
+  const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, { kind, category, nickname, notes, preferred });
+  if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
+  const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
+  return res.json({ message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: kind, category, nickname, notes, preferred }, books: done.books });
+}
+/** the supplier row's own fields from a request body: kind resale | own_use, category, nickname, notes, preferred */
+function supplierFieldsOf(body) {
+  return {
+    kind: body.supply_kind === 'own_use' ? 'own_use' : 'resale',
+    category: sanitise(body.category || '') || null,
+    nickname: sanitise(body.nickname || '') || null,
+    notes: sanitise(body.notes || '') || null,
+    preferred: body.preferred === true || body.preferred === 'true'
+  };
+}
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
@@ -214,14 +214,14 @@ router.post(
       const owner = ctx(req);
       const bridge = textOf(req.body.supplier_bridge_id);
       const localName = sanitise(textOf(req.body.name)) || null;
-      const kind = req.body.supply_kind === 'own_use' ? 'own_use' : 'resale';
-      const category = sanitise(req.body.category || '') || null;
-      const nickname = sanitise(req.body.nickname || '') || null;
-      const notes = sanitise(req.body.notes || '') || null;
-      const preferred = req.body.preferred === true || req.body.preferred === 'true';
-
-      if (!bridge && !localName)
+      const fields = supplierFieldsOf(req.body);
+      const { kind, category, nickname, notes, preferred } = fields;
+      const forBill = textOf(req.body.for_bill);
+      if (!bridge && !localName && !forBill)
         return problem(req, res, { status: 400, ...words.needSupplierParty() });
+
+      /* ⭐ AE-F-19: add the seller of this bill and post it */
+      if (forBill) return addSellerOfBill(req, res, owner, forBill, fields);
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
          user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add
@@ -238,6 +238,7 @@ router.post(
         if (added.dup) return problem(req, res, { status: 409, ...words.listed(localName + ' is already in your supplier list') });
         const local = added.local;
         const localNo = await numberParty(owner, local.identity_id);
+        require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
         return res.json({
           message: 'Supplier added',
           ...restoredAnswer(added.restored, local.display_name),
@@ -247,15 +248,10 @@ router.post(
             party_no: localNo,
             display_name: local.display_name,
             on_rail: false,
-            supply_kind: kind,
-            category,
-            nickname,
-            notes,
-            preferred
+            supply_kind: kind, category, nickname, notes, preferred
           }
         });
       }
-
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
       const sup = await query(
@@ -269,12 +265,14 @@ router.post(
 
       const listed = await withEntity(owner, (db) => listSupplier(db, owner, sup.rows[0].identity_id, { kind, category, nickname, notes, preferred })); /* CRM-247: a deleted supplier comes back */
       if (listed.dup) return problem(req, res, { status: 409, ...words.listed('Already in your supplier list') });
+      await require('../lib/supplier-list').postWaiting(owner); /* AE-F-19: a bill parked for this seller posts now, not at the nightly sweep */
 
       /* ⭐ ON THE RAIL WAS ASSERTED, NOW ASKED (2026-10-02): an inactive business, or one in another sandbox, is found by
          the lookup above but cannot trade with this shop — lib/istest mayTrade, b249's rule. Added anyway (the list is the
          shop's), but it says so now rather than at the first order. */
       const trade = await require('../lib/istest').mayTrade(owner, sup.rows[0].identity_id);
       const supNo = await numberParty(owner, sup.rows[0].identity_id);
+      require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
       res.json({
         message: trade.ok ? 'Supplier added' : 'Supplier added — orders to them stay here only: ' + trade.why,
         ...restoredAnswer(listed.restored, sup.rows[0].display_name),
@@ -284,11 +282,7 @@ router.post(
           on_rail: !!trade.ok,
           party_no: supNo,
           ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
-          supply_kind: kind,
-          category,
-          nickname,
-          notes,
-          preferred
+          supply_kind: kind, category, nickname, notes, preferred
         }
       });
     } catch (err) {

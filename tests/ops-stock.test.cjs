@@ -43,6 +43,9 @@ mock('/middleware/auth', Object.assign((req, res, next) => { req.identity = WHO;
   entityOf: (req) => (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
   requireScope: () => (req, res, next) => next(),
 }));
+/* 1128 WALK-H H-F-05 (on purpose): Home's Operations card first asks lib/holds-stock whether the shop keeps stock at all; a shop that does not gets one sentence, no alarm. This file is about the shelf, so the stand-in says yes; the no-stock sentence has its own check below. */
+let HOLDS = true;
+mock('/lib/holds-stock', { holdsStockOf: async () => HOLDS });
 require(API + '/lib/schema').hasTable = async (tb) => (tb === 'stock_balance' ? HAS_TABLE : true);
 require(API + '/lib/cost').canReadSafe = async () => MAY_COST;
 
@@ -89,6 +92,9 @@ function get(port, p) {
   HAS_TABLE = true; r = await get(port, '/api/facts/operations');
   t('facts/operations: on the shelf · below zero', r.json.lines.map((l) => [l.text, l.tone || null]), [['1 item on the shelf', null], ['1 item below zero', 'dn']]);
   t('facts/operations: two trips — the shelf and the counted flags (R104), never one per item', r.trips, 2);
+  HOLDS = false; r = await get(port, '/api/facts/operations'); HOLDS = true;
+  t('facts/operations: a shop that keeps no stock says so, no below-zero alarm (H-F-05)', [r.json.lines.map((l) => l.text), r.json.figures.below_zero], [['This shop keeps no stock'], 0]);
+  r = await get(port, '/api/facts/operations');
   t('facts/operations: no "low" figure (no reorder level is kept)', /\blow\b/i.test(JSON.stringify(r.json)), false);
   t('facts/operations is a card the route knows', typeof home.BUILD.operations, 'function');
 

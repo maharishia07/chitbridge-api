@@ -23,8 +23,9 @@ const check = (name, ok) => { if (ok) pass++; else { fail++; console.log('  FAIL
   check('Arjun holds 3', withFacts({ identity_id: 'arjun' }, facts).open_load === 3);
   check('Priya holds 2', withFacts({ identity_id: 'priya' }, facts).open_load === 2);
   const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'actors.js'), 'utf8');
-  const get = src.slice(src.indexOf("router.get('/', auth, ...checked('GET /')"));
-  const list = get.slice(0, get.indexOf('// ── POST /api/actors/:id/otp'));
+  /* red1128: the list route was split (fn-size): the read is readActorList, the route calls it */
+  const from = src.indexOf('async function readActorList');
+  const list = src.slice(from, src.indexOf('// ── POST /api/actors/:id/otp'));
   check('the people list runs inside withEntity (RLS sees the shop)', /await withEntity\(entity_id, async \(shop\)/.test(list));
   check('the load and the facts read on that binding', /factsOf\(queryInShop,/.test(list) && /breakStatusCounts\(entity_id, queryInShop\)/.test(list));
   check('no context-free db( in the list route', !/await db\(/.test(list));

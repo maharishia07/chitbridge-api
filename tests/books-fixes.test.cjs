@@ -241,7 +241,7 @@ const parties = (X) => X.T.parties.push({ owner: SHOP, party_id: MALA, party_no:
     const r = await K.retryOutbox(SHOP, 2);
     ok('with room for two and three stuck rows ahead of it, the new row is still tried — and posts', r.tried === 2 && r.posted === 1 && X.T.entries.some((e) => e.source_ref === 'chit:' + good), JSON.stringify(r));
     const sql = require('fs').readFileSync(path.join(H.API, 'lib', 'books-store.js'), 'utf8');
-    ok('…and the real statement orders the waiting list by tries, then id', /FROM books_outbox\s+WHERE entity_id = \$1 AND done_at IS NULL ORDER BY tries, id LIMIT \$2/.test(sql.replace(/\s+/g, ' ')));
+    ok('…and the real statement orders the waiting list by tries, then id', /FROM \$\{OPEN_ROWS_SQL\} ORDER BY tries, id LIMIT \$2/.test(sql.replace(/\s+/g, ' ')) && /WHERE entity_id = \$1 AND done_at IS NULL ORDER BY COALESCE/.test(sql.replace(/\s+/g, ' ')));
   });
 
   /* ═══ M9 · money out to any id on any date ═══ */

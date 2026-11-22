@@ -9,9 +9,9 @@
 -- of those through a foreign key without an entity_id of its own (schema_fields → entity_schemas was the one that
 -- stopped the first run: 23503 on identities). Nothing here names a table, so nothing can throw 42P01.
 --
--- A TEST entity is one the e2e suite minted, by pattern only:
---   email  …@test.example | …@test-cb.com      user_id / display_name  e2eco-… | e2e.pool… | E2E Pool …
--- A real business never matches these patterns. Change the pattern in ONE place: the CTE inside the function.
+-- A TEST entity is one with identities.is_test = true (a generated column: population <> 'live', one-way by trigger) — NOTHING ELSE. VERIFY-EL-DB A10 (batch 1128): it used to match
+-- names and e-mails (e2eco-… | E2E Pool … | @test.example | @test-cb.com), which could remove a real shop with such a name. The pattern survives only in the read-only LIST file.
+-- ⚠️ A shop the e2e suite minted that is still population = live is NOT purged now: the dry run (purge_test_entities(true)) shows what would go, read it first.
 -- Widened 20 Oct (DB-80): a shop whose parent is a test shop is one too (any depth), and every non-entity identity under a test
 -- shop goes with it (staff logins AND customers), after the rows that cite them. That run left 3,125 shop rows blocked by 115
 -- customers and 10 sub-shops. NOT all-or-nothing: each table's error is caught and reported (rows = -1), the rest still goes.
@@ -28,9 +28,7 @@ DECLARE t text; n bigint; ids uuid[]; kids uuid[]; more uuid[]; pass int; progre
 BEGIN
   SELECT array_agg(identity_id) INTO ids FROM identities
    WHERE identity_type = 'entity'
-     AND ( email ILIKE '%@test.example' OR email ILIKE '%@test-cb.com'
-        OR user_id ILIKE 'e2eco-%' OR display_name ILIKE 'e2eco-%'
-        OR user_id ILIKE 'e2e.pool%' OR display_name ILIKE 'E2E Pool%' );
+     AND is_test = true;   /* VERIFY-EL-DB A10: the flag only, never a name or an e-mail pattern (a real shop called 'E2E Pool Supplies' must not be matched) */
   IF ids IS NULL THEN what := 'nothing to purge'; detail := ''; rows := 0; RETURN NEXT; RETURN; END IF;
 
   /* a shop whose parent is a test shop is test data too, at any depth (20 Oct: 10 sub-shops kept their parents alive) */
@@ -145,6 +143,9 @@ BEGIN
   END;
   RETURN;
 END $fn$;
+
+-- Nobody but the owner role may run it (A10): PUBLIC has no EXECUTE.
+REVOKE ALL ON FUNCTION purge_test_entities(boolean) FROM PUBLIC;
 
 -- ⚠️ THIS LINE DELETES. Change false → true to only look.
 SELECT * FROM purge_test_entities(false);

@@ -27,8 +27,8 @@ function grab(name, optional) {
   return HTML.slice(at, i + 1);
 }
 const PAGE_FNS = ['esc', 'r2', 'rmoney', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule',
-  'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'slipBuyerKind', 'slipFooterHTML', 'slipNoBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'shopTax'];
-const NEW_FNS = ['bandWordsOf', 'slipRateOf', 'SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
+  'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'slipBuyerKind', 'slipFooterHTML', 'slipNoBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'slipLineHTML', 'slipCountRowsHTML', 'shopTax'];
+const NEW_FNS = ['slipRule46', 'slipStampOf', 'slipHsnOf', 'slipSignatureHTML', 'slipBuyerAddressHTML', 'bandWordsOf', 'packKinds', 'kindWord', 'kindRowsOf', 'slipRateOf', 'SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
   'packCollectsWithoutId', 'cashRule', 'payWayId', 'cashDue', 'cashRoundWords', 'slipCashRoundHTML', 'restBeforeLast', 'changeOf', 'cashRoundOf'];
 
 /** a till page for one shop: the real packs and money engine, the page's own slip functions, plain stand-ins for the rest */
@@ -42,7 +42,7 @@ function page(country, currency, shop) {
     Number, String, Math, Object, Array, JSON, isFinite,
     S: { shop: Object.assign({ country, currency, name: 'Test Shop', address: '1 Main St', tax_id_word: require('../lib/profile').taxIdWordOf(country) }, shop || {}) },
     MONEY: () => MONEY,
-    cbQuiet: () => {}, counterName: () => 'Counter 1', atShop: () => '17 Oct 2026 10:00', billOrderRow: () => '', billSendTo: () => null,
+    cbQuiet: () => {}, counterName: () => 'Counter 1', atShop: (d, part) => (part === 'date' ? '17 Oct 2026' : part === 'time' ? '10:00 am' : '17 Oct 2026 10:00'), billOrderRow: () => '', billSendTo: () => null,
     modWordsPlain: (m) => m.join(', '), posWords: (c) => c + ' Karnataka', rwProg: () => null,
     cartCount: (lines) => ({ products: lines.length, items: lines.reduce((a, l) => a + l.qty, 0), measured: {} }),
   };
@@ -113,6 +113,27 @@ ok('UAE: a registered buyer over AED 10,000 → the full "Tax Invoice" title', (
   const p = page('AE', 'AED', { gstin: '100123456700003', reg_type: 'regular' });
   const big = Object.assign({}, AE_BILL, { total: 12000, customer: { name: 'Co LLC', gstin: '100999999900003' } });
   assert.match(p.slipHTML(big, {}), />TAX INVOICE<\/div>/);
+});
+
+ok('India IN-F-07 (CGST r.46): a tax invoice carries the year, the HSN / SAC of each line, the buyer address, the reverse-charge answer and the signature; a service line says SAC', () => {
+  const p = page('IN', 'INR', IN_SHOP);
+  const bill = Object.assign({}, INDIA.tax_inter, { lines: [line({ hsn: '7323' }), line({ name: 'Repair', hsn: '9987' })], customer: { name: 'Ravi', gstin: '33AAAAA0000A1Z5', address: '4 Race Course Rd, Coimbatore' } });
+  const html = p.slipHTML(bill, {});
+  assert.match(html, /17 Oct 2026 10:00 am/, 'date with the year');
+  assert.match(html, /MRP ₹620.00  HSN 7323  GST 5%/);
+  assert.match(html, /HSN 7323/); assert.match(html, /SAC 9987/);
+  assert.match(html, /data-testid="till-slip-buyer-address"[^>]*>4 Race Course Rd, Coimbatore</);
+  assert.match(html, /Tax payable on reverse charge: No/);
+  assert.match(html, /Authorised signatory/);
+});
+ok('India IN-F-07: a bill of supply, a cash memo, a not-an-invoice and an unrated bill get none of it; no address held, no address row', () => {
+  const p = page('IN', 'INR', IN_SHOP);
+  ['supply', 'cash', 'not_invoice', 'unrated'].forEach((k) => assert.ok(!/Authorised signatory|reverse charge/.test(p.slipHTML(INDIA[k], {})), k + ' must not carry the invoice particulars'));
+  assert.ok(!/till-slip-buyer-address/.test(p.slipHTML(INDIA.tax_inter, {})));
+});
+ok('the Emirates slip is untouched by r.46 (no HSN, no signature, no RCM line)', () => {
+  const p = page('AE', 'AED', { gstin: '100123456700003', reg_type: 'regular' });
+  assert.ok(!/Authorised signatory|reverse charge|HSN/.test(p.slipHTML(Object.assign({}, AE_BILL, { lines: [line({ hsn: '7323' })] }), {})));
 });
 
 const JP_BILL = { no: 'J1-0001', at: '2026-10-17T06:00:00Z', kind: 'tax', total: 1188, taxable: 1100, tax: 88, supply: 'domestic',

@@ -21,10 +21,10 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 const eq = (name, got, want) => ok(name, JSON.stringify(got) === JSON.stringify(want), 'got ' + JSON.stringify(got) + '  want ' + JSON.stringify(want));
 
 /* the pure parts, hand figures */
-eq('grossOf: sales 10000 less 1000 returns, cost 3000 + wages 2000 (F-66: wages are a direct cost, as the trial balance files them; rent is not) gives 9000, 5000, 4000', R.grossOf([{ role: 'sales', amount_minor: 10000 }, { role: 'sales_returns', amount_minor: -1000 }], [{ role: 'purchases', amount_minor: 3000 }, { role: 'wages', amount_minor: 2000 }, { role: 'rent', amount_minor: 700 }], 'AUD'), { sales_minor: 9000, cost_of_sales_minor: 5000, gross_profit_minor: 4000 });
+eq('grossOf: sales 10000 less 1000 returns, cost 3000 + freight inwards 2000 (F-66: a direct cost, as the trial balance files it; wages and rent are not, batch 1126) gives 9000, 5000, 4000', R.grossOf([{ role: 'sales', amount_minor: 10000 }, { role: 'sales_returns', amount_minor: -1000 }], [{ role: 'purchases', amount_minor: 3000 }, { role: 'freight_inward', amount_minor: 2000 }, { role: 'wages', amount_minor: 900 }, { role: 'rent', amount_minor: 700 }], 'AUD'), { sales_minor: 9000, cost_of_sales_minor: 5000, gross_profit_minor: 4000 });
 eq('grossOf: a purchase-returns account on the income side comes off the cost (3000 less 500)', R.grossOf([{ role: 'sales', amount_minor: 10000 }, { role: 'purchase_returns', amount_minor: 500 }], [{ role: 'purchases', amount_minor: 3000 }], 'AUD').cost_of_sales_minor, 2500);
 eq('grossOf: no sales account means no gross profit line', R.grossOf([{ role: 'other_income', amount_minor: 100 }], [], 'AUD'), null);
-eq('the practice gross margin reads this one list of cost-of-sales roles', R.COST_OF_SALES_ROLES, ['purchases', 'changes_in_inventories', 'purchase_returns', 'wages', 'freight_inward', 'packing']);
+eq('the practice gross margin reads this one list of cost-of-sales roles', R.COST_OF_SALES_ROLES, ['purchases', 'changes_in_inventories', 'purchase_returns', 'freight_inward', 'packing']);
 const rows = [1, 2].map((p) => ({ fiscal_year: '2025-26', period: p, start_date: '2025-0' + (6 + p) + '-01', end_date: '2025-0' + (6 + p) + '-28', entries: 3, status: 'soft_locked' }));
 eq('withChecked: a month with no read says null, never 0', PC.withChecked(rows, new Map([['2025-26|1', { checked: 3, of: 3 }]])).map((r) => [r.checked, r.of]), [[3, 3], [null, null]]);
 
@@ -76,6 +76,7 @@ const call = (port, p, method) => new Promise((done) => {
   const aug = (per.body.periods || []).find((p) => p.fiscal_year === '2025-26' && String(p.start_date).startsWith('2025-08'));
   const sep = (per.body.periods || []).find((p) => p.fiscal_year === '2025-26' && String(p.start_date).startsWith('2025-09'));
   ok('each month carries its entries: Aug 2025 has the sale, Sep 2025 a sale and a purchase', aug && sep && aug.entries === 1 && sep.entries === 2, JSON.stringify([aug && aug.entries, sep && sep.entries]));
+  eq('C-F-01: a month carries its profit before tax from the P&L read: Sep 2025 sold 500 and bought 600 (amounts are whole units, x100 in minor) -> -10000; Aug 2025 -> 100000', [sep && sep.profit_minor, aug && aug.profit_minor], [-10000, 100000]);
   eq('the year switch line: FY 2025-26 holds 5 entries (3 sales + 2 purchases) in its months', [per.body.years.find((y) => y.fy === '2025-26').entries, per.body.years[0].fy], [5, '2026-27']);
   const marks = await get('/periods?marks=1');
   ok('?marks=1 adds checked and of on every month (the in-memory store holds no marks: null, never a made-up 0)', (marks.body.periods || []).length > 0 && marks.body.periods.every((p) => 'checked' in p && 'of' in p), JSON.stringify(marks.body.periods && marks.body.periods[0]));

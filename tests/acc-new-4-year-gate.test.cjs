@@ -72,7 +72,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   DAY = '2027-01-10';
   const a0 = await q('GET', '/year/' + AEFY + '/status'), ra = returnOpen(a0.body);
   ok('AE status: return_open FIRES with no stagger stored, naming the twelve open months', a0.status === 200 && ra && ra.periods.length === 12 && ra.periods[0] === 'Jan 2026' && ra.periods[11] === 'Dec 2026' && a0.body.can_close === false, JSON.stringify(a0.body.refusals));
-  ok('AE: no codes (the code names the FTA stagger, which the shop gives when it closes) and the sentence says so', ra && ra.period_codes.length === 0 && /Close each VAT return period first/.test(ra.why) && /Tax close, which asks for it/.test(ra.why), ra && ra.why);
+  ok('AE: no codes (the code names the FTA stagger, which the shop gives when it closes) and the sentence says so', ra && ra.period_codes.length === 0 && /Close each VAT return period first/.test(ra.why) && /give it in Country setup first/.test(ra.why), ra && ra.why);
   const ac = await q('POST', '/year/' + AEFY + '/close', {});
   ok('AE close: 422 PERIOD_RETURN_OPEN, nothing hard-locked', ac.status === 422 && ac.body.code === 'PERIOD_RETURN_OPEN' && X.T.periods.filter((p) => p.entity_id === AE).every((p) => p.status !== 'hard_locked'), JSON.stringify(ac.body));
   const m1 = await q('POST', '/gst/close', { period: '2026-01', stagger: 'monthly', client_ref: 'ae-01' });

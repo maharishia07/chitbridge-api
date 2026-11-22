@@ -15,7 +15,7 @@ const NUL = '\u0000';
 const DEVICE = 'device-aaaa-1111';
 const OTHER_DEVICE = 'device-bbbb-2222';
 const LATER = 1900000000;
-const MINE = { jti: 'jti-of-this-session', iat: 1, exp: LATER, by: OWNER.identity_id, surface: 'web' };
+const MINE = { jti: 'jti-of-this-session', iat: Math.floor(Date.now() / 1000) - 3600, exp: LATER, by: OWNER.identity_id, surface: 'web' };
 /* a shop's two devices as the listing stores them: one named, one not yet (its label, kind, owner and sessions' surface are null until set) */
 const MY_DEVICES = {
   [DEVICE]: { label: 'Till PC', kind: 'till', by: OWNER.identity_id, first_seen: '2026-11-01T06:00:00.000Z', seen: '2026-11-08T06:00:00.000Z', till: { prefix: 'T1' }, sessions: [MINE] },
@@ -123,9 +123,10 @@ function extras() {
     /* pin */
     X('pin-too-short', 'POST ' + at('/pin'), 400, { body: { pin: '12', confirm_pin: '12' }, setup: { who: STAFF } }),
     X('pin-does-not-match', 'POST ' + at('/pin'), 400, { body: { pin: '1234', confirm_pin: '4321' }, setup: { who: STAFF } }),
-    X('pin-by-an-owner', 'POST ' + at('/pin'), 400, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: OWNER } }),
-    X('pin-db-fails', 'POST ' + at('/pin'), 500, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: STAFF, db: 'fail' } }),
-    X('pin-set', 'POST ' + at('/pin'), 200, { body: { pin: '1234', confirm_pin: '1234' }, setup: { who: STAFF } })
+    X('pin-by-an-owner', 'POST ' + at('/pin'), 400, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: OWNER } }),
+    X('pin-db-fails', 'POST ' + at('/pin'), 500, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF, db: 'fail' } }),
+    X('pin-already-set', 'POST ' + at('/pin'), 409, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF, sqlRows: answering(/has_pin/, [{ has_pin: true }]) } }) /* M5: a seat that holds a PIN changes it, never sets it again */,
+    X('pin-set', 'POST ' + at('/pin'), 200, { body: { pin: '4827', confirm_pin: '4827' }, setup: { who: STAFF } })
   ];
 }
 

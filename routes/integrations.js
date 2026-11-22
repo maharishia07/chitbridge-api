@@ -190,7 +190,7 @@ const KIT_NAMES = [
   'signin-ui.js',
   'their-bill.js',
   'counter-bill.js',
-  'tax-slab-ui.js',
+  'tax-slab-ui.js', 'till-dayrep.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js',
   'printer.js',
   'rollup.js',
   'orders.js',
@@ -919,10 +919,25 @@ async function publicEntityOfHandle(h) {
 /* K-1 (API-10): a handle holding a character text cannot store (a NUL) names no shop — the unknown-handle 404 (S41), before the database turns it into a 500 */
 router.param('handle', textParam({ status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } }));
 // @does A shop handle and optional codes (public) -> we ask any listening connector of that shop to re-read stock -> whether anyone is listening and an ask id.
+/* S16: a public door that makes a shop's connector re-read its stock is capped PER SHOP, whatever the callers' addresses: ASK_PER_MINUTE asks a minute; the rest are told one is already on its way and nothing is emitted */
+const ASK_PER_MINUTE = 6;
+const askWindow = new Map(); /* entity_id → { start, n } */
+/** the window map is swept of every shop whose minute has passed, once it grows past 5000 */
+const sweepAskWindow = (now) => askWindow.size > 5000 && askWindow.forEach((slot, shop) => { if (now - slot.start >= 60000) askWindow.delete(shop); });
+/** S16: true while this shop is under its ASK_PER_MINUTE asks in the current minute (and counts this one) */
+function askRoom(entity_id) {
+  const now = Date.now(), slot = askWindow.get(entity_id);
+  if (!slot || now - slot.start >= 60000) {
+    askWindow.set(entity_id, { start: now, n: 1 }); sweepAskWindow(now);
+    return true;
+  }
+  return ++slot.n <= ASK_PER_MINUTE;
+}
 router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res) => {
   try {
     const entity_id = await publicEntityOfHandle(req.params.handle);
     if (!entity_id) return problem(req, res, { status: 404, code: 'NOT_FOUND', detail: NOT_FOUND_SAID, legacy: { error: 'Not found' } });
+    if (!askRoom(entity_id)) return res.json({ asked: false, listeners: 0, ask_id: null, note: 'a re-read of this shop is already on its way — the last stamped figures stand' });
     const ask_id = uuidv4();
     const n = require('../lib/events').emit([entity_id], {
       kind: 'ask',

@@ -37,7 +37,11 @@ let delivered = [];
 const headerFor = (other) => ({ purpose: 'order', sender_entity_id: SHOP, all_recipients: [{ entity_id: SHOP, role: 'sender' }, { entity_id: other, role: 'receiver' }], business_json: {} });
 const fresh = () => ({ payload: PAYLOAD, live: [], moved: null, locked: 0, header: headerFor(SUPPLIER), roleOf: { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' } });
 const SCENE = fresh();
+/* the catalogue the send reads (lib/receipt-lines catalogueRefusal): one stock item, one service (item_data.stocked false: not counted as stock) */
+const STOCK_ITEM = '77777777-0000-4000-8000-000000000001', SERVICE_ITEM = '77777777-0000-4000-8000-000000000002';
 function rows(s, p) {
+  if (/SELECT item_id FROM catalogue_items/.test(s)) return (p[1] || []).filter((id) => id === STOCK_ITEM || id === SERVICE_ITEM).map((item_id) => ({ item_id }));
+  if (/batch_tracked/.test(s) && /FROM catalogue_items/.test(s)) return [{ item_id: STOCK_ITEM, batch_tracked: null, stocked: null }, { item_id: SERVICE_ITEM, batch_tracked: null, stocked: false }];
   if (/SELECT ch\.purpose, ch\.sender_entity_id, ch\.all_recipients/.test(s)) return SCENE.header ? [SCENE.header] : [];
   if (/FROM unnest\(\$2::uuid\[\]\)/.test(s)) return p[1].map((id) => ({ id, customer: SCENE.roleOf[id] === 'customer', supplier: SCENE.roleOf[id] === 'supplier' }));
   if (/WITH s AS \(SELECT c\.id, c\.path FROM identities/.test(s)) return [{ brand_id: SUPPLIER, built: false, edge_id: null }];
@@ -119,8 +123,15 @@ const it = async (name, fn) => { try { await fn(); pass++; console.log('  ok  ' 
     assert.ok(blank && blank.skip === true && blank.code === 'no_cost', JSON.stringify(blank));
     assert.strictEqual(movementOf({ particulars: 'Rice', quantity: 8, unit: 'kg', price: 0, item_data: { item_id: 'I1' } }).rate, 0, 'a stated 0 is still a stated 0 (the owner\'s free sample)');
   });
-  await it('a receipt that names no order: nothing to carry, the zero is taken off, the line is a no_cost skip', async () => {
-    const r = await send(BLIND, receipt([hiddenLine({ item_data: { item_id: 'I1', unit_cost: 0 } })], { against: null }));
+  await it('a receipt that names no order, a STOCK item with no cost: REFUSED in words, 400 BAD_PRICE, nothing sent (IAS 2: stock is valued at cost; Xero / QuickBooks / Zoho need a cost on a tracked-inventory receipt)', async () => {
+    const r = await send(BLIND, receipt([hiddenLine({ item_data: { item_id: STOCK_ITEM, unit_cost: 0 } })], { against: null }));
+    assert.strictEqual(r.status, 400, JSON.stringify(r.body));
+    assert.strictEqual(r.body.code, 'BAD_PRICE');
+    assert.ok(/no cost price/.test(String(r.body.detail || r.body.message)) && r.body.type, JSON.stringify(r.body));
+    assert.strictEqual(r.wrote, 0, 'nothing was delivered');
+  });
+  await it('a receipt that names no order, a SERVICE (not counted as stock) with no cost: SENT, the zero is taken off, the line is a no_cost skip', async () => {
+    const r = await send(BLIND, receipt([hiddenLine({ item_data: { item_id: SERVICE_ITEM, unit_cost: 0 } })], { against: null }));
     assert.strictEqual(r.status, 200, JSON.stringify(r.body));
     const line = sentLines(r)[0];
     assert.ok(line.price == null && !('unit_cost' in line.item_data), JSON.stringify(line));

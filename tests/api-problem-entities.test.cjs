@@ -68,6 +68,7 @@ const sources = () => ({
   platform: require(path.join(HERE, 'lib', 'platformroot')),
   header: require(path.join(HERE, 'lib', 'entity-header')),
   sides: require(path.join(HERE, 'lib', 'sides')),
+  previewToken: require(path.join(HERE, 'lib', 'preview-token')),
   plans: require(path.join(HERE, 'lib', 'plans')),
   govresolve: require(path.join(HERE, 'lib', 'govresolve')),
   identityAuth: require(path.join(HERE, 'lib', 'identity-auth')),
@@ -132,7 +133,7 @@ function checkContractShape(routes) {
   const operations = Object.keys(contract.OPERATIONS);
   const swept = Object.keys(routes);
   check('every route the router holds has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), swept.sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 24 operations: all 24 routes (POST /register since SEC-130 (A))', operations.length === 24 && Object.keys(routes).length === 24, [operations.length, Object.keys(routes).length]);
+  check('the contract holds 25 operations: all 25 routes (POST /register since SEC-130 (A); POST /me/preview-token since CUSTOMER-DELINK 2)', operations.length === 25 && Object.keys(routes).length === 25, [operations.length, Object.keys(routes).length]);
   const bodies = operations.filter((key) => contract.OPERATIONS[key].requestBody);
   check('every write declares a body that is an object (a list is the schema\'s 400)', bodies.every((key) => contract.OPERATIONS[key].requestBody.content['application/json'].schema.type === 'object'), bodies);
   check('every refusal an operation declares is a Problem', operations.every((key) => Object.keys(contract.OPERATIONS[key].responses).filter((status) => Number(status) >= 400).every((status) => JSON.stringify(contract.OPERATIONS[key].responses[status]).includes('Problem'))));

@@ -10,6 +10,8 @@ const clone = (x) => JSON.parse(JSON.stringify(x)), ymd = (v) => (v ? String(v).
   return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
 const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
   const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
+/* the real store OPEN_ROWS_SQL over the twin: the newest open row of each chit (or of each source_ref with no chit) */
+const openRowsOf = (T, e) => { const kept = new Map(); T.outbox.filter((o) => o.entity_id === e && !o.done_at).forEach((o) => { const k = String(o.source_chit_id || o.source_ref || "id:" + o.id); if (!kept.has(k) || kept.get(k).id < o.id) kept.set(k, o); }); return [...kept.values()]; };
 function create() {
   const T = { loanLocks: new Map(), setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
               outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
@@ -47,7 +49,7 @@ function create() {
       enabled_at: cur.enabled_at || (s.enabled ? now() : null) /* the FIRST time it was switched on, kept (the real upsert's COALESCE) */ })); },
     async saveCheck(db, e, r) { const s = T.setting.get(String(e)); if (s) s.last_check = clone(r); },
     async accounts(db, e) { return clone(T.accounts.filter((a) => a.entity_id === e)).sort((a, b) => String(a.code).localeCompare(String(b.code))); },
-    async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
+    async freeRetiredRoles(db, e, codes) { return T.accounts.filter((x) => x.entity_id === e && x.role && codes.indexOf(String(x.code)) >= 0).map((x) => { const r = { account_id: x.account_id, code: x.code, role: x.role }; x.role = null; return r; }); }, async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
     async insertAccount(db, e, a) {
       if (T.accounts.some((x) => x.entity_id === e && x.code === a.code)) return null;
       if (a.role && T.accounts.some((x) => x.entity_id === e && x.role === a.role)) throw Object.assign(new Error('dup role'), { code: '23505' });
@@ -71,7 +73,7 @@ function create() {
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
     async giveBackNo(db, e, series, fy, n) { const k = e + '|' + series + '|' + (fy || '-'); if (T.counters.get(k) === n + 1) T.counters.set(k, n); },
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
-    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':'))); },
+    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':') || x.source_ref === 'walkin-late:' + chit_id || (Array.isArray(x.source_chit_ids) && x.source_chit_ids.map(String).indexOf(String(chit_id)) >= 0))); },
     async entriesBySourceBase(db, e, base) {
       return T.entries.filter((x) => x.entity_id === e && (x.source_ref === base || String(x.source_ref || '').indexOf(base + ':r') === 0))
         .map((x) => Object.assign(clone(x), { reversed: T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id) }));
@@ -103,6 +105,19 @@ function create() {
       });
       return Array.from(out.values());
     },
+    async zeroRateSales(db, e, from, to, role, currency) {
+      const day = (x) => String(x.posting_date).slice(0, 10);
+      const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id);
+      const got = T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && live(x))
+        .flatMap((h) => T.lines.filter((l) => l.entry_id === h.entry_id && l.currency === currency && /^0+([.]0+)?$/.test(String(l.tax_rate == null ? '' : l.tax_rate))
+          && (T.accounts.find((a) => a.account_id === l.account_id) || {}).role === role));
+      return { lines: got.length, total_minor: got.reduce((sum, l) => sum + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0) };
+    },
+    /* supply kind: the catalogue's 0% slabs with no kind and the items with a bare 0% (a test stands rows in: T.kindless = { slabs: [{ id, name }], items: n }) */
+    async zeroRateKindless(db, e) {
+      const held = (T.kindless && T.kindless[e]) || { slabs: [], items: 0 };
+      return { slabs: held.slabs.slice(0, 50), slab_count: held.slabs.length, item_count: held.items };
+    },
     /* OPS-81: my receipts of their bill against these chits — none unless a test stands rows in (T.receiptBills) */
     async receiptBillsAgainst(db, e, ids) {
       const live = (r) => T.entries.find((x) => x.entity_id === e && x.source_ref === 'chit:' + r.chit_id && !x.reverses_entry_id && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
@@ -124,6 +139,7 @@ function create() {
       }
       return out;
     },
+    async markedRows(db, e, table, field, ids) { return T.changes.filter((c) => c.entity_id === e && c.table_name === table && c.field === field && (ids || []).indexOf(String(c.row_id)) >= 0).map((c) => String(c.row_id)); },
     async postedSources(db, e, refs) { return T.entries.filter((x) => x.entity_id === e && x.source_ref && (refs || []).indexOf(x.source_ref) >= 0).map((x) => x.source_ref); },
     async entry(db, e, eid) {
       const h = T.entries.find((x) => x.entity_id === e && x.entry_id === eid); if (!h) return null;
@@ -389,12 +405,18 @@ function create() {
         .sort((a, b) => String(b.received_at).localeCompare(String(a.received_at))).slice(0, limit || 200);
     },
     async payment(db, e, pid) { const p = T.payments.find((x) => x.entity_id === e && x.payment_id === pid); return p ? clone(p) : null; },
-    async queue(db, e, o) { T.outbox.push(Object.assign({ id: T.outbox.length + 1, entity_id: e, tries: 0, created_at: now(), done_at: null }, clone(o))); },
-    /* STD1: `todo` · `name` as the real store reads them — the row's data, else TODO_SQL's reading of a row parked before they existed */
-    async waiting(db, e, limit) { return clone(T.outbox.filter((o) => o.entity_id === e && !o.done_at).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100))
+    /* M-F-05: ONE open row per bill — the key is the chit, else the source_ref; a second park renews the open row (event, why), keeps tries and place */
+    async queue(db, e, o) {
+      const open = o.source_chit_id ? T.outbox.find((x) => x.entity_id === e && !x.done_at && x.source_chit_id === o.source_chit_id)
+        : o.source_ref ? T.outbox.find((x) => x.entity_id === e && !x.done_at && x.source_ref === o.source_ref) : null;
+      if (open) { open.event = clone(o.event || {}); open.why = String(o.why || '').slice(0, 500); return; }
+      T.outbox.push(Object.assign({ id: T.outbox.length + 1, entity_id: e, tries: 0, created_at: now(), done_at: null }, clone(o)));
+    },
+    /* STD1: `todo` · `name` as the real store reads them — the row's data, else TODO_SQL's reading of a row parked before they existed; one row per bill (OPEN_ROWS_SQL: the newest) */
+    async waiting(db, e, limit) { return clone(openRowsOf(T, e).sort((a, b) => a.tries - b.tries || a.id - b.id).slice(0, limit || 100))
       .map((o) => Object.assign(o, { todo: todoOf(o), name: nameOf(o) })); },
     async waitingCount(db, e) { const out = { total: 0, accept: 0, add_supplier: 0, record: 0 };
-      T.outbox.filter((o) => o.entity_id === e && !o.done_at).forEach((o) => { out[todoOf(o)]++; out.total++; }); return out; },
+      openRowsOf(T, e).forEach((o) => { out[todoOf(o)]++; out.total++; }); return out; },
     async backfillTodo(db, e) { let n = 0; T.outbox.filter((o) => o.entity_id === e && !o.done_at && !(o.event && 'todo' in o.event)).forEach((o) => {
       o.event = Object.assign({}, o.event || {}, { todo: todoOf(o) }, nameOf(o) ? { name: nameOf(o) } : {}); n++; }); return n; },
     /* STD1: the one supplier-by-name resolver, over the parties table (supplier rows): exactly one by name / nickname; else ≤ 3 near */
@@ -409,9 +431,10 @@ function create() {
       return { one, near };
     },
     async outboxClose(db, e, ids, why, only) { const l = (ids || []).map(String); let n = 0; T.outbox.forEach((o) => { if (o.entity_id === e && !o.done_at && l.indexOf(String(o.source_chit_id)) >= 0 && (!(only && only.press) || (o.event && o.event.press === only.press))) { o.done_at = now(); o.why = why; n++; } }); return n; },
-    async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) o.done_at = now(); else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
+    async outboxDone(db, e, oid, ok, why, ev) { const o = T.outbox.find((x) => x.id === oid); if (!o) return; o.tries++; if (ok) { o.done_at = now(); T.outbox.filter((x) => x.entity_id === e && !x.done_at && o.source_chit_id && x.source_chit_id === o.source_chit_id).forEach((x) => { x.done_at = now(); }); } else { o.why = why; if (ev && typeof ev === 'object') o.event = Object.assign({}, o.event || {}, clone(ev)); } },
     async logChange(db, e, c) { T.changes.push(Object.assign({ entity_id: e, at: now() }, clone(c))); },
     async yearLastEvent(db, e, fy) { const rows = T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && String(c.row_id) === String(fy) && (c.field === 'year_closed' || c.field === 'year_reopened')); return rows.length ? clone(rows[rows.length - 1]) : null; },
+    async yearCloseEvent(db, e, fy) { const rows = T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && String(c.row_id) === String(fy) && c.field === 'year_closed'); if (!rows.length) return null; const last = rows[rows.length - 1]; const who = T.identities.find((x) => x.identity_id === last.by); return { at: last.at, by: last.by, by_name: who ? who.display_name || null : null }; }, /* YE-F-06: who closed the year and when, as the real store reads it */
     async changes(db, e) { return clone(T.changes.filter((c) => c.entity_id === e)); },
     async lockTrail(db, e, fy) { return clone(T.changes.filter((c) => c.entity_id === e && c.table_name === 'fiscal_period' && c.field === 'status' && (!fy || String(c.row_id).startsWith(fy + '/')))).map((c) => { const i = T.identities.find((x) => x.identity_id === c.by); return Object.assign({}, c, { by_name: i ? i.display_name || null : null }); }); },
     async terms(db, e, party, side) { const p = T.parties.find((x) => x.owner === e && x.party_id === party && x[side]); return p ? { credit_days: p.credit_days == null ? null : p.credit_days, credit_limit_minor: null, party_no: p.party_no } : null; },
@@ -469,7 +492,7 @@ function create() {
         file_name: p.file_name || null, rows: clone(p.rows || []), created_by: p.by || null, created_at: now() };
       T.compare.push(r); return r.part_id;
     },
-    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); },
+    async openingDays(db, e) { return Array.from(new Set(T.entries.filter((h) => h.entity_id === e && h.is_opening && !h.reverses_entry_id && !T.entries.some((r) => r.reverses_entry_id === h.entry_id)).map((h) => String(h.posting_date).slice(0, 10)))).sort(); }, async hasEntries(db, e) { return T.entries.some((h) => h.entity_id === e); }, async hasPostings(db, e) { return T.entries.some((h) => h.entity_id === e && !h.reverses_entry_id); }, /* E-F-03 */ /* A-F-59: has the ledger ANY entry (Home Accounts card) */
     async namesOf(db, e, ids) { return new Map((ids || []).map((id) => { const i = T.identities.find((x) => String(x.identity_id) === String(id) && (String(x.identity_id) === String(e) || String(x.parent_entity_id) === String(e) || (T.grants || []).some((g) => String(g.grantor_entity) === String(e) && [String(x.identity_id), String(x.parent_entity_id)].includes(String(g.grantee_entity))))); return i ? [String(id), i.display_name || null] : null; }).filter(Boolean)); }, /* the real namesOf fences to the shop and its own people */
     async shopName(db, e) { const i = T.identities.find((x) => x.identity_id === e); return i ? i.display_name || null : null; },
     /* F5 A1 · the shop's registration facts (identities gstn · country · policy_flags.gst_registration), as the SQL answers them */
@@ -516,7 +539,7 @@ const fakeDb = {
   query: async (text, v) => {
     const t = String(text);
     if (t.includes('country-setup') && t.includes('FROM identities')) return { rows: fakeDb.countryRow ? [fakeDb.countryRow] : [] };
-    if (t.includes('country-setup') && t.includes('FROM entity_governance')) return { rows: [] };
+    if ((t.includes('country-setup') || /^SELECT tax_registration FROM entity_governance/.test(t.trim())) && t.includes('FROM entity_governance')) return { rows: [] }; /* AE-F-03 heldAnswersInto reads tax_registration too: in memory none is held, so a value sent is the only one */
     if (/^\s*(SAVEPOINT|RELEASE|ROLLBACK)/i.test(t) || /FROM identities WHERE identity_id = \$1$/.test(t.trim())) return { rows: [] };
     if (/FROM journal_entry WHERE entity_id = \$1 AND created_at >/.test(t)) return { rows: (fakeDb.T ? fakeDb.T.entries : []).filter((x) => x.entity_id === v[0]).slice().reverse().slice(0, 25).map((x) => ({ entry_id: x.entry_id, entry_no: x.entry_no, source_ref: x.source_ref || null })) }; /* R4 (lib/books-event-guard.recent): in memory every entry is 'recent' */
     if (/to_regclass\(/.test(t)) return { rows: [{ i: false, f: false }] }; /* "is table X there?" (lib/crm-followups.migrated — F3's promise dates ask it): in memory the CRM tables are NOT; the reader takes that answer and goes on */
@@ -536,6 +559,8 @@ const fakeDb = {
       const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
       return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
     }
+    /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
+    if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };

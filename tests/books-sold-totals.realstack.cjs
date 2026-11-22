@@ -21,9 +21,11 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
       await c.query('INSERT INTO ledger_account (account_id, entity_id, code, name, nature, role) VALUES ($1,$2,$3,$3,$4,$5)', [id, E, code, nature, role]);
     const entry = async (day, kind, lines, reverses, cur) => {
       const id = uuid(); n++;
+      await c.query('BEGIN'); /* b904: an entry balances at COMMIT, so its header and every line share one transaction */
       await c.query('INSERT INTO journal_entry (entry_id, entity_id, entry_no, posting_date, fiscal_year, period, event_type, currency, total_minor, reverses_entry_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [id, E, 'T' + n, day, 'FY' + day.slice(0, 4), Number(day.slice(5, 7)), kind, cur || 'AUD', 1, reverses || null]);
       let i = 0;
       for (const [acct, dr, cr] of lines) await c.query('INSERT INTO journal_line (entry_id, entity_id, line_no, account_id, dr_minor, cr_minor, currency) VALUES ($1,$2,$3,$4,$5,$6,$7)', [id, E, ++i, acct, dr, cr, cur || 'AUD']);
+      await c.query('COMMIT');
       return id;
     };
     await entry('2026-01-01', 'walkin_day', [[cash, 1000, 0], [sales, 0, 1000]]);

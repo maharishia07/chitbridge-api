@@ -14,7 +14,7 @@ function grabAt(at, label) {
 const grab = (n) => { const at = h.indexOf('function ' + n + '('); return (h.slice(at - 6, at) === 'async ' ? 'async ' : '') + grabAt(at, n); };
 /** a CloudHost method ('bills', 'local', 'state') lifted as a function the test can call */
 const grabMethod = (n) => 'var M_' + n + ' = ' + grabAt(h.indexOf('async ' + n + '(', h.indexOf('var CloudHost')), n).replace(/^async \w+\(/, 'async function(');
-const FNS = ['dayKeyOf', 'shopDayOf', 'dayInZone', 'shopTz', 'tzOpt', 'shopPack', 'dayClosedMark', 'dayCloseDo', 'dueDateFor', 'dayServerCheck', 'lotTrouble', 'noDayMoney', 'dayOrNull', 'billNosHeld', 'dayReread', 'rcvPayPropose'];
+const FNS = ['dayKeyOf', 'shopDayOf', 'dayInZone', 'shopTz', 'shopOwnTz', 'tzOpt', 'shopPack', 'dayClosedMark', 'dayCloseCommit', 'dueDateFor', 'dayServerCheck', 'lotTrouble', 'noDayMoney', 'dayOrNull', 'billNosHeld', 'dayReread', 'rcvPayPropose'];
 const ZONES = { IN: 'Asia/Kolkata', AU: 'Australia/Sydney' };
 
 /** the page for a country with the clock stopped at `now` (an ISO instant) and `rows` in the bill store */
@@ -64,7 +64,7 @@ const okA = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what);
       assert.deepStrictEqual(got, ['A', 'B', 'C']);
     });
     ok(c.country + ': the closed mark, the summary key and the cut agree on one day', () => {
-      p.dayCloseDo();
+      p.dayCloseCommit();
       const m = p.sent[0];
       assert.strictEqual(m.day, c.day, 'the summary key is the shop day');
       assert.strictEqual(p.dayClosedMark().day, c.day, 'the closed mark reads back for the same day');
@@ -83,7 +83,7 @@ const okA = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what);
   });
   q.store.cb_till_dayclosed = JSON.stringify({ day: '', at: NOW, bills: 1, total: 1 });   /* a mark with an empty day sits in the store: '' === '' must not read it back */
   await okA('no shop day: the close refuses in words and files nothing; the server check says it cannot run', async () => {
-    q.dayCloseDo();
+    q.dayCloseCommit();
     assert.strictEqual(q.sent.length, 0, 'nothing sent under a guessed day'); assert.strictEqual(q.dayClosedMark(), null);
     assert.strictEqual((await q.dayServerCheck([])).state, 'offline');
   });

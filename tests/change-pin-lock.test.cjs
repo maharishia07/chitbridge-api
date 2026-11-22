@@ -36,6 +36,7 @@ const stubDb = async (sql, args) => {
   await new Promise(setImmediate); // a real round trip: other requests run between two statements
   const counted = pinCount.answer(s, args, () => row);
   if (counted) return counted;
+  if (/^UPDATE identities SET pin_attempts = 0, last_active_at = NOW\(\) WHERE identity_id = \$1 AND pin_locked_at IS NULL RETURNING identity_id$/.test(s)) { if (row.pin_locked_at) return { rows: [], rowCount: 0 }; row.pin_attempts = 0; return { rows: [{ identity_id: args[0] }], rowCount: 1 }; } // M2: the spend of a right PIN is conditional on no lock
   if (READ_THEN_WRITE.test(s)) { row.pin_attempts = args[1]; if (/pin_locked_at/.test(s)) row.pin_locked_at = new Date(); return { rows: [], rowCount: 1 }; } // the old statement, for the mutation
   if (/^SELECT .*FROM identities WHERE identity_id = \$1$/.test(s) && /pin_locked_at/.test(s)) return { rows: [{ ...row }] };
   return { rows: [], rowCount: 0 };
@@ -74,7 +75,7 @@ let server;
 
 (async () => {
   server = app.listen(0);
-  const good = { current_pin: '1234', new_pin: '5555', confirm_pin: '5555' };
+  const good = { current_pin: '1234', new_pin: '5731', confirm_pin: '5731' };
   const hash = await identityAuth.hashPin('1234');
 
   row = { pin_hash: hash, pin_attempts: 0, pin_locked_at: null };

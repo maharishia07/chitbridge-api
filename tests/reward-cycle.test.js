@@ -82,6 +82,13 @@ async function run(sql, args) {
     }
     if (/^\s*UPDATE reward_ledger|^\s*DELETE FROM reward_ledger/i.test(sql))
       throw new Error('reward_ledger is append-only by GRANT — cb_app may not UPDATE or DELETE');
+    if (/FROM reward_ledger[\s\S]*GROUP BY why/.test(sql)) {
+      /* WALK-D D-F-12: what this bill (ref) already holds, per reason - the replay's answer (lib/reward-store settledBefore) */
+      const [eid, scheme, value, ref] = args;
+      const sums = {};
+      TABLE.filter((r) => mine(eid, scheme, value)(r) && r.ref === ref && (r.why === 'earned' || r.why === 'spent')).forEach((r) => { sums[r.why] = (sums[r.why] || 0) + r.points; });
+      return { rows: Object.keys(sums).map((why) => ({ why, points: String(sums[why]) })) };
+    }
     if (/FROM reward_ledger/.test(sql)) throw new Error('the store read the ledger a way this stub does not know: ' + sql.slice(0, 80));
     return { rows: [] };
 }
