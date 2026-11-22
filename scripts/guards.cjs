@@ -861,6 +861,7 @@ const GUARDS = [
   'crm-viewer.test.cjs',
   'pay-fix-renumber.test.cjs',
   'pay-fix-void.test.cjs',
+  'auae-1129.test.cjs', // AU-F-01 (a withdrawn goods receipt takes its stock back, once, in words) and AU-F-05 (a quantity below 0 on a sale is refused)
   'rail-216-void-paid.test.cjs', // RAIL-216: a payment on the invoice blocks the seller's void (also in NEEDS_ENGINES: runs over the books harness)
   'rail-paid-reject.test.cjs', // RAIL-216 follow-up: a paid invoice is refused for rejected as for cancelled (the rail's own WITHDRAWN list)
   'rail-218-reject-paid.test.cjs', // RAIL-218: a buyer cannot reject a received invoice it has marked paid (statusGate paidRefusal, the one writer; the way out is a credit note); real-Postgres: rail-218-reject-paid-truth.realstack.cjs

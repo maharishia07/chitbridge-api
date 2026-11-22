@@ -129,6 +129,7 @@ const holdsCopy = async (entity_id, chit_id) =>
  * tests/k1-chits-guard.test.cjs proves each entry equals the answer of an unknown uuid on the same route, so the two cannot drift.
  */
 const chitPaid = require('../lib/chit-paid'); /* RAIL-216: the paid fact + the buyer's notice */
+const stockVoid = require('../lib/stock-void'); /* AU-F-01: a withdrawn goods receipt takes its stock back */
 const said404 = (legacy) => () => ({ status: 404, ...said(legacy, 'NOT_FOUND') });
 const notHere = (message) => said404({ error: 'Not found', message });
 const ownCopyOf = (askFor) => (req) => railSaid(railActions.ownCopyRefusalOf(askFor({ held: false }, railActions.meOf(req)))); /* the verdict of the route itself: the level first, then "I hold no copy" */
@@ -6988,7 +6989,9 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
     if (gate.refused) {
       return problem(req, res, withdrawRefusalSpec(gate.refused));
     }
-    if (gate.replay) return res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: { none: true } }); /* RAIL-1128 F5a */
+    const shelf = await stockVoid.reverseReceipt(entity_id, chit_id, withEntity, { actor_id: req.identity.identity_id }); /* AU-F-01: a withdrawn goods receipt takes its stock back, once (idempotent, so a replay finishes a half-done one) */
+    const withdrawnWords = stockVoid.wordsFor(shelf) || 'Order withdrawn';
+    if (gate.replay) return res.json({ message: withdrawnWords, chit_id, status: 'cancelled', books: { none: true } }); /* RAIL-1128 F5a */
     const told = await tellWithdrawal(entity_id, chit_id, gate.moved, req.identity.display_name, reason);
     // deliver the flagged cancel request to the recipients (a per-copy message — like a dispute notification)
     await postMessageCopies({
@@ -7065,7 +7068,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
 
     /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */
-    res.json({ message: 'Order withdrawn', chit_id, status: 'cancelled', books: gate.books, ...ctpReturn.answerOf(ctpReturn.firstOf(told)) });
+    res.json({ message: withdrawnWords, chit_id, status: 'cancelled', books: gate.books, ...ctpReturn.answerOf(ctpReturn.firstOf(told)) });
   } catch (err) {
     withdrawFailure(req, res, err);
   }
