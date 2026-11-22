@@ -1255,12 +1255,14 @@
  "GET /api/network-design/availability": [
   400,
   401,
+  403,
   404,
   500,
   503
  ],
  "GET /api/network-design/stores": [
   401,
+  403,
   404,
   500,
   503
@@ -4273,6 +4275,7 @@
  "PUT /api/connections/:id/respond": [
   400,
   401,
+  403,
   404,
   500
  ],

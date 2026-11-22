@@ -27,6 +27,7 @@ const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error
 const { contract, words, notMigrated, faultOf, atTooLate, issueRefOf } = require('../lib/supplies-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { writeGate } = require('../lib/access'); /* LENS-SEC 1129: a supply write is the owner's or an editor's — a viewer or commenter seat gets the rail's 403 */
 const { withEntity } = require('../db');
 const supplies = require('../lib/supply-store');
 

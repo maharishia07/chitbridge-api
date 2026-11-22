@@ -35,6 +35,8 @@ const { textOf } = require('../lib/input-hygiene');
 const ent = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/network-contract.js) */
 const checked = (route) => schemaValidate(contract.design.operationFor(route), contract.schemaOptions.design);
+const MAX_NODES = 500; // LENS-SEC 1129: no plan limit names a size, so a named cap: a real chain is tens to a few hundred businesses, and each node is a mint + a tree row in one build transaction
+const overNodes = (draft) => draft && Array.isArray(draft.nodes) && draft.nodes.length > MAX_NODES;
 const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this never becomes a document store
 // Rows returned by the single-query network search (b122). Generous enough that a real search is whole, bounded
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
@@ -84,6 +86,7 @@ router.put('/', auth, checked('PUT /'), async (req, res) => {
     if (Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
       return problem(req, res, { status: 413, ...contract.words.tooLarge(MAX_BYTES) });
     }
+    if (overNodes(draft)) return problem(req, res, { status: 413, ...contract.words.tooManyNodes(MAX_NODES) });
     /**
      * ⚠️ A STALE CLIENT MUST NOT BE ABLE TO UN-RECORD WHAT WAS BUILT.
      *
@@ -102,22 +105,9 @@ router.put('/', auth, checked('PUT /'), async (req, res) => {
      */
     const prevDraft = await run.designOf(e);
     const prevNodes = prevDraft && Array.isArray(prevDraft.nodes) ? prevDraft.nodes : [];
-    if (prevNodes.length && Array.isArray(draft.nodes)) {
-      const receipts = new Map();
-      prevNodes.forEach((item) => {
-        if (item && item.key && (item.built || item.invited)) receipts.set(item.key, item);
-      });
-      if (receipts.size) {
-        draft.nodes = draft.nodes.map((item) => {
-          const nestedR = item && item.key ? receipts.get(item.key) : null;
-          if (!nestedR) return item;
-          const out = Object.assign({}, item);
-          if (nestedR.built && !out.built) out.built = nestedR.built;
-          if (nestedR.invited && !out.invited) out.invited = nestedR.invited;
-          return out;
-        });
-      }
-    }
+    /* LENS-SEC (1129): a receipt is the SERVER's — a `built`/`invited` the client sends is dropped, so a forged
+       { bridge_id } of another business can never reach plan() (it would place a store inside their tree). */
+    if (Array.isArray(draft.nodes)) draft.nodes = run.receiptsOnly(prevNodes, draft.nodes);
 
     const r = await withEntity(e, (db) =>
       db.query(
@@ -177,6 +167,7 @@ router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
     if (draft && Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
       return problem(req, res, { status: 413, ...contract.words.tooLarge(MAX_BYTES) });
     }
+    if (overNodes(draft)) return problem(req, res, { status: 413, ...contract.words.tooManyNodes(MAX_NODES) });
     if (!draft && !sample) draft = await run.designOf(me);
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
     let rootHandle = String(body.root_handle || '')
@@ -225,6 +216,7 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
     // ── 2 · THE DESIGN
     const draft = await run.designOf(me);
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
+    if (nodes.length > MAX_NODES) return problem(req, res, { status: 413, ...contract.words.tooManyNodes(MAX_NODES) });
     if (!nodes.length) {
       return problem(req, res, { status: 400, ...contract.words.nothingDesigned() });
     }
@@ -414,6 +406,7 @@ router.get('/stores', auth, async (req, res) => {
     const me = auth.entityOf(req);
     const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
+    if (!(await membership.standsInTree(meRow.bridge_id))) return problem(req, res, { status: 403, ...contract.words.memberSuspended() });
 
     const { visible, truncated } = await visibleStores(meRow);
     if (!visible.length) return res.json({ stores: [], not_in_network: true });
@@ -458,6 +451,7 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
 
     const meRow = await placeOf(me);
     if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
+    if (!(await membership.standsInTree(meRow.bridge_id))) return problem(req, res, { status: 403, ...contract.words.memberSuspended() });
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
     const members = await membership.treeOf(meRow.bridge_id);

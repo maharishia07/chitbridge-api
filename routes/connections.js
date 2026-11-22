@@ -112,6 +112,8 @@ router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) =
     if (!isOwner(req)) return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: 'Only the business owner can answer a connection request. Sign in as the business itself.' }); // reviews4 M17
     const connection_id = req.params.id;
     const action = req.body.action;
+    /* LENS-SEC 1129 network-01 F5: only the business itself answers; a staff seat under it (parent_entity_id) does not, as the build and re-issue (403 in words) */
+    if (req.identity.parent_entity_id) return problem(req, res, { status: 403, ...contract.words.respondOwnerOnly() });
     const entity_id = req.identity.identity_id;
 
     // Find connection
