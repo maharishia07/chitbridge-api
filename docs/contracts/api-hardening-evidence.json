@@ -1609,9 +1609,6 @@
   "POST /api/books/events": {
    "strict_input": true
   },
-  "POST /api/books/events/batch": {
-   "strict_input": true
-  },
   "POST /api/books/entries": {
    "strict_input": true
   },
@@ -1716,6 +1713,9 @@
    "strict_input": true
   },
   "POST /api/books/opening/replace": {
+   "strict_input": true
+  },
+  "POST /api/books/events/batch": {
    "strict_input": true
   },
   "POST /api/books/money-check/resolve": {

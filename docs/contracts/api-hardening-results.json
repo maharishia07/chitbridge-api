@@ -4432,15 +4432,6 @@
     "why": "not reached: answered 404"
    }
   },
-  "POST /api/books/events/batch": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": false,
-    "why": "not reached: answered 404"
-   }
-  },
   "POST /api/books/entries": {
    "strict_input": {
     "pass": true
@@ -4924,6 +4915,15 @@
    }
   },
   "GET /api/books/opening/years": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/events/batch": {
+   "strict_input": {
+    "pass": true
+   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"
