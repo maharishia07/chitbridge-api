@@ -1780,33 +1780,6 @@ router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /eve
     problem(req, res, refusalOf(err, req));
   }
 });
-/**
- * POST /events/batch { events: [ { kind, ... } x 1..100 ] } → { posted, failed, results: [ { index, client_ref, ok, duplicate?, entry_no?, posting_date? | status, code, detail } ] } — SPD bank Add: a statement's lines post in ONE request through the
- * SAME event writer as POST /events (each line keeps its own client_ref, so a retry posts nothing twice); a refused line is named by index and the rest post. A shop that asks the owner to approve a Bookkeeper's entries gets 409 BOOKS_BATCH_HELD and nothing posts.
- */
-// @does A list of up to 100 events in -> we post each one through the one event writer -> one result per line (owner or accountant).
-router.post('/events/batch', auth, noKey, ownerOrAccountant, on, ...checked('POST /events/batch'), async (req, res) => {
-  try {
-    const list = req.body && req.body.events;
-    if (!Array.isArray(list) || list.length < 1 || list.length > 100) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Send between 1 and 100 events.', 'Send between 1 and 100 events.');
-    if (await require('../lib/books-approval').bindsRequest(req, ctx(req))) return refuse(req, res, 409, 'BOOKS_BATCH_HELD', 'This shop asks the owner to approve entries, so a batch is not taken: send them one at a time.', 'This shop asks the owner to approve entries, so a batch is not taken: send them one at a time.');
-    const results = [];
-    for (let index = 0; index < list.length; index++) {
-      const event = list[index], client_ref = event && typeof event === 'object' && event.client_ref != null ? String(event.client_ref) : null;
-      if (!event || typeof event !== 'object' || Array.isArray(event)) { results.push({ index, client_ref, ok: false, status: 400, code: 'BOOKS_BAD_REQUEST', detail: 'This line is not an entry.' }); continue; }
-      try {
-        const out = await M().post(ctx(req), req.books, event, byOf(req));
-        results.push({ index, client_ref, ok: out.ok !== false, duplicate: out.duplicate === true, entry_no: out.entry_no, entry_id: out.entry_id, posting_date: out.posting_date });
-      } catch (err) {
-        const said = refusalOf(err, req) || {};
-        results.push({ index, client_ref, ok: false, status: said.status || 500, code: said.code || 'INTERNAL', detail: said.detail || said.message || 'This line could not be posted.' });
-      }
-    }
-    res.json({ posted: results.filter((one) => one.ok).length, failed: results.filter((one) => !one.ok).length, results });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
-});
 /* ── owner writes: manual entry, reversal, write-off, opening, months ────────────────────────────────────────── */
 const givenLines = (list, currency) => require('../lib/books-manual').givenLines(list, currency); /* ONE reader of a typed journal's lines — the ＋ Entry builder uses it too */
 // @does Typed journal lines in -> we post them as a manual journal entry -> the entry (owner only).
@@ -2743,5 +2716,5 @@ module.exports._test = { isOwner, minorOf, flat, manifestView, sourceOf };
 /* the books' refusals answered the same way from another door (routes/chits.js POST /:chit_id/payment — drift D1) */
 module.exports.fail = fail;
 /* the gates every ledger route sits behind, for a sibling router that must keep the ledger's rules (routes/books-money.js) */
-module.exports.gates = { noKey, editor, on, owner, moneyReader, mayReadMoney }; /* mayReadMoney: routes/crm hides dues from the seat this refuses (Y-F-05); the Home finance card the same (AF-F-03) */
+module.exports.gates = { noKey, editor, on, owner, moneyReader, mayReadMoney, ownerOrAccountant, checked, refuse }; /* mayReadMoney: routes/crm hides dues from the seat this refuses (Y-F-05); the Home finance card the same (AF-F-03) */
 module.exports.alreadyPaid = alreadyPaid;

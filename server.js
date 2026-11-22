@@ -483,7 +483,7 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
-app.use('/api/books', require('./routes/books-opening')); // l16: the opening balances page (preview · replace · the saved view · the year strip), beside routes/books.js
+app.use('/api/books', require('./routes/books-opening')); app.use('/api/books', require('./routes/books-events-batch')); // l16: the opening balances page (preview · replace · the saved view · the year strip), beside routes/books.js
 app.use('/api/books', require('./routes/books-money')); // ACC-206 B: closing an overridden sale's open item (the ledger's own gates, its own file)
 app.use('/api/flags', require('./routes/flags')); app.use('/api/marks', require('./routes/marks')); /* flags: PRIVATE BOOKMARKS AND NOTES, the callers own organisation only, never the books-grant front, never X-Books-For (b876) · marks: MARK & QUERY, a reviewer's marks and queries on a record (the auditor's marks on journal entries first); the books-grant front, two write doors */
 app.use('/api/books-grants', require('./routes/books-grants')); app.use('/api/books-actions', require('./routes/books-actions')); // ACC-176: the member side of read-only access for its network parent (the auditor reads through /api/books with X-Books-For) · ACC-176b: maker-checker for an adviser firm in a store's books (the firm prepares and reviews, the owner accepts; the existing writers post)
