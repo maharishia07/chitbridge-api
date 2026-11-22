@@ -89,6 +89,7 @@ const catalogueMintLimiter = rateLimit({
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
 const { creditNoteMoney, isCounterTakings } = require('../lib/till-credit-note-money'); /* the credit note's money as signs; which live rows are the counters' takings */
+const COUNTER_ROW_SQL = "AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)"; /* AJ-F-08 (walk AJ): a credit note is a counter's own only when it carries its counter (till.id); a rail credit note has none (no till sale). Here, not in lib/counter-bill: that file is vendored byte-for-byte into the till kit */
 const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -3668,7 +3669,7 @@ const engineRow = (bill) => ({ kind: bill.kind === 'credit_note' ? 'credit_note'
 const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.purpose, h.business_json, h.summary_json
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           ${counterBill.NOT_WITHDRAWN_SQL}
         ORDER BY h.created_at DESC LIMIT $3`;
@@ -3711,6 +3712,16 @@ async function liveToday(db, entity_id, filed) {
   return { summaries: liveSummaries(found.rows.filter(isToday), filed, today), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
 }
 
+/**
+ * AJ-F-08: is this bill already inside the counter's filed day summary? THE one rule, so a bill is counted once - from the summary or as an uploaded bill, never both.
+ * A summary that lists its bills (bill_nos, written by the till at close) answers by bill number: a bill it lists is inside it, however late its upload arrives (the double the walk found: C2 and C3 one bill too many).
+ * An older summary with no list falls back to the time it was filed: it summarised what had ARRIVED by then.
+ */
+function inFiling(filing, bill, row) {
+  if (Array.isArray(filing.bill_nos)) return filing.bill_nos.indexOf(bill.no) >= 0 || (!bill.no && !(receivedAt(row) > Date.parse(filing.summarised_at)));
+  return !(receivedAt(row) > Date.parse(filing.summarised_at));
+}
+
 /** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at */
 function liveSummaries(todays, filed, today) {
   const rollup = require('../lib/rollup');
@@ -3721,7 +3732,7 @@ function liveSummaries(todays, filed, today) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
     const filing = filedBy.get(till);
-    if (filing && !(receivedAt(row) > Date.parse(filing.summarised_at))) continue; /* already inside the filed figure: the filing summarised what had ARRIVED by then */
+    if (filing && inFiling(filing, bill, row)) continue;
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
@@ -3795,7 +3806,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
         /* ⚠️ AND SENT BY ME (the two-sided counter bill, 2026-10-01): a supplier's counter bill I RECEIVED carries a bill_no
            and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
@@ -3809,7 +3820,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
        (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */

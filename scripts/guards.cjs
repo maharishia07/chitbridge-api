@@ -900,7 +900,7 @@ const GUARDS = [
   'schedule-apply-claim.test.cjs', // NET-98 critic MUST 3: two readers at one due moment lay a parked patch once (claim: FOR UPDATE SKIP LOCKED + guarded stamp)
   'mis-practice-marks.test.cjs', // MIS 0b/0c: the practice row's queries open and entries checked = the client's own page (review-mark openCount, coverage), a mark altered by a seal included
   'speed17-marks-key-uncast.test.cjs', // l17 speed: the marks key (entry_id) is compared as a uuid, never entry_id::text, so its index serves the practice read at depth
-  'sold-one-rule.test.cjs', // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
+  'sold-one-rule.test.cjs', 'aj-today-sales.test.cjs', /* AJ-F-08: today's sales one figure, net of credit notes, a return is no bill */ // MIS 0a: ONE SOLD fragment, windowed soldByDay, practice paging and year on year
   'onerule-practice-page.test.cjs', // l16 onerule: the practice row equals the client's own page for every fact (months not locked = periodAdvice's rule, bank = unexplainedOf), every seeded client; real-Postgres on the 150-client seed: onerule-practice-page.realstack.cjs
   'net-98-reducers.test.cjs', // NET-98 S1: the pure reducers split out of the view's libs, one definition each (guard); the real-Postgres differential is net-98-differential.realstack.cjs (local stack)
   'openapi-services.test.cjs', // QA wave 2: the public services API document documents every real route of offers, pricing, tax, invoice, keys - and no phantom

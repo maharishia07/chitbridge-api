@@ -23234,6 +23234,7 @@ async function daySummarySend(m){
     if (!(window.CBRollup && CBRollup.summary && CBRollup.totals)) throw new Error('the day summary engine did not load');
     var sum = CBRollup.summary('day', m.day, CBRollup.totals(DAY_ROWS || []),
       { till: tillStamp(tillId(), WHO || null), source: null, at: m.at });
+    sum.bill_nos = (DAY_ROWS || []).map(function(b){ return b.no; }).filter(Boolean); /* AJ-F-08: the bills this summary holds, so the live day counts each once (routes/till.js inFiling) */
     var r = await HOST.daySummary(sum);
     if (!r || !r.ok) throw new Error((r && r.why) || 'it was not queued');
     return true;
