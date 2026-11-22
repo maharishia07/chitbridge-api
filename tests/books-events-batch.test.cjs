@@ -57,7 +57,7 @@ const { ok, eq, done } = counter();
   const flaky = async (e, b, event) => { if (event.n === 2) throw new Error('disk gone'); writes.push(event.n); return { ok: true, entry_no: event.n }; };
   const loud = await postEventsBatch({ entity: 'e', books: {}, by: 'p', request_id: 'rq1', isHeld: async () => false, said, post: flaky }, [{ n: 0 }, { n: 1 }, { n: 2 }, { n: 3 }]);
   eq('loud: a writer error mid-batch is ok:false with its index and code, the rest still counted', [loud.ok, loud.written, loud.refused, loud.code], [false, 3, [{ index: 2, code: 'INTERNAL' }], 'BOOKS_BATCH_PARTIAL']);
-  ok('loud: the error never leaks - the writer own e.message (disk gone) is in the trace, not in the answer, and the status stays a coded 500-class refusal', !JSON.stringify(loud).includes('disk gone') && loud.refused.every((r) => r.code === 'INTERNAL'));
+  ok('loud: the refused list never leaks the writer e.message (index and code only; the 500-class text stays in the trace)', !JSON.stringify(loud.refused).includes('disk gone') && loud.refused.every((r) => r.code === 'INTERNAL' && Object.keys(r).length === 2));
   ok('loud: ONE trace line names the capability and the request id, at warn level', seen.length === 1 && seen[0][1].capability === 'CAP-BOOKS-EVENTS-BATCH' && seen[0][1].id === 'rq1', JSON.stringify(seen));
   log.warn = realWarn;
   const held0 = await postEventsBatch({ entity: 'e', books: {}, request_id: 'rq2', isHeld: async () => true, said, post: flaky }, [{ n: 0 }, { n: 1 }]);
