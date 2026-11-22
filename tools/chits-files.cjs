@@ -14,7 +14,7 @@ const fs = require('fs');
 const path = require('path');
 
 /** routes/chits.js first: positions and "first match" scans keep their old meaning */
-const FILES = ['routes/chits.js', 'lib/chit-move.js', 'lib/chit-crossing.js', 'lib/chits-send-bill.js'];
+const FILES = ['routes/chits.js', 'lib/chit-move.js', 'lib/chit-crossing.js', 'lib/chits-send-bill.js', 'lib/chits-parts.js'];
 /** future splits land here: a '*' in the last segment matches within one folder, a trailing '/' means the whole folder tree */
 const GLOBS = ['routes/chits-*.js', 'lib/chit-send/'];
 /** the route file itself, for a reader that pins it on purpose */

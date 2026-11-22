@@ -561,6 +561,8 @@ async function sendNumberCheck(sendState, req, res) {
   Object.assign(sendState, { client_ref, number_check });
 }
 
+/** a counter bill (business_json.till) that carries a bill_no key at all, even an empty one */
+const carriesBillNo = (business) => isJsonObject(business) && !!business.till && typeof business.till === 'object' && Object.prototype.hasOwnProperty.call(business, 'bill_no');
 /**
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
  * from the route's catch when the b263 unique index refuses an insert (the race the first ask lost). Two copies
@@ -3791,6 +3793,11 @@ function orderBilledSql(header) {
 /** RAIL-106: the changes of mine on this chit the party on another installation has not confirmed yet (lib/ctpreturn unconfirmed) — null, and no query, when nothing is hosted elsewhere; null when the read fails (logged) */
 const unconfirmedOf = (entity_id, chit_id) => ctpReturn.unconfirmed(entity_id, chit_id).catch(cbLog.orElse('chits GET /:chit_id: the read failed — answered with none', null));
 
+/** AE-F-19: a bundle whose books wait is on the supplier list is read again against the live list (the bundle itself when it waits for nothing else) */
+async function withFreshSupplierWait(bundle, entity_id, chit_id) {
+  if (bundle && bundle.books_wait && bundle.books_wait.wait === 'supplier') bundle.books_wait = await require('../lib/supplier-list').freshWait(entity_id, chit_id, bundle.books_wait);
+  return bundle;
+}
 /** S34: what `make` builds from a map that holds something, else undefined (the key then drops out of the answer) */
 const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 

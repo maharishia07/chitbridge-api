@@ -32,6 +32,7 @@ const BODY = ['retPriorOf', 'retReducedBefore', 'retCustomerOwes', 'retOwedRefus
 function page(opts) {
   const said = [];
   const make = new Function('S', 'booksOn', 'booksMajor', 'CREDIT_SINCE', 'r2', 'rmoney', 'money', 'esc', 'toastLine', 'sure', 'said',
+    'var tx = function(e){ return e; }, txf = function(e, v){ return String(e).replace(/\\{(\\w+)\\}/g, function(w, k){ return v && k in v ? v[k] : w; }); };\n' +
     'var RET_OWED = "owed"; var RET_PRIOR = null; var RET_HOW = "";\n' + BODY);
   const api = make({ customers: opts.customers || [] }, () => opts.ledger !== false, (minor) => Number(minor) / 100, opts.since || {},
     (v) => Math.round(v * 100) / 100, (v) => Math.round(v * 100) / 100, (v) => '₹' + v.toFixed(2), (v) => String(v), (m) => said.push(m), async () => opts.confirm !== false, said);

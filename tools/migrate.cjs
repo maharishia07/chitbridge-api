@@ -170,8 +170,25 @@ function acceptedFailures() {
   try {
     return JSON.parse(fs.readFileSync(path.join(M, 'fresh-db.accepted.json'), 'utf8')).accepted || [];
   } catch (e) {
+    if (e.code !== 'ENOENT') console.warn('  · fresh-db.accepted.json could not be read (' + e.message + ') — treated as an empty list, so every failure stops the run');
     return [];
   }
+}
+/** run each pending file in order, recording the ones that pass; a failure is listed in `failed`, and the first one not on the accepted list stops the run → the file it stopped at, or null */
+async function runPending(pool, url, todo, list, failed) {
+  let stopped = null;
+  for (const f of todo) {
+    const x = psql(url, path.join(M, f), true);
+    if (x.ok) {
+      await record(pool, [f], 'migrate');
+      list.push(f);
+      continue;
+    }
+    stopped = stopped || (acceptedFailures().includes(f) ? null : f);
+    failed.push(f + ' — ' + String(x.errs[0] || '').replace(/^psql:[^ ]+ /, '').slice(0, 110));
+    if (stopped) break; /* A6: a numbered file that fails stops the run: a later file may rely on it, and the ledger must not skip over a hole */
+  }
+  return stopped;
 }
 
 /**
@@ -191,7 +208,6 @@ async function apply(url, opts) {
     const fresh = verdict.fresh;
     const list = [],
       failed = [];
-    let stopped = null;
     if (fresh) {
       say('schema: ' + BASELINE[0]);
       const r = psql(url, path.join(M, BASELINE[0]), true);
@@ -204,23 +220,7 @@ async function apply(url, opts) {
     const done = await ledger(pool);
     const files = chainFiles(),
       todo = files.filter((item) => !done.has(item));
-    for (const f of todo) {
-      const x = psql(url, path.join(M, f), true);
-      if (x.ok) {
-        await record(pool, [f], 'migrate');
-        list.push(f);
-      } else {
-        stopped = stopped || (acceptedFailures().includes(f) ? null : f);
-        failed.push(
-          f +
-            ' — ' +
-            String(x.errs[0] || '')
-              .replace(/^psql:[^ ]+ /, '')
-              .slice(0, 110)
-        );
-        if (stopped) break; /* A6: a numbered file that fails stops the run: a later file may rely on it, and the ledger must not skip over a hole */
-      }
-    }
+    const stopped = await runPending(pool, url, todo, list, failed);
     say(
       'schema: ' +
         (todo.length - failed.length) +

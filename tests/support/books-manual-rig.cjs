@@ -25,14 +25,14 @@ const call = (port, method, p, body) => new Promise((done) => {
 });
 
 /** → { X, q, asOwner, asStaff, srv, staff: { code }, close } or null (with the reason printed) when the engines are not there */
-async function rig(shopRow) {
+async function rig(shopRow, shopDay) {
   const X = H.load({ auth: authStub });
   if (shopRow) X.db.countryRow = shopRow; /* another country's identities row (the gate's and the registration's read); none = the India shop */
   if (!X.src.dir) { console.log('   SKIP: ' + X.src.why); return null; }
   require.cache[require.resolve(path.join(H.API, 'lib', 'storage-object'))] = { exports: { available: async () => false } };
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   const realDay = K.dayOf;
-  K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? '2026-10-10' : realDay(ts, c));   /* only "now" moves */
+  K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? (shopDay || '2026-10-10') : realDay(ts, c));   /* only "now" moves; shopDay: a test that locks a month needs the shop's day past that month's end (a running month cannot be locked, WALK K K-F-01) */
   const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
   const srv = app.listen(0); const port = srv.address().port;
   const q = (m, p, b) => call(port, m, '/api/books' + p, b);

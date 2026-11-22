@@ -546,7 +546,6 @@ router.post('/status/bulk', auth, ...checked('POST /status/bulk'), async (req, r
     /* ⚠️ THE SAME LIBRARY CALL THE SINGLE ROUTE MAKES — not a copy. A bulk path that re-implements the stamp is
        how the bulk answer and the single answer start disagreeing about what "unavailable" recorded. */
     const rec = itemstatus.stamp({ status: req.body.status }, { actor_name: req.identity.display_name });
-
     const r = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids, merge: rec }, { returning: 'item_id, item_data' }));
 
     /* ⚠️ SAY WHICH ONES DID NOT MOVE. An id that is not in this catalogue simply does not match, and a bulk
@@ -712,7 +711,6 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
     if (!items.every(isEditShape)) {
       return problem(req, res, { status: 400, ...words.badShape() });
     }
-
     const stored = await storedForEdits(req, entity_id, items);
     if (editorChangesRate(req, items, stored)) return problem(req, res, rateRefusal());
     /* CAT-235: this door REPLACES each record, so it writes the keys a body names AND the stored keys it leaves out (CAT-237's erase rule) — the
@@ -722,10 +720,8 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
        cost-allowed caller never enter (writeRefusal answers null for a non-actor, and for an actor who sees costs). */
     const refused = await cost.writeRefusal(req, entity_id, bulkWrittenKeys(items, stored));
     if (refused) return problem(req, res, { status: 403, ...words.costBlind(refused) });
-
     const schema_id = await defaultSchemaId(entity_id);
     const currency = await regional.currencyFor(entity_id);
-
     const list = [];
     for (let i = 0; i < items.length; i++) {
       const verr = await validateItem(entity_id, schema_id, items[i].item_data, stored && stored.get(items[i].id));
@@ -2270,7 +2266,6 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
     const entity_id = ctx(req);
     const BP = require('../lib/catalogue-blueprint');
     const b = req.body || {};
-
     const bp = BP.blueprint(b.list);
     if (bp.key === 'general') {
       return problem(req, res, { status: 400, ...words.unknownList('There is no product list called "' + String(b.list).slice(0, 40) + '".', Object.keys(BP.BLUEPRINTS)) });

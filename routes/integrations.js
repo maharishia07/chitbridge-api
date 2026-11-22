@@ -190,8 +190,8 @@ const KIT_NAMES = [
   'signin-ui.js',
   'their-bill.js',
   'counter-bill.js',
-  'tax-slab-ui.js',
-  'printer.js', 'till-slip.js',
+  'tax-slab-ui.js', 'till-dayrep.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js', 'till-slip.js',
+  'printer.js',
   'rollup.js',
   'orders.js',
   'orderhub.js',
@@ -922,16 +922,16 @@ router.param('handle', textParam({ status: 404, code: 'NOT_FOUND', detail: NOT_F
 /* S16: a public door that makes a shop's connector re-read its stock is capped PER SHOP, whatever the callers' addresses: ASK_PER_MINUTE asks a minute; the rest are told one is already on its way and nothing is emitted */
 const ASK_PER_MINUTE = 6;
 const askWindow = new Map(); /* entity_id → { start, n } */
+/** the window map is swept of every shop whose minute has passed, once it grows past 5000 */
+const sweepAskWindow = (now) => askWindow.size > 5000 && askWindow.forEach((slot, shop) => { if (now - slot.start >= 60000) askWindow.delete(shop); });
+/** S16: true while this shop is under its ASK_PER_MINUTE asks in the current minute (and counts this one) */
 function askRoom(entity_id) {
-  const now = Date.now();
-  const w = askWindow.get(entity_id);
-  if (!w || now - w.start >= 60000) {
-    askWindow.set(entity_id, { start: now, n: 1 });
-    if (askWindow.size > 5000) for (const [k, v] of askWindow) if (now - v.start >= 60000) askWindow.delete(k);
+  const now = Date.now(), slot = askWindow.get(entity_id);
+  if (!slot || now - slot.start >= 60000) {
+    askWindow.set(entity_id, { start: now, n: 1 }); sweepAskWindow(now);
     return true;
   }
-  w.n += 1;
-  return w.n <= ASK_PER_MINUTE;
+  return ++slot.n <= ASK_PER_MINUTE;
 }
 router.post('/ask/:handle/stock', schemaValidate(ASK_OPERATION), async (req, res) => {
   try {

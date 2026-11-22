@@ -14,7 +14,7 @@ function grabAt(at, label) {
 const grab = (n) => { const at = h.indexOf('function ' + n + '('); return (h.slice(at - 6, at) === 'async ' ? 'async ' : '') + grabAt(at, n); };
 /** a CloudHost method ('bills', 'local', 'state') lifted as a function the test can call */
 const grabMethod = (n) => 'var M_' + n + ' = ' + grabAt(h.indexOf('async ' + n + '(', h.indexOf('var CloudHost')), n).replace(/^async \w+\(/, 'async function(');
-const FNS = ['dayKeyOf', 'shopDayOf', 'dayInZone', 'shopTz', 'tzOpt', 'shopPack', 'dayClosedMark', 'dayCloseCommit', 'dueDateFor', 'dayServerCheck', 'lotTrouble', 'noDayMoney', 'dayOrNull', 'billNosHeld', 'dayReread', 'rcvPayPropose'];
+const FNS = ['dayKeyOf', 'shopDayOf', 'dayInZone', 'shopTz', 'shopOwnTz', 'tzOpt', 'shopPack', 'dayClosedMark', 'dayCloseCommit', 'dueDateFor', 'dayServerCheck', 'lotTrouble', 'noDayMoney', 'dayOrNull', 'billNosHeld', 'dayReread', 'rcvPayPropose'];
 const ZONES = { IN: 'Asia/Kolkata', AU: 'Australia/Sydney' };
 
 /** the page for a country with the clock stopped at `now` (an ISO instant) and `rows` in the bill store */

@@ -271,7 +271,7 @@ const INFRA_LIBS = [
   'pricing-contract.js',
   /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
   'chits-contract.js',
-  'chits-input.js',
+  'chits-input.js', 'chits-parts.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
   /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
@@ -598,7 +598,7 @@ const ENGINE_OTHER = [
   'books.js', 'books-hooks.js', 'party-fields.js', 'finance-terms.js',
   'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
-  'country-setup.js', 'country-setup-merge.js', 'books-hooks-use.js', 'profile-payee.js', 'work-unbilled.js', /* batch 1126 size splits: part files of country-setup · books-hooks · profile · work-rows - parts of infra files, no rule of an engine */
+  'country-setup.js', 'country-setup-merge.js', 'country-setup-clean.js', 'csv-decisions.js', 'books-hooks-use.js', 'profile-payee.js', 'work-unbilled.js', /* batch 1126 size splits: part files of country-setup · books-hooks · profile · work-rows - parts of infra files, no rule of an engine */
   'books-advice-in.js',       /* B-F-17: a received payment advice read as my receipt - split from books-hooks.js, the chit decides, the posting is recordChitPayment; infra, no rule of an engine */
   'books-moved-role.js',      /* F-66 (batch 1126): a ledger role handed back when the pack moved its code - chart bookkeeping of books.js, the pack's rule stays in the engine */
   'consent-counts.js',        /* A-F-58: the one count of who agreed to offers, beside consent-standing.js - rows and SQL, no money or tax */

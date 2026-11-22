@@ -164,3 +164,8 @@ committed `migrations/bNN_*.sql` only** — no more ad-hoc Supabase DDL.
 - **cb_chit (#14) is dormant:** the table stays (Q3, reversible); only the `/api/network` chit-loop *route* was retired. `src/services/chit.js` is retained because `src/services/network.js` uses `edgeHasOpenChit` for the disconnect settle-guard.
 - All `migration_*.sql` are written idempotent (`IF NOT EXISTS` / safe re-run).
 - Physical collapse of files into a single `migrations/NNN_*.sql` sequence is deferred to avoid churn; this manifest is the ordered source of truth meanwhile.
+
+## Pending, not yet run (batch 1128) — Athi runs
+| file | run on | by | note |
+|---|---|---|---|
+| b908_identities_auth_fail_grant.sql | SIT (done by the db lane), then production BEFORE the 1128 api lands | Athi | after b900; column grants on identities.auth_fail_count / auth_fail_at for cb_app (SEC-186 DBs refuse sign-in without it) |

@@ -45,7 +45,7 @@ function page(o) {
     ask: async (msg) => { ctx.asked.push(msg); return o.why == null ? null : o.why; }
   };
   vm.createContext(ctx);
-  vm.runInContext(['billMoney', 'packKinds', 'lineKindOf', 'stateOfTaxId', 'billWhen', 'billStopMoney', 'noDayMoney', 'dayInZone', 'shopDayOf', 'tzOpt', 'shopTz', 'shopPack', 'docCountry', 'bandWordsOf', 'moneyOf', 'noCountryMoney', 'walkInNote', 'taxIncluded', 'moneyStop', 'moneyStopAsk', 'billWarnHTML', 'billWarnLine', 'slipCheckedHTML'].map(grab).join('\n')
+  vm.runInContext(['billMoney', 'packKinds', 'lineKindOf', 'stateOfTaxId', 'billWhen', 'billStopMoney', 'noDayMoney', 'dayInZone', 'shopDayOf', 'tzOpt', 'shopTz', 'shopOwnTz', 'shopPack', 'docCountry', 'bandWordsOf', 'moneyOf', 'noCountryMoney', 'walkInNote', 'taxIncluded', 'moneyStop', 'moneyStopAsk', 'billWarnHTML', 'billWarnLine', 'slipCheckedHTML'].map(grab).join('\n')
     + '\nthis.__f = { billMoney: billMoney, moneyStopAsk: typeof moneyStopAsk === "function" ? moneyStopAsk : null, billWarnHTML: typeof billWarnHTML === "function" ? billWarnHTML : null, slipCheckedHTML: typeof slipCheckedHTML === "function" ? slipCheckedHTML : null };', ctx);
   return ctx;
 }
@@ -80,7 +80,7 @@ function page(o) {
   });
   await ok('finish() asks BEFORE payment is taken, and the chit carries the override; the slip says who checked', () => {
     const f = grab('finish');
-    assert.ok(/moneyStopAsk\(m\.stop\)/.test(f) && f.indexOf('moneyStopAsk') > f.indexOf('billMoney()') && f.indexOf('moneyStopAsk') < f.indexOf('tenderParts'), 'finish() order');
+    assert.ok(/moneyStopAsk\(m\.stop\)/.test(f) && f.indexOf('moneyStopAsk') > f.indexOf('billMoney()') && f.indexOf('moneyStopAsk') < f.indexOf('billPartsOf'), 'finish() order');
     assert.ok(/money_override: moneyOver/.test(f), 'body does not carry money_override');
     assert.ok(/money_override: bill\.money_override/.test(grab('chitOf')), 'chitOf drops money_override');
     const p = page(); const foot = p.__f.slipCheckedHTML({ money_override: { by: 'own-1', by_name: 'Asha' } });

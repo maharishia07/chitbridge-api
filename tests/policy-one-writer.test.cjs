@@ -48,7 +48,7 @@ ok('no UPDATE identities outside lib/profile.js sets gstn / address on the shop 
   idWriters.length === 0, idWriters.join(' · '));
 const ent = fs.readFileSync(path.join(API, 'routes', 'entities.js'), 'utf8');
 ok('no "15 characters" GSTIN assumption on the profile save — the pack decides (profile.taxIdRefusal)', !/body\('gstn'\)[^\n]*isLength\(\{\s*max:\s*15/.test(ent) && /taxIdRefusal/.test(ent));
-const cs = fs.readFileSync(path.join(API, 'lib', 'country-setup.js'), 'utf8');
+const cs = ['country-setup.js', 'country-setup-clean.js'].map((name) => fs.readFileSync(path.join(API, 'lib', name), 'utf8')).join(' '); /* the cleaners are a part file of country setup */
 ok('country setup checks the number with the same function (no private GSTIN/ABN/TRN check left)', /taxIdRefusal/.test(cs) && !/gstinChecksum/.test(cs));
 
 /* ── the writers, against a stand-in db ─────────────────────────────────────────────────────────────────────────────────── */

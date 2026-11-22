@@ -15,7 +15,7 @@ function run(country, pay, picked) {
     tillOpt: () => ({}), upiShapeOk: () => true, creditCust: () => null, esc: String, escJs: String, payLink: () => '', payQr: () => '', cashSaysHTML: () => '', cashRoundWords: () => '', Math, Number, String, Object, Array
   };
   vm.createContext(ctx);
-  vm.runInContext(['shopPack', 'packHasUpi', 'paintPays'].map(grab).join('\n') + '\nthis.__p = paintPays;', ctx);
+  vm.runInContext(['shopPack', 'packHasUpi', 'paintPays', 'payWaysOf', 'addOwnUpiWay', 'addIndiaUpiWay', 'paySinceBackground', 'payButtonsHTML', 'payQrHTML', 'paySaysHTML'].map(grab).join('\n') + '\nthis.__p = paintPays;', ctx);
   ctx.__p();
   return out.innerHTML;
 }

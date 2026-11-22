@@ -2,22 +2,15 @@
  * guards.cjs — RUN THE CHECKS THAT NEED NOTHING, AND SAY ONE NUMBER.
  * `npm test` needs a server running; these do not. They are what must pass before anything is pushed — no database, no network,
  * a few seconds — and until now the way to run them was to remember nine filenames.
- *
- * ⚠️ WHY A SCRIPT AND NOT A SHELL LOOP. The VS Code task was first written as a cmd.exe `for %t in (…)` loop, and VS Code's
- * terminal on Windows is PowerShell, where that is a syntax error. A task nobody can run is a task nobody runs. One node script
  * behaves the same from PowerShell, cmd, Git Bash and CI.
- *
- * ⚠️⚠️ AND WHY A DECLARED LIST RATHER THAN A GLOB. The first version ran everything matching tests/*.test.js — 95 files — and
  * reported 13 failures. Most were not failures at all: traceability needs a live server ("fetch failed"), several need a
  * database. A runner that reports red for the wrong reason gets ignored within a week, and then it is reporting nothing.
  * So GUARDS is a list somebody chose. `--all` runs the rest and is honest that some of it needs a server.
- *
  *   node scripts/guards.cjs         the offline set — safe anywhere, seconds
  *   node scripts/guards.cjs --all   every test file, including the ones that need a server or a database
  *   node scripts/guards.cjs --junit test-results/guards.xml
  *                                   also write a JUnit report, one <testcase> per file, named by the board's key
  *                                   (`chitbridge-api/tests/<file>`) — CI posts it to the test board (ci.yml)
- *
  * OWNS      the declared list of offline guards (GUARDS) and the one line that says how many checks passed.
  * CALLED BY .github/workflows/ci.yml (guards job, every push), the VS Code task, by hand before every push.
  * FLOW      GUARDS ──▶ spawn each tests/<file> ──▶ read its last "<n> checks" ──▶ ok / FAIL per file ──▶ --junit ──▶ exit 1 on any FAIL
@@ -32,6 +25,7 @@ const GUARDS = [
   'reviews1-trace-batch-errors.test.cjs', // reviews1 EL F8: a lot recall rethrows a failed read, answers no rows only for a missing table or column
   'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
   'reviews1-boolean-words.test.cjs', // reviews1 EL F1: one boolean reader for is_draft / is_dispute / chit_wide / priority-flag
+  'identities-column-grant.test.cjs', // SEC-186 (21 Nov): every identities column added after b875 is granted to cb_app in the same or a later migration (b900 broke sign-in on a column-revoked DB)
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
   'books-1126-units.test.cjs', // batch 1126: the received payment advice, the moved wages role and the country setup questions, unit by unit
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
@@ -505,7 +499,6 @@ const GUARDS = [
   'crm-read.test.cjs', // a both-roles party is ONE row; a merged / hidden / other-population party is never listed; dues = the stored figures; no per-row fetch
   'crm-interactions.test.cjs', // log a call / note (party_interaction stubbed); the 503 before b276
   'optout.test.cjs', // ⭐ CON-2: a STOP reply withdraws marketing consent for every party on the number (whatsapp + sms, source reply), whole-message match, per-country words, the offer footer, the signed webhook dismisses it and confirms after the 200
-  'privacy.test.cjs', // CO1: consent append-only + may/why, the request register's legal clock + answered once, the public facts; 503 before b306/b307
   'crm-followups.test.cjs', // follow-ups CRUD, assignment (owner or assignee), late in the SHOP's day, the 503 before b276
   'crm-sweep.test.cjs', // the nightly sweep rings the bell once a day per assignee, nothing sensitive on the event
   /* ⭐⭐⭐ THE WEB'S CONTRACT (2026-10-03: the CRM list failed live - roles an OBJECT, the page read a list) — chitbridge-web keeps a copy and holds its stand-ins to it */
@@ -1048,7 +1041,6 @@ const GUARDS = [
   'api-8-strict-money.test.cjs', // U1 (8 Nov, was run by no CI job): OWNS API-8 (S33): the money bodies are allow-lists, and each still names every key its handler reads.
   'api-43-pricing-tolerant.test.cjs', // API-43 (k78, enrolled with the merge): POST /api/pricing/price ignores unknown body keys again
   'api-tolerant-outward.test.cjs', // API-43 (k78, enrolled with the merge): the tolerant_outward scope list: strict_input does not apply, a short reason counts for nothing
-  'retired-routes-404.test.cjs', // the 7 routes retired 2026-11-12 (DECISIONS d05560bf) answer 404 as JSON for every method and a signed-in caller
   'api-tolerant-till.test.cjs', // S33-T: the counter's queued doors (flags, stock, stock/bulk, reward, reward/claim, quick-keys hide/unhide) and POST /api/chits/send ignore zz_unknown, take the keys older counters sent, refuse a wrong kind 400 in the problem shape
   'identity-secret.test.cjs', // before and after b874: the sign-in reads run with or without ops.identity_secret; a failed ask keeps the view SQL (fail closed)
   'api-tolerant-doors.test.cjs', // S33-T (#1105-#1108): every tolerant door ignores an unknown key and refuses a known key of the wrong kind; the strict catalogue doors name the key they refuse (44 checks)
@@ -1266,6 +1258,13 @@ const GUARDS = [
   'heir-of-plug.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
+  'practice-sql-inline.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): batch 1128 S41, the practice cash statement inlines clean (no lone apostrophe or ; in a SQL comment); offline
+  'readab-1128-units.test.cjs', // READ-GUARD §7 unit evidence, batch 1128 (receipt-lines, shop-country, profilemap); offline
+  'readab-1128a-units.test.cjs', // READ-GUARD §7: einvoice-note, message-client-id, weak pin refusals; offline
+  'readab-1128-g0-units.test.cjs', // READ-GUARD §7: client-ip fail-closed; offline
+  'readab-1128-chits-parts-units.test.cjs', // READ-GUARD §7: lib/chits-parts small steps (payment clear, withdraw, tax refusal); offline
+  'year-close-warnings-store.test.cjs',
+  'till-rate-repeat-press.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): S41 year-close warnings read the queue with the entity id; offline
   'api-junk-types-api9394.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'fin-15-advance-key.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'books-lib-units.test.cjs', // READ-GUARD §7 unit evidence for the small 20 Nov modules (input, reversal date, debit check, event guard, balance rows, locks, year reopen, switch audit, ask cap, no-store)

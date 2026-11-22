@@ -7,7 +7,7 @@ function grabAt(at, label) { assert.ok(at >= 0, label + ' is gone from till.html
 const grab = (n) => { const at = h.indexOf('function ' + n + '('); return (h.slice(at - 6, at) === 'async ' ? 'async ' : '') + grabAt(at, n); };
 const lift = (names, ctx) => { vm.createContext(ctx); vm.runInContext(names.map(grab).join('\n'), ctx); return ctx; };
 let n = 0; const ok = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what); };
-const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) => Math.round(v * 100) / 100, Math, Number, String, Object, Array, JSON, isFinite, isNaN, Date, Intl };
+const base = { tx: (e) => e, txf: (e, v) => String(e).replace(/\{(\w+)\}/g, (w, k) => (v && k in v ? v[k] : w)), cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) => Math.round(v * 100) / 100, Math, Number, String, Object, Array, JSON, isFinite, isNaN, Date, Intl };
 
 (async () => {
   await ok('B-F-23: the bill warning "Open the day" runs beginDay, not only opens the menu', () => {
@@ -42,15 +42,15 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
     assert.ok(/'sold ' \+ item\.sold \+ ', returned '/.test(h)); assert.ok(/Taxable on sales/.test(h) && /Taxable returned/.test(h) && h.indexOf("schemeWord() + ', net'") > 0); /* batch 1126 read: the row is dayMostSoldRow(item, name) */
   });
   await ok('B-F-26: the report date is the shop country\'s order (AU 21/11/2026), not the PC\'s', () => {
-    const c = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz'], Object.assign({}, base, { window: { CBLocale: { REGIONS: { AU: { format: 'en-AU' }, US: { format: 'en-US' } }, timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
+    const c = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz', 'shopOwnTz'], Object.assign({}, base, { window: { CBLocale: { REGIONS: { AU: { format: 'en-AU' }, US: { format: 'en-US' } }, timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
     assert.strictEqual(c.shopDate(Date.UTC(2026, 10, 21, 5)), '21/11/2026');
     assert.ok(/t\(esc\(shopDate\(Date\.now\(\)\)\)/.test(h) && !/esc\(new Date\(\)\.toLocaleDateString\(\)\)/.test(h));
   });
   await ok('AE-F-05/20: the counter writes the shop zone from the snapshot (Perth 08:30 for 00:30Z, not the PC Sydney), English words, the shop order, Latin digits for an AE shop', () => {
     const at = Date.UTC(2026, 10, 21, 0, 30);
-    const perth = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz', 'hhmm'], Object.assign({}, base, { S: { shop: { timezone: 'Australia/Perth' } }, window: { CBLocale: { timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
+    const perth = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz', 'shopOwnTz', 'hhmm'], Object.assign({}, base, { S: { shop: { timezone: 'Australia/Perth' } }, window: { CBLocale: { timezone: () => 'Australia/Sydney' } }, docCountry: () => 'AU', shopPack: () => null }));
     assert.strictEqual(perth.hhmm(at), '08:30');
-    const dubai = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz'], Object.assign({}, base, { S: { shop: { timezone: 'Asia/Dubai' } }, window: { CBLocale: { REGIONS: { AE: { format: 'ar-AE' } }, timezone: () => 'Asia/Kolkata' } }, docCountry: () => 'AE', shopPack: () => null }));
+    const dubai = lift(['shopDate', 'shopFmt', 'tzOpt', 'shopTz', 'shopOwnTz'], Object.assign({}, base, { S: { shop: { timezone: 'Asia/Dubai' } }, window: { CBLocale: { REGIONS: { AE: { format: 'ar-AE' } }, timezone: () => 'Asia/Kolkata' } }, docCountry: () => 'AE', shopPack: () => null }));
     const said = dubai.shopDate(Date.UTC(2026, 10, 21, 22, 30));
     assert.strictEqual(said, '22/11/2026'); assert.ok(!/[؀-ۿ]/.test(said));
     assert.ok(fs.readFileSync(__dirname + '/../routes/till.js', 'utf8').includes('timezone: countrySetup.clockOf({ country, timezone: row.timezone }).zone'), 'the snapshot carries shop.timezone');
@@ -71,6 +71,21 @@ const base = { cbQuiet() {}, rmoney: (v) => Math.round(v * 100) / 100, r2: (v) =
   await ok('B-F-22: the owner signed in as the shop may set a rate at the till', () => {
     const mk = (who) => lift(['rateMay'], Object.assign({}, base, { cbRateMay: (f) => ({ ok: !!(f && f.owner) }), personOn: () => false, S: { staff: [] }, WHO: who, CloudHost: {} })).rateMay();
     assert.strictEqual(mk({ kind: 'entity' }).ok, true); assert.strictEqual(mk({ kind: 'coassist' }).ok, false);
+  });
+  await ok('B-F-24: ask then sure — the first dialog late close event must not cancel the confirm that opens right after it', async () => {
+    const el = () => ({ hidden: false, textContent: '', value: '', style: {}, innerHTML: '', appendChild() {}, focus() {}, select() {} });
+    const els = {}; ['askbody', 'askinput', 'asklabel', 'askno', 'askok', 'asktitle'].forEach((k) => { els[k] = el(); });
+    let lateClose = null;
+    const dlg = { open: false, onclose: null, showModal() { this.open = true; }, close() { this.open = false; const self = this; lateClose = () => self.onclose && self.onclose(); } };   /* the real event is a queued task: it fires AFTER the next dialog is open */
+    els.askdlg = dlg;
+    const c = lift(['_askClose', '_askOpen', 'sure', 'ask'], Object.assign({}, base, { _askResolve: null, pictureModeOn: () => false, voiceSay() {}, toastLine() {}, setTimeout: () => 0, Promise,
+      document: { getElementById: (k) => els[k], createElement: () => el() } }));
+    const first = c.ask('count', '', 'Cash', 'Close the day'); els.askinput.value = '0'; els.askok.onclick();
+    assert.strictEqual(await first, '0');
+    const second = c.sure('close?', 'Close the day', 't', 'Not yet');   /* what dayCloseDo does next */
+    assert.strictEqual(dlg.open, true); lateClose();                    /* the first dialog's close event arrives now */
+    let settled = false; second.then(() => { settled = true; }); await Promise.resolve(); await Promise.resolve();
+    assert.strictEqual(settled, false, 'the late close event cancelled the confirm'); els.askok.onclick(); assert.strictEqual(await second, true);
   });
   console.log(n + ' ok');
 })().catch((e) => { console.error(e); process.exit(1); });

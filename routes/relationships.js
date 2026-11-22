@@ -263,7 +263,6 @@ router.post(
         require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
         return res.json(localSupplierAnswer(added, localNo, { kind, category, nickname, notes, preferred }));
       }
-
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
       const sup = await query(
@@ -294,11 +293,7 @@ router.post(
           on_rail: !!trade.ok,
           party_no: supNo,
           ...(trade.ok ? {} : { one_sided: { why: trade.why } }),
-          supply_kind: kind,
-          category,
-          nickname,
-          notes,
-          preferred
+          supply_kind: kind, category, nickname, notes, preferred
         }
       });
     } catch (err) {

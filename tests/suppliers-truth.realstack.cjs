@@ -114,10 +114,11 @@ const mineLines = async (A, chit) => ((ok(await j('/api/chits/' + chit, { token:
     }, 'the bill from an unlisted seller carries no sentence saying it waits');
     await kase('SU-03', 'a batch-tracked product received with no batch number posts nothing; the same product with its batch posts', async () => {
       const P = await trackedProduct(A, 'Tracked ' + RUN + '-3');
-      await sendSelf(A, lotReceipt(RUN + '-R3n', P, [{ qty: 5 }]), 'receipt with no batch');
+      const refused = await j('/api/chits/send', { method: 'POST', token: A.token, body: lotReceipt(RUN + '-R3n', P, [{ qty: 5 }]) }); /* WALK-D D-F-01: refused at the door in words, nothing put on the shelf */
+      expect(refused.status === 400 && refused.b.code === 'RECEIPT_LOT_REQUIRED', 'receipt with no batch answered HTTP ' + refused.status + ' ' + JSON.stringify(refused.b).slice(0, 200));
       await sendSelf(A, lotReceipt(RUN + '-R3b', P, [{ qty: 3, lot: { batch: BATCH_ONLY } }]), 'receipt with a batch');
       const moves = await settleLots(A, P.id, 1);
-      expect(moves.length === 1 && String(moves[0].lot).toUpperCase() === BATCH_ONLY.toUpperCase() && near(moves[0].qty, 3), 'movements ' + JSON.stringify(moves) + ' (expected only the batch ' + BATCH_ONLY + ' x3: the no-batch receipt is refused one layer down, lib/stock-store.js:112)');
+      expect(moves.length === 1 && String(moves[0].lot).toUpperCase() === BATCH_ONLY.toUpperCase() && near(moves[0].qty, 3), 'movements ' + JSON.stringify(moves) + ' (expected only the batch ' + BATCH_ONLY + ' x3: the no-batch receipt is refused 400 at the door)');
     });
     await kase('SU-04', 'two batches of one product on one receipt are two movements under two lots, each with its own expiry, and one on-hand figure', async () => {
       const P = await trackedProduct(A, 'Tracked ' + RUN + '-4');

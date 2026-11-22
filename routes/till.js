@@ -1481,10 +1481,8 @@ router.post('/stock/bulk', auth, auth.requireScope('till'), ...checked('POST /st
       return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + STOCK_BULK_MAX + ' products in one change.') });
     }
     if (COUNTER_STATUSES.indexOf(input.status) < 0) return refuseBad(req, res, "status must be 'available' or 'unavailable'");
-
     const stamp = itemstatus.stamp({ status: input.status, note: input.note }, { actor_name: input.by });
     const saved = await withEntity(entity_id, (db) => catwrite.patchItems(db, entity_id, { ids: input.ids, merge: stamp }));
-
     shopChanged(entity_id, 'stock ' + input.status + ' ×' + saved.rows.length);
     res.json({
       ok: true,
@@ -1722,7 +1720,6 @@ router.post('/flags', auth, auth.requireScope('till'), ...checked('POST /flags')
     if (!item_id) return refuseBad(req, res, 'item_id required');
     const offerOptOut = body.offer_id != null;
     if (!offerOptOut && body.screen === undefined) return refuseBad(req, res, 'nothing to set — pass screen, or offer_id with excluded');
-
     const saved = await withEntity(entity_id, (db) =>
       offerOptOut ? setOfferOptOut(db, entity_id, item_id, body) : setScreenPick(db, entity_id, item_id, body)
     );
@@ -2124,7 +2121,6 @@ router.post('/offer-item', auth, auth.requireScope('till'), ...checked('POST /of
     const entity_id = auth.entityOf(req);
     const input = offerItemInput(req.body);
     if (!input.offer_id || !input.item_id) return refuseBad(req, res, 'offer_id and item_id required');
-
     const done = await withEntity(entity_id, (db) => moveOfferItem(db, entity_id, input, req.identity && req.identity.identity_id));
 
     const refusal = moveRefusal(done);
@@ -2408,7 +2404,7 @@ function slabPatchOf(item_data, slab) {
   const before = Object.assign({}, item_data || {});
   const after = taxSlab.setOn(Object.assign({}, before), slab);
   const patch = {};
-  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key]) patch[key] = after[key] === undefined ? null : after[key];
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) if (after[key] !== before[key] && !(after[key] === undefined && before[key] === null)) patch[key] = after[key] === undefined ? null : after[key];
   return patch;
 }
 /**
@@ -2753,6 +2749,12 @@ function pairCode() {
   }
 }
 
+/** why this request may not mint a screen pairing code (403 said), or null: a person must be signed in, a key other than a counter's may not, and (S9: a screen key lasts a year) only the owner or a manager hat may; a counter key keeps its own narrow right */
+function screenPairRefusal(req, holder, viaCounter) {
+  if (!req.identity || (holder && !viaCounter)) return said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.');
+  const mayMint = viaCounter || require('../lib/owner').isOwner(req) || require('../lib/owner').isManager(req);
+  return mayMint ? null : said('OWNER_ONLY', 'Forbidden', 'Only the owner or a manager can pair a screen.');
+}
 /** the shop asks for a code — one per screen, so two televisions can be revoked apart */
 // @does A screen name in, a signed-in person (not a key) -> we make a one-time pairing code for a new shop screen -> the code.
 router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
