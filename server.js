@@ -236,14 +236,36 @@ app.use(require('./lib/limits').admit);
 // E07 · the request in scope for the database layer (slow-query lines carry its id) — after the parsers, whose stream callbacks drop the context
 app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.locals, next, require('./lib/client-ip').clientIp(req)));
 
-// Rate limiting — higher limit in dev/testing
-const limiter = rateLimit({
-  name: 'api-global', windowMs: 15 * 60 * 1000,
-  max: intFromEnv('RATE_LIMIT_MAX', 500),
+/* Rate limiting — T-F-02 (OWASP API4:2023; Stripe, Shopify and GitHub key the budget on the signed-in identity and keep a lower per-address one for strangers).
+   One Home load is ~30-40 calls (round-trips.budget.json: the home reads), so the old 500 per 15 min per ADDRESS refused an owner after ~15 loads and every
+   staff member of a shop behind one NAT address together. Now, all per 15 min and each set from the environment (SIT sets its own):
+     RATE_LIMIT_USER_MAX  3000  a SIGNED-IN person, own bucket   = ~60 screen loads x ~40 calls = 2400, plus headroom
+     RATE_LIMIT_MAX        500  an UNSIGNED caller, per address  = unchanged; the signed-in budget never applies to a stranger
+     RATE_LIMIT_IP_MAX   10000  ceiling per ADDRESS for everyone together = ~3 busy people on a shared shop address; it only stops a flood from one address
+   The sign-in, check-login, public, catalogue and assistant limiters below are NOT touched: they stay exactly as strict as before. */
+const generalBucket = require('./lib/limiter-key').generalBucket;
+const GENERAL_WINDOW_MS = 15 * 60 * 1000;
+const USER_MAX = intFromEnv('RATE_LIMIT_USER_MAX', 3000);
+const STRANGER_MAX = intFromEnv('RATE_LIMIT_MAX', 500);
+/* the per-address ceiling is mounted FIRST: the person's budget then writes the RateLimit-* headers a client reads; the ceiling's own show only when it refuses */
+const ipCeiling = rateLimit({
+  name: 'api-ip-ceiling', windowMs: GENERAL_WINDOW_MS,
+  max: intFromEnv('RATE_LIMIT_IP_MAX', 10000),
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests', message: 'Please try again in 15 minutes' }
+  keyGenerator: (req) => 'ip:' + String(req.ip || (req.socket && req.socket.remoteAddress) || 'unknown'),
+  message: { error: 'Too many requests', message: 'Too many requests from this network — please try again in a few minutes' }
 });
+const limiter = rateLimit({
+  name: 'api-global', windowMs: GENERAL_WINDOW_MS,
+  max: USER_MAX /* the budget the register reads */,
+  limit: (req) => (generalBucket(req).signedIn ? USER_MAX : STRANGER_MAX),
+  keyGenerator: (req) => generalBucket(req).key,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests', message: 'You have asked for a lot in a short time — please try again in a few minutes' }
+});
+app.use('/api/', ipCeiling);
 app.use('/api/', limiter);
 
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).

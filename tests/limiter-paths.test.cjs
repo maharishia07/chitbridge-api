@@ -35,7 +35,7 @@ require.cache[rlPath].exports = tagged;
 /* ── server.js, without listening (tools/load-app.cjs) ───────────────────────────────────────────────────────── */
 const app = loadApp();
 
-const isGlobal = (fn) => !!fn.__limiter && /Please try again in 15 minutes/.test(JSON.stringify(fn.__limiter.message || ""));   // the blanket /api one
+const isGlobal = (fn) => !!fn.__limiter && /Please try again in 15 minutes|asked for a lot in a short time|Too many requests from this network/.test(JSON.stringify(fn.__limiter.message || ""));   // the blanket /api ones: per person (api-global) and per address (api-ip-ceiling), T-F-02
 const GUARD_NAME = /^(auth|customerAuth|requireScope|admin|requireAdmin|authenticate|verifyToken|requireAuth|authed|requireRole)$/;
 const guardish = (fn) => fn.__guard || GUARD_NAME.test(fn.name || '');
 
