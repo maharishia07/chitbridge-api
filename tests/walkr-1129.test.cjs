@@ -64,12 +64,13 @@ const SETTING = { enabled: true, walkin_grain: 'day', country: 'AE', functional_
   eq('VAT201 (stagger 3): Box 1 1905 / 95 · Box 4 10000 · Box 5 3000 (read from the ledgers; two carried totals: boxes 1+4+5 = 14905 = the bill less its VAT)', [box(ret, 1).amount_minor, box(ret, 1).tax_minor, box(ret, 4).amount_minor, box(ret, 5).amount_minor, box(ret, 1).amount_minor + box(ret, 4).amount_minor + box(ret, 5).amount_minor], [1905, 95, 10000, 3000, 14905]);
   ok('…and nothing waits for an answer', !ret.needs_answer, JSON.stringify(ret.needs_answer));
 
-  /* ── R-F-01 · kinds NOT stated (the walk's catalogue): stays on 4000, and the return says it needs an answer ── */
+  /* ── R-F-01 · kinds NOT stated (the walk's catalogue): waits on 4040, and the return says it needs an answer ── */
   await openShop(SHOP2);
   TC.entryFor = async () => ({ sells: true, invoice: bill(false) });
   await K.postDay(SHOP2, 'C1', DAY, { setting: SETTING });
   const b = net(SHOP2);
-  eq('no kind stated: the 0% lines stay on sales (-14905), never guessed onto 4010 / 4030', [b.sales, b.sales_exempt || 0, b.sales_zero_rated || 0], [-14905, 0, 0]);
+  /* AA-F-01 (engines 1129, decided): a 0% line that names no kind waits on its OWN ledger 4040 (sales_unanswered), in no VAT201 box — it is neither on 4000 (Box 1 would count it as standard-rated) nor guessed onto 4010 / 4030. Two carried totals: 1905 on sales + 13000 waiting = 14905, the bill less its VAT */
+  eq('no kind stated: the 0% lines wait on 4040 (-13000), sales keeps only the 5% line (-1905), never guessed onto 4010 / 4030', [b.sales, b.sales_unanswered || 0, b.sales_exempt || 0, b.sales_zero_rated || 0], [-1905, -13000, 0, 0]);
   const ret2 = await P.taxReturn(SHOP2, await X.B.settingOf(X.db, SHOP2), { stagger: 3, period: '2026-10/2026-12' }, X.db);
   eq('…and the return says so: needs_answer carries the 0% sales that name no kind, 13000 (Rice 3000 + Gold 10000)', [ret2.needs_answer && ret2.needs_answer.total_minor, ret2.needs_answer && ret2.needs_answer.currency], [13000, 'AED']);
 

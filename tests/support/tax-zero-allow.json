@@ -46,12 +46,6 @@
   {
    "file": "lib/books-hooks.js",
    "kind": "catch",
-   "text": "catch (e) { return null; }",
-   "reason": "SAFE: the books lock date unread answers null; the engine's own lock still holds (not a tax figure)"
-  },
-  {
-   "file": "lib/books-hooks.js",
-   "kind": "catch",
    "text": "catch (_) { grain = party || credit > 0 || gstin ? 'bill' : setting.wa",
    "reason": "SAFE: the posting grain (bill/day) fallback, not a tax figure"
   },
@@ -82,7 +76,7 @@
   {
    "file": "lib/catalogue-view.js",
    "kind": "zero",
-   "text": "return r && r.rate != null && !r.cess_unreadable ? { /* TAX-EXPLICIT: ",
+   "text": "return resolved && resolved.rate != null && !resolved.cess_unreadable ? { rate: resolved.rate, cess:",
    "reason": "SAFE: the storefront cess of a slab with a known rate; an unreadable declared cess returns null (cess_unreadable), an absent cess is no cess"
   },
   {
@@ -106,7 +100,7 @@
   {
    "file": "lib/tax-copy.js",
    "kind": "catch",
-   "text": "catch (e) { taxCheck = { ok: false, differences: [{ what: 'server chec",
+   "text": "catch (e) { return { ok: false, differences: [{ what: 'server check', issued: null,",
    "reason": "SAFE: a failing server tax check answers { ok:false, differences } in words, it is not a pass"
   },
   {
@@ -116,21 +110,15 @@
    "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
   },
   {
-   "file": "lib/tax-lines.js",
+   "file": "lib/tax-engine-line.js",
    "kind": "zero",
    "text": "cess_rate: num(item.cess_rate) || 0,",
    "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
   },
   {
-   "file": "lib/tax-lines.js",
+   "file": "lib/tax-line-status.js",
    "kind": "zero",
    "text": "const rate = num(item.GstRt) || 0;",
-   "reason": "SAFE: lineTaxStatusOf reads the engine's line (GstRt is always a number there; an unrated line is marked _unrated and is UNAVAILABLE first); an absent head on a known rate sums as 0"
-  },
-  {
-   "file": "lib/tax-lines.js",
-   "kind": "zero",
-   "text": "const heads = round2((num(item.CgstAmt) || 0) + (num(item.SgstAmt) || ",
    "reason": "SAFE: lineTaxStatusOf reads the engine's line (GstRt is always a number there; an unrated line is marked _unrated and is UNAVAILABLE first); an absent head on a known rate sums as 0"
   },
   {
@@ -142,7 +130,7 @@
   {
    "file": "lib/tax-lines.js",
    "kind": "zero",
-   "text": "net.vat = round2((output.vat || 0) - (credit.vat || 0));",
+   "text": "netTax.vat = round2((output.vat || 0) - (credit.vat || 0));",
    "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
   },
   {
@@ -156,6 +144,18 @@
    "kind": "zero",
    "text": "const totalOf = (lines, key, currency) => { const factor = minorFactor",
    "reason": "SAFE: item.rate here is the purchase line's unit rate (price), not a tax rate"
+  },
+  {
+   "file": "lib/catalogue-view.js",
+   "kind": "catch",
+   "text": "catch (e) { dropCostRegardless(items, e); }",
+   "reason": "SAFE: not a tax figure; a failed read answers by dropping every cost key from the items before they leave (dropCostRegardless: fail closed), never by showing them"
+  },
+  {
+   "file": "lib/tax-shelf.js",
+   "kind": "catch",
+   "text": "catch (e) { return nothingUnlessRefused(e); }",
+   "reason": "SAFE: nothingUnlessRefused rethrows the refusal of the tax id read (TAX01-1, fail closed) and logs every other failed shelf read (log.fellBack) before answering nothing; no tax figure is made up"
   }
  ]
 }

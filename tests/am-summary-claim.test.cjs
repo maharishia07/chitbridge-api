@@ -29,7 +29,7 @@ const filed = (till, count, gross, extra) => Object.assign(R.summary('day', day,
 let n = 0; const ok = (what, fn) => { fn(); n++; console.log('  ok  ' + what); };
 ok('AM-C13: C3 claims 6 bills / 113.50, holds 1 bill of 13.50: the day reads the bill, the gap is 5 bills / 100.00', () => {
   const claims = [];
-  const got = ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 6, 113.5)], day, claims);
+  const got = ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 6, 113.5)], day, claims, 'AED');
   assert.strictEqual(got.length, 1);
   assert.deepStrictEqual([got[0].totals.count, got[0].totals.gross], [1, 13.5]);
   assert.deepStrictEqual(claims.map((c) => [c.till.id, c.count, c.gross]), [['C3', 5, 100]]);
@@ -40,26 +40,34 @@ ok('the claim reads in the owner\'s words, in the shop\'s money (fils to the uni
   assert.strictEqual(words.gross_minor, 10000);
   assert.strictEqual(ctx.claimWords({ key: day, till: {}, count: 1, gross: 0.5 }, 'AED').words, 'Summary says more than its bills: AED 0.50 · 1 bill not received');
 });
+ok('a shop that states no currency has no money to compare: the claim is the bills not received, the words leave the amount out, nothing throws (was toFixed / a thrown XXX)', () => {
+  const claims = [];
+  ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 6, 113.5)], day, claims, null);
+  assert.deepStrictEqual(claims.map((c) => [c.count, c.gross]), [[5, null]]);
+  const words = ctx.claimWords(claims[0], null);
+  assert.strictEqual(words.words, 'Summary says more than its bills: 5 bills not received');
+  assert.deepStrictEqual([words.gross_minor, words.currency], [null, null]);
+});
 ok('a summary that holds no bill at all (none received) reads zero and still tells the gap', () => {
   const claims = [];
-  const got = ctx.liveSummaries([], [filed('C3', 2, 20)], day, claims);
+  const got = ctx.liveSummaries([], [filed('C3', 2, 20)], day, claims, 'AED');
   assert.deepStrictEqual([got[0].totals.count, got[0].totals.gross], [0, 0]);
   assert.deepStrictEqual([claims[0].count, claims[0].gross], [2, 20]);
 });
 ok('a summary the bills back is untouched: no gap, the filed figure stands', () => {
   const claims = [];
-  const got = ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 1, 13.5)], day, claims);
+  const got = ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 1, 13.5)], day, claims, 'AED');
   assert.deepStrictEqual(got, []); assert.deepStrictEqual(claims, []);
 });
 ok('money alone over the bills (same count, +100.00 gross) is a gap of 0 bills / 100.00', () => {
   const claims = [];
-  ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 1, 113.5)], day, claims);
+  ctx.liveSummaries([bill('C3/1', 13.5, 'C3')], [filed('C3', 1, 113.5)], day, claims, 'AED');
   assert.deepStrictEqual([claims[0].count, claims[0].gross], [0, 100]);
 });
 ok('a late bill the summary does not list is added once on top of the BACKED summary', () => {
   const claims = [];
   const late = Object.assign(bill('C3/2', 10, 'C3'), { created_at: '2026-11-21T12:00:00.000Z' });
-  const got = ctx.liveSummaries([bill('C3/1', 13.5, 'C3'), late], [filed('C3', 1, 13.5, { bill_nos: ['C3/1'] })], day, claims);
+  const got = ctx.liveSummaries([bill('C3/1', 13.5, 'C3'), late], [filed('C3', 1, 13.5, { bill_nos: ['C3/1'] })], day, claims, 'AED');
   assert.deepStrictEqual([got[0].totals.count, got[0].totals.gross], [2, 23.5]); assert.deepStrictEqual(claims, []);
 });
 ok('no claims list (the live arm was full) means no judgement: the filed figure is kept as before', () => {
