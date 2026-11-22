@@ -2282,6 +2282,14 @@
     422
    ]
   },
+  "POST /api/books/events/batch": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/fx-rates": {
    "cases": 2,
    "failed": 0,

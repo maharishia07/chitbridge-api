@@ -289,14 +289,14 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare/:id/csv": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/daybook": {
    "output_allowlist": true,
@@ -322,8 +322,8 @@
   "GET /api/books/evidence/:id": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -349,8 +349,8 @@
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -401,15 +401,15 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
@@ -2440,37 +2440,37 @@
   "POST /api/network/connections/:id/approve": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
-   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections/:id/decline": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
-   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections/:id/disconnect": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
-   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections/:id/resume": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
-   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "POST /api/network/connections/:id/suspend": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
-   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "POST /api/network/entities": {
    "output_allowlist_basis": "recordings",
@@ -2904,11 +2904,13 @@
    "bfla_role_check": true
   },
   "PUT /api/assist/container": {
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PUT /api/assist/region-override": {
    "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PUT /api/catalogue-face": {
    "output_allowlist": true,
