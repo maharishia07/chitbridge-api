@@ -5,6 +5,7 @@
  *           GET /api/crm/parties and /parties/:id (lib/crm list · one) and GET /api/books/dues. A customer's balance stays; a supplier's or a both-sides
  *           net is null + cost_hidden:true; the supplier credit limit goes; `overdue`, `oldest_due`, `open_side` and the alerts count stand; a ledger-off
  *           null stays null; the owner and a cost-allowed actor answer byte for byte as before; each route reads can_see_costs ONCE.
+ * Y-F-05: the actor is the shop's bookkeeper (hat manager) — the seats the books' dues gate refuses see no dues at all (tests/queue1-crm-dues-seat.test.cjs), so R1 (a customer balance stands) is proven for a seat the books let through.
  * CALLED BY scripts/guards.cjs · CI. No database, no network. Part 1: the pure helper. Part 2 (child process): routes/crm.js + lib/crm over
  *           tests/support/crm-stub.cjs. Part 3 (child process): routes/books.js over tests/support/books-harness.cjs (the in-memory books + the engines).
  * FLOW      planted supplier figures → helper / route → whole-body scan (money keys with a figure, planted figures, ₹) on every purchase-side row
@@ -88,7 +89,7 @@ async function partCrm() {
   t('owner | no marker anywhere, no can_see_costs read', [JSON.stringify([ownerList.body, ownerOne.body, ownerBoth.body]).includes('cost_hidden'), flagReads], [false, 0]);
   t('owner | the supplier\'s dues are late (the real figure, oldest due Jan) and the list counts it', [party(ownerList, SUP).dues.overdue, ownerList.body.alerts.dues_overdue], [true, 3]);
 
-  stub.as('E1', { identity: { identity_id: 'A7', identity_type: 'actor', parent_entity_id: 'E1' } });
+  stub.as('E1', { identity: { identity_id: 'A7', identity_type: 'actor', parent_entity_id: 'E1', access_level: 'editor', hat: 'manager' } });
   flag = true; flagReads = 0;
   const okList = await stub.get('/parties'), okOne = await stub.get('/parties/' + SUP), okBoth = await stub.get('/parties/' + BOTH);
   /* `may.remove` is owner-only by design (crmMay), so the comparison is everything but `may` */
