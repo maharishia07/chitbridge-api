@@ -111,6 +111,7 @@ const piece = (name) => ({ id: undefined, name, unit: 'piece', price: 1000 });
     /* the counter's parts: AU's 5c cash step is the tender's rule, so the 5c-declared total is paid by card */
     const counter = (extra) => Object.assign({ invoice: { ValDtls: counterOf } }, c.id === 'AU' ? { parts: [{ how: 'card', amount: counterOf.TotInvVal }] } : {}, extra);
     const NO = (kind) => RUN + c.id + '-' + kind;
+    let c5id = null; /* AI-F-02 (1129): a rail credit note names one of the sender's own bills; C8 takes back C5 */
 
     await kase(c.id + '-C1', 'C1 counter cash bill: invoice, money, total_value and the detail column are one figure (no list holds a walk-in bill)', async () => {
       const r = ok(await send(A, bill(NO('c1'), rows, counter())), 'send C1');
@@ -124,7 +125,8 @@ const piece = (name) => ({ id: undefined, name, unit: 'piece', price: 1000 });
     });
     await kase(c.id + '-C5', 'C5/C6 app invoice A to B (the engine bills it at send): both copies, both lists, one figure', async () => {
       const r = ok(await send(A, rated(invoice(NO('c5'), rows, { to: B.bridge }), rate)), 'send C5');
-      await assertBothCopies(A, B, chitIdOf(r), c.currency, c.id + ' C5');
+      c5id = chitIdOf(r);
+      await assertBothCopies(A, B, c5id, c.currency, c.id + ' C5');
     });
     await kase(c.id + '-C7', 'C7 order A to B: both copies, both lists, one figure', async () => {
       const r = ok(await send(A, rated(order(NO('c7'), rows, { to: B.bridge }), rate)), 'send C7');
@@ -133,6 +135,7 @@ const piece = (name) => ({ id: undefined, name, unit: 'piece', price: 1000 });
     await kase(c.id + '-C8', 'C8 credit note A to B: both copies, both lists, one figure', async () => {
       const body = rated(invoice(NO('c8'), rows, { to: B.bridge }), rate);
       Object.assign(body, { purpose: 'credit_note', subject: 'Credit note ' + NO('c8'), manual_subject: 'Credit note ' + NO('c8') });
+      body.business_json = Object.assign({}, body.business_json, { against: { chit_id: c5id }, reason_words: 'goods returned' }); /* the UAE pack asks why a credit note is issued */
       const r = ok(await send(A, body), 'send C8');
       await assertBothCopies(A, B, chitIdOf(r), c.currency, c.id + ' C8');
     });
