@@ -407,6 +407,7 @@ const SEND_STEPS = [
   sendSuspended,
   sendSeller,
   sendCreditReason /* AR-F-02: after sendBody, sendFanOut and sendSeller have set purpose, is_draft, business_json and counterBill (it sat before them and judged an empty state) */,
+  sendLineRates,
   sendOffers,
   sendReceiptLines,
   sendMoney,
@@ -857,6 +858,19 @@ async function sendLineShape(sendState, req, res) {
 function refuseWithdrawnCurrency(business_json) {
   if (business_json && typeof business_json === 'object' && business_json.currency) require('../lib/money').refuseNewCurrency(business_json.currency);
 }
+/**
+ * AP-F-07: a money stated at the TOP of the body (currency_code) was read by nothing: an AED bill went in as dollars 1:1, "ZZZ" as AUD. It is the same statement as business_json.currency, so it is judged by the same
+ * door (refuseNewCurrency: an unknown or withdrawn code is a worded 422 MONEY_CURRENCY_UNKNOWN) and carried there, where the order rule (orderMoneyOf, carry never relabel) and the invoice refusal (heads:currency) already read it.
+ * @returns the business data with the stated money in it (a new object only when it had none)
+ */
+function statedMoneyCarried(business_json, body) {
+  const given = body && body.currency_code;
+  if (given == null || String(given).trim() === '') return business_json;
+  require('../lib/money').refuseNewCurrency(String(given).trim().toUpperCase());
+  const has = business_json && typeof business_json === 'object';
+  if (has && business_json.currency) return business_json;
+  return Object.assign(has ? business_json : {}, { currency: String(given).trim().toUpperCase() });
+}
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
@@ -868,15 +882,7 @@ async function sendBody(sendState, req, res) {
      mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-  let business_json = businessJsonOf(req.body);
-  /* ⭐ AJ-F-02 (walk AJ, 21 Nov 2026): ONE reader of "the money the sender stated" - business_json.currency, or the body's own `currency_code` / `currency` (a door that names it there was silently ignored and its USD 100.00 was booked as AED 100.00). Carry, never relabel (DEC-073/074, ACC-377): the stated code goes on the chit as business_json.currency, where orderMoneyOf and the books read it; an unknown or withdrawn code ("XXX") is refused in words; two different codes are refused, never one picked. */
-  const asked = req.body.currency_code != null && req.body.currency_code !== '' ? req.body.currency_code : req.body.currency;
-  if (typeof asked === 'string' && asked.trim()) {
-    const code = require('../lib/money').refuseNewCurrency(asked);
-    const inside = business_json && typeof business_json === 'object' && business_json.currency ? String(business_json.currency).trim().toUpperCase() : '';
-    if (inside && inside !== code) return problem(req, res, { status: 422, ...said({ error: 'Two currencies', code: 'MONEY_CURRENCY_MISMATCH', message: 'This bill names ' + code + ' and also ' + inside + '. Name one currency and send it again.' }, codeOfStatus(422)) });
-    if (!inside) business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { currency: code });
-  }
+  const business_json = statedMoneyCarried(businessJsonOf(req.body), req.body);
   refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
@@ -1442,6 +1448,26 @@ async function sendSeller(sendState, req, res) {
   }
   const unratedBlank = blankRated.at.filter((at) => line_items[at] && line_items[at].gst_rate == null && line_items[at].rate == null);
   Object.assign(sendState, { line_items, orderLike, toIds, counterBill, sellerId, unratedBlank });
+}
+
+/**
+ * AP-F-08: a line's rate must be one the SELLER's country pack names (Australia: GST-free or 10%). A 15% line was accepted and claimed on the buyer's side (BAS 1B); now 422 TAX_RATE_NOT_IN_PACK names the line, the rate and the pack's own.
+ * The sender's own pack decides when the sender sells (an invoice, a counter bill); an order is rated by the seller's shelf and is left to it. A draft is the author's own copy and is let through; no rate on a line, or a pack with no rate list, is not judged here (the shelf and the engine speak).
+ */
+async function sendLineRates(sendState, req, res) {
+  if (sendState.is_draft || !Array.isArray(sendState.line_items) || !sendState.line_items.some((line) => line && Number(line.gst_rate) > 0)) return; /* no taxed line: no read */
+  if (sendState.sellerId && sendState.sellerId !== sendState.sender_id) return; /* an order is rated by the SELLER's shelf (sendSeller), not by this sender's country */
+  const country = await countryOfEntity(sendState.sender_id); /* the memoised read sendSupplyKind makes next: no extra trip */
+  const business = sendState.business_json || {};
+  const shop = { country };
+  const note = taxLines.isNoteOf(sendState.purpose);
+  const day = note ? taxLines.againstDayOf(business, sendState.purpose, shop) : taxLines.billDayOf(business, sendState.purpose, new Date(), shop); /* the document's own day: a back-dated bill or a note on an older bill is judged by the menu of ITS day (AP-F critic 1129) */
+  const bad = taxLines.unlistedRateOf(country, sendState.line_items, { day, note, exported: taxLines.exportStatedOf(business) === true });
+  if (!bad) return;
+  const word = require('../lib/tax-shelf').taxWordOf(country);
+  const message = 'Line ' + bad.index + ' is at ' + bad.rate + '% ' + word + ', which is not a rate here (' + word + ' is ' + bad.rates.join('% or ') + '%, or none). Nothing was sent. Correct the rate on that line and send again.';
+  res.locals.code = 'TAX_RATE_NOT_IN_PACK';
+  return problem(req, res, { status: 422, ...said({ error: 'Tax rate not allowed', code: 'TAX_RATE_NOT_IN_PACK', message, line: bad.index, rate: bad.rate }, 'CHIT_BAD_REQUEST') });
 }
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
@@ -7064,6 +7090,7 @@ router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes
 
 router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf(), require('../lib/chits-holds-contract').pathsOf()), schemas: {} };
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
+router.statedMoneyCarried = statedMoneyCarried; /* AP-F-07: tests/ap-move-in.test.cjs */
 router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
 router.sendBody = sendBody; /* AJ-F-02: tests/aj-currency-door.test.cjs runs the one reader of the stated money */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
@@ -7096,3 +7123,5 @@ module.exports.statusBucketFilter = statusBucketFilter;
 module.exports.sendReceiptLines = sendReceiptLines; /* WALK-D: tests/walkd-goods-in-refused.test.cjs runs the real step over express */
 module.exports.sendLineShape = sendLineShape; /* RAIL-177 · RAIL-81 */
 module.exports.declaredRetention = declaredRetention; /* RAIL-212 */
+module.exports.SEND_STEPS = SEND_STEPS; /* AP-F-08: tests/ap-1129-order.test.cjs runs the real step order */
+module.exports.sendLineRates = sendLineRates;

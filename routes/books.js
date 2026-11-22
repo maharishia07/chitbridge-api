@@ -1893,7 +1893,8 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
       sample: parsed.rows.slice(0, 5),
       sheet: parsed.sheet || null,
       sheets: parsed.sheets || null,
-      header_row: parsed.headerRow || 1
+      header_row: parsed.headerRow || 1,
+      header_hint: MI.headerHint(kind, req.body, parsed) /* AP-F-03: { row, why } when the headings sit under title rows, else null */
     });
   } catch (err) {
     problem(req, res, refusalOf(err, req));

@@ -1,0 +1,5 @@
+Customer,Company,Email,Phone,Business ID No.,Billing City,Billing State
+Harbour Cafe,Harbour Cafe Pty Ltd,pay@harbour.example,0412 111 222,51824753556,Sydney,NSW
+Reef Hardware,,,0412 333 444,12345678901,Cairns,QLD
+Outback Supplies,,,0412 555 666,,Alice Springs,NT
+Harbour Cafe,,,0412 777 888,,Sydney,NSW

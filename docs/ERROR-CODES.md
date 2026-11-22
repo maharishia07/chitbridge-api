@@ -328,6 +328,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | KEY_NOT_SCOPED | 403 | Key not scoped | This key is not allowed to do that. | Use a key made for this, or sign in as a person. | auth | 2026-10-31 |
 | KEY_REVOKED | 401 | Key revoked | This key was removed or is not known. | Make a new key and use that. | auth | 2026-10-31 |
 | TAX_NOT_CHARGEABLE | 422 | Tax not chargeable | This shop is not allowed to charge tax, so a bill carrying tax was not taken. | Issue a bill of supply with no tax and send it again. | chits | 2026-11-21 |
+| TAX_RATE_NOT_IN_PACK | 422 | Tax rate not allowed | A line is at a tax rate that is not one of this country's, so nothing was sent. | Correct the rate on that line, to one the answer lists, then send again. | chits | 2026-11-22 |
 | TOKEN_EXPIRED | 401 | Token expired | Your sign-in has run out. | Sign in again. | auth | 2026-10-31 |
 | TOKEN_MISSING | 401 | Token missing | You are not signed in. | Sign in, then try again. | auth | 2026-10-31 |
 | UNKNOWN_FIELD | 400 | Field not known here | Not saved: that detail cannot be changed here. Check the name and try again. | Leave that detail out and save again. | relationships | 2026-10-24 |
