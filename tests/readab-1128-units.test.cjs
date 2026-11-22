@@ -61,7 +61,9 @@ check('receipt-lines: the date 12/03/25 is refused as unreadable, never guessed'
 check('receipt-lines: a good line, a draft and a non-receipt are not refused', () => {
   assert.strictEqual(receipt.refusalOf(receiptOf(goodLine), { today: TODAY }), null);
   assert.strictEqual(receipt.refusalOf(Object.assign(receiptOf({ name: 'Rice', quantity: 0 }), { is_draft: true }), { today: TODAY }), null);
-  assert.strictEqual(receipt.refusalOf({ purpose: 'order', line_items: [{ name: 'Rice', quantity: 0 }], business_json: {} }, { today: TODAY }), null);
+  /* AY-F-03 · AZ-F-01 · AX-F-04 (1129): an ORDER or a credit note line of quantity 0 is refused BAD_QTY now; a purpose that is neither a receipt nor an order is not judged */
+  assert.strictEqual((receipt.refusalOf({ purpose: 'order', line_items: [{ name: 'Rice', quantity: 0 }], business_json: {} }, { today: TODAY }) || {}).code, 'BAD_QTY');
+  assert.strictEqual(receipt.refusalOf({ purpose: 'general', line_items: [{ name: 'Rice', quantity: 0 }], business_json: {} }, { today: TODAY }), null);
 });
 
 (async () => {
