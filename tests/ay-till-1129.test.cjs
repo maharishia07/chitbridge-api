@@ -22,9 +22,9 @@ function sourceOf(name) {
   for (; i < till.length; i++) { if (till[i] === '{') depth++; else if (till[i] === '}' && --depth === 0) break; }
   return till.slice(start + 1, i + 1);
 }
-const ctx = { esc: String, money: (x) => 'M' + Math.round(x * 100), rmoney: (x) => Math.round(Number(x) * 100) / 100, tillStamp: () => ({ id: 'C1' }), slipHeadHTML: () => '', creditNoteTitle: () => 'CREDIT NOTE', counterName: () => 'C1', atShop: () => 'x', retTaxRowsHTML: () => '' };
+const ctx = { esc: String, money: (x) => 'M' + Math.round(x * 100), rmoney: (x) => Math.round(Number(x) * 100) / 100, tillStamp: () => ({ id: 'C1' }), slipHeadHTML: () => '', creditNoteTitle: () => 'CREDIT NOTE', shopPack: () => null, cbQuiet: () => {}, slipCreditNoteTaxHTML: () => '', slipRowHTML: () => '', SLIP_DASH: '<hr>', counterName: () => 'C1', atShop: () => 'x', retTaxRowsHTML: () => '' };
 vm.createContext(ctx);
-vm.runInContext(['retOriginalOf', 'chitOfCN', 'retSlipHTML'].map(sourceOf).join('\n'), ctx);
+vm.runInContext(['retOriginalOf', 'chitOfCN', 'retSlipHTML', 'slipTitleHTML', 'creditNoteTitleLines'].map(sourceOf).join('\n'), ctx);
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
 

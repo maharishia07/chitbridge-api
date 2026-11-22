@@ -56,6 +56,8 @@ const withTitle = tillWith('AE', (base) => Object.assign({}, base, { slip: Objec
 eq('Arabic first, then English, as on the tax invoice', withTitle.creditNoteTitleLines().map((l) => l.lang), ['ar', 'en']);
 eq('the English line is the pack words, upper case', withTitle.creditNoteTitleLines()[1].text, 'TAX CREDIT NOTE');
 eq('the Arabic line is set right to left', /dir="rtl"/.test(withTitle.slipTitleHTML(withTitle.creditNoteTitleLines())), true);
-eq('a pack with no credit_note title keeps the one English line', tillWith('AE').creditNoteTitleLines().map((l) => l.lang + ':' + l.text), ['en:TAX CREDIT NOTE']);
+/* the shipped AE pack now carries its own credit_note title (Arabic + English), so the no-title case is a pack with that key taken out */
+const noTitle = tillWith('AE', (base) => Object.assign({}, base, { slip: Object.assign({}, base.slip, { titles: Object.assign({}, base.slip.titles, { credit_note: undefined }) }) }));
+eq('a pack with no credit_note title keeps the one English line', noTitle.creditNoteTitleLines().map((l) => l.lang + ':' + l.text), ['en:TAX CREDIT NOTE']);
 eq('the return slip prints the lines, not a typed title', /slipTitleHTML\(creditNoteTitleLines\(\)\)/.test(till), true);
 console.log('');
