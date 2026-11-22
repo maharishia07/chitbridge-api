@@ -128,14 +128,14 @@ function withQuotedCodes(base, scanned) {
   const out = {};
   Object.keys(scanned).forEach((code) => (out[code] = { at: scanned[code].at.slice() }));
   sourceFiles(base).forEach((file) => {
-    const rel = path.relative(base, file).split(path.sep).join('/');
+    const relPath = path.relative(base, file).split(path.sep).join('/');
     fs.readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
       if (/^\s*(\/\/|\*|\/\*)/.test(line)) return;
       for (const hit of line.matchAll(/(['"])([A-Z][A-Z0-9]*_[A-Z0-9_]+)\1/g)) {
         if (!known.has(hit[2])) continue;
         if (/(?:[=!]==?|\bcase|\.includes\(|\.has\(|indexOf\()\s*$/.test(line.slice(0, hit.index))) continue;
         const entry = (out[hit[2]] = out[hit[2]] || { at: [] });
-        if (!entry.at.some(([name, number]) => name === rel && number === index + 1)) entry.at.push([rel, index + 1]);
+        if (!entry.at.some(([name, number]) => name === relPath && number === index + 1)) entry.at.push([relPath, index + 1]);
       }
     });
   });
