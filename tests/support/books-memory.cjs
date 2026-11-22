@@ -101,6 +101,7 @@ function create() {
       });
       return Array.from(out.values());
     },
+    async taxOfEntriesWith(db, e, from, to, taxRole, roles) { const day = (x) => String(x.posting_date).slice(0, 10), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; let net = 0; T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => { const ls = T.lines.filter((l) => l.entry_id === h.entry_id); if (ls.some((l) => roles.indexOf(role(l)) >= 0)) ls.filter((l) => role(l) === taxRole).forEach((l) => { net += Number(l.dr_minor || 0) - Number(l.cr_minor || 0); }); }); return { net_minor: net }; },
     async zeroRateSales(db, e, from, to, role, currency) {
       const day = (x) => String(x.posting_date).slice(0, 10);
       const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id);

@@ -55,6 +55,7 @@ const INFRA = [
   'books-daybook.js',
   'books-dues-rows.js',
   'books-movein.js',
+  'books-store-gstclass.js',
   'books-store-packs.js',
   'books-store-parties.js',
   'catalogue-order-checks.js',
