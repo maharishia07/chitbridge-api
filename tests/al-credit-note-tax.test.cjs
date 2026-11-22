@@ -22,7 +22,7 @@ const P = (x) => Math.round(x * 100);
 const ctx = { esc: String, money: (x) => 'M' + P(x), rmoney: (x) => Math.round(Number(x) * 100) / 100, NOT_DECIDED: 'not decided', invoiceRule: () => null, schemeWord: () => 'GST', taxFigure: (x) => 'M' + P(x),
   reducedNoteHTML: () => '', kindRowsOf: () => '', taxHeadWord: String, shopPack: () => ({}), isReducedRate: () => false };
 vm.createContext(ctx);
-vm.runInContext(['domesticFootHTML', 'perRateFootHTML', 'taxSummaryHTML'].map(sourceOf).join('\n') + '\n' + read('till-slip.js').replace(/^[^]*?(?=\/\*\*\n \* AL-F-01)/, '').replace(/\/\*\* the saving[^]*$/, '')
+vm.runInContext(['domesticFootHTML', 'perRateFootHTML', 'taxSummaryHTML'].map(sourceOf).join('\n') + '\n' + read('till-slip.js').replace(/^[^]*?(?=\/\*\* a posted credit note's by_rate)/, '').replace(/\/\*\* the saving[^]*$/, '')
   + '\nfunction slipTaxBlockHTML(bill, totals, row, dash, unrated){ return taxSummaryHTML(bill, row, dash); }', ctx);
 let pass = 0;
 const eq = (name, got, want) => {
