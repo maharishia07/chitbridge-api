@@ -187,7 +187,7 @@ const KIT_NAMES = [
   'run-hidden.vbs',
   'till.js',
   'till.html',
-  'signin-provider.js', 'signin-session.js', 'signin-ui.js',
+  'signin-more-ways.js', 'signin-session.js', 'signin-ui.js',
   'their-bill.js',
   'counter-bill.js',
   'tax-slab-ui.js', 'till-dayrep.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js', 'till-slip.js',

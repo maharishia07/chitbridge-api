@@ -102,7 +102,7 @@
     line: 'Use a code instead',
     later: 'Not now',
   };
-  /* ⭐ OTHER WAYS TO SIGN IN is its own capability (app/signin-provider.js, loaded before this file): its words, landed code, row and address come through CBSignin.provider.
+  /* ⭐ OTHER WAYS TO SIGN IN is its own capability (app/signin-more-ways.js, loaded before this file): its words, landed code, row and address come through CBSignin.provider.
      Absent → a loud console.warn with a code and no provider door; the window itself still signs in by mobile, e-mail, PIN and code. */
   /* what a sign-in leaves (the claims, the session, the keeping of it) is app/signin-session.js, loaded before this file */
   var SS = E.session;
@@ -110,7 +110,7 @@
   var jwtClaims = SS.claims, sessionOf = SS.of, verifyRefused = SS.refused, isCustomerOnApps = SS.customerOnApps, keep = SS.keep;
   var P = E.provider;
   if (!P) {
-    root.console.warn('SIGNIN_PROVIDER_MODULE_MISSING: /app/signin-provider.js was not loaded before /app/signin-ui.js; no provider sign-in is offered');
+    root.console.warn('SIGNIN_PROVIDER_MODULE_MISSING: /app/signin-more-ways.js was not loaded before /app/signin-ui.js; no provider sign-in is offered');
     P = { words: { connect: {}, sso: {} }, take: function () { return null; }, soonRow: function () { return ''; }, isKey: function () { return false; }, start: function () { return ''; }, ask: function () {}, arrive: function () {} };
   }
   WORDS.connect = P.words.connect;
@@ -127,7 +127,7 @@
     sso: { label: 'Use company account' },
     passkey: { label: 'Use your passkey' }
   };
-  /* the provider doors (the "More ways to sign in" row, the address to the provider) are /app/signin-ui.js's other half: app/signin-provider.js */
+  /* the provider doors (the "More ways to sign in" row, the address to the provider) are /app/signin-ui.js's other half: app/signin-more-ways.js */
   function soonRow(intent, skip, live) {
     return P.soonRow(intent, skip, live, addCss);
   }

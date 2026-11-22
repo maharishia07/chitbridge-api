@@ -477,7 +477,7 @@ async function refresh() {
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
       /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's); cb-words.js and strings-hi/ar.js are the web-mastered string door and packs (tillLocale 1128: the page asks with onerror, so a kit without them speaks English) */
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-provider.js', 'signin-session.js', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js', 'till-dayrep.js', 'till-slip.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js'], staged: STAGED });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-more-ways.js', 'signin-session.js', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js', 'till-dayrep.js', 'till-slip.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -1181,7 +1181,7 @@ function foreignRequest(req) {
 
 /* ⭐ the files the kit carries a byte copy of and serves at the web's own path: [file, what it is called when it is missing]. The sign-in window; FX-F10W2 the ONE comparison of their bill total (api lib/their-bill.js); CTR-161 the ask-once rate menu (web public/app/tax-slab-ui.js), so the page's onerror hook never fires offline */
 const KIT_SERVED = {
-  '/app/signin-provider.js': ['signin-provider.js', 'the provider sign-in'], '/app/signin-session.js': ['signin-session.js', 'the sign-in session'],
+  '/app/signin-more-ways.js': ['signin-more-ways.js', 'the provider sign-in'], '/app/signin-session.js': ['signin-session.js', 'the sign-in session'],
   '/app/signin-ui.js': ['signin-ui.js', 'the sign-in window'],
   '/app/their-bill.js': ['their-bill.js', 'the bill check'],
   '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu'], '/app/till-dayrep.js': ['till-dayrep.js', 'the day report'], '/app/till-slip.js': ['till-slip.js', 'the bill slip'], '/app/cb-words.js': ['cb-words.js', 'the string door'], '/app/strings-hi.js': ['strings-hi.js', 'the Hindi pack'], '/app/strings-ar.js': ['strings-ar.js', 'the Arabic pack']

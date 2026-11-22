@@ -1,10 +1,10 @@
-/* signin-provider.js — OTHER WAYS TO SIGN IN: the provider doors (Google, Microsoft) of the one sign-in window.
+/* signin-more-ways.js — OTHER WAYS TO SIGN IN: the provider doors (Google, Microsoft) of the one sign-in window.
  * OWNS      the words a provider sign-in or connect says (words.sso · words.connect), what the provider's redirect left in the address (take), the "More ways to sign in" row
  *           (soonRow), the address that sends the browser to the provider (start) and the api's list of ready providers (ask); arrive() hands a landed code or refusal to the window's machine
  * CALLED BY app/signin-ui.js (reads CBSignin.provider once, at load; absent → console.warn SIGNIN_PROVIDER_MODULE_MISSING and no provider door is drawn) · settings.html reads take() through CBSignin.takeLanded
  * FLOW      load (this file, AFTER /engine/signin.js and BEFORE /app/signin-ui.js) ──▶ CBSignin.provider = { words, take, soonRow, isKey, start, ask, arrive }
  * CARD      18-identity-sign-in-and-access/sign-in
- * Twin: a byte copy lives in the api kit (tools/tally-connector/signin-provider.js, scripts/vendor-till.cjs); the web file is the master.
+ * Twin: a byte copy lives in the api kit (tools/tally-connector/signin-more-ways.js, scripts/vendor-till.cjs); the web file is the master.
  */
 (function (root) {
   'use strict';
