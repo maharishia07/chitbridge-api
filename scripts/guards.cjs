@@ -33,6 +33,7 @@ const GUARDS = [
   'ak-f02-seat-gates.test.cjs', // AK-F-02: manager hat runs pack, FX and pays out; the counter seat records money in only (real Express, in-memory ledger)
   'ak-f03-reopen-hard-month.test.cjs', // AK-F-03: the owner opens the newest hard-locked month with a reason (unlock and reopen), one audit row; an older month stays shut
   'identities-column-grant.test.cjs', // SEC-186 (21 Nov): every identities column added after b875 is granted to cb_app in the same or a later migration (b900 broke sign-in on a column-revoked DB)
+  'b911-signin-link-bind.test.cjs', // GF-platform-01 M2 (22 Nov): b911 binds a provider link's identity to its entity; DB proof tests/b911-signin-link-bind.proof.sql
   'c11-10b-rail-shape.test.cjs', // C11 10b: send names an unread price key, refuses a bad line_id, bounds retention, the one writer refuses a figure past its column, CTP_UNRESOLVABLE answers 503, cost needs a currency, list filters read before a cast, UTF-8 attachment names
   'books-1126-units.test.cjs', // batch 1126: the received payment advice, the moved wages role and the country setup questions, unit by unit
   'pages-parse.test.js', // every inline script in app.html, till.html and promo.html parses
