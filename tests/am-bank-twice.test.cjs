@@ -29,7 +29,7 @@ const db = { async query(sql, args) {
   if (/FROM information_schema|pg_/.test(sql)) return { rows: [] };
   throw new Error('unexpected: ' + sql.slice(0, 90));
 } };
-const sheet = { period_from: '2026-11-01', period_to: '2026-11-30', opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'AED', file_hash: 'abc123' };
+const sheet = { period_from: '2026-09-01', period_to: '2026-09-30', opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'AED', file_hash: 'abc123' };
 const sign = (over) => BRL.appendStatement(db, E.SHOP, ACCOUNT, 'AED', Object.assign({}, sheet, over || {}), E.SHOP);
 const refused = async (fn) => { try { await fn(); return null; } catch (err) { return err; } };
 let n = 0; const ok = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what); };
@@ -41,7 +41,7 @@ let n = 0; const ok = async (what, fn) => { await fn(); n++; console.log('  ok  
     assert.ok(/already signed off/.test(err.message)); assert.strictEqual(rows.length, 1);
   });
   await ok('3 another file (hash) or another period is another statement: signs', async () => {
-    await sign({ file_hash: 'zzz999' }); await sign({ period_from: '2026-11-02' }); assert.strictEqual(rows.length, 3);
+    await sign({ file_hash: 'zzz999' }); await sign({ period_from: '2026-09-02' }); assert.strictEqual(rows.length, 3);
   });
   await ok('4 a month the books hold hard-locked refuses by the entries\' rule (PERIOD_LOCKED), nothing stored; an open month signs', async () => {
     LOCKED = [10];
