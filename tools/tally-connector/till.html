@@ -6151,6 +6151,15 @@ function taxFigure(amount){ return amount == null ? NOT_DECIDED : money(amount);
 function negatedTax(amount){ return amount == null ? null : -amount; }
 function schemeWord(){ var pack = shopPack(); return countryWords().taxName || (pack && pack.tax && pack.tax.scheme) || 'Tax'; }
 function creditNoteTitle(){ var p = shopPack(); return p && p.creditNote && p.creditNote.title ? String(p.creditNote.title).toUpperCase() : 'CREDIT NOTE'; }
+/** AA-F-05 (walk AA): the credit note's title in the shop's languages, from the pack's own slip.titles.credit_note (same shape and langs as the invoice's, so Arabic sits beside English as on the tax invoice); a pack with none keeps creditNoteTitle()'s one English line */
+function creditNoteTitleLines(){
+  try {
+    var slip = (shopPack() || {}).slip, words = slip && slip.titles && slip.titles.credit_note;
+    var lines = words ? (slip.langs || []).filter(function(lang){ return words[lang]; }).map(function(lang){ return { lang: lang, text: String(words[lang]).toUpperCase() }; }) : [];
+    if (lines.length) return lines;
+  } catch (e) { cbQuiet('creditNoteTitleLines:1', e); }
+  return [{ lang: 'en', text: creditNoteTitle() }];
+}
 /** does the shop's tax turn on the STATE (India's CGST/SGST · IGST — pack.tax.supply 'state')? A border pack (Australia, the UAE) has one head and no state. No pack known → one head (W1-TILL). */
 function packSplitsByState(){ try { var pack = shopPack(); return !!(pack && pack.tax && pack.tax.supply === 'state'); } catch (e) { cbQuiet('packSplitsByState:1', e); return false; } }
 /** does the shop's pack carry UPI among its payment modes (reg-in chart.paymentModes.upi)? Elsewhere a counter's own UPI payee is not offered — an NPCI QR with cu=AUD pays nobody. No pack → not offered (W1-TILL). */
@@ -8640,6 +8649,22 @@ function kindLabelOf(w){
   if (w.kind !== 'standard') return kindWordsOf(w.kind, kindWord(w.kind));
   return Number(w.rate) ? (rated ? kindWord(rated) + ' ' : '') + w.rate + '%' : noReasonZeroWord();
 }
+/** AA-F-02: the words for lines that carry no tax rate at all - the pack's scheme word, never a literal VAT or GST ("No VAT rate set") */
+function noRateWord(){ return 'No ' + schemeWord() + ' rate set'; }
+/** AA-F-02: the base of the invoice's lines the engine flagged `_unrated` (it prices them at 0%, so they sit in the standard 0% class) */
+function unratedBaseOf(invoice){
+  var items = (invoice && invoice.ItemList) || [];
+  return items.reduce(function(sum, item){ return item && item._unrated ? rmoney(sum + (Number(item.AssAmt) || 0)) : sum; }, 0);
+}
+/** AA-F-02: the classes with the unrated base taken out of the unnamed 0% class and set beside them as its own `unrated` row (a class left empty is dropped) */
+function unratedApart(list, base){
+  var out = [], taken = false;
+  list.forEach(function(w){
+    if (!taken && w.kind === 'standard' && !Number(w.rate)) { taken = true; var rest = rmoney(Number(w.taxable) - base); if (rest > 0) out.push({ kind: w.kind, rate: w.rate, taxable: rest, tax: w.tax }); }
+    else out.push(w);
+  });
+  return taken ? out.concat([{ kind: 'unrated', rate: 0, taxable: base, tax: 0 }]) : list;
+}
 /** a bill under a one-head pack that names kinds (AE · AU), with no kind named on any line: its 0% lines still say they are 0% (R-F-02) */
 function borderKindsPack(){ try { return !!(packKinds() && !packSplitsByState()); } catch (_) { return false; } }
 /**
@@ -8652,10 +8677,11 @@ function kindRowsOf(invoice, row){
   try {
     var cb = invoice && invoice._cb, named = !!(cb && cb.kinds && cb.kinds.length);
     if (!cb || !(named || (borderKindsPack() && !cb.reason)) || !window.CBTax || !CBTax.moneyOf) return '';
-    var list = classesOf(CBTax.moneyOf(invoice));
+    var list = classesOf(CBTax.moneyOf(invoice)), unrated = unratedBaseOf(invoice);
+    if (list && unrated) list = unratedApart(list, unrated);   /* AA-F-02: a line with no rate is its own row, never inside "Taxable" nor under a reason it was never given */
     if (!list || list.length < 2) return '';
     return list.map(function(w){
-      return '<div data-testid="till-slip-kind-' + esc(w.kind) + '">' + row(esc(kindLabelOf(w)), money(w.taxable)) + '</div>';
+      return '<div data-testid="till-slip-kind-' + esc(w.kind) + '">' + row(esc(w.kind === 'unrated' ? noRateWord() : kindLabelOf(w)), money(w.taxable)) + '</div>';
     }).join('');
   } catch (e) { cbQuiet('kindRowsOf:1', e); return ''; }
 }
@@ -27170,7 +27196,7 @@ function retSlipHTML(cn){
   return '<div style="font:13px/1.45 ui-monospace,monospace">'
     + slipHeadHTML(kind)
     + '<div style="border-top:1px solid currentColor;margin:4px 0"></div>'
-    + '<div style="font-size:17px;font-weight:800;text-align:center">' + creditNoteTitle() + '</div>'
+    + '<div style="font-size:17px">' + slipTitleHTML(creditNoteTitleLines()) + '</div>'
     + '<div>' + esc(counterName()) + (cn.by && cn.by.name ? ' · ' + esc(cn.by.name) : '') + '</div>'
     + '<div style="font-size:15px;font-weight:700">' + esc(cn.no || '') + '</div>'
     + '<div>' + esc(atShop(cn.at || Date.now())) + '</div>'

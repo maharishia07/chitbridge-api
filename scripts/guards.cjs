@@ -1108,6 +1108,7 @@ const GUARDS = [
   'walkt-1129.test.cjs', // WALK T (1129) T-F-01: VAT201 Box 9 counts only a bill's 5% lines (hand 12000 / 600 in fils, not 41000), 0% lines of the same bill out, a reversal nets away
   'ae-f02-trn-dashes.test.cjs', // AE-F-02: a TRN typed with dashes or spaces is cleaned to 15 digits by the pack's rule (was a 500 at gstn varchar(15)); wrong lengths refused in words
   'ae-f03-setup-asks.test.cjs', // AE-F-03: the pack's setup questions (Emirate · VAT period · zone) asked once, kept in tax_registration.asked, read by the return
+  'till-walkaa-1129.test.cjs', // Walk AA (1129): the slip's Taxable never holds a zero-rated or unrated line (own rows), the credit note's title in both languages from the pack, the reason-not-stated word from the pack's scheme word
   'till-zero-lines-1129.test.cjs', // Walk R-F-02/R-F-05/AU P-F-08 (1129): a 0% line says its reason (Zero-rated · Exempt · GST-free · VAT 0%, with the pack's other-language words), the taxable is split by class on the slip foot and the day close; hand figures in fils and cents
   'till-slip-read-1129.test.cjs', // the slip split into named steps prints byte for byte what it did: 16 golden slips (IN, AU, AE, JP, US; credit note, zero-rated, multi-rate, foreign buyer) + each step
   'till-takings-1129.test.cjs', // Walk R-F-04 (1129): the till summary's live day counts counter bills only (a rail credit note is not a sale): 158.00 AED = the day close
