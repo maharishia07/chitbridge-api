@@ -1,6 +1,8 @@
 'use strict';
 /**
  * routes/books-events-batch.js — POST /api/books/events/batch (SPD bank Add): a statement's lines post in ONE request (split out of routes/books.js, 1129).
+ * OWNER     cb-accounting
+ * RISK      money
  * OWNS      the door only: the gates, the 400 and 409 answers and the receipt in the body. The capability is lib/books-events-batch.postEventsBatch (CAP-BOOKS-EVENTS-BATCH).
  * CALLED BY server.js (mounted beside routes/books.js at /api/books); the bank Add on the Ledger screen.
  * FLOW      auth → noKey → ownerOrAccountant (owner or manager seat, no adviser door) → on → contract check → postEventsBatch → { posted, failed, results, + the receipt }
