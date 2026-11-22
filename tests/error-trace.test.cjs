@@ -15,6 +15,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { routesOf } = require('../tools/error-codes.cjs');
+const { functionsOf, requiresOf } = require('../tools/error-trace.cjs');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'errtrace-'));
 const put = (rel, text) => {
@@ -66,4 +67,7 @@ assert.deepStrictEqual(found.VIA_TABLE, ['GET /api/x/a'], 'a table the helper na
 assert.deepStrictEqual(found.VIA_NAME, ['POST /api/x/b'], 'a handler handed over by name is followed');
 assert.ok(found.NEVER_REACHED === undefined, 'a code no call reaches stays unknown, never guessed');
 fs.rmSync(root, { recursive: true, force: true });
-console.log('error-trace.test: 6 passed');
+/* tools/error-trace.cjs itself (unit): the function spans a call is resolved against, and the requires a file makes */
+assert.deepStrictEqual(functionsOf(['function a() {', '  return 1;', '}', 'const b = () => 2;', 'function c() { return 3; }']).map((fn) => [fn.name, fn.from, fn.to]), [['a', 1, 3], ['b', 4, 4], ['c', 5, 5]], 'functionsOf gives each function its name and its 1-based line span');
+assert.deepStrictEqual(requiresOf("const x = require('npm-pkg');", path.join(process.cwd(), 'routes', 'y.js'), process.cwd()), { aliases: {}, members: {} }, 'a package that is not ours is not followed (never guessed)');
+console.log('error-trace.test: 8 passed');
