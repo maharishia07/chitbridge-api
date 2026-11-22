@@ -128,10 +128,12 @@ module.exports = async function sectionG({ assert, crypto, http, apiBase, issuer
   });
   await checkAsync('G2e N2a: the access log line carries the path without its query string (the lt and the device id never reach a log); the provider routes log no req.query / originalUrl elsewhere', async () => {
     const fs = require('fs'), path = require('path');
+    /* ERR-14-LOGKEYS moved the request line into lib/request-log.js (server.js calls requestLine); the check follows it */
     const server = fs.readFileSync(path.join(__dirname, '..', '..', 'server.js'), 'utf8');
-    const block = server.slice(server.indexOf("log.info('request'"), server.indexOf("log.info('request'") + 700);
-    assert.ok(block.includes("path: (req.originalUrl || req.url).split('?')[0]"), 'the request log must cut the query string');
-    assert.ok(!/req.query/.test(block), 'the query object is not logged');
+    const line = fs.readFileSync(path.join(__dirname, '..', '..', 'lib', 'request-log.js'), 'utf8');
+    assert.ok(server.includes("log.info('request', require('./lib/request-log').requestLine(req, res, t0))"), 'the access log is written by the one request-log line');
+    assert.ok(line.includes("path: (req.originalUrl || req.url).split('?')[0]"), 'the request log must cut the query string');
+    assert.ok(!/req\.query/.test(line.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')), 'the query object is not logged');
     for (const file of ['routes/signin-provider.js', 'routes/signin-provider-connect.js']) {
       const src = fs.readFileSync(path.join(__dirname, '..', '..', file), 'utf8');
       assert.ok(!src.split('\n').some((line) => /log\.(info|warn|error|debug)\(/.test(line) && /req\.(query|originalUrl|url)/.test(line)), file + ' logs the address');
