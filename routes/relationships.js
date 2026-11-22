@@ -18,7 +18,6 @@ const log = require('../lib/logger');
 /* SEC-FIX3 S5 — a handle lookup finds a BUSINESS only: not a storefront customer (<phone>@<shop>.cr, identity_type 'customer') and not an
    employee (name@shop.br, an actor) — both carry a parent entity. Otherwise adding one confirmed it and returned their phone/contact. */
 const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
-
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
