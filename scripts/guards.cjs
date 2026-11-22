@@ -720,6 +720,8 @@ const GUARDS = [
   'iddocs-verify.test.cjs', // M18: phone/e-mail identity documents verified by a code (lib/otp.js engine); 5 wrong -> locked; PUT clears; an unverified contact is never used for recovery
   'sec101-iddoc-hash.test.cjs', // SEC-101: Aadhaar (store:false) stored with a KEYED hash (HKDF of VAULT_ENC_KEY), legacy sha256 still recognised, no key = 503; PHONE/EMAIL hashes byte for byte unchanged, sign-in + device-key match still find the person
   'sec106-staff-code-hash.test.cjs', // SEC-106: a staff first code is kept as a KEYED hash (HKDF of VAULT_ENC_KEY, otp_code_hash), never plain; verifyOtp compares the hash, every issue zeroes the attempts and writes a code_issued trail row; an idempotent answer carrying a code is never stored; b781 written, not run
+  'b860-guard.test.cjs', // VERIFY-EL-DB A2: b860 raises unless cb_app has lost SELECT on otp_code, otp_code_hash, pin_hash; guard before the first ALTER; proof file kept beside it
+  'sec01-r3-form-signer.test.cjs', // VERIFY-SEC-01 R3: an editor typing the owner name signs as themselves; only the owner types a name; signed_by always the real identity
   'register-gate.test.cjs', // RAIL-90: the register is a per-shop capability — off (403 CAPABILITY_OFF) for a shop with no key and no rows; on with the key; on with existing rows and no key
   'raida-close-route.test.cjs', // RAIL-93: POST /api/chits/:chit_id/raida/:raida_id/close passes the worklist's disposition (and carried-forward register, evidence) to raida.close; a full register's ending writes its closing row
   'sides.test.cjs', // CB Sides: driftOf (resolver) + the impact walk (lib/impact, shared with raida.walk) + GET /api/entities/sides is ONE read; a source with no data is a 'not yet' row, never a number
