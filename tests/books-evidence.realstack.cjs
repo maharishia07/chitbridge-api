@@ -143,12 +143,13 @@ async function main() {
     const n0 = await looks();
     const aud = await call(Pw, 'GET', '/api/books/evidence/' + fileId, { member: SHOP });
     const n1 = await looks();
-    ok('5c the auditor under a LIVE grant reads the file: 200, the same bytes, no-store, and the look is logged (+1)', aud.status === 200 && aud.raw.equals(pdf) && /no-store/.test(aud.cache) && n1 === n0 + 1, JSON.stringify([aud.status, n0, n1]));
+    /* MONEY-01 A6 (21 Nov, Athi: an accountant's access is explicit): the file download is the ADVISER grant's only; an auditor under a live grant is refused and nothing is logged as looked at (middleware/books-grant FILE_READS) */
+    ok('5c the auditor under a LIVE grant is refused the file download: 403, no bytes, no look logged (the adviser grant alone downloads a file)', aud.status === 403 && !(aud.raw && aud.raw.equals(pdf)) && n1 === n0, JSON.stringify([aud.status, n0, n1]));
     const audList = await call(Pw, 'GET', '/api/books/daybook?from=2026-07-01&to=2026-11-30', { member: SHOP });
     const af = byRef(audList.body, 'JPS-J1');
     ok('5d the auditor Day book carries the same evidence and the flag on HP-E1', af && af.evidence.count === 1 && byRef(audList.body, 'HP-E1').evidence.flag === 'no_tax_invoice', JSON.stringify(af && af.evidence));
-    const msgFile = await call(Pw, 'GET', '/api/books/evidence/' + note.body.id, { member: SHOP });
-    ok('5e a file stored on a MESSAGE is not evidence: 404, the same as a made-up id', msgFile.status === 404 && (await call(Pw, 'GET', '/api/books/evidence/22222222-2222-4222-8222-222222222222', { member: SHOP })).status === 404, JSON.stringify(msgFile.status));
+    const msgFile = await call(owner, 'GET', '/api/books/evidence/' + note.body.id);
+    ok('5e a file stored on a MESSAGE is not evidence: 404 for its owner, the same as a made-up id (the auditor is refused 403 at the door for both: nothing to tell them apart)', msgFile.status === 404 && (await call(owner, 'GET', '/api/books/evidence/22222222-2222-4222-8222-222222222222')).status === 404 && (await call(Pw, 'GET', '/api/books/evidence/' + note.body.id, { member: SHOP })).status === 403, JSON.stringify(msgFile.status));
     const write = await call(Pw, 'POST', '/api/books/evidence/' + fileId, { member: SHOP, body: {} });
     ok('5f a write through the grant is refused (not a 2xx)', write.status >= 400, JSON.stringify(write.status));
     const stranger = await call(Qw, 'GET', '/api/books/evidence/' + fileId, { member: SHOP });
