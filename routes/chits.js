@@ -896,12 +896,15 @@ function refuseWithdrawnCurrency(business_json) {
  * @returns the business data with the stated money in it (a new object only when it had none)
  */
 function statedMoneyCarried(business_json, body) {
-  const given = body && body.currency_code;
-  if (given == null || String(given).trim() === '') return business_json;
-  require('../lib/money').refuseNewCurrency(String(given).trim().toUpperCase());
+  /* AJ-F-02 + AP-F-07, one reader: the code stated on the body (currency_code, else currency) and the one inside business_json.currency are ONE statement; an unknown code is a worded 422 (refuseNewCurrency), two different codes are a worded 422 MONEY_CURRENCY_MISMATCH, one stated code is carried into business_json.currency */
+  const given = body && body.currency_code != null && String(body.currency_code).trim() !== '' ? body.currency_code : body && body.currency;
+  if (typeof given !== 'string' || !given.trim()) return business_json;
+  const code = require('../lib/money').refuseNewCurrency(given.trim());
   const has = business_json && typeof business_json === 'object';
-  if (has && business_json.currency) return business_json;
-  return Object.assign(has ? business_json : {}, { currency: String(given).trim().toUpperCase() });
+  const inside = has && business_json.currency ? String(business_json.currency).trim().toUpperCase() : '';
+  if (inside && inside !== code) throw Object.assign(new Error('This bill names ' + code + ' and also ' + inside + '. Name one currency and send it again.'), { status: 422, code: 'MONEY_CURRENCY_MISMATCH' });
+  if (inside) return business_json;
+  return Object.assign(has ? business_json : {}, { currency: code });
 }
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
@@ -914,7 +917,13 @@ async function sendBody(sendState, req, res) {
      mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-  const business_json = statedMoneyCarried(businessJsonOf(req.body), req.body);
+  let business_json;
+  try {
+    business_json = statedMoneyCarried(businessJsonOf(req.body), req.body);
+  } catch (stated) {
+    if (!stated || stated.code !== 'MONEY_CURRENCY_MISMATCH') throw stated;
+    return problem(req, res, { status: 422, ...said({ error: 'Two currencies', code: stated.code, message: stated.message }, codeOfStatus(422)) }); /* AJ-F-02 */
+  }
   refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
