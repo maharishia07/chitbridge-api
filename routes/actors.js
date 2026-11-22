@@ -399,7 +399,8 @@ router.post(
        * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : access.FROM_HAT[list] || access.EDITOR;
-      const hat = access.labelHat(actor_role, access_level) || list; /* AK: the Bookkeeper or Accountant label sets the manager hat */
+      const asked = access.labelHat(actor_role, access_level); /* AK: the Bookkeeper or Accountant label sets the manager hat, in a SHOP only (a practice, or an unknown, keeps the hat sent) */
+      const hat = (asked && (await require('../lib/people').practiceOf(entity_id, req.identity.identity_id)) === false ? asked : null) || list;
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
       const costsCol = access.seesCostsInsert(req.body, _lvlCol); /* RC-3: written only when asked */
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
