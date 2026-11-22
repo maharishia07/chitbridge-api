@@ -4,12 +4,15 @@
  * CALLED BY app/signin-ui.js (reads CBSignin.provider once, at load; absent → console.warn SIGNIN_PROVIDER_MODULE_MISSING and no provider door is drawn) · settings.html reads take() through CBSignin.takeLanded
  * FLOW      load (this file, AFTER /engine/signin.js and BEFORE /app/signin-ui.js) ──▶ CBSignin.provider = { words, take, soonRow, isKey, start, ask, arrive }
  * CARD      18-identity-sign-in-and-access/sign-in
+ * ID        CMP071
+ * OWNER     cb-security
+ * RISK      security
  * Twin: a byte copy lives in the api kit (tools/tally-connector/signin-more-ways.js, scripts/vendor-till.cjs); the web file is the master.
  */
 (function (root) {
   'use strict';
-  var E = root.CBSignin;
-  if (!E || typeof E.who !== 'function') throw new Error('CBSignin provider needs /engine/signin.js loaded first');
+  var engine = root.CBSignin;
+  if (!engine || typeof engine.who !== 'function') throw new Error('CBSignin provider needs /engine/signin.js loaded first');
 
   var WORDS = {
     /* connect (the #c= word after a signed-in person linked a provider): what Settings says */
@@ -57,7 +60,8 @@
       if (!found) return null;
       if (root.history && typeof root.history.replaceState === 'function') root.history.replaceState(null, '', where.pathname + where.search);
       return { kind: found[1], value: decodeURIComponent(found[2]) };
-    } catch (_) {
+    } catch (failure) {
+      if (typeof root.cbQuiet === 'function') root.cbQuiet('signin: the provider landing in the address could not be read, no provider result is shown', failure);
       return null;
     }
   })();
@@ -117,32 +121,33 @@
   }
 
   /** the api address that sends this browser to the provider (a top-level visit; the device id rides in the address because a visit has no header) */
-  function start(c, key, dev) {
-    return dev && isKey(key) ? (c.apiBase || '') + '/api/signin/provider/' + encodeURIComponent(key) + '/start?device_id=' + encodeURIComponent(dev) : '';
+  function start(context, key, dev) {
+    return dev && isKey(key) ? (context.apiBase || '') + '/api/signin/provider/' + encodeURIComponent(key) + '/start?device_id=' + encodeURIComponent(dev) : '';
   }
   /** the providers the api says are ready: person windows only (never the till or a shop's customer; a host with its own transport keeps its own rules) */
-  function ask(m, c, unwrap) {
-    if (c.need === 'customer' || c.surface === 'till' || c.surface === 'shop' || c.io || typeof root.fetch !== 'function') return;
+  function askProviders(machine, context, unwrap) {
+    if (context.need === 'customer' || context.surface === 'till' || context.surface === 'shop' || context.io || typeof root.fetch !== 'function') return;
     try {
       root
-        .fetch((c.apiBase || '') + '/api/signin/providers', { cache: 'no-store' })
+        .fetch((context.apiBase || '') + '/api/signin/providers', { cache: 'no-store' })
         .then(function (reply) { return reply.json(); })
-        .then(function (j) { m.setLive(unwrap(j).providers); })
+        .then(function (j) { machine.setLive(unwrap(j).providers); })
         .catch(function (err) { if (root.cbQuiet) root.cbQuiet('signin:providers', err); });
-    } catch (_) {
+    } catch (failure) {
       /* the list failing leaves every provider greyed, as before */
+      if (typeof root.cbQuiet === 'function') root.cbQuiet('signin: the provider list could not be asked, every provider stays greyed', failure);
     }
   }
   /** mount found something the provider's redirect left: a one-time code is swapped, a refusal word is said, a connect result is kept for Settings */
-  function arrive(m, c) {
-    var landed = c.need !== 'customer' && c.surface !== 'till' && c.surface !== 'shop' && !c.io ? LANDED : null;
+  function arrive(machine, context) {
+    var landed = context.need !== 'customer' && context.surface !== 'till' && context.surface !== 'shop' && !context.io ? LANDED : null;
     if (!landed) return;
     LANDED = null;
-    if (landed.kind === 'h') m.providerHandoff(landed.value);
-    else if (landed.kind === 'e') m.refuse(m.words.sso[landed.value] || m.words.sso.fallback);
+    if (landed.kind === 'h') machine.providerHandoff(landed.value);
+    else if (landed.kind === 'e') machine.refuse(machine.words.sso[landed.value] || machine.words.sso.fallback);
     else LANDED = landed; /* a connect result belongs to Settings, not to a sign-in window */
   }
 
-  E.provider = { words: WORDS, take: take, soonRow: soonRow, isKey: isKey, start: start, ask: ask, arrive: arrive };
-  if (typeof module !== 'undefined' && module.exports) module.exports = E.provider;
+  engine.provider = { words: WORDS, take: take, soonRow: soonRow, isKey: isKey, start: start, ask: askProviders, arrive: arrive };
+  if (typeof module !== 'undefined' && module.exports) module.exports = engine.provider;
 })(typeof window !== 'undefined' ? window : typeof globalThis !== 'undefined' ? globalThis : this);

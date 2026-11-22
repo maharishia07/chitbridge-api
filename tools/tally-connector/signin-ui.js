@@ -105,16 +105,16 @@
   /* ⭐ OTHER WAYS TO SIGN IN is its own capability (app/signin-more-ways.js, loaded before this file): its words, landed code, row and address come through CBSignin.provider.
      Absent → a loud console.warn with a code and no provider door; the window itself still signs in by mobile, e-mail, PIN and code. */
   /* what a sign-in leaves (the claims, the session, the keeping of it) is app/signin-session.js, loaded before this file */
-  var SS = E.session;
-  if (!SS) throw new Error('CBSignin.mount needs /app/signin-session.js loaded before /app/signin-ui.js');
-  var jwtClaims = SS.claims, sessionOf = SS.of, verifyRefused = SS.refused, isCustomerOnApps = SS.customerOnApps, keep = SS.keep;
-  var P = E.provider;
-  if (!P) {
+  var sessionApi = E.session;
+  if (!sessionApi) throw new Error('CBSignin.mount needs /app/signin-session.js loaded before /app/signin-ui.js');
+  var jwtClaims = sessionApi.claims, sessionOf = sessionApi.of, verifyRefused = sessionApi.refused, isCustomerOnApps = sessionApi.customerOnApps, keep = sessionApi.keep;
+  var providerApi = E.provider;
+  if (!providerApi) {
     root.console.warn('SIGNIN_PROVIDER_MODULE_MISSING: /app/signin-more-ways.js was not loaded before /app/signin-ui.js; no provider sign-in is offered');
-    P = { words: { connect: {}, sso: {} }, take: function () { return null; }, soonRow: function () { return ''; }, isKey: function () { return false; }, start: function () { return ''; }, ask: function () {}, arrive: function () {} };
+    providerApi = { words: { connect: {}, sso: {} }, take: function () { return null; }, soonRow: function () { return ''; }, isKey: function () { return false; }, start: function () { return ''; }, ask: function () {}, arrive: function () {} };
   }
-  WORDS.connect = P.words.connect;
-  WORDS.sso = P.words.sso;
+  WORDS.connect = providerApi.words.connect;
+  WORDS.sso = providerApi.words.sso;
   /**
    * ⭐ THE METHOD SLOTS (DECISIONS 2026-10-08: every sign-in method lives only in CBSignin). A slot is CONFIG, hidden by default:
    * a button is drawn only when the host switches the slot on (contract.methods[name] === true) AND gives onMethod — so nothing on
@@ -129,10 +129,10 @@
   };
   /* the provider doors (the "More ways to sign in" row, the address to the provider) are /app/signin-ui.js's other half: app/signin-more-ways.js */
   function soonRow(intent, skip, live) {
-    return P.soonRow(intent, skip, live, addCss);
+    return providerApi.soonRow(intent, skip, live, addCss);
   }
   function providerStart(c, key) {
-    return P.start(c, key, deviceOf(c));
+    return providerApi.start(c, key, deviceOf(c));
   }
   function methodsOn(c) {
     var on = (c && c.methods) || {};
@@ -209,6 +209,49 @@
     if (code && said.message) return String(said.message);
     return E.refusal({ status: failed.status, message: said.message || said.error });
   }
+  /** a person proved by the host's own credential: no token, no session — an identity, exactly what a counter keeps */
+  function localSessionOf(person, surface) {
+    person = person || {};
+    var kind = person.kind === 'entity' ? 'owner' : person.kind || 'employee';
+    return {
+      token: '',
+      role: kind === 'owner' ? 'entity' : 'actor',
+      name: person.name || '',
+      entity: '',
+      bridgeId: '',
+      person: { id: person.id || null, identity_id: person.identity_id || person.id || null, kind: kind, shop: person.entity || null },
+      exp: null,
+      device_id: null,
+      surface: surface || null,
+      jti: null,
+      local: true
+    };
+  }
+  /** the two provider steps of the machine, built over its own state and helpers (env = { S, set, post, c, W, signedIn }) */
+  function providerSteps(env) {
+    /** the api's list of ready providers → the keys whose button is live (a list that is not well formed switches nothing on) */
+    function setLive(list) {
+      var keys = (Array.isArray(list) ? list : [])
+        .filter(function (item) { return item && item.live === true && typeof item.key === 'string' && providerApi.isKey(item.key); })
+        .map(function (item) { return item.key; });
+      return env.set({ live: keys });
+    }
+    /** the page came back from the provider with a one-time code: swap it for the session (the SAME answer as a code sign-in), or say in words why not */
+    function providerHandoff(code) {
+      if (env.S.at !== 'out' || !code) return Promise.resolve(env.S);
+      env.set({ busy: true, why: '' });
+      return env.post('/api/signin/provider/handoff', { code: String(code) }).then(function (reply) {
+        var answer = reply.body || {};
+        var W = env.W;
+        if (verifyRefused(reply, answer, env.c)) return env.set({ busy: false, why: W.sso[answer.code] || answer.detail || answer.message || W.sso.fallback });
+        var session = sessionOf(answer);
+        env.S.answer = answer;
+        if (answer.requires_pin_setup === true) return env.set({ busy: false, at: 'setpin', localPin: false, token: answer.token, session: session, said: W.setWhy });
+        return env.signedIn(session, answer);
+      });
+    }
+    return { setLive: setLive, providerHandoff: providerHandoff };
+  }
   /* ── the state machine ──────────────────────────────────────────────────────────────────────────────────────────── */
   function machine(c, io) {
     c = c || {};
@@ -248,21 +291,7 @@
     }
     /** a person proved by the host's own credential: no token, no session — an identity, exactly what a counter keeps */
     function localSession(p) {
-      p = p || {};
-      var kind = p.kind === 'entity' ? 'owner' : p.kind || 'employee';
-      return {
-        token: '',
-        role: kind === 'owner' ? 'entity' : 'actor',
-        name: p.name || '',
-        entity: '',
-        bridgeId: '',
-        person: { id: p.id || null, identity_id: p.identity_id || p.id || null, kind: kind, shop: p.entity || null },
-        exp: null,
-        device_id: null,
-        surface: c.surface || null,
-        jti: null,
-        local: true
-      };
+      return localSessionOf(p, c.surface);
     }
     var subs = [];
     function emit() {
@@ -466,24 +495,6 @@
       set({ local: null, viaLine: true, need: '', why: '' });
       return askFor(id);
     }
-    /** the api's list of ready providers → the keys whose button is live (a list that is not well formed switches nothing on) */
-    function setLive(list) {
-      var keys = (Array.isArray(list) ? list : []).filter(function (p) { return p && p.live === true && typeof p.key === 'string' && P.isKey(p.key); }).map(function (p) { return p.key; });
-      return set({ live: keys });
-    }
-    /** the page came back from the provider with a one-time code: swap it for the session (the SAME answer as a code sign-in), or say in words why not */
-    function providerHandoff(code) {
-      if (S.at !== 'out' || !code) return Promise.resolve(S);
-      set({ busy: true, why: '' });
-      return post('/api/signin/provider/handoff', { code: String(code) }).then(function (reply) {
-        var answer = reply.body || {};
-        if (verifyRefused(reply, answer, c)) return set({ busy: false, why: W.sso[answer.code] || answer.detail || answer.message || W.sso.fallback });
-        var s = sessionOf(answer);
-        S.answer = answer;
-        if (answer.requires_pin_setup === true) return set({ busy: false, at: 'setpin', localPin: false, token: answer.token, session: s, said: W.setWhy });
-        return signedIn(s, answer);
-      });
-    }
     /** a sentence the host wants on the box (e.g. the picker: "no counter PIN for X yet") — words only, no state change */
     function refuse(why) {
       return set({ why: String(why || '') });
@@ -500,6 +511,7 @@
       held = null;
       return set({ at: 'out', typed: '', kind: '', need: '', resolved: '', choices: [], why: '', said: '', token: null, local: null });
     }
+    var providerDoors = providerSteps({ S: S, set: set, post: post, c: c, W: W, signedIn: signedIn });
     return {
       state: function () {
         return S;
@@ -527,8 +539,8 @@
       later: later,
       line: line,
       refuse: refuse,
-      setLive: setLive,
-      providerHandoff: providerHandoff,
+      setLive: providerDoors.setLive,
+      providerHandoff: providerDoors.providerHandoff,
       online: onLine,
       methods: function () {
         return methodsOn(c);
@@ -568,6 +580,30 @@
     (doc.head || doc.documentElement).appendChild(node);
   }
 
+  /** the sign-in method buttons, and under them the "More ways to sign in" row (not on the till or a shop's own window) */
+  function methodSlotsHtml(machine, context, state) {
+    var slots = machine
+      .methods()
+      .map(function (item) {
+        return (
+          '<button data-cbsid="SCR054-B01" type="button" class="cbsi-m" data-cbsi="method" data-method="' +
+          item +
+          '" data-testid="signin-' +
+          item +
+          '">' +
+          esc(METHODS[item].label) +
+          '</button>'
+        );
+      })
+      .join('');
+    if (context.need !== 'customer' && context.surface !== 'till' && context.surface !== 'shop') slots += soonRow('signin', machine.methods(), state.live);
+    return slots;
+  }
+  /** a click on a provider door: the browser goes to the provider's own sign-in address (nothing is sent from here) */
+  function openProvider(context, node) {
+    var address = providerStart(context, node.getAttribute('data-provider'));
+    if (address && root.location) root.location.assign(address);
+  }
   function paint(host, m, c) {
     var S = m.state(),
       W = m.words,
@@ -575,21 +611,7 @@
     var why = S.why ? '<p class="cbsi-why" role="alert" data-testid="signin-why">' + esc(S.why) + '</p>' : '';
     var busy = S.busy ? ' disabled' : '';
     if (S.at === 'out') {
-      var slots = m
-        .methods()
-        .map(function (item) {
-          return (
-            '<button data-cbsid="SCR054-B01" type="button" class="cbsi-m" data-cbsi="method" data-method="' +
-            item +
-            '" data-testid="signin-' +
-            item +
-            '">' +
-            esc(METHODS[item].label) +
-            '</button>'
-          );
-        })
-        .join('');
-      if (c.need !== 'customer' && c.surface !== 'till' && c.surface !== 'shop') slots += soonRow('signin', m.methods(), S.live);
+      var slots = methodSlotsHtml(m, c, S);
       h =
         '<h2>' +
         esc(W.title) +
@@ -753,10 +775,8 @@
       else if (k === 'line') m.line();
       else if (k === 'later') m.later();
       else if (k === 'method' && typeof c.onMethod === 'function') c.onMethod(node.getAttribute('data-method'));
-      else if (k === 'provider') {
-        var go = providerStart(c, node.getAttribute('data-provider'));
-        if (go && root.location) root.location.assign(go);
-      } else if (k === 'register') goRegister(e, node);
+      else if (k === 'provider') openProvider(c, node);
+      else if (k === 'register') goRegister(e, node);
     }
     function onInput(e) {
       if (host.contains(e.target) && e.target.name === 'id') m.typed(e.target.value);
@@ -765,8 +785,8 @@
     doc.addEventListener('click', onClick);
     doc.addEventListener('input', onInput);
     paint(host, m, c);
-    P.ask(m, c, unwrap);
-    P.arrive(m, c);
+    providerApi.ask(m, c, unwrap);
+    providerApi.arrive(m, c);
     return {
       destroy: function () {
         m.close();
@@ -791,7 +811,7 @@
    ⚠️ NOT E.keep: E is the ENGINE (engine/signin.js), whose keep(surface, answer) the counter calls; assigning over it broke every till
    sign-in (14 Oct, till-pin and 10 more walks). [[feedback-namespace-after-assignment]] */
   E.keepSession = keep;
-  E.takeLanded = P.take;
+  E.takeLanded = providerApi.take;
   E.jwtClaims = jwtClaims;
   E.transport = httpPost; /* the default transport, for a host that wraps it (the till: "offline" said in words first) */
   E.METHODS = METHODS;

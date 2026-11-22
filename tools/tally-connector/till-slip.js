@@ -219,6 +219,12 @@ function slipTaxBlockHTML(bill, totals, row, dash, unrated){
        says it is not an invoice. The place itself is still CBTax.placeOfSupply's (the shop's state; a delivery moves it). */
     + slipPlaceOfSupplyHTML(bill, unrated, row);
 }
+/** a posted credit note's by_rate as the positive amounts handed back: { rate: { base, tax } } (nothing recomputed, only the sign dropped) */
+function slipCreditNoteShownRates(posted, rates){
+  var shown = {};
+  rates.forEach(function(rate){ var figures = posted[rate] || {}; shown[rate] = { base: Math.abs(Number(figures.taxable != null ? figures.taxable : figures.base) || 0), tax: Math.abs(Number(figures.tax) || 0) }; });
+  return shown;
+}
 /**
  * AL-F-01 (walk AL, 21 Nov; a repeat of Q-F-02): a credit note prints the tax it reverses the way a bill prints its tax, through the same tax block (slipTaxBlockHTML): the rate, the taxable value and each head, per rate.
  * Every figure is the POSTED note's own by_rate (negative on the note, shown as the positive amount handed back); nothing is added up or recomputed here. A note whose tax was not decided says so, and a note with no tax prints nothing.
@@ -229,10 +235,12 @@ function slipCreditNoteTaxHTML(cn, row, dash){
   if (!(Number(cn && cn.taxable) || Number(cn && cn.tax) || rates.length)) return '';
   var undecided = rates.some(function(rate){ return (posted[rate] || {}).tax == null; });
   if (undecided) return row('Tax', NOT_DECIDED);
-  var shown = {};
-  rates.forEach(function(rate){ var figures = posted[rate] || {}; shown[rate] = { base: Math.abs(Number(figures.taxable != null ? figures.taxable : figures.base) || 0), tax: Math.abs(Number(figures.tax) || 0) }; });
-  var view = { kind: 'tax', supply: cn.supply, by_rate: shown, tax: Math.abs(Number(cn.tax) || 0), taxable: Math.abs(Number(cn.taxable) || 0), total: Math.abs(Number(cn.total) || 0), customer: cn.customer, heads: null, invoice: null };
+  var view = { kind: 'tax', supply: cn.supply, by_rate: slipCreditNoteShownRates(posted, rates), tax: slipHandedBack(cn.tax), taxable: slipHandedBack(cn.taxable), total: slipHandedBack(cn.total), customer: cn.customer, heads: null, invoice: null };
   return slipTaxBlockHTML(view, null, row, dash, []);
+}
+/** a posted figure of a credit note as the positive amount handed back (only the sign is dropped; nothing is recomputed) */
+function slipHandedBack(figure){
+  return Math.abs(Number(figure) || 0);
 }
 /** the saving: the price before offers and what the customer saved, when any offer came off the bill */
 function slipSavedRowsHTML(bill, totals, row){
