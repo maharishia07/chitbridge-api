@@ -31,26 +31,33 @@ function functionsOf(lines) {
   const found = [];
   lines.forEach((line, index) => {
     if (/^\s*(?:if|for|while|switch|catch|else)\b/.test(line)) return;
-    for (const shape of FN_DEFS) {
-      const defMatch = shape.exec(line);
-      if (!defMatch || KEYWORDS.has(defMatch[2])) continue;
-      const indent = defMatch[1].length;
-      let to = index + 1;
-      if (!/;\s*(?:\/[*/].*)?$/.test(line.trim())) {
-        for (let at = index + 1; at < lines.length; at++) {
-          const text = lines[at];
-          if (!text.trim()) continue;
-          const depth = text.length - text.trimStart().length;
-          if (depth > indent) { to = at + 1; continue; }
-          if (/^\s*[)}\]]/.test(text)) to = at + 1;
-          break;
-        }
-      }
-      found.push({ name: defMatch[2], from: index + 1, to, table: shape === FN_DEFS[FN_DEFS.length - 1] });
-      break;
-    }
+    const def = definitionOn(line);
+    if (!def) return;
+    const to = /;\s*(?:\/[*/].*)?$/.test(line.trim()) ? index + 1 : lastLineOfBody(lines, index, def.match[1].length);
+    found.push({ name: def.match[2], from: index + 1, to, table: def.shape === FN_DEFS[FN_DEFS.length - 1] });
   });
   return found;
+}
+
+/** the first function shape a line opens, with its match, or null (a keyword is not a name: the next shape gets its turn) */
+function definitionOn(line) {
+  for (const shape of FN_DEFS) {
+    const match = shape.exec(line);
+    if (match && !KEYWORDS.has(match[2])) return { shape, match };
+  }
+  return null;
+}
+
+/** the last line (1-based) of the body that opens at `index`: every deeper-indented line, plus a closing ) } ] at the opening's own indent */
+function lastLineOfBody(lines, index, indent) {
+  let to = index + 1;
+  for (let at = index + 1; at < lines.length; at++) {
+    const text = lines[at];
+    if (!text.trim()) continue;
+    if (text.length - text.trimStart().length > indent) to = at + 1;
+    else return /^\s*[)}\]]/.test(text) ? at + 1 : to;
+  }
+  return to;
 }
 
 /** a relative require() spec as the file it names */
@@ -60,36 +67,57 @@ function resolveSpec(file, spec) {
   return null;
 }
 
+/** the names of a destructuring list '{ a, b: c }' as { member, local } (local = the name it is kept under) */
+function namesOfList(list) {
+  return list.split(',').map((part) => part.trim()).filter(Boolean).map((part) => {
+    const [member, local] = part.split(':').map((word) => word.trim());
+    return { member, local: local || member };
+  });
+}
+
 /** the modules a file requires: { alias → absolute path } and { name → { file, member } } for the destructured ones */
 function requiresOf(text, file, root) {
   const aliases = {};
   const members = {};
   const resolve = (spec) => (spec.startsWith('.') ? resolveSpec(file, spec) : null);
+  bindRequires(text, resolve, aliases, members);
+  bindAliasMembers(text, aliases, members);
+  bindDestructuredRequires(text, resolve, members);
+  return { aliases, members };
+}
+
+/** const x = require('./m') is an alias; const x = require('./m').y is a member */
+function bindRequires(text, resolve, aliases, members) {
   for (const hit of text.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*require\(\s*'([^']+)'\s*\)(\.[A-Za-z_$][\w$]*)?/g)) {
     const target = resolve(hit[2]);
     if (!target) continue;
     if (hit[3]) members[hit[1]] = { file: target, member: hit[3].slice(1) };
     else aliases[hit[1]] = target;
   }
+}
+
+/** const words = contract.words  ·  const { words, failed } = contract (a name taken from an alias already required) */
+function bindAliasMembers(text, aliases, members) {
   for (const hit of text.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*;/g)) {
-    if (aliases[hit[2]] && !members[hit[1]]) members[hit[1]] = { file: aliases[hit[2]], member: hit[3] }; /* const words = contract.words */
+    if (aliases[hit[2]] && !members[hit[1]]) members[hit[1]] = { file: aliases[hit[2]], member: hit[3] };
   }
   for (const hit of text.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*([A-Za-z_$][\w$]*)\s*;/g)) {
-    if (!aliases[hit[2]]) continue; /* const { words, failed } = contract */
-    hit[1].split(',').map((part) => part.trim()).filter(Boolean).forEach((part) => {
-      const [member, local] = part.split(':').map((word) => word.trim());
-      if (!members[local || member]) members[local || member] = { file: aliases[hit[2]], member };
+    if (!aliases[hit[2]]) continue;
+    namesOfList(hit[1]).forEach(({ member, local }) => {
+      if (!members[local]) members[local] = { file: aliases[hit[2]], member };
     });
   }
+}
+
+/** const { a, b: c } = require('./m') */
+function bindDestructuredRequires(text, resolve, members) {
   for (const hit of text.matchAll(/(?:const|let|var)\s*\{([^}]*)\}\s*=\s*require\(\s*'([^']+)'\s*\)/g)) {
     const target = resolve(hit[2]);
     if (!target) continue;
-    hit[1].split(',').map((part) => part.trim()).filter(Boolean).forEach((part) => {
-      const [member, local] = part.split(':').map((word) => word.trim());
-      members[local || member] = { file: target, member };
+    namesOfList(hit[1]).forEach(({ member, local }) => {
+      members[local] = { file: target, member };
     });
   }
-  return { aliases, members };
 }
 
 /** the file facts of a repo root, read once per file: its text, lines, functions and requires */
