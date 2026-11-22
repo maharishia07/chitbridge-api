@@ -27480,6 +27480,7 @@ async function paintEarlier(){
     /* ⭐ M47 (walk 2026-10-10): "Mayur Bhavan: 10 bill(s)" left the other 15 unexplained — the split is WHO billed them */
     body = '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px" data-testid="till-earlier-head">' + rows.length + (rows.length === 1 ? ' bill · ' : ' bills · ') + money(total)
       + (WHO && mine.length !== rows.length ? ' · ' + mine.length + ' by ' + esc(whoWord()) + ' ' + money(mine.reduce(function(a,b){ return rmoney(a+(b.total||0)); },0)) : '') + '</div>'
+      + earlierNoReturn(rows, held)
       + rows.map(function(b){
         return '<div style="display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)" data-testid="till-old-' + esc(b.no) + '">'
           + '<span style="flex:1"><b>' + esc(b.no) + '</b><div class="u">' + esc(atShop(b.at)) + ' · '
@@ -27495,6 +27496,14 @@ async function paintEarlier(){
   if (!document.getElementById('billsdlg').open) document.getElementById('billsdlg').showModal();
 }
 var EARLIER = [];
+/** BE-F-07: ONE line, shown not hidden, for the bills with no Return button (not "x bills ... x bills" on every row): why — only bills of the last RET_DAYS days rung on this counter can be returned here (their lines are on this device); a seat that cannot issue returns says that instead */
+function earlierNoReturn(rows, held){
+  var said = function(text){ return '<div style="color:var(--dim);font-size:.9em;margin-bottom:8px" data-testid="till-earlier-noreturn">' + text + '</div>'; };
+  if (!retCanIssue()) return said('This counter cannot take a return, so no bill here has a Return button.');
+  var n = rows.filter(function(b){ return !held[b.no] && !isReturnRow(b) && !isExpenseRow(b); }).length;
+  if (!n) return '';
+  return said((n === 1 ? '1 bill has' : n + ' bills have') + ' no Return button: only bills from the last ' + RET_DAYS + ' days that were rung on this counter can be returned here. The others came in another way, or are older.');
+}
 /** ACC-255: the amount of an Earlier bills row — a sale is its money, a credit note reads "−₹300.00 Refund" (the minus sign, then the word) */
 function earlierAmount(bill){
   if (!isReturnRow(bill)) return money(bill.total);
