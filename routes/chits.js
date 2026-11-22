@@ -1405,6 +1405,7 @@ async function sendSeller(sendState, req, res) {
         face: shelf.face
       }); /* the Map, as the storefront passes it — see slabOf */
   } catch (e) {
+    if (e && e.code === taxShelf.UNREADABLE) throw e; /* TAX-01 r1: the shop's tax details unread = refused (503, TAX_SHELF_UNREADABLE), never a bill with no tax; the send door answers it through knownerr */
     cbLog.fellBack('chits: the read failed — carried on without it', e); /* rate-less lines are what every chit carried until tonight */
   }
   const unratedBlank = blankRated.at.filter((at) => line_items[at] && line_items[at].gst_rate == null && line_items[at].rate == null);
