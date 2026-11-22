@@ -150,9 +150,10 @@ const segCounts = async (shop) => { const s = ok(await j('/api/crm/segments', { 
 
     /* K-1 Q2 (laptop1, 4 Nov): a rewards holder value is bound as TEXT; Postgres refuses a NUL in text (22021). lib/reward-store binds the holder only when the shop runs a live reward programme: on main this shop (none) answers 200 points 0, a shop WITH one answers 500 (22021).
        With lib/problem textParam the answer is 400 INVALID_INPUT naming the field either way, before any query. */
-    await kase('CR-K1-NUL', 'GET /relationships/customers/:id/rewards with a NUL in the holder answers 400 INVALID_INPUT, never a 500 with the database words', async () => {
+    await kase('CR-K1-NUL', 'GET /relationships/customers/:id/rewards with a NUL in the holder answers 400 INVALID_CHARACTER at the door, never a 500 with the database words', async () => {
       const r = await j('/api/relationships/customers/a%00b/rewards', { token: A.token });
-      expect(r.status === 400 && (r.b || {}).code === 'INVALID_INPUT' && (r.b || {}).field === 'id' && !/22021|invalid byte sequence/i.test(JSON.stringify(r.b)), 'answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
+      /* platform review 1129 (the %00 path door): a NUL in a path is refused at the one door before the route reads it */
+      expect(r.status === 400 && (r.b || {}).code === 'INVALID_CHARACTER' && !/22021|invalid byte sequence/i.test(JSON.stringify(r.b)), 'answered ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 200));
       const plain = await j('/api/relationships/customers/holder-' + RUN + '/rewards', { token: A.token });
       expect(plain.status === 200, 'a plain unknown holder still answers 200, got ' + plain.status);
     });
