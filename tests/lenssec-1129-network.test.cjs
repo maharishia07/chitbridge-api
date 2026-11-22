@@ -50,7 +50,7 @@ const reqOf = (o) => Object.assign({ headers: {}, query: {}, params: {}, body: {
     const h = handlerOf(require(path.join(API, 'routes', 'connections.js')), 'put', '/:id/respond');
     sqls.length = 0; const res = resOf();
     await h(reqOf({ method: 'PUT', params: { id: '11111111-1111-4111-8111-111111111111' }, body: { action: 'accept' }, identity: { identity_id: 'c2', parent_entity_id: 'p1' } }), res);
-    assert.strictEqual(res.code, 403); assert.strictEqual(res.body.code, 'NETWORK_OWNER_ONLY'); assert.strictEqual(sqls.length, 0);
+    assert.strictEqual(res.code, 403); assert.ok(['OWNER_ONLY', 'NETWORK_OWNER_ONLY'].includes(res.body.code), res.body.code); /* reviews4 M1 refuses a non-owner first (OWNER_ONLY); the lens-sec line behind it answers the network word: same 403, same sentence */ assert.strictEqual(sqls.length, 0);
     const own = resOf();
     await h(reqOf({ method: 'PUT', params: { id: '11111111-1111-4111-8111-111111111111' }, body: { action: 'accept' }, identity: { identity_id: 'p1' } }), own);
     assert.strictEqual(own.code, 404, 'the owner reaches the read (empty db: not found)');
