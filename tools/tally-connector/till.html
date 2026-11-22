@@ -3998,7 +3998,7 @@
 <!-- ⭐⭐⭐ THE ONE SIGN-IN WINDOW (DECISIONS 2026-10-08): CBSignin.mount — the same file index, CB Accounts and CB CRM load. It
      widens /engine/signin.js (so AFTER it, never before). The web serves its master (public/app/signin-ui.js); the shop PC
      serves the kit's byte copy at the same path (scripts/vendor-till.cjs, till.js). The counter draws no sign-in form of its own. -->
-<script src="/app/signin-ui.js" onerror="engineMissed('signin-ui')"></script>
+<script src="/app/signin-provider.js" onerror="engineMissed('signin-provider')"></script><script src="/app/signin-session.js" onerror="engineMissed('signin-session')"></script><script src="/app/signin-ui.js" onerror="engineMissed('signin-ui')"></script>
 <script src="/engine/qty.js" onerror="engineMissed('qty')"></script>
 <script src="/engine/scalecode.js" onerror="engineMissed('scalecode')"></script>
 <script src="/engine/rewards.js" onerror="engineMissed('rewards')"></script>
