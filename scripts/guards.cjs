@@ -33,7 +33,7 @@ const GUARDS = [
   'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
   'reviews1-boolean-words.test.cjs', // reviews1 EL F1: one boolean reader for is_draft / is_dispute / chit_wide / priority-flag
   'lv05-held-pay-out-and-todo.test.cjs', // LV-05/06: owner-approves refuses a Bookkeeper payment out; the To-do lists held entries only to the owner (real Express)
-  'pay-out-gate.test.cjs', // AK-F-02: lib/pay-out-gate.js unit — owner and in-house accountant pass, a counter seat records money in only, stored direction read for propose/confirm, a failing read closes the door
+  'seats-label-hat.test.cjs', 'pay-out-gate.test.cjs', // AK-F-02 + 22 Nov item 5: the Bookkeeper/Accountant label sets the manager hat (lib/access.labelHat) · lib/pay-out-gate.js unit — only the owner pays out, the accountant and a counter seat record money in only, stored direction read for propose/confirm, a failing read closes the door
   'seat-matrix.test.cjs', // AK-F-02 (22 Nov): docs/SEAT-MATRIX.md is what the gates say (tools/seat-matrix.cjs), the contract's staff seats agree with them; a counter never pays a supplier
   'lv12-ai-skill-prototype-names.test.cjs', // LV-12: constructor / __proto__ / prototype are not skills (getSkill + POST /ai-draft, real route)
   'lv13-assist-container-gates.test.cjs', // LV-13: PUT /assist/container and /region-override are the owner's or a platform operator's; an ownerless container's override is the platform's

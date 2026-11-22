@@ -15,8 +15,8 @@ ok('the doc equals what the code says (node tools/seat-matrix.cjs --write)', doc
 ok('no unknown gate and no contract-vs-gate disagreement', built.problems.length === 0, built.problems.join('\n          '));
 const row = (key) => built.rows.find((r) => r.key === key);
 const cells = (key) => row(key).cells.map(String).join('|');
-ok('payments: owner yes, accountant yes, counter money in, viewer no', cells('POST /payments') === 'true|true|money in|false');
-ok('pack and FX: owner only (RC-7 decision)', ['POST /packs', 'GET /packs', 'POST /fx-rates', 'POST /fx-revalue'].every((key) => cells(key) === 'true|false|false|false'));
+ok('pack and FX rates: owner + accountant (22 Nov decision item 5); revalue and the lock stay owner only', ['POST /packs', 'GET /packs', 'POST /fx-rates', 'POST /fx-rates/import'].every((key) => cells(key) === 'true|true|false|false') && ['POST /fx-revalue', 'POST /periods/:fy/:p/:act'].every((key) => cells(key) === 'true|false|false|false'));
+ok('pay-out: the accountant records money in only (22 Nov decision item 5)', cells('POST /payments') === 'true|money in|money in|false');
 ok('journal: owner + accountant only', cells('POST /entries') === 'true|true|false|false');
 ok('trial balance: owner + accountant read, a counter and a viewer do not', /^true|(true|needs the Sees costs flag)|false|false$/.test(cells('GET /trial-balance'))); /* b1129: the report is cost-blind unless the seat Sees costs */
 ok('a counter never reaches a supplier payment: propose and confirm carry the same gate', ['POST /payments/:id/propose', 'POST /payments/:id/confirm'].every((key) => row(key).cells[2] === 'money in'));

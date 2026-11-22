@@ -2268,7 +2268,7 @@ function manifestView(manifest) {
   });
 }
 // @does Nothing in -> we list the accountant packs built for this shop -> the packs (owner only).
-router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res) => {
+router.get('/packs', auth, ownerOrAccountant, on, ...checked('GET /packs'), async (req, res) => {
   try {
     const e = ctx(req);
     const rows = await withEntity(e, (h) => S.packs(h, e));
@@ -2291,7 +2291,7 @@ router.get('/packs', auth, owner, on, ...checked('GET /packs'), async (req, res)
   }
 });
 // @does A pack kind, year and period in -> we build the accountant's pack and store its file -> the pack id, checksum and manifest (owner only).
-router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, res) => {
+router.post('/packs', auth, ownerOrAccountant, on, ...checked('POST /packs'), async (req, res) => {
   try {
     const b = req.body || {};
     const r = await require('../lib/books-pack').build(ctx(req), { kind: b.kind, fiscal_year: b.fiscal_year, period: b.period, by: byOf(req) });
@@ -2308,7 +2308,7 @@ router.post('/packs', auth, owner, on, ...checked('POST /packs'), async (req, re
  *   download  the same path, or null when has_file is false (kept for the first web build)
  */
 // @does A pack id in -> we read its manifest and whether it has a file and was confirmed -> the pack (owner only).
-router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (req, res) => {
+router.get('/packs/:id', auth, ownerOrAccountant, on, ...checked('GET /packs/:id'), async (req, res) => {
   try {
     const e = ctx(req),
       id = String(req.params.id);
@@ -2338,7 +2338,7 @@ router.get('/packs/:id', auth, owner, on, ...checked('GET /packs/:id'), async (r
   }
 });
 // @does A pack id in -> we fetch the stored zip of that pack -> the zip file to download (owner only).
-router.get('/packs/:id/file', auth, owner, on, ...checked('GET /packs/:id/file'), async (req, res) => {
+router.get('/packs/:id/file', auth, ownerOrAccountant, on, ...checked('GET /packs/:id/file'), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
     const r = await require('../lib/books-pack').download(ctx(req), String(req.params.id));
@@ -2613,7 +2613,7 @@ router.get('/fx-rates', auth, noKey, on, ...checked('GET /fx-rates'), async (req
 });
 /** POST /fx-rates { date, currency, rate, source?, source_ref? } → { rate } — owner; insert-only (a correction is a newer row for the same day). One transaction. */
 // @does A date, a currency and a rate in -> we add the rate, insert-only, so a correction is a newer row -> the rate (owner only).
-router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), async (req, res) => {
+router.post('/fx-rates', auth, noKey, on, ownerOrAccountant, ...checked('POST /fx-rates'), async (req, res) => {
   try {
     const e = ctx(req);
     res.status(201).json({ rate: await withEntity(e, (h) => FXR.add(h, e, req.books, req.body || {}, byOf(req))) });
@@ -2623,7 +2623,7 @@ router.post('/fx-rates', auth, noKey, on, owner, ...checked('POST /fx-rates'), a
 });
 /** POST /fx-rates/import { csv, file_name? } → { added, refused: [{ line, why }], rates } — owner; the good rows in ONE insert, source 'import'. One transaction. */
 // @does A CSV of rates in -> we add the good rows and list the refused ones with why -> the count added, the refused lines and the rates (owner only).
-router.post('/fx-rates/import', auth, noKey, on, owner, ...checked('POST /fx-rates/import'), async (req, res) => {
+router.post('/fx-rates/import', auth, noKey, on, ownerOrAccountant, ...checked('POST /fx-rates/import'), async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {};

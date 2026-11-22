@@ -35,7 +35,7 @@ function gateFor({ owner = false, accountant = false, stored = null, readFails =
   const own = gateFor({ owner: true });
   ok('the owner pays out', (await own.run('body', { body: { direction: 'out' } })) === true && own.said.length === 0);
   const acc = gateFor({ accountant: true });
-  ok("the shop's accountant pays out", (await acc.run('body', { body: { direction: 'out' } })) === true);
+  ok("the shop's accountant is refused a payment out (22 Nov decision item 5) and records money in", (await acc.run('body', { body: { direction: 'out' } })) === false && acc.said[0].status === 403 && acc.said[0].detail === PAY_OUT_WORDS && (await gateFor({ accountant: true }).run('body', { body: { direction: 'in' } })) === true);
   const seat = gateFor({});
   ok('a counter seat records money in (body)', (await seat.run('body', { body: { direction: 'in' } })) === true);
   ok('a counter seat paying out is refused 403 OWNER_ONLY with the one sentence', (await seat.run('body', { body: { direction: 'out' } })) === false && seat.said[0].status === 403 && seat.said[0].code === 'OWNER_ONLY' && seat.said[0].detail === PAY_OUT_WORDS && seat.said[0].legacy.may === false);
