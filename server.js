@@ -286,7 +286,7 @@ app.use(
     '/api/actors/set-pin',
     '/api/signin/ask',
     '/api/signin/verify',
-    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
+    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback', '/api/signin/provider/handoff', '/api/signin/provider/link/start', '/api/signin/provider/links/:link_id' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
     /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */

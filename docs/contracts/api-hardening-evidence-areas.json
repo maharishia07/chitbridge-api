@@ -113,6 +113,9 @@
    "output_allowlist": true,
    "junk_fuzz": true
   },
+  "DELETE /api/signin/provider/links/:link_id": {
+   "output_allowlist": true
+  },
   "GET /.well-known/ctp.json": {
    "output_allowlist": true
   },
@@ -1184,6 +1187,9 @@
   },
   "GET /api/signin/provider/:key/start": {
    "junk_fuzz": true
+  },
+  "GET /api/signin/provider/links": {
+   "output_allowlist": true
   },
   "GET /api/signin/providers": {
    "junk_fuzz": true,
@@ -2672,6 +2678,15 @@
   "POST /api/signin/pin": {
    "output_allowlist": true,
    "junk_fuzz": true
+  },
+  "POST /api/signin/provider/handoff": {
+   "output_allowlist": true
+  },
+  "POST /api/signin/provider/link/finish": {
+   "output_allowlist": true
+  },
+  "POST /api/signin/provider/link/start": {
+   "output_allowlist": true
   },
   "POST /api/signin/renew": {
    "output_allowlist": true,

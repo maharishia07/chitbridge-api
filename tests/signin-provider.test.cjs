@@ -9,6 +9,7 @@
  *        a wrong signature · another provider's iss (mix-up) · no device id · next off the list · the person cancelled · library missing · tables missing · a foreign tenant · an unverified e-mail never links ·
  *        no token, code or secret in any log line · the stand-in rule fails closed (absent NODE_ENV, sealed)
  *   E  the handoff row lives 60 s (clock stub) and is single use
+ *   F  P1a POST /provider/handoff: a linked verified account gets the code door session body; unverified e-mail, unlinked, bad nonce, replay, alg none, other device, two accounts, ended, removed device, over the per-account budget, no secret in a log
  *   K  (SIT only, when SSO_KC_BASE is set, e.g. http://localhost:18080 through ssh -L to a Keycloak container on a SIT box) the SAME start and callback against Keycloak realms google and microsoft
  *        (deploy/sso/realms): the real login form is driven, no browser; claims, the iss parameter, PKCE and discovery as Keycloak really sends them
  * No real provider, no real credential: every client id and secret below is a throwaway test fixture. No database. Needs Node 22.12+ and the dev dependency oauth2-mock-server (CI installs it; locally run `npm i`).
@@ -76,10 +77,33 @@ const dbStub = {
       const [provider, issuer, tenant, subject] = params;
       return { rows: world.links.filter((l) => l.provider === provider && l.issuer === issuer && l.tenant === tenant && l.subject === subject) };
     }
+    if (/FROM public.signin_provider_link WHERE entity_id/.test(sql)) return { rows: world.links.filter((l) => l.entity_id === params[0] && l.identity_id === params[1]).map((l) => Object.assign({ email: null, email_verified: false, linked_at: 'now', last_used_at: null }, l)) };
+    if (/INSERT INTO public.signin_provider_link/.test(sql)) {
+      const [entity_id, identity_id, provider, issuer, tenant, subject, subject_alt, org, email, email_verified] = params;
+      if (world.links.some((l) => l.identity_id === identity_id && l.provider === provider)) return { rows: [] }; // the unique (identity_id, provider)
+      const link_id = 'cccccccc-0000-4000-8000-' + String(world.links.length + 1).padStart(12, '0');
+      world.links.push({ link_id, entity_id, identity_id, provider, issuer, tenant, subject, subject_alt, org, email, email_verified });
+      return { rows: [{ link_id }] };
+    }
+    if (/DELETE FROM public.signin_provider_link/.test(sql)) {
+      const at = world.links.findIndex((l) => l.link_id === params[0] && l.entity_id === params[1] && l.identity_id === params[2]);
+      return at < 0 ? { rows: [] } : { rows: world.links.splice(at, 1) };
+    }
     throw new Error('unexpected query in the stub: ' + sql);
   },
   withEntity: async (id, fn) => fn({ query: dbStub.query })
 };
+/* the credential door: the connect routes sit behind middleware/auth, which needs a signed session; a test seam stands in for it (header x-test-as = a person of world.people) — the real auth is proved by its own suites */
+world.people = {};
+const authStub = (req, res, next) => {
+  const person = world.people[req.headers['x-test-as']];
+  if (!person) return res.status(401).json({ error: 'Unauthorised' });
+  req.identity = person; req.session = { jti: String(req.headers['x-test-jti'] || 'jti-' + req.headers['x-test-as']), device_id: req.headers['x-device-id'] }; // the listed session the real auth hands on
+  return next();
+};
+authStub.entityOf = (req) => req.identity.parent_entity_id || req.identity.identity_id;
+const authPath = require.resolve('../middleware/auth');
+require.cache[authPath] = { id: authPath, filename: authPath, loaded: true, exports: authStub };
 const dbPath = require.resolve('../db');
 require.cache[dbPath] = { id: dbPath, filename: dbPath, loaded: true, exports: dbStub };
 
@@ -345,6 +369,7 @@ async function sectionD({ OAuth2Server, Events }) {
   const issuer = server.issuer.url;
   const router = require('../routes/signin-provider');
   const app = express();
+  app.use(express.json());
   app.use('/api/signin', router);
   const api = await new Promise((resolve) => {
     const s = http.createServer(app).listen(0, '127.0.0.1', () => resolve(s));
@@ -380,10 +405,10 @@ async function sectionD({ OAuth2Server, Events }) {
     provider._reset(undefined);
   };
   /** one whole round trip: start → provider → callback; `tamper(token)` rewrites the ID token's claims before signing; returns every step */
-  async function roundTrip({ keepHooks, key = 'google', tamper, device = DEVICE, next, dropCookie, query, forgeId } = {}) {
+  async function roundTrip({ keepHooks, key = 'google', tamper, device = DEVICE, next, dropCookie, query, forgeId, lt } = {}) {
     if (!keepHooks) for (const event of [Events.BeforeTokenSigning, Events.BeforeResponse]) server.service.removeAllListeners(event);
     if (tamper) server.service.on(Events.BeforeTokenSigning, (token) => { if (token.payload.nonce !== undefined || token.payload.email === undefined) tamper(token); });
-    const startUrl = `${apiBase}/api/signin/provider/${key}/start?` + new URLSearchParams(Object.assign({}, device === null ? {} : { device_id: device }, next === undefined ? {} : { next })).toString();
+    const startUrl = `${apiBase}/api/signin/provider/${key}/start?` + new URLSearchParams(Object.assign({}, device === null ? {} : { device_id: device }, next === undefined ? {} : { next }, lt === undefined ? {} : { lt })).toString();
     const start = await rawGet(startUrl);
     const out = { start };
     if (start.status !== 302 || !/^https?:\/\/localhost:\d+\//.test(start.headers.location) || start.headers.location.startsWith(apiBase)) return out;
@@ -417,7 +442,7 @@ async function sectionD({ OAuth2Server, Events }) {
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.headers['cache-control'], 'no-store');
     const body = JSON.parse(res.body);
-    assert.deepStrictEqual(body, { providers: [{ key: 'google', label: 'Google (test)' }, { key: 'microsoft', label: 'Microsoft (test)' }], standin: true });
+    assert.deepStrictEqual(body, { providers: [{ key: 'google', label: 'Google (test)', live: true }, { key: 'microsoft', label: 'Microsoft (test)', live: true }], standin: true });
   });
   await checkAsync('GET /providers is empty when the library does not load: the api still answers, ONE log line', async () => {
     resetWorld();
@@ -425,10 +450,6 @@ async function sectionD({ OAuth2Server, Events }) {
     const res = await rawGet(apiBase + '/api/signin/providers');
     assert.deepStrictEqual(JSON.parse(res.body), { providers: [], standin: false });
     resetWorld();
-    const real = provider.library;
-    void real;
-    // a real failure path: forget the library and make import() throw by pointing at a module that is not there
-    provider._reset(undefined);
   });
   await checkAsync('GET /providers is empty when the tables are missing (42883): buttons hidden, no 500', async () => {
     resetWorld();
@@ -709,7 +730,7 @@ async function sectionD({ OAuth2Server, Events }) {
   await checkAsync('E · the handoff lives 60 s and is single use; a ticket five tries; a start row 10 minutes', async () => {
     resetWorld();
     const pending = require('../lib/signin-pending');
-    assert.deepStrictEqual(pending.KINDS, { start: 600, handoff: 60, ticket: 600, linkstart: 300 });
+    assert.deepStrictEqual(pending.KINDS, { start: 600, handoff: 60, ticket: 600, linkstart: 60 });
     const ref = provider.randomRef();
     await pending.put('handoff', ref, { a: 1 });
     assert.deepStrictEqual(await pending.take('handoff', ref), { a: 1 });
@@ -728,6 +749,9 @@ async function sectionD({ OAuth2Server, Events }) {
     assert.strictEqual(await pending.take('handoff', 'short'), null);
     resetWorld();
   });
+
+  await require('./lib/signin-provider-handoff-scenes.cjs')({ assert, crypto, http, apiBase, issuer, roundTrip, claimsOf, world, resetWorld, logLines, fragment, rawGet, expectRefused, DEVICE, checkAsync });
+  await require('./lib/signin-provider-connect-scenes.cjs')({ assert, crypto, http, apiBase, issuer, roundTrip, claimsOf, world, resetWorld, logLines, fragment, rawGet, expectRefused, DEVICE, checkAsync });
 
   await new Promise((resolve) => api.close(resolve));
   await server.stop();

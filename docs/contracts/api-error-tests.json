@@ -149,6 +149,10 @@
   409,
   500
  ],
+ "DELETE /api/signin/provider/links/:link_id": [
+  404,
+  503
+ ],
  "GET /.well-known/ctp.json": [
   200,
   500
@@ -1440,6 +1444,9 @@
  ],
  "GET /api/signin/provider/:key/start": [
   404
+ ],
+ "GET /api/signin/provider/links": [
+  503
  ],
  "GET /api/signin/sessions": [
   401,
@@ -3780,6 +3787,19 @@
   401,
   409,
   500
+ ],
+ "POST /api/signin/provider/handoff": [
+  400,
+  401,
+  403
+ ],
+ "POST /api/signin/provider/link/finish": [
+  400,
+  403
+ ],
+ "POST /api/signin/provider/link/start": [
+  400,
+  401
  ],
  "POST /api/signin/renew": [
   400,
