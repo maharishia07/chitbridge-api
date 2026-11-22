@@ -1,5 +1,7 @@
 'use strict';
 /*
+ * tools/error-trace.cjs — the static call graph behind the error-code register (which codes a route can raise).
+ * OWNER     cb-api
  * OWNS      the static call graph that follows a route into the helpers it calls and gives it the error codes those helpers raise (ERR-14 part 1, "trigger known").
  * CALLED BY tools/error-codes.cjs routesOf() · tests/error-trace.test.cjs
  * FLOW      every function in routes/ lib/ middleware/ server.js (name, line range, code literals inside, names it calls)

@@ -6,6 +6,7 @@
  * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
  * UNIT      routes/books-events-batch.js
  * UNIT      lib/books-events-batch.js
+ * MIN       error-never-leaks - the refused list of a failed batch names only an index and a code; the writer own message stays in the trace.
  * MIN       loud - a mid-batch writer error answers ok:false with a code and the refused index (never silent partial success); the receipt is always returned and one trace line is logged.
  */
 'use strict';
