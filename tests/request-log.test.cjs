@@ -71,7 +71,7 @@ function call(port, method, p, headers, body) {
     const traced = reqLines.find((x) => x.id === 'trace-abc.123');
     ok(!!traced && traced.path === '/health' && traced.status === 200 && typeof traced.ms === 'number', 'the id travels to the log: the request line for trace-abc.123 has path, status, ms');
     ok(reqLines.some((x) => x.id === minted), 'the minted uuid is the one on the log line');
-    ok(reqLines.length > 0 && reqLines.every((x) => 'entity' in x && 'person' in x && 'bytes' in x && 'code' in x), 'every request line names entity, person, bytes and code');
+    ok(reqLines.length > 0 && reqLines.every((x) => 'entity' in x && 'person' in x && 'bytes' in x && 'code' in x && 'seat' in x && 'route' in x), 'every request line names entity, person, bytes, code, seat and route');
     const big = reqLines.find((x) => x.id === 'too-big-1');
     ok(!!big && big.status === 413 && big.code === 'BODY_TOO_LARGE' && big.bytes > 300 * 1024, 'the 413 has its own log line with the code and the size');
     const inside = reqLines.find((x) => x.id === 'mounted-1');

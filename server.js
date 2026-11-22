@@ -220,22 +220,7 @@ app.use((req, res, next) => {
      taken and any refusal code (res.locals.code) — a 401/403/409 is now visible in the log, not guessed at. */
   const t0 = Date.now();
   res.on('finish', () => {
-    log.info('request', {
-      id: req.id,
-      method: req.method,
-      /* the FULL path, not the part a mounted router leaves, and no query string (the Servers heat map
-         counts by path: PM/SERVERS-STATUS.md, Athi 31 Oct) */
-      path: (req.originalUrl || req.url).split('?')[0],
-      status: res.statusCode,
-      ms: Date.now() - t0,
-      code: (res.locals && res.locals.code) || null,
-      kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */,
-      origin: req.headers.origin || null,
-      /* E07: whose request — the business (entity) and who acted (person); the body's size, for E01's budgets */
-      entity: (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
-      person: (req.identity && req.identity.identity_id) || null,
-      bytes: Number(req.headers['content-length']) || 0
-    });
+    log.info('request', require('./lib/request-log').requestLine(req, res, t0));
   });
   next();
 });
