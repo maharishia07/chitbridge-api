@@ -35,6 +35,7 @@ The header lines carry CALLED BY and FLOW; this index does not repeat them, so i
 | `lib/books-cashflow.js` | the cash position (project · read) and the api's ONE major <-> minor pair, toMinor · fromMinor (money.round + money.decimals; ACC-179 folded the copies) | 16-finance/books-cashflow |
 | `lib/books-contract.js` | the contract of routes/books.js: each route's OpenAPI operation (S9), the ledger's refusal mapper (refusalOf) and the sentences its gates answer in. | 16-finance/books-routes |
 | `lib/books-engines.js` | the one adapter between the books tables' rows and the engines' shapes (itemOf · itemRow · dues · the engine loaders) | 14-accounting/ledger-accounts-day-book-entries-reverse |
+| `lib/books-events-batch.js` | CAP-BOOKS-EVENTS-BATCH: postEventsBatch(ctx, events), 1..100 events through the one event writer, ALWAYS a receipt { ok, capability, request_id, written, held, refused } and one trace line; callable by the route, bank Add, move-in, the till day close | 14-accounting/ledger-accounts-day-book-entries-reverse |
 | `lib/books-hooks.js` | the posting hooks (a saved chit → its event), the outbox park, the shop's day (dayOf), and classify's major → minor (toMinor: the api's one, books-cashflow). | 16-finance/books-posting |
 | `lib/books-manual.js` | the hand-keyed event builders (BUILD), the grid (catalogue) and the typed-lines reader givenLines (minor → major in the shop's currency, ACC-179). | 14-accounting/ledger-accounts-day-book-entries-reverse |
 | `lib/books-nightly.js` | the ledger's nightly check (named differences, never auto-fixed) and its in-process 6-hour timer. | 14-accounting/books-health-to-do-outbox |
@@ -395,6 +396,7 @@ The header lines carry CALLED BY and FLOW; this index does not repeat them, so i
 | `routes/adopt.js` | taking a supplier's delivery into the buyer's own catalogue. | 03-catalogue/adopt |
 | `routes/assist.js` | the assistant proxy and the brand's catalogue-source authoring. | 28-platform-and-operations/assist |
 | `routes/attachments.js` | the two doors above. The copies themselves (one row per participant, the bytes in object storage or the row) are lib/storage.js; the words of a refusal and the limit … | 01-rail-core-the-chit/README |
+| `routes/books-events-batch.js` | POST /api/books/events/batch: the door only (gates, 400/409 answers, the receipt in the body) over lib/books-events-batch | 14-accounting/ledger-accounts-day-book-entries-reverse |
 | `routes/books-money.js` | POST /api/books/money-check/resolve { chit_id, how, note? } — a sale the owner let through although the engine's money did not add up is an item on the books to-do … | 14-accounting/README |
 | `routes/books.js` | /api/books: the ledger's reads and the period-end writes, every refusal a code + a sentence (fail), never a 500 of prose. | 16-finance/books-routes |
 | `routes/capture.js` | the intake inbox and channel adapters (web simulate, webhooks). | 11-crm-and-marketing/capture |

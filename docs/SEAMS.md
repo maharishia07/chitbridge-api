@@ -14,14 +14,14 @@ of file each thing is; this says what already does the job.
 | 188 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 178 | `words` | `variant.browser.js` |  |
 | 164 | `withEntity` | `books-hooks.js` |  |
-| 145 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 146 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 140 | `answer` | `availability.js` | from March; then nearest. |
 | 131 | `money` | `bill-privacy.js` |  |
 | 129 | `item` | `bank-band.js` |  |
 | 114 | `list` | `cap-flag.js` |  |
 | 114 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 111 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 108 | `entry` | `books-store.js` |  |
+| 109 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
 | 98 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
@@ -38,8 +38,8 @@ of file each thing is; this says what already does the job.
 | 81 | `again` | `signin-ui.js` |  |
 | 79 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 79 | `items` | `books-store.js` | PERF1: |
+| 79 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 79 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
-| 78 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 78 | `failed` | `service.js` | what every catch answers: |
 | 77 | `read` | `books-grant-drill.js` |  |
 | 77 | `rows` | `cap-settings.js` |  |
@@ -71,14 +71,14 @@ of file each thing is; this says what already does the job.
 | 58 | `note` | `dbwatch.js` |  |
 | 57 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 57 | `account` | `home-facts.js` | OMITTED: |
-| 54 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
+| 55 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 54 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 52 | `sheet` | `cap-employees.js` |  |
 | 52 | `lines` | `cart.js` |  |
 | 52 | `status` | `books-backfill.js` | read: |
+| 51 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
-| 50 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
 | 50 | `gate` | `country-setup.js` | gate(h, entity): |
@@ -146,6 +146,7 @@ of file each thing is; this says what already does the job.
 | 29 | `model` | `chit-sheet.js` |  |
 | 29 | `reason` | `lab-kit.js` | W9: |
 | 29 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
+| 29 | `post` | `books-manual.js` | POST /events — |
 | 29 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
 | 29 | `recorded` | `stock-below-zero.js` | is this movement (the unique key: |
 | 29 | `allowed` | `trips.js` | let _idsFrom = null, |
@@ -156,7 +157,6 @@ of file each thing is; this says what already does the job.
 | 28 | `step` | `cart.js` |  |
 | 28 | `head` | `list-ctl.js` |  |
 | 28 | `panel` | `sides.js` |  |
-| 28 | `post` | `books-manual.js` | POST /events — |
 | 28 | `chart` | `fx-rates.js` |  |
 | 28 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 27 | `figures` | `bank-demo.js` |  |
@@ -174,12 +174,12 @@ of file each thing is; this says what already does the job.
 | 26 | `payment` | `books-store.js` |  |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `side` | `books-grant-reports.js` |  |
+| 25 | `refusalOf` | `bill-number-taken.js` | the refusal thrown as data: |
 | 25 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 25 | `reply` | `private-flag.js` | Refused in words: |
 | 24 | `done` | `attach-ui.js` |  |
 | 24 | `more` | `lab-kit.js` | idKey: |
 | 24 | `check` | `network-app.js` |  |
-| 24 | `refusalOf` | `bill-number-taken.js` | the refusal thrown as data: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 24 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
@@ -192,15 +192,16 @@ of file each thing is; this says what already does the job.
 | 23 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
 | 23 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 23 | `connectors` | `home-facts.js` | declare (said in words — |
+| 23 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 23 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
 | 22 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 22 | `send` | `cap-quotes.js` |  |
 | 22 | `said` | `cap-shop.js` |  |
+| 22 | `receipt` | `books-events-batch.js` | the receipt: |
 | 22 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
 | 22 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 22 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
-| 22 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 22 | `report` | `raida.js` | register at the one moment it must not. |
 | 22 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 21 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 21 | `actions` | `workflow.js` | actions(chit, me) — |
 | 21 | `label` | `bill-privacy.js` | label(step, mine) — |
 | 21 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
-| 21 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
