@@ -45796,7 +45796,7 @@
    "owner_area": "books-events-batch",
    "owner_agent": "unassigned",
    "file": "routes/books-events-batch.js",
-   "line": 23,
+   "line": 25,
    "hash": "81ed0ae303132c52",
    "does": "A list of up to 100 events in -> we post each one through the one event writer -> one result per line (owner or accountant).",
    "errors": {
