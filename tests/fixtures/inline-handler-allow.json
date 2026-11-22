@@ -1,5 +1,6 @@
 {
  "esc": [
+  "till.html|agentParkedAnswer(|js",
   "till.html|galPick(|id",
   "till.html|holdHearStart(|esc(String(Math.round(Number(i.price) || 0)))",
   "till.html|lineTile(|id",

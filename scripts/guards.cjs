@@ -800,6 +800,21 @@ const GUARDS = [
   'actors-create-level.test.cjs',
   'actors-max-tasks-cap.test.cjs',
   'ai-box.test.cjs',
+  'ad-f04-rail-tax-invoice.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'ad-f05-past-year-lock.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'aj-double-count.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'books-replay-locked-month.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'error-trace.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'lv-counter-1129.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'queue1-crm-dues-seat.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'queue1-rail-credit-against.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'rate-limit-identity.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'till-inline-handler-xss.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'walkab-1129-bill-number.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'walkac-claim-cap.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'walkac-moved-note.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'walkac-pay-order.test.cjs', // red1129: enrolled by the integrator, green on sit-in
+  'walkae2-line-scheme.test.cjs', // red1129: enrolled by the integrator, green on sit-in
   'ai-one-pipe.test.cjs',
   'assign-merge-patch.test.cjs',
   'connect-10d-input-shape.test.cjs', // C11 batch 10d (12 Nov): a chit line goes to someone on the team (one reader with the follow-up door, nothing written for a stranger), an offer's text is text, a shopper name fits its column, a new quick-key group is typed like a changed one; 42 checks

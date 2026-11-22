@@ -15,7 +15,7 @@ const vm = require('vm');
 const engines = process.env.CB_ENGINES_DIR ? path.join(path.resolve(process.env.CB_ENGINES_DIR), 'src') : path.join(__dirname, '..', 'lib'); /* 1129: the api's adopted engine copies (what the till is vendored from), no checkout needed */
 if (!fs.existsSync(path.join(engines, 'tax-slab.js'))) { console.log('skip: no engines checkout (set CB_ENGINES_DIR)'); process.exit(0); }
 const T = require(path.join(engines, 'tax')), S = require(path.join(engines, 'tax-slab')), R = require(path.join(engines, 'regulation'));
-const till = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
+const till = ['till.html', 'till-slip.js', 'till-dayrep.js'].map((part) => fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', part), 'utf8')).join('\n'); /* the page and the part files it loads (1128-1129 split) */
 const slip = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8'); /* 1129: the slip's builders are the page's second part file */
 const dayrep = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-dayrep.js'), 'utf8'); /* 1128: the day report's table builders are the page's part file */
 

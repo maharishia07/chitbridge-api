@@ -477,6 +477,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | SSO_TOKEN | 401 | Sign-in not accepted | The provider answer could not be trusted, so nobody was signed in. | Start again. If it keeps happening, use your code or PIN. | auth | 2026-11-17 |
 | SSO_CANCELLED | 400 | Sign-in cancelled | You stopped the sign-in at the provider. | Start again, or use your code or PIN. | auth | 2026-11-17 |
 | PROVIDER_OFF | 404 | Provider sign-in is off | Signing in with an outside account is not switched on here. | Use your code or PIN. | auth | 2026-11-17 |
+| BOOKS_BATCH_HELD | 409 | Batch not taken | This shop asks the owner to approve entries, so a batch is not taken: send them one at a time. | Send the entries one at a time. | accounting | 2026-11-22 |
 | CREDIT_NOTE_BEFORE_BILL | 409 | Credit note dated before its bill | This credit note is dated before the bill it credits. A credit comes after the sale: fix the date on the note. | Fix the date on the note. | accounting | 2026-11-22 |
 | LAST_WAY_IN | 409 | Only way to sign in | This is your only way to sign in. Set a PIN first, then disconnect it. | Set a PIN first. | auth | 2026-11-22 |
 | LINK_ENFORCED | 403 | Sign-in required by the business | Your business requires this sign-in. Ask the owner to change it. | Ask the owner. | auth | 2026-11-22 |

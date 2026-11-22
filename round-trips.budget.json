@@ -5817,6 +5817,14 @@
       "wire": 0,
       "fired": true,
       "status": 400
+    },
+    "POST /api/books/events/batch": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "why": "red1129: placeholder = the single door row; the batch posts up to 100 lines through the same writer (trips grow per line, measured on sit-in by measure.cjs MODE=batch)"
     }
   }
 }

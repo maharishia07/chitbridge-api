@@ -18,7 +18,8 @@ stub('books-store', {
   accounts: async () => chart,
   openItems: async (handle, entity, accountId) => { calls.openItems++; return rowsBy[accountId] || []; },
   items: async (handle, entity, party, accountId) => { calls.items++; return rowsBy[accountId] || []; },
-  fxLinesReady: async () => false
+  fxLinesReady: async () => false,
+  movedByLock: async () => [] /* AC-F-02: no entry moved by a lock in this stub */
 });
 stub('books-needs', { empty: () => ({ marks: 0 }), partyNeeds: async () => ({ by_party: new Map() }) });
 stub('books-hooks', { dayOf: (moment) => new Date(moment).toISOString().slice(0, 10), dayBounds: (day) => ({ to: day + 'T23:59:59Z' }) });
