@@ -601,6 +601,7 @@ async function sendBillTaken(sendState, req, res) {
   if (!billTaken.numberOf(sendState)) return;
   await withEntity(sendState.sender_id, (db) => billTaken.judge(db, sendState, { locked: false }));
 }
+/**
  * ⚠⚠ ONE LOOK-UP, TWO CALLERS. It is asked once BEFORE anything is written (the ordinary duplicate), and again
  * from the route's catch when the b263 unique index refuses an insert (the race the first ask lost). Two copies
  * of this query would be two opinions about what "already here" means. [[feedback-no-duplicate-functions]]
