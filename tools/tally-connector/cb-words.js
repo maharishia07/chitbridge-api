@@ -3,7 +3,7 @@
  * ID        SCR045
  * RISK      plain
  * OWNER     cb-ux-locale
- * OWNS      cbLang · CBSTR · tx · txf · txn · bidiWrap · cbIsRawId · rewordPlain · friendlyErr · toast · toastHost · toastLevel · CBConfirm
+ * OWNS      cbLang · CBSTR · tx · txf · txn · bidiWrap · cbIsRawId · rewordPlain · friendlyErr · failWords · bodyWords · toast · toastHost · toastLevel · CBConfirm
  * CALLED BY every page that speaks through tx() or toast(): the back-office pages (before app/accounts-shell.js) and the customer pages
  *           (shop · store · network-shop · embed), which load THIS and never accounts-shell.js (CUSTOMER-DELINK, 21 Nov 2026: a customer page loads no back-office code)
  * FLOW      loaded after helpers.js (esc) → the page's own script calls tx / toast / CBConfirm
@@ -155,6 +155,28 @@ function friendlyErr(e) {
   const m = (e && e.message) || String(e || '');
   /* the api's own sentence keeps its words, so the toast can still find its code and hint (B7) */
   return e && e.code && e.message ? m : rewordPlain(m);
+}
+
+/** a message as words only: a string with its markup and edge spaces removed, else '' */
+function wordsOnly(text) {
+  return typeof text === 'string' ? text.replace(/<[^>]*>/g, '').trim() : '';
+}
+/**
+ * failWords(e, fallback) → the words a screen paints for a failed call: the problem's OWN shopkeeper words (RFC 9457 detail / the error-code
+ * register sentence core.js put on e.message) when the error came from the api or our own offline/timeout path (e.code, e.status or e.kind),
+ * else the network line from rewordPlain, else the screen's fallback. Never a raw TypeError / library message, and never markup:
+ * the caller still esc()s it. e2e/fail-words.test.cjs. Reviews8 (the ~30 raw e.message sites of cap-flag, cap-folders, cap-intake).
+ */
+function failWords(e, fallback) {
+  var m = e ? wordsOnly(e.message) : '';
+  if (m && (e.code || e.status || e.kind)) return m;
+  var plain = m ? rewordPlain(m) : '';
+  return plain && plain !== m ? plain : fallback || 'something went wrong';
+}
+/** bodyWords(body, fallback) → the same words from a raw JSON answer (a page that calls fetch itself): detail, then message, then title, strings only, no markup */
+function bodyWords(body, fallback) {
+  var b = body || {}, m = [b.detail, b.message, b.title].filter(function (v) { return typeof v === 'string' && v.trim(); })[0] || '';
+  return m.replace(/<[^>]*>/g, '').trim() || fallback || 'something went wrong';
 }
 
 /** the look of a host the page did not draw itself; a page with a bottom dock sets --cb-toast-bottom to clear it (shop.html) (same tokens and sizes as the pages that carry their own #toast rules) */
