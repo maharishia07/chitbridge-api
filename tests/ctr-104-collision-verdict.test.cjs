@@ -54,6 +54,6 @@ const callers = src.match(/tillCollisionVerdict\(/g) || [];
 ok('tillCollisionVerdict( appears 2 times: its definition and its ONE caller, replayRefusal (CTR-204 folded the race-catch onto it)', callers.length === 2 && /const verdict = tillCollisionVerdict\(mine, seen\.till_id \|\| null, myAt, seen\.billed_at \? String\(seen\.billed_at\) : null, client_ref\)/.test(src), String(callers.length));
 ok('the race-catch (call site 2) and the replay check (call site 1) both ask replayRefusal, so both read the same four things: till id, stored till_id, both billed_at',
   /const mine = \(businessJson && businessJson\.till && businessJson\.till\.id\) \|\| null;\s+const myAt = businessJson && businessJson\.billed_at \? String\(businessJson\.billed_at\) : null;/.test(src)
-  && /await replayRefusal\(req, sender_id, seen, client_ref\)/.test(src) && /await replayRefusal\(req, who, seen, raceRef\)/.test(src), '');
+  && /await replayRefusal\(req, sender_id, seen, client_ref\)/.test(src) && /await replayRefusal\(req, (?:who|shopId), seen, raceRef\)/.test(src), '');
 ok('the verdict body is written once: TILL_SERIES_COLLISION appears one time in the route', (src.match(/TILL_SERIES_COLLISION/g) || []).length === 1, String((src.match(/TILL_SERIES_COLLISION/g) || []).length));
 })().then(done);

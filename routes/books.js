@@ -11,7 +11,7 @@ const CLOCK = require('../lib/shop-clock');
 const { NOT_A_UUID_WORDS } = require('../lib/knownerr');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { refusalOf, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
+const { refusalOf, statementFault, returnFromRailAnswer, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
 const logger = require('../lib/logger');
 /**
  * routes/books.js — SPEC-books-v2 §5, in the shapes the Ledger screen reads (chitbridge-web public/app/cap-books.js).
@@ -1302,25 +1302,12 @@ router.post('/bank/marks', auth, noKey, editor, bankWriter, on, ...checked('POST
     problem(req, res, refusalOf(err, req));
   }
 });
-/**
- * the refusals a statement sign-off answers in words, by code → the problem to send, or null for any other error (refusalOf answers it): BOOKS_NOT_MIGRATED 503 (before b864: the shared record is not set up),
- * CURRENCY_MISMATCH 409 (a statement in another currency than the account's, with the field), STATEMENT_ALREADY_SIGNED 409 (AM-F-04: the same account + period + file hash signed again with the same figures),
- * BOOKS_FIGURE_DIFFERS 409 (WALK U U-F-02: the books' figure on that day is not the one this statement was worked against)
- */
-const STATEMENT_FAULT_STATUS = { BOOKS_NOT_MIGRATED: 503, CURRENCY_MISMATCH: 409, STATEMENT_ALREADY_SIGNED: 409, BOOKS_FIGURE_DIFFERS: 409 };
-function statementFault(err) {
-  const status = err && STATEMENT_FAULT_STATUS[err.code];
-  if (!status) return null;
-  const legacy = { code: err.code, error: err.message, message: err.message };
-  if (err.code === 'CURRENCY_MISMATCH') legacy.field = err.field;
-  return { status, code: err.code, detail: err.message, legacy };
-}
 /** AM-F-05 (Athi, 22 Nov): a sign-off for a period that ends in a LOCKED month waits on the Waiting list, in words (the owner's press posts it) → { waiting } or { statement } */
 async function signOffStatement(req, e, body) {
   const lockedWait = require('../lib/books-locked-wait');
   return withEntity(e, async (handle) => {
     const account = await bankAccountOf(handle, e, body.account, true);
-    const held = /^d{4}-d{2}-d{2}$/.test(String(body.period_to || '')) ? await lockedWait.heldIfLocked(handle, e, req.books, body.period_to) : null;
+    const held = /^\d{4}-\d{2}-\d{2}$/.test(String(body.period_to || '')) ? await lockedWait.heldIfLocked(handle, e, req.books, body.period_to) : null;
     if (held) return { waiting: { words: await lockedWait.parkStatement(handle, e, account, body, { by: byOf(req), acting: actingOf(req) }, held), posts_on: held.posts_on } };
     return { statement: await BANK_LOG.appendStatement(handle, e, account, curOf(req), body, byOf(req), actingOf(req)) };
   });
@@ -2566,17 +2553,6 @@ async function movedByLockNotes(owner, form) {
   const moved = (await withEntity(owner, (h) => S.movedByLock(h, owner))).filter((entry) => inSpan(entry.posting_date) || inSpan(entry.doc_date));
   return moved.map((entry) => entry.entry_no + ' · ' + entry.words);
 }
-/** TOUR-FIX1: the 200 answer of a return that is made from the rail, not the ledgers (India: GSTR-1 / 3B) */
-function returnFromRailAnswer(err) {
-  const pack = err.pack || null;
-  return {
-    form: null,
-    pack,
-    code: err.code,
-    why: pack === 'IN' ? "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here." : err.message,
-    rail: pack === 'IN' ? '/api/tax/gstr' : null
-  };
-}
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner, or the shop's auditor (ACC-229: whole-entity + can_see_costs, 403 BOOKS_RETURN_READ_NOT_ALLOWED). Prepared, never lodged.
  *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
@@ -2592,9 +2568,7 @@ router.get('/returns', auth, moneyReader, on, ...checked('GET /returns'), async 
     // prettier-ignore
     res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, unsupported_input: form.unsupported_input, needs_answer: form.needs_answer, emirates: form.emirates, staggers: form.staggers });
   } catch (err) {
-    if (err && err.code === 'RETURN_FROM_RAIL') {
-      return res.json(returnFromRailAnswer(err));
-    }
+    if (err && err.code === 'RETURN_FROM_RAIL') return res.json(returnFromRailAnswer(err));
     problem(req, res, refusalOf(err, req));
   }
 });

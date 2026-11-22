@@ -16,13 +16,12 @@ ok(['Cashier', 'Senior accountant to the owner', '', null, undefined].every((l) 
 const seat = { identity: { identity_type: 'actor', parent_entity_id: 'shop', hat: access.labelHat('Bookkeeper', access.EDITOR), access_level: 'editor' } };
 ok(owner.isInHouseAccountant(seat) === true, 'the hat the label gives IS the in-house accountant seat the money doors ask for');
 const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'actors.js'), 'utf8');
-const lines = src.split('\n');
-const askedLine = lines.find((l) => l.includes('const asked = access.labelHat(')).split(' /*')[0].trim();
-const hatLine = lines.find((l) => l.includes('const hat = (asked')).split(' /*')[0].trim();
-ok(/max_tasks,\s*hat,\s*employee_id/.test(src), 'POST /api/actors stores the label hat: the INSERT binds hat');
-/* the route's own two lines, with the require of lib/people replaced by a stand-in practice read */
-const body = [askedLine, hatLine].join('\n').split("require('../lib/people').practiceOf").join('practiceOf');
-const run = (practice, label) => Function('access', 'practiceOf', 'req', 'entity_id', 'actor_role', 'access_level', 'list', '"use strict"; return (async () => { ' + body + ' return hat; })()')(access, async () => practice, { identity: { identity_id: 'x' } }, 'e', label, 'editor', 'act');
+const fnAt = src.indexOf('async function hatForNewActor(');
+const fnText = src.slice(fnAt, src.indexOf('\n}\n', fnAt) + 2);
+ok(/max_tasks,\s*hatToStore,\s*employee_id/.test(src), 'POST /api/actors stores the label hat: the INSERT binds the hat hatForNewActor answered');
+/* the route's helper, lifted whole, with the require of lib/people replaced by a stand-in practice read */
+const lifted = fnText.split("require('../lib/people').practiceOf").join('practiceOf');
+const run = (practice, label) => Function('access', 'practiceOf', '"use strict"; return (' + lifted.replace('async function hatForNewActor', 'async function') + ')')(access, async () => practice)(label, 'editor', 'act', 'e', 'x');
 (async () => {
   ok((await run(false, 'Accountant')) === 'manager', 'a SHOP typing Job Accountant gets the manager hat');
   ok((await run(true, 'Accountant')) === 'act', 'a FIRM (practice) typing Job Accountant keeps the hat it sent');

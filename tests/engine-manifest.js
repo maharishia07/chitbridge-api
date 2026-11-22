@@ -274,7 +274,7 @@ const INFRA_LIBS = [
   'pricing-contract.js',
   /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
   'chits-contract.js',
-  'chits-input.js', 'chits-parts.js',
+  'chits-input.js', 'chits-parts.js', 'chits-cancel-flag.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
   /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
@@ -355,7 +355,7 @@ const INFRA_LIBS = [
   'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
-  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js', 'books-locked-wait.js',
+  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js', 'books-locked-wait.js', 'books-waiting-row.js', 'books-bill-order.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
   'books-cashflow.js', 'books-side-items.js', /* SPEED 1129: which party items a control account's reader loads (open documents from today, every row for a past day): a choice of rows, no figure */
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
@@ -659,7 +659,7 @@ const ENGINE_OTHER = [
   /* ⭐⭐ [TILL-107] — the two trade blueprints and their product-code sequence, and the ONE path that writes a
      product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
      → insert → meter), extracted from routes/products.js when the counter became a second caller. */
-  'catalogue-blueprint.js', 'catalogue-write.js',
+  'catalogue-blueprint.js', 'catalogue-write.js', 'catalogue-rate-menu.js',
   /* ⭐⭐ [TILL-122] — the day/week/month rollup. CB's own rule about what a return does to a day's figures,
      extracted for the same reason catalogue-write was: the counter became a second caller. Athi: *"this can be
      kept in local and also in server."* It is vendored byte-equal into the kit, so the shop PC folds its own

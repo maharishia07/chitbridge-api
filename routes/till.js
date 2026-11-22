@@ -143,8 +143,7 @@ const pickKeys = (source, list) => {
 };
 /** the snapshot body cut down to what a shop screen (TV) may be sent — only the allow-listed shop and item fields, only what is on the shelf */
 function screenView(body) {
-  const all = Array.isArray(body.items) ? body.items : [];
-  const shown = all.filter((item) => item && item.status === 'available');
+  const all = Array.isArray(body.items) ? body.items : [], shown = all.filter((item) => item && item.status === 'available');
   const gone = body.delta ? all.filter((item) => item && item.status !== 'available').map((item) => item.item_id) : [];
   return {
     at: body.at,
@@ -262,8 +261,7 @@ async function readItemsSection(snap) {
  * a repeat is a no-op merge; a permanent miss is a stale price nobody notices.
  */
 function snapshotAsk(req) {
-  const readAt = new Date().toISOString();
-  const entity_id = auth.entityOf(req);
+  const readAt = new Date().toISOString(), entity_id = auth.entityOf(req);
   /* ⭐ SNAP-SCREEN: is a TV asking? Decided here, once, from the key — the answer is shaped by screenView at the end */
   const screen = isScreenKey(req.till && req.till.key);
   /* the moment the till last read the shop — anything touched after it is what it does not have */
@@ -1114,10 +1112,7 @@ async function pushNetworkLines(entity_id, adoptedRows, items, network, project,
   for (const line of lines) {
     const record = networkRecord(line, project);
     if (!record) continue;
-    if (!catalogueRead.isPricedByStore(line, record.price)) {
-      network.unpriced++;
-      continue;
-    }
+    if (!catalogueRead.isPricedByStore(line, record.price)) { network.unpriced++; continue; }
     /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
     record.source = { key: line.source_key, title: line.source_title || null, owner: line.owner_entity_id || null, line: line.line_id };
     items.push(record);
@@ -1414,8 +1409,7 @@ function policyBlock(row, flags) {
 // @does A product and available or unavailable in, a counter key or a shop sign-in -> we mark the product's counter status, never retired -> the product's new status.
 router.post('/stock', auth, auth.requireScope('till'), ...checked('POST /stock'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const input = stockInput(req.body);
+    const entity_id = auth.entityOf(req), input = stockInput(req.body);
     if (!input.item_id) return refuseBad(req, res, 'item_id required');
     /* ⚠️ available and unavailable ONLY. 'retired' and 'redundant' carry an argument — what replaced it, until when — and nobody
        makes that call standing at a till with a customer waiting. The same two the bulk screen offers, for the same reason. */
@@ -1473,8 +1467,7 @@ const STOCK_BULK_MAX = 500;
 // @does Up to 500 product ids and a status in, a counter key or a shop sign-in -> we mark them all available or unavailable in one go -> how many changed.
 router.post('/stock/bulk', auth, auth.requireScope('till'), ...checked('POST /stock/bulk'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const input = stockBulkInput(req.body);
+    const entity_id = auth.entityOf(req), input = stockBulkInput(req.body);
     if (!input.ids.length) return refuseBad(req, res, 'item_ids required');
     if (input.ids.length > STOCK_BULK_MAX) {
       return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + STOCK_BULK_MAX + ' products in one change.') });
@@ -1545,8 +1538,7 @@ function bulkMessage(moved, asked, status) {
 // @does A counter's health code in, a paired counter key or a shop sign-in -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.
 router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /diagnostic'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const keyId = req.till && req.till.key && req.till.key.jti;
+    const entity_id = auth.entityOf(req), keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can report itself.');
     const diag = await require('../lib/api-keys').setDiag(entity_id, keyId, diagnosticPatch(req));
     if (!diag) return problem(req, res, { status: 404, ...notFound('This key is not listed for the shop.') });
@@ -1616,8 +1608,7 @@ async function lockedCounter(db, entity_id, counterId) {
 // @does A paired counter's own key -> we close that counter for the day so it is no longer listed as open -> a confirmation.
 router.post('/close', auth, auth.requireScope('till'), ...checked('POST /close'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const keyId = req.till && req.till.key && req.till.key.jti;
+    const entity_id = auth.entityOf(req), keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can close itself.');
     const body = req.body || {};
     const mine = await keyRowOf(entity_id, keyId);
@@ -1683,8 +1674,7 @@ function seriesContinues(counter, till, period) {
 // @does Break or billing in, a paired counter key or a shop sign-in -> we note what this counter is doing, if it holds the counter -> whether it was recorded.
 router.post('/state', auth, auth.requireScope('till'), ...checked('POST /state'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const keyId = req.till && req.till.key && req.till.key.jti;
+    const entity_id = auth.entityOf(req), keyId = req.till && req.till.key && req.till.key.jti;
     const body = req.body || {};
     const state = body.state === 'break' ? 'break' : 'billing';
     const mine = await keyRowOf(entity_id, keyId);
@@ -1755,8 +1745,7 @@ function flagsAnswer(item_id, data) {
  * → the writer's answer, or { rows: [] } when the product is not this shop's
  */
 async function setOfferOptOut(db, entity_id, item_id, body) {
-  const offer_id = String(body.offer_id);
-  const excluded = body.excluded === true || body.excluded === 'true';
+  const offer_id = String(body.offer_id), excluded = body.excluded === true || body.excluded === 'true';
   const current = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2 FOR UPDATE', [entity_id, item_id]);
   if (!current.rows.length) return { rows: [] };
   const previous = (current.rows[0].item_data || {}).offers_excluded;
@@ -2969,10 +2958,7 @@ async function changeScreenKey(entity_id, keyId, edit) {
     const list = Array.isArray(flags.api_keys) ? flags.api_keys : [];
     const found = list.find((item) => item && String(item.jti) === keyId);
     if (!found) return;
-    if (!isScreenKey(found)) {
-      outcome = 'refused';
-      return;
-    }
+    if (!isScreenKey(found)) { outcome = 'refused'; return; }
     outcome = 'done';
     await policy.patchKey(db, entity_id, [], { api_keys: edit(list) }, { op: 'merge' });
   });
@@ -3425,10 +3411,7 @@ async function addItemNames(entity_id, balances) {
   const ids = Object.keys(balances);
   const named = await withEntity(entity_id, (db) => db.query(require('../lib/catalogue-read').ITEM_NAMES_SQL, [entity_id, ids]));
   for (const item of named.rows)
-    if (balances[item.id]) {
-      balances[item.id].name = item.name || null;
-      balances[item.id].unit = item.unit || null;
-    }
+    if (balances[item.id]) { balances[item.id].name = item.name || null; balances[item.id].unit = item.unit || null; }
 }
 
 /**
@@ -3754,22 +3737,17 @@ function newestFilingOfToday(filed, today) {
   for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
   return filedBy;
 }
-
 /** today's counter bills split per counter: byTill = the bills not in a filing yet (to be folded), inside = the received bills each filing holds, to test its claim against */
 function splitTodaysBills(todays, filedBy) {
-  const byTill = new Map();
-  const inside = new Map();
+  const byTill = new Map(), inside = new Map();
   for (const row of distinctBills(todays.filter(isCounterTakings))) {
-    const bill = billRow(row);
-    const till = tillKeyOf(bill.till);
-    const filing = filedBy.get(till);
+    const bill = billRow(row), till = tillKeyOf(bill.till), filing = filedBy.get(till);
     if (filing && inFiling(filing, bill, row)) { inside.set(till, (inside.get(till) || []).concat(engineRow(bill))); continue; }
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
   return { byTill, inside };
 }
-
 /** the counters whose filed summary claims more than its bills: each gets a claim pushed on claims and its bills kept apart; a counter with no new bills still gets a (empty) group so its day reads from the bills received */
 function noteOverClaims(split, filedBy, today, claims, currency) {
   const rollup = require('../lib/rollup');
@@ -3785,7 +3763,6 @@ function noteOverClaims(split, filedBy, today, claims, currency) {
   }
   return overClaimed;
 }
-
 /** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at, unless the summary claims more than its bills (claims gets the gap) */
 function liveSummaries(todays, filed, today, claims, currency) {
   const rollup = require('../lib/rollup');

@@ -3,6 +3,12 @@
  "allow": [
   {
    "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (e) { return dayFailed(entity, waitingJob, e, options, 'walkin:' + counter + ':' + shopDay",
+   "reason": "SAFE: the walk-in day's failure is handed to dayFailed, which parks it on the Waiting list with the words (or rethrows on a retry) and answers queued; moved out of the catch body, behaviour unchanged"
+  },
+  {
+   "file": "lib/books-hooks.js",
    "kind": "zero",
    "text": "const cess = roundMoney((row.cess || 0) + (line.CesAmt || 0), currency",
    "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
@@ -88,7 +94,7 @@
   {
    "file": "lib/services.js",
    "kind": "zero",
-   "text": "cess_rate: num(dec[index].cess_rate) || item.cess_rate || 0,",
+   "text": "cess_rate: num(decorated.cess_rate) || item.cess_rate || 0,",
    "reason": "SAFE: an absent cess on a line whose rate is known is no cess; an unreadable declared one is refused at the door (ACC-221 unreadFieldsOf) or flagged cess_unreadable (TAX-EXPLICIT)"
   },
   {

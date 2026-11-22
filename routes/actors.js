@@ -262,8 +262,7 @@ router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withM
 /** AK: the Bookkeeper or Accountant label sets the manager hat, in a SHOP only (a practice, or an unknown, keeps the hat sent) */
 async function hatForNewActor(actorRole, accessLevel, hatSent, entityId, byIdentity) {
   const asked = access.labelHat(actorRole, accessLevel);
-  const inShop = asked && (await require('../lib/people').practiceOf(entityId, byIdentity)) === false;
-  return (inShop ? asked : null) || hatSent;
+  return (asked && (await require('../lib/people').practiceOf(entityId, byIdentity)) === false ? asked : null) || hatSent;
 }
 
 // ── POST /api/actors ─────────────────────────────────────────

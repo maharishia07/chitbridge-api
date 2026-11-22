@@ -52,7 +52,8 @@ let n = 0; const ok = async (what, fn) => { await fn(); n++; console.log('  ok  
   });
   await ok('5 the route maps the new code to 409 in words', () => {
     const src = require('fs').readFileSync(path.join(HERE, 'routes', 'books.js'), 'utf8');
-    assert.ok(/err\.code === 'STATEMENT_ALREADY_SIGNED'\) return problem\(req, res, \{ status: 409/.test(src));
+    const contract = require('fs').readFileSync(path.join(HERE, 'lib', 'books-contract.js'), 'utf8');
+    assert.ok(/STATEMENT_FAULT_STATUS = \{[^}]*STATEMENT_ALREADY_SIGNED: 409/.test(contract) && /const fault = statementFault\(err\);\s+if \(fault\) return problem\(req, res, fault\)/.test(src));
   });
   console.log('\n  ' + n + ' passed');
 })().catch((e) => { console.error(e); process.exit(1); });

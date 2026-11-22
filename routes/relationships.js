@@ -154,14 +154,12 @@ function supplierFieldsOf(body) {
 }
 /** the answer of adding the seller of a bill (AE-F-19): the seller as a supplier on the rail, and what posting the parked bill did. `fields` = { kind, category, nickname, notes, preferred } */
 function sellerOfBillAnswer(done, fields) {
-  const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
-  return { message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: fields.kind, category: fields.category, nickname: fields.nickname, notes: fields.notes, preferred: fields.preferred }, books: done.books };
+  return { message: done.listed.dup ? 'Already in your supplier list' : 'Supplier added', supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: fields.kind, category: fields.category, nickname: fields.nickname, notes: fields.notes, preferred: fields.preferred }, books: done.books };
 }
 /** adds the seller of this bill as a supplier and posts the parked bill; `fields` = { kind, category, nickname, notes, preferred } */
 async function addSellerOfBill(req, res, owner, forBill, fields) {
   const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, fields);
-  if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
-  return res.json(sellerOfBillAnswer(done, fields));
+  return done ? res.json(sellerOfBillAnswer(done, fields)) : problem(req, res, { status: 404, ...words.noBusiness() });
 }
 /** the answer of adding a supplier by name only (off the rail): `added` is addLocalSupplier's result, `localNo` its party number */
 function localSupplierAnswer(added, localNo, fields) {

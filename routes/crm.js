@@ -124,22 +124,15 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
 
 /** LV-17: the party's chit bills → { n, last } (the newest created_at as an ISO string, or null) */
 function billsInChits(rows) {
-  const bills = rows.filter((row) => row.doc_kind === 'bill');
-  const last = bills.map((row) => crm.iso(row.created_at)).reduce((latest, at) => (!latest || at > latest ? at : latest), null);
-  return { n: bills.length, last };
+  const times = rows.filter((row) => row.doc_kind === 'bill').map((row) => crm.iso(row.created_at));
+  return { n: times.length, last: times.reduce((newest, at) => (!newest || at > newest ? at : newest), null) };
 }
-
 /** the ledger's bills for this party on the caller's handle, a missing table read as none → { n, last } */
 async function billsInLedger(h, owner, partyId) {
-  const led = await require('../db').trySavepoint(
-    h,
-    () => h.query(`SELECT count(*)::int AS n, max(created_at) AS last FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill'`, [owner, partyId]),
-    { rows: [] }
-  );
+  const led = await require('../db').trySavepoint(h, () => h.query(`SELECT count(*)::int AS n, max(created_at) AS last FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill'`, [owner, partyId]), { rows: [] });
   const found = led.rows[0];
   return found ? { n: Number(found.n) || 0, last: found.last ? crm.iso(found.last) : null } : { n: 0, last: null };
 }
-
 /** a customer's programme points (reward-store, the same reader the customer's own pane uses), or null: not a customer, no programme, or the table not there yet */
 async function pointsOf(owner, party) {
   if (!party.roles.customer) return null;

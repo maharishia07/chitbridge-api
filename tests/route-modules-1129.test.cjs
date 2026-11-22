@@ -112,3 +112,25 @@ test('the tender step does nothing for a draft or a bill with no payment; the na
   assert.equal(await sendBill.addNamedCounterCustomer('shop', { customer: { name: 'Acme', entity_id: 'e1' } }), null);
   assert.equal(await sendBill.addNamedCounterCustomer('shop', null), null);
 });
+
+test('the cancel flag stamps each OTHER recipient once, pushes the cross-installation answer, and never throws (lib/chits-cancel-flag)', async () => {
+  const path = require('node:path');
+  const stub = (rel, exportsOf) => { const id = require.resolve(rel); require.cache[id] = { id, filename: id, loaded: true, exports: exportsOf }; };
+  const stamped = [];
+  let hasColumn = true;
+  stub('../db', { withEntity: async (_entity, fn) => fn({ query: async () => ({ rows: [{ all_recipients: [{ entity_id: 'a' }, { entity_id: 'a' }, { entity_id: 'me' }, { entity_id: 'b' }, null] }] }) }) });
+  stub('../lib/schema', { hasColumn: async () => hasColumn });
+  stub('../lib/chit-move', { stampCancelRequested: async (rid) => { stamped.push(rid); } });
+  stub('../lib/ctpreturn', { onCancelRequested: async () => 'told-answer' });
+  const { flagCancelRequested } = require('../lib/chits-cancel-flag');
+  const req = { identity: { display_name: 'Asha' } };
+  const told = [];
+  await flagCancelRequested(req, 'me', 'c1', 'wrong order', told);
+  assert.deepEqual(stamped, ['a', 'b'], 'a duplicate recipient and the sender are not stamped');
+  assert.deepEqual(told, ['told-answer']);
+  stamped.length = 0;
+  hasColumn = false;
+  await flagCancelRequested(req, 'me', 'c1', 'x', told);
+  assert.deepEqual(stamped, [], 'before the migration nothing is stamped');
+  assert.equal(path.basename(require.resolve('../lib/chits-cancel-flag')), 'chits-cancel-flag.js');
+});

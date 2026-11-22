@@ -83,7 +83,7 @@ async function send(db, state, delay) {
   const route = require('../tools/chits-files.cjs').read(HERE); /* the chits route's code through the one list (chits-files.test) */
   ok('the route has the early step, in the step list after the bill-number rule', /sendBillNumber,\s*sendBillTaken,/.test(route));
   ok('both write transactions ask again under the number\'s lock', (route.match(/bill-number-taken'\)\.judge\([a-zA-Z]+, sendState, \{ locked: true \}\)/g) || []).length === 2);
-  ok('the index\'s own refusal (23505 on bill_no) answers the same 409', /\/bill_no\/\.test\(String\(err\.constraint/.test(route));
+  ok('the index\'s own refusal (23505 on bill_no) answers the same 409', /refusedOnIndex\(err, \/bill_no\/\)/.test(route) && /err\.code === '23505' && part\.test\(String\(err\.constraint/.test(route));
   const mig = fs.readFileSync(path.join(HERE, 'migrations', 'b907_chit_bill_no_unique.sql'), 'utf8');
   ok('b907 builds a partial unique index and stops on existing duplicates', /CREATE UNIQUE INDEX IF NOT EXISTS ux_chit_bill_no_per_entity/.test(mig) && /RAISE EXCEPTION 'b907 not built/.test(mig));
   const read = fs.readFileSync(path.join(HERE, 'migrations', 'READ-2026-11-21-1-bill-no-duplicates.sql'), 'utf8');

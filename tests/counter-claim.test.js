@@ -67,8 +67,11 @@ it('a takeover releases the holder BEFORE it claims, in one transaction', () => 
   assert.ok(release > 0, 'a takeover no longer closes the previous key');
   assert.ok(claim > 0, 'the claim no longer records the new holder');
   assert.ok(release < claim, 'the release happens after the claim — two keys would hold one counter');
-  const inClaim = CLAIM.slice(CLAIM.indexOf('const claim = async'));
-  assert.ok(inClaim.indexOf('await releaseHolder(') > 0 && inClaim.indexOf('await releaseHolder(') < inClaim.indexOf('writeClaim(db, entity_id, want'), 'claim no longer calls releaseHolder before it records the new holder');
+  /* the release is in judgeClaim (the first transaction of claim), the record of the new holder in writeClaim (the second): claim must call them in that order */
+  const inJudge = CLAIM.slice(CLAIM.indexOf('async function judgeClaim('));
+  const inClaim = CLAIM.slice(CLAIM.indexOf('const claim = async'), CLAIM.indexOf('async function judgeClaim('));
+  assert.ok(inJudge.indexOf('await releaseHolder(') > 0, 'judgeClaim no longer calls releaseHolder for a takeover');
+  assert.ok(inClaim.indexOf('judgeClaim(db, entity_id, want') > 0 && inClaim.indexOf('judgeClaim(db, entity_id, want') < inClaim.indexOf('writeClaim(db, entity_id, want'), 'claim no longer judges (and releases) before it records the new holder');
 });
 
 it('and the released key stops working at once', () => {

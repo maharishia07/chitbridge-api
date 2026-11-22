@@ -4194,11 +4194,7 @@ function deviceId(){
  * Per DEVICE, never per person or per label alone ([[project-till-series-prefix]]: two devices both "C1" absorbed a
  * real sale as a retry). 'D' + three base-36 characters of the device id — never C1, which is the shop PC's.
  */
-function deviceLabel(){
-  var k = deviceId(), h = 5381;
-  for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
-  return 'D' + ('000' + (h % 46656).toString(36)).slice(-3).toUpperCase();
-}
+function deviceLabel(){ var k = deviceId(), h = 5381; for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0); return 'D' + ('000' + (h % 46656).toString(36)).slice(-3).toUpperCase(); }
 /** is this browser billing as a PERSON (a kept session), rather than as a keyed counter or the shop PC */
 function personOn(){
   if (typeof AgentHost !== 'undefined' && typeof HOST !== 'undefined' && HOST === AgentHost) return false;
@@ -4253,9 +4249,7 @@ function keyShopHeld(){ return (CloudHost && CloudHost.key) ? (ls.get(shopLs('cb
 function personKind(chosen, identity, claims){ return (chosen && chosen.kind) || (identity && identity.kind) || claims.identity_type || null; }
 /** the session to keep, from the sign-in's own answer — the shop it opens comes from the identity the server named */
 /** M5: 'till' is asked for only by a device that holds a counter pairing (a key); anything else signs in as 'web' — the server would downgrade it anyway, and the page never claims what it does not hold */
-function tillSurface(){
-  return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) || ls.get('cb_till_key', null) ? 'till' : 'web';
-}
+function tillSurface(){ return (typeof CloudHost !== 'undefined' && CloudHost && CloudHost.key) || ls.get('cb_till_key', null) ? 'till' : 'web'; }
 function personOf(token, idn, who){
   var ent = (idn && idn.entity_id) || (who && who.entity) || null;
   if (!token || !ent) return null;
@@ -4365,15 +4359,9 @@ function shopSlotMove(){
  * ladder at all.
  */
 var Q_FLOOR = 2000, Q_CEIL = 300000;                  /* 2 s → 5 min, the package's own numbers */
-function qBackoff(tries){
-  var n = Math.max(1, Number(tries) || 1);
-  return Math.min(Q_CEIL, Q_FLOOR * Math.pow(2, n - 1));
-}
+function qBackoff(tries){ var n = Math.max(1, Number(tries) || 1); return Math.min(Q_CEIL, Q_FLOOR * Math.pow(2, n - 1)); }
 /** is this row allowed to be tried yet? a row that has never failed is always due */
-function qDue(row, at){
-  var t = Number(row && row._nextAt) || 0;
-  return !t || t <= (at || Date.now());
-}
+function qDue(row, at){ var t = Number(row && row._nextAt) || 0; return !t || t <= (at || Date.now()); }
 /** when the earliest waiting row comes due, or 0 when nothing is waiting */
 function qSoonest(rows, at){
   var now = at || Date.now(), best = 0;
@@ -4517,11 +4505,7 @@ function tillStore(){
   return keyStoreName(k);
 }
 /** the store a KEY named — djb2, a name, not a secret: the key itself never goes near a store name (M10 reads it for the move) */
-function keyStoreName(k){
-  var h = 5381;
-  for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0);
-  return 'cb-till-' + h.toString(36);
-}
+function keyStoreName(k){ var h = 5381; for (var i = 0; i < k.length; i++) h = (((h * 33) ^ k.charCodeAt(i)) >>> 0); return 'cb-till-' + h.toString(36); }
 
 /* ── IndexedDB, the smallest wrapper that does the job ── */
 /**
@@ -4623,10 +4607,7 @@ var OWNER = null, FOREIGN = 0;
 /* ⭐ the sentence the 🩺 panel last showed, so a report SENT says what the shopkeeper is reading — see openStuck() */
 var STUCK_VERDICT = null;
 /** ⭐ ONE reader for the pairing address — the boot path and the paste handler must not disagree about it */
-function hashVal(n){
-  var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)'));
-  return m ? decodeURIComponent(m[1]) : '';
-}
+function hashVal(n){ var m = location.hash.match(new RegExp('[#&]' + n + '=([^&]*)')); return m ? decodeURIComponent(m[1]) : ''; }
 /**
  * ── ⭐⭐ A KEY PASTED INTO AN ALREADY-OPEN COUNTER ────────────────────────────────────────────────────────────
  *
@@ -5205,11 +5186,7 @@ function netSet(k){
   try { paintStatus(); } catch (e) { cbQuiet('netSet:4', e); }
 }
 /** ⭐ a simulation held back because a bill was in hand lands HERE — the same funnel stylePendFlush() uses */
-function netPendFlush(){
-  if (!NET_PEND) return;
-  var k = NET_PEND; NET_PEND = null;
-  netSet(k);
-}
+function netPendFlush(){ if (!NET_PEND) return; var k = NET_PEND; NET_PEND = null; netSet(k); }
 
 
 /** ⭐ opened on demand \u2014 the bar stays one line, because it is on screen all day [[feedback-text-budget]] */
@@ -6237,10 +6214,7 @@ var TILL_CLASH = null;
  * ⚠️ Only CREATING needs the internet. A counter given its number yesterday opens and bills offline today.
  */
 function tillGivenKey(){ return shopLs('cb_till_given'); }
-async function tillGivenOK(){
-  if (ls.get(tillGivenKey(), '')) return true;
-  return await tillIssued();
-}
+async function tillGivenOK(){ if (ls.get(tillGivenKey(), '')) return true; return await tillIssued(); }
 /**
  * ⭐ T4-03: BILLING ASKS THE STORAGE BEFORE IT TAKES A NUMBER. A database that refuses stops the sale in words — it never falls back to
  * an empty second store, where the series would restart at 0001 and the first bill of the day would be written over.
@@ -6480,10 +6454,7 @@ function leaseLeft(held, now){
   return { left: left, size: size };
 }
 /** the server said no: for the country or the table, and this counter never held a block, blocks are off for this session (it numbers the old way) */
-function leaseRefused(answer, held){
-  var notHere = answer && (answer.code === 'LEASE_NOT_FOR_COUNTRY' || answer.code === 'LEASE_NOT_READY');
-  if (notHere && !(held && held.leased)) LEASE_OFF = true;
-}
+function leaseRefused(answer, held){ var notHere = answer && (answer.code === 'LEASE_NOT_FOR_COUNTRY' || answer.code === 'LEASE_NOT_READY'); if (notHere && !(held && held.leased)) LEASE_OFF = true; }
 /** ask for a block when one is due (none left, or 20 percent or less); one ask at a time; true when this device holds a usable number. The server's refusal for the country or the table switches blocks off for this session. */
 function leaseRefill(force){
   if (LEASE_ASKING) return LEASE_ASKING;
@@ -7396,9 +7367,7 @@ function paintShopName(){
   el.textContent = (S && S.shop && S.shop.name) || (HOST.mode === 'cloud' && !CloudHost.cred() ? tx('Not signed in yet') : tx('This shop'));
 }
 /* C-F-11: offline says "offline — bills are kept here" for a counter signed in by a PERSON too (it holds a token, not a till key); "no key yet" only when there is no credential at all */
-function netPillOffline(){
-  return (HOST && HOST.mode === 'cloud' && !CloudHost.cred()) ? 'no key yet' : 'offline — bills are kept here';
-}
+function netPillOffline(){ return (HOST && HOST.mode === 'cloud' && !CloudHost.cred()) ? 'no key yet' : 'offline — bills are kept here'; }
 /**
  * ⭐ Q-F-05 · IS THIS SEAT VIEW-ONLY? The same reading the back office makes (web helpers viewOnlyLogin): the signed-in person's token
  * says access level viewer. The api already refuses a write from it (403 READ_ONLY); the sell screen says so BEFORE the number is taken,
@@ -7600,10 +7569,7 @@ function custKnown(){
  * it is kept WITH the snapshot, so the answer is the same with the line down. Absent or false = off: neither is shown.
  * ⭐ ONE reader of the flag. Every control asks booksOn() or creditCust(); nothing else looks at the snapshot for it.
  */
-function booksOn(){
-  var snap = S;
-  return !!(snap && (snap.books === true || (snap.shop && snap.shop.books === true) || (snap.settings && snap.settings.books === true)));
-}
+function booksOn(){ var snap = S; return !!(snap && (snap.books === true || (snap.shop && snap.shop.books === true) || (snap.settings && snap.settings.books === true))); }
 /** the customer credit and money received may be recorded against: a KNOWN one, in a shop whose ledger is on */
 function creditCust(){ return booksOn() ? custKnown() : null; }
 /** minor units → the amount, in the shop's own currency's decimals (the money engine's rule, never a hard-coded 100) */
@@ -7613,15 +7579,8 @@ function booksMajor(minor){
   return rmoney(Number(minor || 0) / Math.pow(10, dec));
 }
 /** an amount → minor units in the shop's own currency — booksMajor's inverse, the same decimals (CX1: the pack's taxInvoice takes minor) */
-function shopMinor(amount){
-  var cur = shopCur();
-  var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2;
-  return Math.round(rmoney(amount) * Math.pow(10, dec));
-}
-function creditDaysOf(c){
-  var d = c && c.credit_days;
-  return (d != null && d !== '' && isFinite(Number(d))) ? Math.max(0, Math.floor(Number(d))) : null;
-}
+function shopMinor(amount){ var cur = shopCur(); var dec = (window.CBMoney && CBMoney.decimals) ? CBMoney.decimals(cur) : 2; return Math.round(rmoney(amount) * Math.pow(10, dec)); }
+function creditDaysOf(c){ var d = c && c.credit_days; return (d != null && d !== '' && isFinite(Number(d))) ? Math.max(0, Math.floor(Number(d))) : null; }
 /** the due date a credit bill carries; null when the shop has not set this customer's terms (never guessed) */
 function dueDateFor(c, at){
   var d = creditDaysOf(c); if (d == null) return null;
@@ -7909,16 +7868,8 @@ function catOrderClose(){
  * escaping at all. Hiding drops a row out of the ranked list to the bottom section; showing puts it back at
  * the end — never in the middle of an order nobody asked it to rejoin at.
  */
-function catHideAt(i){
-  if (!CATDRAFT || !CATDRAFT_HIDDEN || i < 0 || i >= CATDRAFT.length) return;
-  CATDRAFT_HIDDEN.push(CATDRAFT.splice(i, 1)[0]);
-  catOrderPaint();
-}
-function catShowAt(j){
-  if (!CATDRAFT || !CATDRAFT_HIDDEN || j < 0 || j >= CATDRAFT_HIDDEN.length) return;
-  CATDRAFT.push(CATDRAFT_HIDDEN.splice(j, 1)[0]);
-  catOrderPaint();
-}
+function catHideAt(i){ if (!CATDRAFT || !CATDRAFT_HIDDEN || i < 0 || i >= CATDRAFT.length) return; CATDRAFT_HIDDEN.push(CATDRAFT.splice(i, 1)[0]); catOrderPaint(); }
+function catShowAt(j){ if (!CATDRAFT || !CATDRAFT_HIDDEN || j < 0 || j >= CATDRAFT_HIDDEN.length) return; CATDRAFT.push(CATDRAFT_HIDDEN.splice(j, 1)[0]); catOrderPaint(); }
 /**
  * ── ⭐⭐ THE FOLD IS MEASURED, NEVER GUESSED (design-handoff §2 "The fold") ───────────────────────
  *
@@ -8257,9 +8208,7 @@ function catOrderSet(list){ ls.set(shopLs('cb_till_catorder'), JSON.stringify(li
  * ⚠️ A MODE, NOT A BUTTON. "Back to most-used first" used to be a footer button beside Cancel, where both
  * read as "undo my work" — it is gone; picking the mode here is the only way in or out now.
  */
-function catOrderMode(){
-  return (ls.get(shopLs('cb_till_catmode'), 'most_used') === 'fixed') ? 'fixed' : 'most_used';
-}
+function catOrderMode(){ return (ls.get(shopLs('cb_till_catmode'), 'most_used') === 'fixed') ? 'fixed' : 'most_used'; }
 function catOrderModeSet(m){ ls.set(shopLs('cb_till_catmode'), (m === 'fixed') ? 'fixed' : 'most_used'); }
 /**
  * ⭐⭐ PICTURE MODE OVERRIDES THE PREFERENCE, IT DOES NOT ERASE IT (design-handoff/07-picture-mode §… :
@@ -8524,10 +8473,7 @@ function thumbsToggle(){
   ls.set(shopLs('cb_till_thumbs'), thumbsOn() ? 'off' : 'on');
   paintCard(); paintHits();
 }
-function statusOf(i){
-  var v = String((i && i.status) || '').trim().toLowerCase();
-  return v || 'available';
-}
+function statusOf(i){ var v = String((i && i.status) || '').trim().toLowerCase(); return v || 'available'; }
 /**
  * ⚠️⚠️ AND IT IS NOT A REFUSAL. lib/itemstatus.js is explicit that "unavailable" STILL MATCHES — out of stock today is not "we
  * have never heard of this" — and at a counter the shopkeeper is standing in front of the physical packet. So an item marked off
@@ -8718,11 +8664,7 @@ function rateOf(i){
 function taxWords(i){ var r = rateOf(i); return r != null ? (r + '% ' + schemeWord()) : ''; }   /* CX1: the pack's scheme word — VAT in Dubai */
 /** ⭐ the tile's own offer fact — the CLEAN promise only, regardless of MODE (a key is glanced at, never read
  *  closely; offerNames()'s maintain-mode raw name belongs on the detailed row, never on a tile this small). */
-function offerPromiseFor(i){
-  var os = offersFor(i);
-  for (var k = 0; k < os.length; k++) if (os[k].promise) return os[k].promise;
-  return '';
-}
+function offerPromiseFor(i){ var os = offersFor(i); for (var k = 0; k < os.length; k++) if (os[k].promise) return os[k].promise; return ''; }
 /**
  * ⚠️ A FULL STOP, NOT A WARNING STRIP. A counter that is holding the wrong shop's prices cannot be allowed to keep taking money
  * while a banner sits at the top — somebody would bill through it. Nothing is deleted: the other shop's copy, its bills and its
@@ -9091,10 +9033,7 @@ async function retainDaily(){
   return r;
 }
 /** ⭐ the Settings row: a limit changed, and the sentence says at once which limit binds and what it would cost */
-async function retainSave(k, v){
-  retainSet(k, v);
-  await retainPaint();
-}
+async function retainSave(k, v){ retainSet(k, v); await retainPaint(); }
 async function retainPaint(){
   var el = document.getElementById('set_keep_say'); if (!el) return;
   try { el.textContent = retainPlan((await DB.all('bills')) || []).say; } catch (_) { el.textContent = frozenOr(''); }
@@ -9547,10 +9486,7 @@ function menuOpenSet(){
                      : [started ? 'bills' : 'day'];
 }
 function menuIsOpen(id){ return menuOpenSet().indexOf(id) >= 0; }
-function menuFirstSection(){
-  if (MENU_OPEN_SEC !== null) return MENU_OPEN_SEC;
-  return (dayStatus().state !== 'new') ? 'bills' : 'day';
-}
+function menuFirstSection(){ if (MENU_OPEN_SEC !== null) return MENU_OPEN_SEC; return (dayStatus().state !== 'new') ? 'bills' : 'day'; }
 /**
  * ⭐ WHICH ELEMENT ACTUALLY SCROLLS in the hub — the two-column list when there is room, the panel itself when
  * there is not. Asked once, so the save and the restore can never disagree about what they are measuring.
@@ -26760,10 +26696,7 @@ function retOriginalOf(bill){
   return { supply: supply, pos_state: pos == null ? null : String(pos), heads: (bill && bill.heads) || null, known: !!supply };
 }
 /** the first of these that is present and not '' (0 counts), else null */
-function firstStated(){
-  for (var i = 0; i < arguments.length; i++) if (arguments[i] != null && arguments[i] !== '') return arguments[i];
-  return null;
-}
+function firstStated(){ for (var i = 0; i < arguments.length; i++) if (arguments[i] != null && arguments[i] !== '') return arguments[i]; return null; }
 /** the money of the return sheet: each line's share (the last return takes the remainder), the totals, the rate-wise split */
 function retMoney(){
   var out = { lines: [], total: 0, taxable: 0, tax: 0, saved: 0, byRate: {}, count: 0 };
