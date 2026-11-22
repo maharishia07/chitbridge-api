@@ -1395,9 +1395,9 @@
    "bfla_role_check": true
   },
   "PATCH /api/crm/followups": {
-   "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "PATCH /api/crm/followups/:id": {

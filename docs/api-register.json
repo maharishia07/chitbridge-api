@@ -17632,7 +17632,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 127,
-   "hash": "f29aeae1a51b626b",
+   "hash": "e997699d6f2c7d8b",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
     "count": 0,
@@ -17726,7 +17726,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "f29aeae1a51b626b"
+    "stale_since": "e997699d6f2c7d8b"
    },
    "status": "partial",
    "callers": [
@@ -45828,9 +45828,9 @@
     "schema_in": true,
     "schema_out": true,
     "missing_input_answer": true,
-    "error_shape": false,
+    "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": false,
     "strict_input": true,
     "output_allowlist": false,
@@ -45855,7 +45855,8 @@
     500
    ],
    "notes": [
-    "auth middleware answers 401 in the old body"
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
    "reported": {
     "bfla_role_check": true,

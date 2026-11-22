@@ -2170,6 +2170,13 @@
   404,
   500
  ],
+ "POST /api/books/events/batch": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
  "POST /api/books/fx-rates": [
   401,
   403,

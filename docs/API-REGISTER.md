@@ -401,7 +401,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | POST | /api/books/entries | books | routes/books.js:1813 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/books/entries/:id/reverse | books | routes/books.js:1845 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/books/events | books | routes/books.js:1775 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
-| POST | /api/books/events/batch | books | routes/books.js:1788 | yes | yes | no | yes | yes | no | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no | no | no | yes | no | yes | no |
+| POST | /api/books/events/batch | books | routes/books.js:1788 | yes | yes | yes | yes | yes | yes | no | yes | no | yes | yes | yes | yes | partial | yes | yes | no | no | no | yes | no | yes | no |
 | POST | /api/books/fx-rates | books | routes/books.js:2672 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/books/fx-rates/import | books | routes/books.js:2682 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | no | yes | yes | no | yes | no |
 | POST | /api/books/fx-revalue | books | routes/books.js:2729 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | yes | yes | no | yes | no |
