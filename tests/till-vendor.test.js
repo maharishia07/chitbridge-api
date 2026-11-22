@@ -974,7 +974,7 @@ JOBS.push(['⭐⭐ the window reaches both hosts: kit copy = web master, served 
   assert.strictEqual(norm(fs.readFileSync(kit, 'utf8')), norm(fs.readFileSync(path.join(WEB, 'app', 'signin-ui.js'), 'utf8')), 'the kit copy drifted from web public/app/signin-ui.js');
   const prog = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
   assert.ok(/url\.pathname === '\/app\/signin-ui\.js'|'\/app\/signin-ui\.js': \[/.test(prog), 'the program does not serve /app/signin-ui.js');
-  assert.ok(/live: \['till\.html', 'signin-ui\.js'(, '[a-z-]+\.js')*\]/.test(prog), 'the kit update does not refresh the window');
+  assert.ok(/live: \['till\.html'(, '[a-z-]+\.js')*, 'signin-ui\.js'(, '[a-z-]+\.js')*\]/.test(prog), 'the kit update does not refresh the window');
   assert.ok(/url\.pathname === '\/api\/signin\/ask' \|\| url\.pathname === '\/api\/signin\/verify' \|\| url\.pathname === '\/api\/signin\/pin'/.test(prog), 'the program does not pass the window\'s calls through');
   assert.ok(!/url\.pathname === '\/api\/entities\/register'/.test(prog), 'the old /api/entities proxy is still there');
   const vendor = fs.readFileSync(path.join(API, 'scripts', 'vendor-till.cjs'), 'utf8');
