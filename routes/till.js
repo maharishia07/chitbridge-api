@@ -261,7 +261,8 @@ async function readItemsSection(snap) {
  * a repeat is a no-op merge; a permanent miss is a stale price nobody notices.
  */
 function snapshotAsk(req) {
-  const readAt = new Date().toISOString(), entity_id = auth.entityOf(req);
+  const readAt = new Date().toISOString();
+  const entity_id = auth.entityOf(req);
   /* ⭐ SNAP-SCREEN: is a TV asking? Decided here, once, from the key — the answer is shaped by screenView at the end */
   const screen = isScreenKey(req.till && req.till.key);
   /* the moment the till last read the shop — anything touched after it is what it does not have */
