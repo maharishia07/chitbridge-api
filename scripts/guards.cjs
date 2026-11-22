@@ -381,6 +381,7 @@ const GUARDS = [
   'year-depreciation-f3.test.cjs', // ⭐ F3 (1128): the year close refuses (depreciation_not_run) until the year's depreciation is run
   'tax-lock-nil-1128.test.cjs', // F4 LEFT (1128): a nil tax close leaves a marker; its lock survives a year reopen
   'year-depreciation-nil-1128.test.cjs', // F3 LEFT (1128): a nil depreciation run writes its marker and passes the year gate
+  'yearclose-stock-warning-1129.test.cjs', // GF-MONEY F3 (1129): a year with stock and no closing stock names closing_stock_missing on the close (a warning, never a gate)
   'acc381-ledger-months.test.cjs', // ACC-381: GET /ledger/:account carries months (server totals per month, hand 30,000 / 20,500, a page keeps them, cost-blind nulls them)
   'acc-new-1-box9.test.cjs', // ⭐ l16-accfix ACC-new-1: VAT201 box 9 counts only entries that carried recoverable VAT (hand 750.00 vs 1,062.50), a reversal nets away; AU G11 unchanged
   'walkd-goods-in-refused.test.cjs', // ⭐ WALK-D D-F-01..05: a goods-in with qty 0/-3/1e12, no or negative cost, a ghost product, no lot on a batch-kept item, an expired lot or a date not YYYY-MM-DD is 400 in words (BAD_QTY, BAD_PRICE, RECEIPT_*); FEFO skips expired lots
