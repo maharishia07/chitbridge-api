@@ -288,31 +288,10 @@ router.post(
        * the request again, through the one reader both sides use.
        */
       const raceRef = refOf(req);
-      if (raceRef && err && err.code === '23505' && /client_ref/.test(String(err.constraint || err.detail || err.message || ''))) {
-        try {
-          const who = entityId(req);
-          const seen = await sameRefLook(who, raceRef);
-          if (seen) {
-            /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — one function both callers share, so this cannot drift from it */
-            const refusal = await replayRefusal(req, who, seen, raceRef);
-            if (refusal) return problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
-            /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
-            return res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
-          }
-        } catch (e) {
-          cbLog.fellBack('chits: failed — carried on without it', e); /* fall through to the ordinary failure — a bad answer here must not hide the real one */
-        }
-      }
-      /* ⭐ AB-F-06: b907's index (one bill number per shop) refused the insert - the same 409 BILL_NUMBER_TAKEN the check gives, naming the holder; if no holder is read, the ordinary failure follows */
-      if (err && err.code === '23505' && /bill_no/.test(String(err.constraint || err.detail || err.message || ''))) {
-        try {
-          const who = entityId(req);
-          await withEntity(who, (db) => require('../lib/bill-number-taken').judge(db, { sender_id: who, business_json: req.body && req.body.business_json, client_ref: raceRef }, { locked: false }));
-        } catch (taken) {
-          const known = require('../lib/knownerr').known(taken);
-          if (known) return problem(req, res, { status: known.status, ...said(known.body, codeOfStatus(known.status)) });
-        }
-      }
+      const raceAnswered = await answerLostRace(req, res, err, raceRef);
+      if (raceAnswered) return;
+      const billNoTaken = await billNumberRaceProblem(req, err, raceRef);
+      if (billNoTaken) return problem(req, res, billNoTaken);
       /* ⭐ a refusal the database made on purpose (b247's population boundary) answers as one — 409, in words — not
          as "Send failed" (lib/knownerr, external review §23) */
       const _known = require('../lib/knownerr').known(err);
@@ -322,6 +301,44 @@ router.post(
     }
   }
 );
+
+/** a unique-index refusal (23505) whose constraint, detail or message names `part` */
+const refusedOnIndex = (err, part) => !!err && err.code === '23505' && part.test(String(err.constraint || err.detail || err.message || ''));
+
+/**
+ * the client_ref race (see the long note in the send route's catch): the same bill sent twice, the database refused the second → true once the answer is sent (the existing chit, or a named collision), else false
+ * and the ordinary failure follows; a bad answer here must not hide the real one
+ */
+async function answerLostRace(req, res, err, raceRef) {
+  if (!raceRef || !refusedOnIndex(err, /client_ref/)) return false;
+  try {
+    const shopId = entityId(req);
+    const seen = await sameRefLook(shopId, raceRef);
+    if (!seen) return false;
+    /* ⚠ THE SAME VERDICT AS THE CHECK ABOVE — one function both callers share, so this cannot drift from it */
+    const refusal = await replayRefusal(req, shopId, seen, raceRef);
+    if (refusal) problem(req, res, { status: 409, ...said(refusal, 'CHIT_CONFLICT') });
+    /* the same bill, sent twice — answer with the chit that exists, exactly as a replay is answered */
+    else res.status(200).json({ ok: true, chit_id: seen.chit_id, duplicate: true, client_ref: raceRef, raced: true });
+    return true;
+  } catch (failure) {
+    cbLog.fellBack('chits: failed — carried on without it', failure); /* fall through to the ordinary failure */
+    return false;
+  }
+}
+
+/** ⭐ AB-F-06: b907's index (one bill number per shop) refused the insert → the same 409 BILL_NUMBER_TAKEN problem the check gives, naming the holder; null when no holder is read (the ordinary failure follows) */
+async function billNumberRaceProblem(req, err, raceRef) {
+  if (!refusedOnIndex(err, /bill_no/)) return null;
+  try {
+    const shopId = entityId(req);
+    await withEntity(shopId, (db) => require('../lib/bill-number-taken').judge(db, { sender_id: shopId, business_json: req.body && req.body.business_json, client_ref: raceRef }, { locked: false }));
+  } catch (taken) {
+    const known = require('../lib/knownerr').known(taken);
+    if (known) return { status: known.status, ...said(known.body, codeOfStatus(known.status)) };
+  }
+  return null;
+}
 
 /** the named send steps, in order; a step that has answered returns truthy and the send stops there. `st` carries what one step hands the next. */
 async function runSendSteps(req, res) {
@@ -897,15 +914,31 @@ function refuseWithdrawnCurrency(business_json) {
  */
 function statedMoneyCarried(business_json, body) {
   /* AJ-F-02 + AP-F-07, one reader: the code stated on the body (currency_code, else currency) and the one inside business_json.currency are ONE statement; an unknown code is a worded 422 (refuseNewCurrency), two different codes are a worded 422 MONEY_CURRENCY_MISMATCH, one stated code is carried into business_json.currency */
-  const given = body && body.currency_code != null && String(body.currency_code).trim() !== '' ? body.currency_code : body && body.currency;
-  if (typeof given !== 'string' || !given.trim()) return business_json;
-  const code = require('../lib/money').refuseNewCurrency(given.trim());
-  const has = business_json && typeof business_json === 'object';
-  const inside = has && business_json.currency ? String(business_json.currency).trim().toUpperCase() : '';
+  const stated = statedCodeOf(body);
+  if (!stated) return business_json;
+  const code = require('../lib/money').refuseNewCurrency(stated);
+  const isObject = business_json && typeof business_json === 'object';
+  const inside = isObject && business_json.currency ? String(business_json.currency).trim().toUpperCase() : '';
   if (inside && inside !== code) throw Object.assign(new Error('This bill names ' + code + ' and also ' + inside + '. Name one currency and send it again.'), { status: 422, code: 'MONEY_CURRENCY_MISMATCH' });
   if (inside) return business_json;
-  return Object.assign(has ? business_json : {}, { currency: code });
+  return Object.assign(isObject ? business_json : {}, { currency: code });
 }
+/** the money code a body states at its top (currency_code, else currency), trimmed; null when it states none */
+function statedCodeOf(body) {
+  const given = body && body.currency_code != null && String(body.currency_code).trim() !== '' ? body.currency_code : body && body.currency;
+  return typeof given === 'string' && given.trim() ? given.trim() : null;
+}
+/** the business data with the stated money carried → { business_json }, or { refusal } for two different currencies (a worded 422, AJ-F-02) */
+function carryStatedMoney(body) {
+  try {
+    return { business_json: statedMoneyCarried(businessJsonOf(body), body) };
+  } catch (stated) {
+    if (!stated || stated.code !== 'MONEY_CURRENCY_MISMATCH') throw stated;
+    return { refusal: { status: 422, ...said({ error: 'Two currencies', code: stated.code, message: stated.message }, codeOfStatus(422)) } };
+  }
+}
+/** the detail page a chit's business data asks for, or undefined */
+const pageAskedOf = (business) => (business && typeof business === 'object' ? business.page : undefined);
 /** what the chit says — purpose, subject, lines, business data, its page and its money */
 async function sendBody(sendState, req, res) {
   // Compose panel omits purpose and sends `subject`/`schema_values` — tolerate that shape.
@@ -916,19 +949,14 @@ async function sendBody(sendState, req, res) {
      ("the one you selected comes as the last record"). Done here because this is where a chit is born;
      mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
-  /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-  let business_json;
-  try {
-    business_json = statedMoneyCarried(businessJsonOf(req.body), req.body);
-  } catch (stated) {
-    if (!stated || stated.code !== 'MONEY_CURRENCY_MISMATCH') throw stated;
-    return problem(req, res, { status: 422, ...said({ error: 'Two currencies', code: stated.code, message: stated.message }, codeOfStatus(422)) }); /* AJ-F-02 */
-  }
+  const carried = carryStatedMoney(req.body);
+  if (carried.refusal) return problem(req, res, carried.refusal); /* AJ-F-02 */
+  const business_json = carried.business_json;
   refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
      refuses (the app falls back to the base page with a note). mint.page() reads the one registry, data/pages.json. */
-  const pageAsked = business_json && typeof business_json === 'object' ? business_json.page : undefined;
+  const pageAsked = pageAskedOf(business_json);
   const pageStamp = mint.page(pageAsked);
   if (!pageStamp.ok) return problem(req, res, { status: 400, ...said({ error: 'Unknown page', code: pageStamp.code, message: pageStamp.message }, 'PAGE_UNKNOWN') });
   /**
@@ -1451,6 +1479,13 @@ function blankRatesToNone(lines) {
  * the line keeps that rate for life. ⚠️ Fails open: no shelf, no rate, the chit still sends. Never touches
  * price or total. Athi (asleep): "complete all on your own" — decision logged in BUILD_LOG.
  */
+/** the seller of a send: the one recipient when it is a plain order (not a counter bill) to exactly one business, else the sender */
+const sellerOfSend = (isPlainOrder, toIds, senderId) => (isPlainOrder && toIds.length === 1 ? toIds[0] : senderId);
+/** an order sent to a seller who is not the sender is in the SELLER's money (DECISIONS 14:50, when this installation knows it): the money code the send then carries */
+async function orderCurrencyOf(sendState, sellerId, senderId) {
+  const sellerCurrency = await sellerMoney(sellerId);
+  return orderMoneyOf({ stated: sendState.business_json && sendState.business_json.currency, seller: sellerCurrency, sender: await sellerMoney(senderId), fallback: sendState.currency_code });
+}
 async function sendSeller(sendState, req, res) {
   const { sender_id, purpose, business_json, receiverDetails } = sendState;
   let { line_items } = sendState;
@@ -1466,11 +1501,8 @@ async function sendSeller(sendState, req, res) {
      customer it has one 'to' recipient — read as an order, the CUSTOMER would have become the seller: their shelf, their
      offers, the shop added to the customer's own customer list. The shop whose counter numbered it sold it. */
   const counterBill = taxCopy.counterIssued(business_json);
-  const sellerId = orderLike && !counterBill && toIds.length === 1 ? toIds[0] : sender_id;
-  if (sellerId !== sender_id) {
-    const sellerCurrency = await sellerMoney(sellerId); /* DECISIONS 14:50: the seller's money, when this installation knows it */
-    sendState.currency_code = orderMoneyOf({ stated: business_json && business_json.currency, seller: sellerCurrency, sender: await sellerMoney(sender_id), fallback: sendState.currency_code });
-  }
+  const sellerId = sellerOfSend(orderLike && !counterBill, toIds, sender_id);
+  if (sellerId !== sender_id) sendState.currency_code = await orderCurrencyOf(sendState, sellerId, sender_id);
   const blankRated = blankRatesToNone(line_items);
   line_items = blankRated.lines;
   try {
@@ -1503,13 +1535,13 @@ async function sendLineRates(sendState, req, res) {
   const business = sendState.business_json || {};
   const shop = { country };
   const note = taxLines.isNoteOf(sendState.purpose);
-  const day = note ? taxLines.againstDayOf(business, sendState.purpose, shop) : taxLines.billDayOf(business, sendState.purpose, new Date(), shop); /* the document's own day: a back-dated bill or a note on an older bill is judged by the menu of ITS day (AP-F critic 1129) */
-  const bad = taxLines.unlistedRateOf(country, sendState.line_items, { day, note, exported: taxLines.exportStatedOf(business) === true });
-  if (!bad) return;
+  const billDay = note ? taxLines.againstDayOf(business, sendState.purpose, shop) : taxLines.billDayOf(business, sendState.purpose, new Date(), shop); /* the document's own day: a back-dated bill or a note on an older bill is judged by the menu of ITS day (AP-F critic 1129) */
+  const unlisted = taxLines.unlistedRateOf(country, sendState.line_items, { day: billDay, note, exported: taxLines.exportStatedOf(business) === true });
+  if (!unlisted) return;
   const word = require('../lib/tax-shelf').taxWordOf(country);
-  const message = 'Line ' + bad.index + ' is at ' + bad.rate + '% ' + word + ', which is not a rate here (' + word + ' is ' + bad.rates.join('% or ') + '%, or none). Nothing was sent. Correct the rate on that line and send again.';
+  const message = 'Line ' + unlisted.index + ' is at ' + unlisted.rate + '% ' + word + ', which is not a rate here (' + word + ' is ' + unlisted.rates.join('% or ') + '%, or none). Nothing was sent. Correct the rate on that line and send again.';
   res.locals.code = 'TAX_RATE_NOT_IN_PACK';
-  return problem(req, res, { status: 422, ...said({ error: 'Tax rate not allowed', code: 'TAX_RATE_NOT_IN_PACK', message, line: bad.index, rate: bad.rate }, 'CHIT_BAD_REQUEST') });
+  return problem(req, res, { status: 422, ...said({ error: 'Tax rate not allowed', code: 'TAX_RATE_NOT_IN_PACK', message, line: unlisted.index, rate: unlisted.rate }, 'CHIT_BAD_REQUEST') });
 }
 
 /** the seller's live offers, when the sender sells — never on a bill already priced (REV-02) */
@@ -5421,6 +5453,20 @@ async function clearPaymentMark(db, req, entity_id) {
   return cleared;
 }
 /**
+ * a copy that takes no Mark-paid here → { voided } or { parts: true }, else null.
+ * FIN-80 (M7a): a withdrawn (voided) or rejected bill takes no payment — stamped before this check, the copy read paid while the books answered { none }.
+ * A counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key).
+ */
+function copyTakesNoPayment(copy) {
+  if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { voided: copy.current_status };
+  const business = copy.business_json || {};
+  return business.payment && Array.isArray(business.payment.parts) ? { parts: true } : null;
+}
+/** amount_minor is the figure; `amount` (major) rides beside it for every screen that reads it, derived exactly in the copy's own currency (nothing when the copy names none) */
+function fillMajorAmount(payment, copy) {
+  if (payment.amount_minor != null && payment.amount == null && copy.currency_code) payment.amount = require('../lib/books-cashflow').fromMinor(payment.amount_minor, copy.currency_code);
+}
+/**
  * the Mark-paid write on the caller's handle: the books first (a refusal throws — nothing marked), then the mark on my copy.
  * → null (no copy) · { parts } (the bill carries its own tender) · { books }
  * An amount above what the bill owes is NOT judged here (FIN-53, Athi 2026-10-29): the books' one rule (`excess`, 409) asks, the
@@ -5430,13 +5476,10 @@ async function markChitPaid(db, press) {
   const { entity_id, chit_id, payment, hooks } = press;
   const copy = await taxCopy.copyOn(db, chit_id, entity_id);
   if (!copy) return null;
-  /* FIN-80 (M7a): a withdrawn (voided) or rejected bill takes no payment — stamped before this check, the copy read paid while the books answered { none } */
-  if (NO_PAYMENT_STATUS.includes(copy.current_status)) return { voided: copy.current_status };
+  const taken = copyTakesNoPayment(copy);
+  if (taken) return taken;
   const copyBusiness = copy.business_json || {};
-  /* a counter bill's tender lives on the bill ({ parts }) and posts with it — this door must not overwrite it (two shapes under one key) */
-  if (copyBusiness.payment && Array.isArray(copyBusiness.payment.parts)) return { parts: true };
-  /* amount_minor is the figure; `amount` (major) rides beside it for every screen that reads it, derived exactly in the copy's own currency (null when the copy names none) */
-  if (payment.amount_minor != null && payment.amount == null && copy.currency_code) payment.amount = require('../lib/books-cashflow').fromMinor(payment.amount_minor, copy.currency_code);
+  fillMajorAmount(payment, copy);
   const books = await hooks.chitPaid(db, entity_id, Object.assign({}, copy, { business_json: Object.assign({}, copyBusiness, { payment }) }), {
     by: payment.by,
     acknowledge: Array.isArray(press.acknowledge) ? press.acknowledge : [] /* a code, or { code, over_minor } — books.acknowledgements reads both */,
@@ -5481,6 +5524,15 @@ function payFailure(req, res, err) {
  */
 /* idem3 (7 Nov): "Mark unpaid" (DELETE below) rides the same gate — a retry answers the first clear and never names the books entries twice; the web sends idem:'attempt' (EP chitUnpay) */
 const payOnce = require('../middleware/idempotency').requireKey();
+/** after a Mark-paid commit: what could not post WAITS, named (books_outbox → Waiting; the retry posts it through the same classify), and my own connector, if one is watching, books the Receipt voucher */
+async function afterPaid(entity_id, chit_id, payment, out, hooks) {
+  if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id, press: 'payment' }, out.books.why, chit_id, 'chit:' + chit_id); /* press: so "Mark unpaid" closes THIS row and never the bill's own wait (FIN-66) */
+  try {
+    require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method });
+  } catch (e) {
+    cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e);
+  }
+}
 // @does A chit id with a payment reference in -> we mark your bill paid and post it to the books once per press -> the paid chit, or 409 if the bill was withdrawn.
 router.post(
   '/:chit_id/payment',
@@ -5505,14 +5557,7 @@ router.post(
       if (!out) return problem(req, res, { status: 404, ...said({ error: 'Not found' }, 'NOT_FOUND') });
       const refusal = paidRefusal(out);
       if (refusal) return problem(req, res, refusal);
-      /* what could not post WAITS, named, after the commit (books_outbox → Waiting; the retry posts it through the same classify) */
-      if (out.books && out.books.queued) await hooks.park(entity_id, { job: 'chit', chit_id, press: 'payment' }, out.books.why, chit_id, 'chit:' + chit_id); /* press: so "Mark unpaid" closes THIS row and never the bill's own wait (FIN-66) */
-      /* my own connector (if one is watching) books the Receipt voucher — the bell rings for ME */
-      try {
-        require('../lib/events').emit([entity_id], { kind: 'paid', id: chit_id, method: payment.method });
-      } catch (e) {
-        cbLog.fellBack('chits POST /:chit_id/payment: the signal was not sent — carried on without it', e);
-      }
+      await afterPaid(entity_id, chit_id, payment, out, hooks);
       /* a replay (the same press, or an older web's second press on one chit) is SAID: the books kept the first — never "recorded" twice */
       const replayed = !!(out.books && out.books.payment && out.books.payment.duplicate);
       res.json({ message: replayed ? 'Already recorded' : 'Payment recorded', replayed, payment, books: out.books });
@@ -5838,16 +5883,8 @@ router.post(
       const result = await withEntity(entity_id, async (db) => {
         /* the ONE message writer (lib/message-post): the copies, then (external) the timeline line, on this transaction */
         return postMessage(db, {
-          subject_type: 'chit',
-          chit_id,
-          message_id: messageId,
-          sender_entity_id: entity_id,
-          sender_display_name: senderName,
-          thread_type,
-          message_text,
-          msg_type: req.body.msg_type,
-          is_dispute: isDispute,
-          dispute_id: disputeId,
+          subject_type: 'chit', chit_id, message_id: messageId, sender_entity_id: entity_id, sender_display_name: senderName,
+          thread_type, message_text, msg_type: req.body.msg_type, is_dispute: isDispute, dispute_id: disputeId,
           line_id: req.body.line_id || null,
           timeline: { display_name, roster: disputeRoster }
         });
@@ -6983,13 +7020,13 @@ async function withdrawOwnCopies(db, req, entity_id, chit_id, actor, reason) {
        told why. Own copies only, as before. */
   const gates = [];
   for (const copy of railStatus.COPIES) {
-    const g = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', actor, { copy });
-    if (g.from) gates.push(g); // a copy I do not hold has nothing to move
+    const copyGate = await railStatus.statusGate(db, entity_id, chit_id, 'cancelled', actor, { copy });
+    if (copyGate.from) gates.push(copyGate); // a copy I do not hold has nothing to move
   }
   const refusedBy = gates.find((item) => !item.ok);
   if (refusedBy) return { refused: refusedBy };
   const moved = [];
-  for (const g of gates) if (await g.write()) moved.push({ copy: g.copy, from: g.from });
+  for (const copyGate of gates) if (await copyGate.write()) moved.push({ copy: copyGate.copy, from: copyGate.from });
   if (!moved.length) return { refused: null, moved, replay: true }; /* RAIL-1128 F5a: a replay moved nothing: no second voided row, no second books call, no second message */
   await db.query(
     `INSERT INTO state_log (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, new_status, detail)
@@ -6997,6 +7034,71 @@ async function withdrawOwnCopies(db, req, entity_id, chit_id, actor, reason) {
     [chit_id, entity_id, req.identity.identity_id, req.identity.display_name, `Withdrawn: ${reason}`]
   ); // own timeline only
   return { refused: null, moved, books: await require('../lib/books-hooks').chitWithdrawn(db, entity_id, chit_id, reason, req.identity.identity_id) }; // H3
+}
+/** the flag on each recipient's copy that a cancel was requested, and the same stamp across installations: `told` gets the cross-installation answer pushed on; never loses the withdrawal itself */
+async function flagCancelRequested(req, entity_id, chit_id, reason, told) {
+  /**
+   * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
+   * the order right away, so we need a flag to show cancel requested."*
+   *
+   * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
+   * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
+   * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
+   * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
+   *
+   * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
+   * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
+   * what the rail does. What it must never do is decide FOR them:
+   *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
+   *     current_status       — their answer. Only they may write it.            ❌ untouched
+   * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
+   *
+   * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
+   * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
+   * somebody who had been asked.
+   *
+   * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
+   *
+   * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
+   * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
+   * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
+   * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
+   * states, the column reaching the payload) and the join was dead.
+   *
+   * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
+   * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
+   * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
+   * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
+   * "matches nothing".**
+   *
+   * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
+   * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
+   * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
+   * which is exactly what a per-copy rail does.
+   *
+   * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
+   * so nothing here needs to read across a boundary in order to write across one.
+   *
+   * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
+   * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
+   * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
+   */
+  try {
+    if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
+      const hdr = await withEntity(entity_id, (db) =>
+        db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
+      );
+      const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || []).map((item) => item && item.entity_id).filter((id) => id && id !== entity_id);
+      /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
+           timestamp for no reason. */
+      for (const rid of [...new Set(parties)]) {
+        await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
+      }
+      told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
+    }
+  } catch (e) {
+    console.error('cancel flag:', e.message);
+  }
 }
 // PUT /chits/:chit_id/void — recorded withdrawal by the SENDER; works after acceptance.
 //
@@ -7047,68 +7149,7 @@ router.put('/:chit_id/void', auth, ...checked('PUT /:chit_id/void'), trimmedBody
       message_text: `[cancel requested] ${reason}`
     });
 
-    /**
-     * ⭐⭐ AND A FLAG ON THEIR COPY, NOT ONLY A MESSAGE (b195). Athi, 2026-09-02: *"it has to be flagged against
-     * the order right away, so we need a flag to show cancel requested."*
-     *
-     * The message alone lands in the Messages tab, behind a click, in a list with everything else — so the one
-     * fact that changes what a supplier should do next arrived looking like chatter. It could not be derived on
-     * the read path either: `msg_type` is CHECK-constrained to eight values, none meaning "cancel request", so
-     * the only marker was a PREFIX IN THE TEXT and every screen would have had to string-match message bodies.
-     *
-     * ⚠️⚠️ THIS IS NOT THE CROSS-ENTITY WRITE THIS ROUTE FORBIDS, and the line is worth being exact about.
-     * `postMessageCopies` directly above ALREADY writes into every recipient's copy — delivering INTO a copy is
-     * what the rail does. What it must never do is decide FOR them:
-     *     cancel_requested_at  — someone has asked. Inbound. Written here.        ✅
-     *     current_status       — their answer. Only they may write it.            ❌ untouched
-     * A supplier who cut the stock at 6am still refuses by leaving their status where it is.
-     *
-     * ⚠️ SCOPED TO THE OTHER PARTICIPANTS: `entity_id <> $2`. The sender's own row is already terminal-void
-     * from the UPDATE above, and stamping "cancel requested" on it as well would make the sender look like
-     * somebody who had been asked.
-     *
-     * ⚠️⚠️ ONE CONTEXT PER RECIPIENT — AND MY FIRST VERSION USED `withEntity(null)` AND WROTE NOTHING.
-     *
-     * The b49 policy on chit_status is `entity_id = NULLIF(current_setting('app.current_entity', true), '')::uuid`.
-     * With no context that expression is NULL, `entity_id = NULL` is never true, and the UPDATE matched ZERO
-     * rows — inside a catch, so nothing was raised and the withdrawal reported success. The flag simply never
-     * existed. ⭐ THE END-TO-END SPEC IS WHAT CAUGHT IT: every part was green (the button, the banner's render
-     * states, the column reaching the payload) and the join was dead.
-     *
-     * ⚠️ AND THE COMMENT I WROTE ARGUED FOR THE BUG — it said a null context was needed because the sender's
-     * context would filter the rows. A null context filters EVERYTHING. This is the same RLS-with-no-usable-
-     * context blackout diagnosed for the register earlier in this same session; writing it a second time, one
-     * day later, is why the rule is worth stating plainly: **RLS with no context is not "unrestricted", it is
-     * "matches nothing".**
-     *
-     * ⭐ The rail already had the answer beside this line: `postMessageCopies` reaches every copy through the
-     * SECURITY DEFINER `chit_message_deliver`. Without a definer for this, the honest equivalent is to set each
-     * recipient's own context and write their row — the server acting as delivery agent, one copy at a time,
-     * which is exactly what a per-copy rail does.
-     *
-     * ⚠️ Recipients come from the SENDER'S OWN header (`all_recipients`), readable under the sender's context —
-     * so nothing here needs to read across a boundary in order to write across one.
-     *
-     * ⚠️ GUARDED BY hasColumn so the deploy can precede the migration in either order, and wrapped so a failure
-     * here can never lose the withdrawal itself: the sender's copy and the message are already committed, and
-     * an un-flagged request is a smaller fault than a withdrawal that reports failure after doing the work.
-     */
-    try {
-      if (await schema.hasColumn('chit_status', 'cancel_requested_at')) {
-        const hdr = await withEntity(entity_id, (db) =>
-          db.query(`SELECT all_recipients FROM chit_header WHERE chit_id = $1 AND entity_id = $2`, [chit_id, entity_id])
-        );
-        const parties = ((hdr.rows[0] && hdr.rows[0].all_recipients) || []).map((item) => item && item.entity_id).filter((id) => id && id !== entity_id);
-        /* De-duplicated: one entity may appear as both `to` and `cc`, and stamping twice would move the
-             timestamp for no reason. */
-        for (const rid of [...new Set(parties)]) {
-          await stampCancelRequested(rid, chit_id, req.identity.display_name, reason);
-        }
-        told.push(await ctpReturn.onCancelRequested(entity_id, chit_id, { by_name: req.identity.display_name, reason })); // RAIL-106: the flag on a copy on another installation is set there, by the same stamp
-      }
-    } catch (e) {
-      console.error('cancel flag:', e.message);
-    }
+    await flagCancelRequested(req, entity_id, chit_id, reason, told); /* b195: a flag on their copy, not only a message (the long note is on the function) */
 
     /* The response says what was WRITTEN. Answering 'void' while storing 'cancelled' would hand every caller
          the private word this change exists to retire. */

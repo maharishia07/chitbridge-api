@@ -74,6 +74,20 @@ function cellOf(chain, req) {
 const WORD = { adviser: { read: 'reads', door: 'door', allow: 'yes', deny: '-' }, auditor: { read: 'reads', allow: 'yes', deny: '-' } };
 const show = (cell) => (cell === true ? 'yes' : cell === false ? '-' : String(cell));
 
+/** whether the contract's declared staff answer lets this seat in: the staff level, or (for the accountant) an editor hat; the narrowed bank write gate is owner and the shop's accountant only */
+function seatMayByContract(row, seat, narrowed) {
+  const byLevel = !narrowed && matrix.allowedFor(row.seats, 'staff', seat.level);
+  return Boolean(byLevel || (seat.key === 'accountant' && matrix.allowedFor(row.seats, 'staff', 'editor'))); /* a manager hat that can edit is also an editor */
+}
+/** the problem line where the gates and the contract disagree for one seat, else null; a flag-dependent cell (Sees costs, switched by the owner) is the owner's choice, not a seat's right: not compared */
+function seatDisagreement(key, row, chain, seat, cell) {
+  if (String(cell).startsWith('needs')) return null;
+  const got = cell !== false && !String(cell).startsWith('?');
+  const should = seatMayByContract(row, seat, chain.includes('bankWriter')); /* the bank write gate is narrower than the editor level the role matrix asks of the row */
+  if (should === got) return null;
+  return key + ': the contract declares staff "' + row.seats.staff + '" (' + seat.key + ' ' + (should ? 'may' : 'may not') + ') but the gates say ' + (got ? 'may' : 'may not');
+}
+
 /** { rows, problems }: a row per route of the books contract; a problem is a gate the tool does not know, or a declared staff answer that disagrees with the gates */
 function build() {
   const chains = chainOf(['books', 'books-events-batch'].map((name) => fs.readFileSync(path.join(root, 'routes', name + '.js'), 'utf8')).join('\n')); /* the books routes and the batch door that moved out of them (1129): one gate-chain scan */
@@ -84,12 +98,8 @@ function build() {
     const cells = SEATS.map((seat) => cellOf(chain, seat.req));
     cells.filter((cell) => String(cell).startsWith('?')).forEach((cell) => problems.push(key + ': gate "' + String(cell).slice(1) + '" is not taught to tools/seat-matrix.cjs'));
     SEATS.slice(1).forEach((seat, index) => {
-      const cell = cells[index + 1];
-      if (String(cell).startsWith('needs')) return; /* a flag-dependent cell (Sees costs, switched by the owner) is the owner's choice, not a seat's right: not compared */
-      const got = cell !== false && !String(cell).startsWith('?');
-      const narrowed = chain.includes('bankWriter'); /* the bank write gate is narrower than the editor level the role matrix asks of the row: owner and the shop's accountant only */
-      const should = !narrowed && matrix.allowedFor(row.seats, 'staff', seat.level) || ((seat.key === 'accountant' || (narrowed && seat.key === 'accountant')) && matrix.allowedFor(row.seats, 'staff', 'editor')); /* a manager hat that can edit is also an editor */
-      if (should !== got) problems.push(key + ': the contract declares staff "' + row.seats.staff + '" (' + seat.key + ' ' + (should ? 'may' : 'may not') + ') but the gates say ' + (got ? 'may' : 'may not'));
+      const problem = seatDisagreement(key, row, chain, seat, cells[index + 1]);
+      if (problem) problems.push(problem);
     });
     rows.push({ key, summary: row.summary.replace(/\s*\(owner\)$/, ''), cells, adviser: WORD.adviser[row.seats.adviser], auditor: WORD.auditor[row.seats.auditor], chain: chains[key] ? chain.join(' > ') : '(contract) ' + chain.join(' > ') });
   });

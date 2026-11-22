@@ -24,7 +24,7 @@ function sourceOf(name) {
 }
 const ctx = { esc: String, money: (x) => 'M' + Math.round(x * 100), rmoney: (x) => Math.round(Number(x) * 100) / 100, tillStamp: () => ({ id: 'C1' }), slipHeadHTML: () => '', creditNoteTitle: () => 'CREDIT NOTE', shopPack: () => null, cbQuiet: () => {}, slipCreditNoteTaxHTML: () => '', slipRowHTML: () => '', SLIP_DASH: '<hr>', counterName: () => 'C1', atShop: () => 'x', retTaxRowsHTML: () => '' };
 vm.createContext(ctx);
-vm.runInContext(['retOriginalOf', 'chitOfCN', 'retSlipHTML', 'slipTitleHTML', 'creditNoteTitleLines'].map(sourceOf).join('\n'), ctx);
+vm.runInContext(['firstStated', 'retOriginalOf', 'chitOfCN', 'retSlipHTML', 'retSlipAgainstHTML', 'retSlipLineHTML', 'retSlipKeptHTML', 'slipTitleHTML', 'creditNoteTitleLines'].map(sourceOf).join('\n'), ctx);
 let pass = 0, fail = 0;
 const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + name); } else { fail++; console.log('   FAIL ' + name + (why ? '\n          ' + why : '')); } };
 

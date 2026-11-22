@@ -122,6 +122,36 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
   }
 });
 
+/** LV-17: the party's chit bills → { n, last } (the newest created_at as an ISO string, or null) */
+function billsInChits(rows) {
+  const bills = rows.filter((row) => row.doc_kind === 'bill');
+  const last = bills.map((row) => crm.iso(row.created_at)).reduce((latest, at) => (!latest || at > latest ? at : latest), null);
+  return { n: bills.length, last };
+}
+
+/** the ledger's bills for this party on the caller's handle, a missing table read as none → { n, last } */
+async function billsInLedger(h, owner, partyId) {
+  const led = await require('../db').trySavepoint(
+    h,
+    () => h.query(`SELECT count(*)::int AS n, max(created_at) AS last FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill'`, [owner, partyId]),
+    { rows: [] }
+  );
+  const found = led.rows[0];
+  return found ? { n: Number(found.n) || 0, last: found.last ? crm.iso(found.last) : null } : { n: 0, last: null };
+}
+
+/** a customer's programme points (reward-store, the same reader the customer's own pane uses), or null: not a customer, no programme, or the table not there yet */
+async function pointsOf(owner, party) {
+  if (!party.roles.customer) return null;
+  try {
+    const balance = await require('../lib/reward-store').balance(owner, { scheme: 'identity', value: party.party_id }, withEntity);
+    return balance.programme ? { programme: balance.programme.name, points: balance.points, worth: balance.worth } : null;
+  } catch (e) {
+    if (!(e && e.code === '42P01')) throw e;
+    return null;
+  }
+}
+
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
 // @does A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.
 router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (req, res) => {
@@ -133,7 +163,7 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
     if (!found) return problem(req, res, { status: 404, ...notYourParty() });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
-    let chitBills = 0, chitLast = null; /* LV-17: the party's bills counted by the server, never from a page of the timeline */
+    let chitBills = { n: 0, last: null }; /* LV-17: the party's bills counted by the server, never from a page of the timeline */
     /* the relationship: select.rows + measure.scorecard, exactly what /relationships/scorecard/:id answers — a local party has no chits */
     if (p.kind !== 'local') {
       const select = require('../lib/select'),
@@ -143,39 +173,17 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
       const rows = await select.rows(owner, { counterparty_id: p.party_id, limit: 5000 });
       const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
       rec.relationship = { relationship: card.relationship, completion: card.completion };
-      rows.forEach((row) => {
-        if (row.doc_kind !== 'bill') return;
-        chitBills++;
-        const at = crm.iso(row.created_at);
-        if (!chitLast || at > chitLast) chitLast = at;
-      });
+      chitBills = billsInChits(rows);
     } else rec.relationship = null;
     /* points: a customer programme (reward-store, the same reader the customer's own pane uses) */
-    rec.points = null;
-    if (p.roles.customer) {
-      try {
-        const b = await require('../lib/reward-store').balance(owner, { scheme: 'identity', value: p.party_id }, withEntity);
-        if (b.programme) rec.points = { programme: b.programme.name, points: b.points, worth: b.worth };
-      } catch (e) {
-        if (!(e && e.code === '42P01')) throw e;
-      }
-    }
+    rec.points = await pointsOf(owner, p);
     /* the follow-ups: soft — before b276 the record is complete without them and says so */
     rec.migrated = true;
     rec.followups = [];
-    let ledBills = 0, ledLast = null;
+    let ledgerBills = { n: 0, last: null };
     try {
       rec.followups = await withEntity(owner, async (h) => {
-        /* the ledger's bills for this party in the SAME transaction (one trip), a missing table read as none */
-        const led = await require('../db').trySavepoint(
-          h,
-          () => h.query(`SELECT count(*)::int AS n, max(created_at) AS last FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill'`, [owner, p.party_id]),
-          { rows: [] }
-        );
-        if (led.rows[0]) {
-          ledBills = Number(led.rows[0].n) || 0;
-          ledLast = led.rows[0].last ? crm.iso(led.rows[0].last) : null;
-        }
+        ledgerBills = await billsInLedger(h, owner, p.party_id); /* in the SAME transaction (one trip) */
         return F.list(h, owner, { party_id: p.party_id });
       });
     } catch (e) {
@@ -189,7 +197,7 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
         may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
       });
     /* the bills: the dearer of the chit bills and the ledger bills (the same rule the record always used on a page of the timeline), now over the WHOLE history */
-    rec.bills = { n: Math.max(chitBills, ledBills), last_at: [chitLast, ledLast].filter(Boolean).sort().pop() || null };
+    rec.bills = { n: Math.max(chitBills.n, ledgerBills.n), last_at: [chitBills.last, ledgerBills.last].filter(Boolean).sort().pop() || null };
     await crm.withUnbilled([rec], owner, byOf(req), blind); /* CRM-D7: the SAME figure the list row carries (the one sum, work-rows.sumUnbilled); absent when the shop is truncated, hidden whole for a blind reader */
     rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     /* S34: the party's keys (lib/crm.js assemble, in its order: a supplier-only party has no customer or lead), then what this record adds */
@@ -226,8 +234,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
     const beforeIso = new Date(before).toISOString();
     const entries = [];
     let migrated = true;
-    const costView = require('../lib/cost-view'),
-      noMoneyReader = await noMoney(req), /* Y-F-05 */
+    const costView = require('../lib/cost-view'), noMoneyReader = await noMoney(req), /* Y-F-05 */
       blind = await costView.blindOf(req, owner); /* RAIL-146h: ONE can_see_costs read (the owner pays none); a blind reader's cost-side money is null */
     let sides = null;
     /* chits (+ the latest external message of each) and disputes — through select.rows, the scorecard's own selector */

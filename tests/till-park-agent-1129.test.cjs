@@ -30,7 +30,7 @@ function lift(name) {
 }
 const liftLine = (re) => { const m = SRC.match(re); assert.ok(m, 'missing ' + re); return m[0] + '\n'; };
 const BODY = ['readQueueEntries', 'parseQueueLine', 'removeSentFromQueue', 'replaceQueueLine', 'parkEntry', 'parkedList', 'parkedAnswer', 'receivedAlready',
-  'refusalParks', 'refusalWords', 'whyNot', 'pointsBody', 'logPointsAnswer', 'postPointsFor', 'drain'].map(lift).join('')
+  'refusalParks', 'refusalWords', 'titleAndDetail', 'settleRefusal', 'noteWhyNot', 'whyNot', 'pointsBody', 'logPointsAnswer', 'postPointsFor', 'drain'].map(lift).join('')
   + liftLine(/\nconst readLines = [^\n]*;/) + liftLine(/\nconst appendLine = [^\n]*;/) + liftLine(/\nconst RETRY_CODES = [^\n]*;/) + liftLine(/\nconst DUPLICATE_CODES = [^\n]*;/) + liftLine(/\nconst TORN_SAID = [^\n]*;/);
 
 function counter(answer) {

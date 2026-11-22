@@ -3748,13 +3748,17 @@ function claimWords(claim, currency) {
   return Object.assign({}, claim, { gross_minor: currency ? minor : null, currency: currency || null, words: 'Summary says more than its bills: ' + amount + bills + ' not received' });
 }
 
-/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at, unless the summary claims more than its bills (claims gets the gap) */
-function liveSummaries(todays, filed, today, claims, currency) {
-  const rollup = require('../lib/rollup');
-  const filedBy = new Map(); /* newest filing of today per counter (filed rows arrive newest first) */
+/** newest filing of today per counter (filed rows arrive newest first) */
+function newestFilingOfToday(filed, today) {
+  const filedBy = new Map();
   for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
+  return filedBy;
+}
+
+/** today's counter bills split per counter: byTill = the bills not in a filing yet (to be folded), inside = the received bills each filing holds, to test its claim against */
+function splitTodaysBills(todays, filedBy) {
   const byTill = new Map();
-  const inside = new Map(); /* the received bills each filing holds, to test its claim against */
+  const inside = new Map();
   for (const row of distinctBills(todays.filter(isCounterTakings))) {
     const bill = billRow(row);
     const till = tillKeyOf(bill.till);
@@ -3763,15 +3767,32 @@ function liveSummaries(todays, filed, today, claims, currency) {
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
+  return { byTill, inside };
+}
+
+/** the counters whose filed summary claims more than its bills: each gets a claim pushed on claims and its bills kept apart; a counter with no new bills still gets a (empty) group so its day reads from the bills received */
+function noteOverClaims(split, filedBy, today, claims, currency) {
+  const rollup = require('../lib/rollup');
   const overClaimed = new Map();
   for (const [till, filing] of claims ? filedBy : []) { /* no claims list = the bills could not all be read (live arm full): no judgement */
-    const gap = claimGap(filing.totals || {}, rollup.totals(inside.get(till) || []), currency);
-    if (!gap) continue;
-    overClaimed.set(till, inside.get(till) || []);
-    if (!byTill.has(till)) byTill.set(till, { till: filing.till, rows: [] });
-    claims.push({ key: today, till: { id: (filing.till || {}).id || null, name: (filing.till || {}).name || null }, ...gap });
+    const received = split.inside.get(till) || [];
+    const claimedGap = claimGap(filing.totals || {}, rollup.totals(received), currency);
+    if (!claimedGap) continue;
+    overClaimed.set(till, received);
+    if (!split.byTill.has(till)) split.byTill.set(till, { till: filing.till, rows: [] });
+    const filedTill = filing.till || {};
+    claims.push({ key: today, till: { id: filedTill.id || null, name: filedTill.name || null }, ...claimedGap });
   }
-  return Array.from(byTill.entries()).map(([till, group]) => {
+  return overClaimed;
+}
+
+/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at, unless the summary claims more than its bills (claims gets the gap) */
+function liveSummaries(todays, filed, today, claims, currency) {
+  const rollup = require('../lib/rollup');
+  const filedBy = newestFilingOfToday(filed, today);
+  const split = splitTodaysBills(todays, filedBy);
+  const overClaimed = noteOverClaims(split, filedBy, today, claims, currency);
+  return Array.from(split.byTill.entries()).map(([till, group]) => {
     const filing = overClaimed.has(till) ? null : filedBy.get(till); /* a claim beyond its bills is not folded in: the day reads from the bills received */
     const parts = rollup.totals(overClaimed.has(till) ? overClaimed.get(till).concat(group.rows) : group.rows);
     return rollup.summary('day', today, filing ? rollup.fold([filing.totals, parts]) : parts, { till: group.till, at: filing ? filing.summarised_at : new Date().toISOString() });
@@ -3892,11 +3913,12 @@ function billRow(row) {
 /** the bill's number, its moment, its customer and the counter and person that billed it */
 function billWho(row, business) {
   const till = business.till || {};
+  const customer = business.customer || {};
   return {
     no: business.bill_no || null,
     at: business.billed_at || row.created_at,
-    customer: (business.customer && business.customer.name) || 'Walk-in',
-    customer_id: (business.customer && business.customer.identity_id) || null, /* Y-F-01: the party the bill was made out to, so a return can be taken off what they owe */
+    customer: customer.name || 'Walk-in',
+    customer_id: customer.identity_id || null, /* Y-F-01: the party the bill was made out to, so a return can be taken off what they owe */
     by: till.by || null,
     till: { id: till.id || null, name: till.name || null }
   };

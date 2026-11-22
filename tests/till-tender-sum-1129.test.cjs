@@ -53,7 +53,7 @@ ok('finish() stops on a line with no tax answer BEFORE the tender is read, and o
   assert.ok(a > 0 && b > a && c > b && d > c, [a, b, c, d].join(','));
 });
 ok('a refusal that cannot change (TAX_LINE_UNAVAILABLE, TENDER_SUM_MISMATCH) is held, not retried', () => assert.ok(/var NEVER_OK = \[[^\]]*'TAX_LINE_UNAVAILABLE'[^\]]*'TENDER_SUM_MISMATCH'/.test(HTML)));
-ok('the warn row uses the sentence', () => assert.ok(HTML.includes("billWarnLine('norate', noTaxAnswerWords(un)")));
+ok('the warn row uses the sentence', () => assert.ok(HTML.includes("billWarnLine('norate', noTaxAnswerWords(noRateNames)")));
 ok('P-F-06: the till asks for no invoice block when the snapshot says the shop has none (invoice_blocks false); the snapshot carries it from lease.leasesFor', () => {
   assert.ok(HTML.split(String.fromCharCode(10)).some((l) => l.startsWith("function leaseApplies(tag)") && l.includes("invoice_blocks === false")));
   assert.ok(fs.readFileSync(path.join(__dirname, '../routes/till.js'), 'latin1').includes('invoice_blocks: invoiceLease.leasesFor(country)'));

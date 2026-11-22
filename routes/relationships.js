@@ -157,6 +157,12 @@ function sellerOfBillAnswer(done, fields) {
   const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
   return { message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: fields.kind, category: fields.category, nickname: fields.nickname, notes: fields.notes, preferred: fields.preferred }, books: done.books };
 }
+/** adds the seller of this bill as a supplier and posts the parked bill; `fields` = { kind, category, nickname, notes, preferred } */
+async function addSellerOfBill(req, res, owner, forBill, fields) {
+  const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, fields);
+  if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
+  return res.json(sellerOfBillAnswer(done, fields));
+}
 /** the answer of adding a supplier by name only (off the rail): `added` is addLocalSupplier's result, `localNo` its party number */
 function localSupplierAnswer(added, localNo, fields) {
   const local = added.local;
@@ -238,11 +244,7 @@ router.post(
         return problem(req, res, { status: 400, ...words.needSupplierParty() });
 
       /* ⭐ AE-F-19 · ADD THE SELLER OF THIS BILL AND POST IT: the seller's own key (the sender of my received copy), never a minted twin of the same name; then the parked bill posts */
-      if (forBill) {
-        const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, { kind, category, nickname, notes, preferred });
-        if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
-        return res.json(sellerOfBillAnswer(done, { kind, category, nickname, notes, preferred }));
-      }
+      if (forBill) return addSellerOfBill(req, res, owner, forBill, { kind, category, nickname, notes, preferred });
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
          user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add

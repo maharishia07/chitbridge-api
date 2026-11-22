@@ -21,7 +21,7 @@ function grab(name) {
 const ctx = { isCounterTakings: require(path.join(root, 'lib', 'till-credit-note-money')).isCounterTakings, require: (m) => require(path.join(root, m.replace(/^\.\.\//, ''))), Date, Array, Set, Map, Math, Number, Object };
 vm.createContext(ctx);
 ctx.billRow = (row) => ({ no: row.business_json.bill_no, till: { id: row.business_json.till.id, name: null }, kind: 'sale', total: row.total, payments: [{ how: 'cash', amount: row.total }], refunds: [] });
-vm.runInContext(['engineRow', 'tillKeyOf', 'rungAt', 'receivedAt'].map((n) => src.match(new RegExp('^const ' + n + ' = .*$', 'm'))[0]).concat(['distinctBills', 'inFiling', 'claimGap', 'claimWords', 'liveSummaries'].map(grab)).join('\n') + '\nthis.liveSummaries = liveSummaries; this.claimWords = claimWords;', ctx);
+vm.runInContext(['engineRow', 'tillKeyOf', 'rungAt', 'receivedAt'].map((n) => src.match(new RegExp('^const ' + n + ' = .*$', 'm'))[0]).concat(['distinctBills', 'inFiling', 'claimGap', 'claimWords', 'newestFilingOfToday', 'splitTodaysBills', 'noteOverClaims', 'liveSummaries'].map(grab)).join('\n') + '\nthis.liveSummaries = liveSummaries; this.claimWords = claimWords;', ctx);
 const R = require(path.join(root, 'lib', 'rollup.js'));
 const day = '2026-11-21', filedAt = '2026-11-21T10:00:00.000Z';
 const bill = (no, total, till) => ({ chit_id: no, created_at: '2026-11-21T09:00:00.000Z', total, business_json: { bill_no: no, billed_at: '2026-11-21T08:00:00.000Z', till: { id: till } } });

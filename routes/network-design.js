@@ -38,6 +38,24 @@ const checked = (route) => schemaValidate(contract.design.operationFor(route), c
 const MAX_NODES = 500; // LENS-SEC 1129: no plan limit names a size, so a named cap: a real chain is tens to a few hundred businesses, and each node is a mint + a tree row in one build transaction
 const overNodes = (draft) => draft && Array.isArray(draft.nodes) && draft.nodes.length > MAX_NODES;
 const MAX_BYTES = 2_000_000; // a design is a modest JSON tree; cap so this never becomes a document store
+/** the problem for a draft that cannot be checked (not an object, over the byte cap, over the node cap), or null; an absent draft is fine */
+function draftRefusal(draft) {
+  if (draft !== undefined && draft !== null && (typeof draft !== 'object' || Array.isArray(draft))) return { status: 400, ...contract.words.draftNotObject() };
+  if (draft && Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) return { status: 413, ...contract.words.tooLarge(MAX_BYTES) };
+  return overNodes(draft) ? { status: 413, ...contract.words.tooManyNodes(MAX_NODES) } : null;
+}
+/** the problem for the nodes a build would mint: over the node cap (413) or none designed (400), else null */
+function buildNodesRefusal(nodes) {
+  if (nodes.length > MAX_NODES) return { status: 413, ...contract.words.tooManyNodes(MAX_NODES) };
+  return nodes.length ? null : { status: 400, ...contract.words.nothingDesigned() };
+}
+/** the signed-in business's row for a tree read, or the problem to answer: the account cannot be read (404) or no longer stands in the tree (403) -> { meRow } | { stop } */
+async function placeInTree(me) {
+  const meRow = await placeOf(me);
+  if (!meRow) return { stop: { status: 404, ...contract.words.accountUnread() } };
+  if (!(await membership.standsInTree(meRow.bridge_id))) return { stop: { status: 403, ...contract.words.memberSuspended() } };
+  return { meRow };
+}
 // Rows returned by the single-query network search (b122). Generous enough that a real search is whole, bounded
 // so one careless "a" cannot pull a 20,000-row catalogue through the API. Hitting it is REPORTED, never hidden.
 const SINGLE_LIMIT = 200;
@@ -161,23 +179,14 @@ router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
     const body = req.body || {};
     const sample = body.sample === true;
     let draft = body.draft;
-    if (draft !== undefined && draft !== null && (typeof draft !== 'object' || Array.isArray(draft))) {
-      return problem(req, res, { status: 400, ...contract.words.draftNotObject() });
-    }
-    if (draft && Buffer.byteLength(JSON.stringify(draft)) > MAX_BYTES) {
-      return problem(req, res, { status: 413, ...contract.words.tooLarge(MAX_BYTES) });
-    }
-    if (overNodes(draft)) return problem(req, res, { status: 413, ...contract.words.tooManyNodes(MAX_NODES) });
+    const refused = draftRefusal(draft);
+    if (refused) return problem(req, res, refused);
     if (!draft && !sample) draft = await run.designOf(me);
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
-    let rootHandle = String(body.root_handle || '')
-      .trim()
-      .toLowerCase();
+    let rootHandle = String(body.root_handle || '').trim().toLowerCase();
     if (!rootHandle && !sample) {
       const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [me]);
-      rootHandle = String((r.rows[0] && r.rows[0].user_id) || '')
-        .trim()
-        .toLowerCase();
+      rootHandle = String((r.rows[0] && r.rows[0].user_id) || '').trim().toLowerCase();
     }
     if (!rootHandle) rootHandle = 'sample';
     const taken = !sample && handleLib.check(rootHandle).ok ? await run.takenUnder(rootHandle) : [];
@@ -216,10 +225,8 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
     // ── 2 · THE DESIGN
     const draft = await run.designOf(me);
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
-    if (nodes.length > MAX_NODES) return problem(req, res, { status: 413, ...contract.words.tooManyNodes(MAX_NODES) });
-    if (!nodes.length) {
-      return problem(req, res, { status: 400, ...contract.words.nothingDesigned() });
-    }
+    const nodesProblem = buildNodesRefusal(nodes);
+    if (nodesProblem) return problem(req, res, nodesProblem);
     const taken = await run.takenUnder(rootHandle);
     const live = await run.liveOf(nodes);
 
@@ -246,19 +253,7 @@ router.post('/build', auth, checked('POST /build'), async (req, res) => {
      */
 
     if (dryRun) {
-      return res.json({
-        ok: true,
-        dry_run: true,
-        root: rootHandle,
-        root_claimed: rootClaimed,
-        create: plan.create,
-        update: plan.update,
-        invite: plan.invite,
-        skip: plan.skip,
-        problems: plan.problems,
-        notes,
-        counts: plan.counts
-      });
+      return res.json({ ok: true, dry_run: true, root: rootHandle, root_claimed: rootClaimed, create: plan.create, update: plan.update, invite: plan.invite, skip: plan.skip, problems: plan.problems, notes, counts: plan.counts });
     }
     if (!plan.create.length && !plan.update.length && !plan.invite.length) {
       return res.json({
@@ -404,9 +399,9 @@ async function mapLimit(items, limit, fn) {
 router.get('/stores', auth, async (req, res) => {
   try {
     const me = auth.entityOf(req);
-    const meRow = await placeOf(me);
-    if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
-    if (!(await membership.standsInTree(meRow.bridge_id))) return problem(req, res, { status: 403, ...contract.words.memberSuspended() });
+    const place = await placeInTree(me);
+    if (place.stop) return problem(req, res, place.stop);
+    const { meRow } = place;
 
     const { visible, truncated } = await visibleStores(meRow);
     if (!visible.length) return res.json({ stores: [], not_in_network: true });
@@ -445,13 +440,11 @@ router.get('/availability', auth, checked('GET /availability'), async (req, res)
   try {
     const me = auth.entityOf(req);
     const text = textOf(req.query.q);
-    if (text.length < 2) {
-      return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
-    }
+    if (text.length < 2) return problem(req, res, { status: 400, ...contract.words.searchTooShort() });
 
-    const meRow = await placeOf(me);
-    if (!meRow) return problem(req, res, { status: 404, ...contract.words.accountUnread() });
-    if (!(await membership.standsInTree(meRow.bridge_id))) return problem(req, res, { status: 403, ...contract.words.memberSuspended() });
+    const place = await placeInTree(me);
+    if (place.stop) return problem(req, res, place.stop);
+    const { meRow } = place;
 
     // Everyone under MY root, at any depth — one query, whatever the shape of the tree.
     const members = await membership.treeOf(meRow.bridge_id);

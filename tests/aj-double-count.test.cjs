@@ -23,7 +23,7 @@ const ctx = { isCounterTakings: require(path.join(root, 'lib', 'till-credit-note
 vm.createContext(ctx);
 const billRow = (row) => ({ no: row.business_json.bill_no, till: { id: row.business_json.till.id, name: null }, kind: 'sale', total: row.total, payments: [{ how: 'cash', amount: row.total }], refunds: [] });
 ctx.billRow = billRow;
-vm.runInContext(['engineRow', 'tillKeyOf', 'rungAt', 'receivedAt'].map((n) => { const m = src.match(new RegExp('^const ' + n + ' = .*$', 'm')); return m ? m[0] : grab(n); }).concat(['distinctBills', 'inFiling', 'claimGap', 'liveSummaries'].map(grab)).join('\n') + '\nthis.liveSummaries = liveSummaries;', ctx);
+vm.runInContext(['engineRow', 'tillKeyOf', 'rungAt', 'receivedAt'].map((n) => { const m = src.match(new RegExp('^const ' + n + ' = .*$', 'm')); return m ? m[0] : grab(n); }).concat(['distinctBills', 'inFiling', 'claimGap', 'newestFilingOfToday', 'splitTodaysBills', 'noteOverClaims', 'liveSummaries'].map(grab)).join('\n') + '\nthis.liveSummaries = liveSummaries;', ctx);
 const R = require(path.join(root, 'lib', 'rollup.js'));
 const day = '2026-11-21', filedAt = '2026-11-21T10:00:00.000Z';
 const bill = (no, total, recv, till) => ({ chit_id: no, created_at: recv, total, business_json: { bill_no: no, billed_at: '2026-11-21T08:00:00.000Z', till: { id: till || 'C2' } } });
@@ -58,7 +58,7 @@ ok('another counter\'s bill with the same number is not inside this counter\'s s
   assert.strictEqual(got.length, 1); assert.strictEqual(got[0].till.id, 'C3');
 });
 ok('both writers of a day summary list their bills (the page close and the desktop connector)', () => {
-  assert.ok(/sum\.bill_nos = \(DAY_ROWS/.test(fs.readFileSync(path.join(root, 'tools/tally-connector/till.html'), 'utf8')));
+  assert.ok(/sum\.bill_nos = dayBillNos\(\)/.test(fs.readFileSync(path.join(root, 'tools/tally-connector/till.html'), 'utf8')));
   assert.ok(/sum\.bill_nos = nos;/.test(fs.readFileSync(path.join(root, 'tools/tally-connector/till.js'), 'utf8')));
 });
 console.log('\n  ' + n + ' passed');

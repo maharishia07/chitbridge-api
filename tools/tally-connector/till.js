@@ -561,15 +561,18 @@ function refusalParks(e) {
 }
 /** the server's own words: the problem detail's title and detail (or the older message) */
 function refusalWords(e) {
-  const b = (e && e.body) || {};
-  const title = String(b.title || b.error || '').trim(), detail = String(b.detail || b.message || '').trim();
-  const said = title && detail && detail.indexOf(title) < 0 ? title + ' — ' + detail : (detail || title);
+  const body = (e && e.body) || {};
+  const said = titleAndDetail(String(body.title || body.error || '').trim(), String(body.detail || body.message || '').trim());
   return said || (e && e.message) || 'ChitBridge refused it';
 }
+/** both words when the detail does not already say the title, else the detail, else the title */
+function titleAndDetail(title, detail) {
+  return title && detail && detail.indexOf(title) < 0 ? title + ' — ' + detail : detail || title;
+}
 /** swap one queue line for another (same temp file and rename as removeSentFromQueue); false when the line is no longer there */
-function replaceQueueLine(raw, row) {
+function replaceQueueLine(rawLine, row) {
   const entries = readQueueEntries();
-  const at = entries.findIndex((x) => x.raw === raw);
+  const at = entries.findIndex((x) => x.raw === rawLine);
   if (at < 0) return false;
   entries[at] = { raw: row ? JSON.stringify(row) : null, row: row };
   const kept = entries.filter((x) => x.raw !== null);
@@ -595,8 +598,40 @@ function parkedAnswer(no, action) {
   const entry = readQueueEntries().find((x) => x.row && x.row._parked && String(x.row.no) === String(no));
   if (!entry) return false;
   if (action === 'retry') { const row = Object.assign({}, entry.row); delete row._parked; return replaceQueueLine(entry.raw, row); }
-  try { appendLine(path.join(DIR, 'discarded.jsonl'), Object.assign({ discarded_at: new Date().toISOString() }, entry.row)); } catch (_) { return false; }
+  try { appendLine(path.join(DIR, 'discarded.jsonl'), Object.assign({ discarded_at: new Date().toISOString() }, entry.row)); } catch (e) { log('queue: entry ' + no + ' was not discarded, the copy in discarded.jsonl could not be written (' + e.message + ')'); return false; }
   return replaceQueueLine(entry.raw, null);
+}
+/** POST /api/send: try the queue now and say how many went, so the page can report what happened instead of guessing */
+async function sendNowRoute(req, res) {
+  const before = readLines(F.queue).length;
+  await drain();
+  const after = readLines(F.queue).length;
+  return json(res, 200, { ok: true, before: before, sent: before - after, queued: after, online: online });
+}
+const QUEUE_ROUTES = new Map([['/api/send', sendNowRoute], ['/api/queue/retry', queueAnswerRoute], ['/api/queue/discard', queueAnswerRoute]]);
+/** the owner's answer to a parked entry: POST /api/queue/retry · /api/queue/discard (the page asks the owner first; see parkedDrop); an unreadable body names no entry, so the answer is 404 */
+async function queueAnswerRoute(req, res, url) {
+  let bodyText = ''; for await (const chunk of req) bodyText += chunk;
+  let named = {}; try { named = JSON.parse(bodyText || '{}'); } catch (e) { log('queue answer: the body was not readable (' + e.message + '), so it names no entry'); }
+  const retrying = url.pathname.endsWith('retry');
+  const done = parkedAnswer(named && named.no, retrying ? 'retry' : 'discard');
+  if (done && retrying) { try { await drain(); } catch (e) { log('queue: ' + e.message); } }
+  return json(res, done ? 200 : 404, { ok: done, parked: parkedList() });
+}
+/** the shop's answer to one entry, when it is final: 'received' (the shop already has it, counted as sent) · 'parked' (it refused the content: parked once with its words, kept) · null (not final: whyNot decides) */
+function settleRefusal(entry, bill, e) {
+  if (receivedAlready(e)) { log('entry ' + bill.no + ' → already received'); return 'received'; }
+  if (!refusalParks(e)) return null;
+  if (parkEntry(entry, e)) log('entry ' + bill.no + ' was refused and is parked for you: ' + refusalWords(e));
+  return 'parked';
+}
+/** why this send failed, remembered for the SCREEN and logged once for whoever is reading the window; answers whether the line is still up */
+function noteWhyNot(e) {
+  const w = whyNot(e);
+  QUEUE_WHY = { say: w.say, fatal: !!w.fatal, online: !!w.online,
+                code: (e && e.body && e.body.code) || null, at: new Date().toISOString() };
+  if (w.fatal && !QUEUE_SAID) { QUEUE_SAID = true; log('the queue cannot be sent: ' + w.say); }
+  return w.online;
 }
 let draining = false, drainAt = 0;
 async function drain() {
@@ -674,19 +709,9 @@ async function drain() {
          * ⚠⚠ AND A WRONG KEY NEVER COMES RIGHT BY WAITING, so it is said out loud once rather than retried in
          * silence for ever. The bill is still kept — nothing is ever dropped.
          */
-        /* ⭐ till-park: the shop already has it → sent; the shop refused the content → parked once with its words, kept, not retried */
-        if (receivedAlready(e)) { online = true; log('entry ' + bill.no + ' → already received'); continue; }
-        if (refusalParks(e)) {
-          online = true; failed.push(entry);
-          if (parkEntry(entry, e)) log('entry ' + bill.no + ' was refused and is parked for you: ' + refusalWords(e));
-          continue;
-        }
-        const w = whyNot(e);
-        online = w.online;
-        /* ⭐ remembered for the SCREEN, and logged once for whoever is reading the window */
-        QUEUE_WHY = { say: w.say, fatal: !!w.fatal, online: !!w.online,
-                      code: (e && e.body && e.body.code) || null, at: new Date().toISOString() };
-        if (w.fatal && !QUEUE_SAID) { QUEUE_SAID = true; log('the queue cannot be sent: ' + w.say); }
+        const settled = settleRefusal(entry, bill, e);   /* ⭐ till-park: already there → sent; refused content → parked once, kept, not retried */
+        if (settled) { online = true; if (settled === 'parked') failed.push(entry); continue; }
+        online = noteWhyNot(e);
         failed.push(entry);                                 /* keep it; the next tick tries again */
       }
     }
@@ -1605,21 +1630,8 @@ const server = http.createServer(async (req, res) => {
      * on this host, in a file, and only this process can send it; the page can only ask.
      * ⚠️ It reports the queue length after trying, so the page can say what happened instead of guessing.
      */
-    if (req.method === 'POST' && url.pathname === '/api/send') {
-      const before = readLines(F.queue).length;
-      await drain();
-      const after = readLines(F.queue).length;
-      return json(res, 200, { ok: true, before: before, sent: before - after, queued: after, online: online });
-    }
-
-    /* ⭐ till-park: the owner's answer to a parked entry — Retry or Discard (the page asks the owner first; see parkedDrop) */
-    if (req.method === 'POST' && (url.pathname === '/api/queue/retry' || url.pathname === '/api/queue/discard')) {
-      let raw = ''; for await (const c of req) raw += c;
-      let b = {}; try { b = JSON.parse(raw || '{}'); } catch (_) { /* an unreadable body names no entry: 404 below */ }
-      const done = parkedAnswer(b && b.no, url.pathname.endsWith('retry') ? 'retry' : 'discard');
-      if (done && url.pathname.endsWith('retry')) { try { await drain(); } catch (_) {} }
-      return json(res, done ? 200 : 404, { ok: done, parked: parkedList() });
-    }
+    const queueRoute = req.method === 'POST' ? QUEUE_ROUTES.get(url.pathname) : null;
+    if (queueRoute) return queueRoute(req, res, url);
 
     /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
        host it is on; the agent already holds the key and already knows how to reach the server. */

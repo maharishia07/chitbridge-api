@@ -107,6 +107,19 @@ async function startChecks(req, row) {
   return { device, next };
 }
 
+/** the extra fields a connect-step visit adds to the start row: {} when there is no `lt`, null when the `lt` is spent, foreign or for another device */
+async function linkingOf(req, checks, row) {
+  const linkToken = typeof req.query.lt === 'string' ? req.query.lt : '';
+  if (!linkToken) return {};
+  return (await connect.takeLinkStart(linkToken, checks.device, row.key)) || null;
+}
+
+/** the callback of a connect-step visit: no session here and nothing written; a refusal word, or a one-time confirm code for the signed-in session */
+async function finishLinkVisit(res, started, claims, req) {
+  const done = await connect.finishLink(started, claims, req);
+  return res.redirect(302, provider.webSigninUrl() + (done.code ? '#k=' + encodeURIComponent(done.code) : '#c=' + encodeURIComponent(done.word)));
+}
+
 /* 2 · start: a top-level visit from the page */
 // @does A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.
 router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start'), async (req, res) => {
@@ -117,11 +130,11 @@ router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start
   if (checks.refusal) return refuseVisit(req, res, checks.refusal);
   try {
     /* connect step: an `lt` (from the signed-in re-proof) turns this visit into a LINK for that one account; a spent, foreign or other-device lt is a finished sign-in */
-    const linking = typeof req.query.lt === 'string' && req.query.lt ? await connect.takeLinkStart(req.query.lt, checks.device, row.key) : null;
-    if (typeof req.query.lt === 'string' && req.query.lt && !linking) return refuseVisit(req, res, 'SSO_HANDOFF');
+    const linking = await linkingOf(req, checks, row);
+    if (!linking) return refuseVisit(req, res, 'SSO_HANDOFF');
     const started = await provider.authRequest(row.key);
     const ref = provider.randomRef();
-    await pending.put('start', ref, Object.assign({ provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next }, linking || {}));
+    await pending.put('start', ref, Object.assign({ provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next }, linking));
     setCookie(res, ref);
     return res.redirect(302, started.url);
   } catch (failure) {
@@ -184,10 +197,7 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
   if (spent.refusal) return refuseVisit(req, res, spent.refusal);
   const answer = await checkAnswer(row, req.query, spent.started);
   if (answer.refusal) return refuseVisit(req, res, answer.refusal);
-  if (spent.started.intent === 'link') {
-    const done = await connect.finishLink(spent.started, answer.claims, req); // no session here and nothing written: a refusal word, or a one-time confirm code for the signed-in session
-    return res.redirect(302, provider.webSigninUrl() + (done.code ? '#k=' + encodeURIComponent(done.code) : '#c=' + encodeURIComponent(done.word)));
-  }
+  if (spent.started.intent === 'link') return finishLinkVisit(res, spent.started, answer.claims, req);
   try {
     const code = await keepHandoff(row, spent.started, answer.claims);
     return res.redirect(302, provider.webSigninUrl() + '#h=' + encodeURIComponent(code));

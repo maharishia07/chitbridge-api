@@ -41,7 +41,7 @@ function sheet(may) {
     retConfirm: async () => true, negatedTax: (x) => x, WHO: null, HOST: { creditNote: async (body) => { issued.push(body); return { ok: true, bill: body }; } }, retClose() {}, retSlipHTML: () => '', slipDocButtons() {}, autoPrint() {}, menuFresh() {}, paintStatus() {}, cbQuiet() {},
     document: { getElementById: () => null }, creditNoteTitle: () => '' };
   vm.createContext(ctx);
-  vm.runInContext(['retOriginalOf', 'retPaidSet', 'retIsOther', 'retOtherSaid', 'retOtherMay', 'retReasonSet', 'retHowOptions', 'retIssue'].map(lift).join(''), ctx);
+  vm.runInContext(['firstStated', 'retOriginalOf', 'retPaidSet', 'retIsOther', 'retOtherSaid', 'retOtherMay', 'retReasonSet', 'retHowOptions', 'retShowSlip', 'retIssue'].map(lift).join(''), ctx);
   return ctx;
 }
 const run = (ctx, code) => vm.runInContext(code, ctx);

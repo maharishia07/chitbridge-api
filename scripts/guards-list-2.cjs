@@ -430,6 +430,7 @@ const GUARDS_PART = [
   'till-since-word.test.cjs',
   'till-s4-ctr158-footer.test.cjs', // CTR-158 (2026-11-14): fails under CTR158_MUTATE=1
   'till-s4-ctr161-kit-taxslab.test.cjs', // CTR-161 (2026-11-14): fails under CTR161_MUTATE=1
+  'till-kit-signin-halves.test.cjs', // the sign-in window's two halves ride the till kit (served, refreshed, vendored byte-equal)
   'till-s4-ctr166-supply-buyer.test.cjs', // CTR-166 (2026-11-14): fails under CTR166_MUTATE=1
   'till-s4-ctr253-freetext-gate.test.cjs', // CTR-253 (2026-11-14): fails under CTR253_MUTATE=1
   'till-t2d.test.cjs',

@@ -20,7 +20,7 @@ function lift(name) {
 const ctx = { Math, Number, String, isFinite, esc: (x) => String(x), r2: (x) => Math.round(x * 100) / 100, S: null, CART: [], holdsStock: () => true,
   taxInputOf: (i) => { const o = {}; for (const k of ['tax_slab', 'gst_rate', 'hsn']) if (i[k] != null && String(i[k]).trim() !== '') o[k] = i[k]; return o; } };
 vm.createContext(ctx);
-vm.runInContext(['stockWarnWords', 'stockWarnHTML', 'statedTaxOf'].map(lift).join(''), ctx);
+vm.runInContext(['stockCountOf', 'stockWarnWords', 'stockWarnHTML', 'isStated', 'taxInputOrEmpty', 'statedTaxOf'].map(lift).join(''), ctx);
 const run = (code) => vm.runInContext(code, ctx);
 let n = 0, failed = 0;
 const it = (name, fn) => { n++; try { fn(); console.log('  ok   ' + name); } catch (e) { failed++; console.log('  FAIL ' + name + '\n         ' + e.message); } };

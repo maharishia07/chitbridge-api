@@ -259,6 +259,13 @@ router.post('/suggest-key', auth, [body('display_name').custom(plainValue).withM
   }
 });
 
+/** AK: the Bookkeeper or Accountant label sets the manager hat, in a SHOP only (a practice, or an unknown, keeps the hat sent) */
+async function hatForNewActor(actorRole, accessLevel, hatSent, entityId, byIdentity) {
+  const asked = access.labelHat(actorRole, accessLevel);
+  const inShop = asked && (await require('../lib/people').practiceOf(entityId, byIdentity)) === false;
+  return (inShop ? asked : null) || hatSent;
+}
+
 // ── POST /api/actors ─────────────────────────────────────────
 // Create a new actor under entity
 // @does Name, optional e-mail, login key and role in -> we let the owner add a co-assist under the shop with a first sign-in code -> the new co-assist (owner only).
@@ -399,8 +406,7 @@ router.post(
        * the same answer PATCH /actors/:id writes. WX-P2P-18 found the same on the real stack and adds the reach (whole_entity) as chosen. Before b173 the column is absent: not SELECTed, not written (lib/schema).
        */
       const access_level = access.LEVELS.includes(req.body.access_level) ? req.body.access_level : access.FROM_HAT[list] || access.EDITOR;
-      const asked = access.labelHat(actor_role, access_level); /* AK: the Bookkeeper or Accountant label sets the manager hat, in a SHOP only (a practice, or an unknown, keeps the hat sent) */
-      const hat = (asked && (await require('../lib/people').practiceOf(entity_id, req.identity.identity_id)) === false ? asked : null) || list;
+      const hatToStore = await hatForNewActor(actor_role, access_level, list, entity_id, req.identity.identity_id);
       const _lvlCol = await schema.hasColumn('identities', 'access_level');
       const costsCol = access.seesCostsInsert(req.body, _lvlCol); /* RC-3: written only when asked */
       /* PEOPLE-EMAIL (SEC2): the Add form's e-mail is STORED (identities.email, $13) — before, it was used once to send the first
@@ -421,7 +427,7 @@ router.post(
           actor_role || null,
           phone,
           max_tasks,
-          hat,
+          hatToStore,
           employee_id,
           toEmail || null
         ].concat(_lvlCol ? [access_level, req.body.whole_entity === true] : []).concat(costsCol.params)
@@ -439,12 +445,7 @@ router.post(
        * is a pricing question the ledger does not need to answer — it records that one was taken, and when.
        */
       try {
-        require('../lib/meter')
-          .meter(entity_id, 'coassist.create', {
-            detail: identity_id,
-            rid: req.id
-          })
-          .catch(logger.orElse('actors: failed — carried on without it'));
+        require('../lib/meter').meter(entity_id, 'coassist.create', { detail: identity_id, rid: req.id }).catch(logger.orElse('actors: failed — carried on without it'));
       } catch (e) {
         logger.fellBack('actors: the helper failed — carried on without it', e);
       }

@@ -1302,27 +1302,41 @@ router.post('/bank/marks', auth, noKey, editor, bankWriter, on, ...checked('POST
     problem(req, res, refusalOf(err, req));
   }
 });
+/**
+ * the refusals a statement sign-off answers in words, by code → the problem to send, or null for any other error (refusalOf answers it): BOOKS_NOT_MIGRATED 503 (before b864: the shared record is not set up),
+ * CURRENCY_MISMATCH 409 (a statement in another currency than the account's, with the field), STATEMENT_ALREADY_SIGNED 409 (AM-F-04: the same account + period + file hash signed again with the same figures),
+ * BOOKS_FIGURE_DIFFERS 409 (WALK U U-F-02: the books' figure on that day is not the one this statement was worked against)
+ */
+const STATEMENT_FAULT_STATUS = { BOOKS_NOT_MIGRATED: 503, CURRENCY_MISMATCH: 409, STATEMENT_ALREADY_SIGNED: 409, BOOKS_FIGURE_DIFFERS: 409 };
+function statementFault(err) {
+  const status = err && STATEMENT_FAULT_STATUS[err.code];
+  if (!status) return null;
+  const legacy = { code: err.code, error: err.message, message: err.message };
+  if (err.code === 'CURRENCY_MISMATCH') legacy.field = err.field;
+  return { status, code: err.code, detail: err.message, legacy };
+}
+/** AM-F-05 (Athi, 22 Nov): a sign-off for a period that ends in a LOCKED month waits on the Waiting list, in words (the owner's press posts it) → { waiting } or { statement } */
+async function signOffStatement(req, e, body) {
+  const lockedWait = require('../lib/books-locked-wait');
+  return withEntity(e, async (handle) => {
+    const account = await bankAccountOf(handle, e, body.account, true);
+    const held = /^d{4}-d{2}-d{2}$/.test(String(body.period_to || '')) ? await lockedWait.heldIfLocked(handle, e, req.books, body.period_to) : null;
+    if (held) return { waiting: { words: await lockedWait.parkStatement(handle, e, account, body, { by: byOf(req), acting: actingOf(req) }, held), posts_on: held.posts_on } };
+    return { statement: await BANK_LOG.appendStatement(handle, e, account, curOf(req), body, byOf(req), actingOf(req)) };
+  });
+}
 /** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
 // @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
 router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};
-    const LW = require('../lib/books-locked-wait');
-    /* AM-F-05 (Athi, 22 Nov): a sign-off for a period that ends in a LOCKED month waits on the Waiting list, in words; the owner's press posts it */
-    const made = await withEntity(e, async (handle) => {
-      const account = await bankAccountOf(handle, e, body.account, true);
-      const held = /^\d{4}-\d{2}-\d{2}$/.test(String(body.period_to || '')) ? await LW.heldIfLocked(handle, e, req.books, body.period_to) : null;
-      if (held) return { waiting: { words: await LW.parkStatement(handle, e, account, body, { by: byOf(req), acting: actingOf(req) }, held), posts_on: held.posts_on } };
-      return { statement: await BANK_LOG.appendStatement(handle, e, account, curOf(req), body, byOf(req), actingOf(req)) };
-    });
+    const made = await signOffStatement(req, e, body);
     if (made.waiting) return res.status(202).json({ statement: null, waiting: made.waiting });
     res.status(201).json({ statement: made.statement });
   } catch (err) {
-    if (err && err.code === 'BOOKS_NOT_MIGRATED') return problem(req, res, { status: 503, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* before b864: the shared record is not set up, in words (the same answer refusalOf gives) */
-    if (err && err.code === 'CURRENCY_MISMATCH') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message, field: err.field } }); /* a statement in another currency than the account's (the same answer refusalOf gives) */
-    if (err && err.code === 'STATEMENT_ALREADY_SIGNED') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* AM-F-04: the same statement (account + period + file hash) signed again with the same figures, in words */
-    if (err && err.code === 'BOOKS_FIGURE_DIFFERS') return problem(req, res, { status: 409, code: err.code, detail: err.message, legacy: { code: err.code, error: err.message, message: err.message } }); /* WALK U U-F-02: the books' figure on that day is not the one this statement was worked against, in words */
+    const fault = statementFault(err);
+    if (fault) return problem(req, res, fault);
     problem(req, res, refusalOf(err, req));
   }
 });
@@ -1918,14 +1932,14 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
 router.post('/move-in/preview', auth, owner, on, ...checked('POST /move-in/preview'), async (req, res) => {
   try {
     const e = ctx(req);
-    const { m, pl } = await withEntity(e, async (h) => {
+    const { m: moveMeta, pl: movePlan } = await withEntity(e, async (h) => {
       const done = await moveInPlan(req, h);
       /* AI-F-03: what Suspense will hold is the posting engine's own dry run, never the plan's sum (lib/move-in previewSuspense) */
       const said = await MI.previewSuspense(h, e, done.pl, { world: done.w, as_at: done.m.as_at, currency: curOf(req), client_ref: done.m.client_ref, by: byOf(req) });
       done.pl.notes = (done.pl.notes || []).concat(said);
       return done;
     });
-    res.json(Object.assign({ kind: m.kind, source: m.source, side: m.side, as_at: m.as_at }, pl));
+    res.json(Object.assign({ kind: moveMeta.kind, source: moveMeta.source, side: moveMeta.side, as_at: moveMeta.as_at }, movePlan));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2544,6 +2558,25 @@ route('post', '/closing-stock', (req, e, setting, body, by) => P().closingStock(
 route('post', '/gst/close', (req, e, setting, body, by) => P().gstClose(e, setting, body, by));
 // @does A period, the amounts, the bank and a challan number in -> we post the tax payment once per attempt -> the entry (owner only).
 route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, body, by), [onceOnly]); /* FIN-63: a tax payment is a money write — one key per attempt */
+/** AC-F-02: a document a locked month moved into (or out of) the period of this return, said in the entry's own words → the note lines (none when the form has no period span) */
+async function movedByLockNotes(owner, form) {
+  const span = form && ((form.periods || []).find((item) => item.period === form.period) || (form.period && form.period.start ? form.period : null));
+  if (!span) return [];
+  const inSpan = (day) => day >= span.start && day <= span.end;
+  const moved = (await withEntity(owner, (h) => S.movedByLock(h, owner))).filter((entry) => inSpan(entry.posting_date) || inSpan(entry.doc_date));
+  return moved.map((entry) => entry.entry_no + ' · ' + entry.words);
+}
+/** TOUR-FIX1: the 200 answer of a return that is made from the rail, not the ledgers (India: GSTR-1 / 3B) */
+function returnFromRailAnswer(err) {
+  const pack = err.pack || null;
+  return {
+    form: null,
+    pack,
+    code: err.code,
+    why: pack === 'IN' ? "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here." : err.message,
+    rail: pack === 'IN' ? '/api/tax/gstr' : null
+  };
+}
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner, or the shop's auditor (ACC-229: whole-entity + can_see_costs, 403 BOOKS_RETURN_READ_NOT_ALLOWED). Prepared, never lodged.
  *  India → 200 { form: null, code: RETURN_FROM_RAIL, why, rail } (GSTR-1 / 3B come from the rail: GET /api/tax/gstr). One transaction, no per-row query. */
@@ -2553,24 +2586,14 @@ route('post', '/gst/pay', (req, e, setting, body, by) => P().gstPay(e, setting, 
 router.get('/returns', auth, moneyReader, on, ...checked('GET /returns'), async (req, res) => {
   try {
     const form = await P().taxReturn(ctx(req), req.books, req.query || {});
-    /* AC-F-02: a document a locked month moved into (or out of) this period is said on the return, in the entry's own words */
-    const span = form && ((form.periods || []).find((item) => item.period === form.period) || (form.period && form.period.start ? form.period : null));
-    const inSpan = (day) => !!span && day >= span.start && day <= span.end;
-    const movedHere = span ? (await withEntity(ctx(req), (h) => S.movedByLock(h, ctx(req)))).filter((m) => inSpan(m.posting_date) || inSpan(m.doc_date)) : [];
-    if (movedHere.length) form.notes = (form.notes || []).concat(movedHere.map((m) => m.entry_no + ' · ' + m.words));
+    const movedNotes = await movedByLockNotes(ctx(req), form); /* AC-F-02 */
+    if (movedNotes.length) form.notes = (form.notes || []).concat(movedNotes);
     /* the pack's return, every key it can carry named (S34); a key this return does not carry is undefined, and JSON leaves it out */
     // prettier-ignore
     res.json({ currency: form.currency, pack: form.pack, form: form.form, name: form.name, short: form.short, authority: form.authority, portal: form.portal, prepared: form.prepared, asked: form.asked, needs: form.needs, why: form.why, periods: form.periods, period: form.period, boxes: form.boxes, payable_minor: form.payable_minor, refund_minor: form.refund_minor, net_minor: form.net_minor, notes: form.notes, cite: form.cite, unsupported_input: form.unsupported_input, needs_answer: form.needs_answer, emirates: form.emirates, staggers: form.staggers });
   } catch (err) {
     if (err && err.code === 'RETURN_FROM_RAIL') {
-      const pack = err.pack || null;
-      return res.json({
-        form: null,
-        pack,
-        code: err.code,
-        why: pack === 'IN' ? "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here." : err.message,
-        rail: pack === 'IN' ? '/api/tax/gstr' : null
-      });
+      return res.json(returnFromRailAnswer(err));
     }
     problem(req, res, refusalOf(err, req));
   }

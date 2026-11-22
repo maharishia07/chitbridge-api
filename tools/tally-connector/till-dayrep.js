@@ -35,13 +35,23 @@ function dayRepRows(bills){
   });
   return { items: sums.items, byRate: sums.byRate, byPay: sums.byPay, payBills: sums.payBills, byKind: sums.namedKind ? sums.byKind : null };
 }
+/** the rate-wise figures the invoice was issued with (its by_rate), or null when it carries none */
+function dayRepIssuedRates(figures){
+  return figures && figures.by_rate && Object.keys(figures.by_rate).length ? figures.by_rate : null;
+}
+/** the invoice's own by_kind rows, else its by_rate read as standard-kind rows, else none */
+function dayRepKindRows(figures){
+  if (figures && figures.by_kind) return figures.by_kind;
+  if (!(figures && figures.by_rate)) return [];
+  return Object.keys(figures.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: figures.by_rate[rt].taxable, tax: figures.by_rate[rt].tax }; });
+}
 /** SUPPLY KIND: the day by kind, from each bill's own invoice (the engine's by_kind), as issued; shown only when some bill named a kind */
 function dayRepAddKinds(sums, bill){
   var issuedRates = null;
   try { var invoice = bill.invoice, named = !!(invoice && invoice._cb && invoice._cb.kinds && invoice._cb.kinds.length), figures = (invoice && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(invoice) : null;
     if (named) sums.namedKind = true;
-    if (figures && figures.by_rate && Object.keys(figures.by_rate).length) issuedRates = figures.by_rate;
-    ((figures && figures.by_kind) || (figures && figures.by_rate ? Object.keys(figures.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: figures.by_rate[rt].taxable, tax: figures.by_rate[rt].tax }; }) : [])).forEach(function(w){
+    issuedRates = dayRepIssuedRates(figures);
+    dayRepKindRows(figures).forEach(function(w){
       var key = w.kind + '|' + w.rate, row = sums.byKind[key] || (sums.byKind[key] = { kind: w.kind, rate: w.rate, taxable: 0, tax: 0 });
       row.taxable = rmoney(row.taxable + (Number(w.taxable) || 0)); row.tax = rmoney(row.tax + (Number(w.tax) || 0)); });
   } catch (e) { cbQuiet('dayRepAddKinds:1', e); /* an old bill with no readable invoice is left out of this table only */ }

@@ -413,7 +413,7 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
     const said = []; let called = 0;
     const ctx = { dbFrozen: () => true, busyDone() {}, sure: (m) => { said.push(m); return Promise.resolve(false); }, location: { reload() {} }, HOST: { history: async () => { called++; return { bills: [] }; }, cred: () => 'k' }, tillId: () => 'C1', toastLine: (t) => said.push('TOAST ' + t), Array, Object, Date, DB: { all: async () => { throw new Error('read while frozen'); } } };
     vm.createContext(ctx);
-    vm.runInContext(liftVar('BLOCKED_WORDS') + ['askReload', 'frozenStop', 'historyOrNull', 'dayReread'].map(lift).join(''), ctx);
+    vm.runInContext(liftVar('BLOCKED_WORDS') + ['askReload', 'frozenStop', 'historyOrNull', 'serverBillCustomer', 'dayReread'].map(lift).join(''), ctx);
     assert.strictEqual(await vm.runInContext('dayReread(true)', ctx), 0);
     assert.strictEqual(called, 0, 'it asked the shop for the day while frozen'); assert.ok(/re-reading the day was stopped/.test(said[0]) && !said.some((t) => /Nothing new/.test(t)), said.join('|'));
   });

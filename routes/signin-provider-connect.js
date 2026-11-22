@@ -1,3 +1,6 @@
+// routes/signin-provider-connect.js — the connect step of provider sign-in: link, list and unlink a provider on the signed-in account
+// OWNER     cb-security
+// RISK      security
 // OWNS      the CONNECT step of provider sign-in (SEC-112 P1a, critic 21 Nov): a signed-in person links a provider to their OWN account (re-proof, subject binding), lists their links, and unlinks (re-proof, audit)
 // FLOW      Settings › Sign-in ──▶ POST /provider/link/start { provider, pin|otp } ──▶ re-proof ──▶ one-use `lt` + the start address ──▶ GET /provider/:key/start?lt= ──▶ provider ──▶ callback (intent link) ──▶ finishLink ──▶ link row + audit + notice ──▶ 302 web #c=<word>
 //           DELETE /provider/links/:link_id { pin|otp } ──▶ re-proof ──▶ own link? enforced? last way in? ──▶ delete + audit + notice
@@ -41,7 +44,7 @@ const WORDS = Object.freeze({
   LINK_CONFIRM_FAILED: 'That connection could not be confirmed. Start again from Settings.'
 });
 const shopOf = (req) => auth.entityOf(req);
-const me = (req) => req.identity.identity_id;
+const identityIdOf = (req) => req.identity.identity_id;
 /** the listed session this request rides on (its jti), or '' for a token that carries none */
 const sessionOf = (req) => String((req.session && req.session.jti) || '');
 
@@ -67,11 +70,11 @@ const refuse = (req, res, status, code) => problem(req, res, { status, code, det
 
 /** the person's own row (credentials included), proved with the PIN or a fresh code in the body: { person }, or { sent: true } when the 401 is already written */
 async function reprove(req, res) {
-  const person = (await identityAuth.rowsOfCandidates(query, [me(req)]))[0];
+  const person = (await identityAuth.rowsOfCandidates(query, [identityIdOf(req)]))[0];
   const body = req.body || {};
   const check = person && !endedStatus(person.status) ? await identityAuth.verifyCredential(query, person, { pin: body.pin, otp: body.otp }) : { ok: false };
   if (!check.ok) {
-    audit(req, shopOf(req), me(req), 'fail', body.otp && !body.pin ? 'otp' : 'pin', 'REAUTH_FAILED', null); // N5: the method the person tried
+    audit(req, shopOf(req), identityIdOf(req), 'fail', body.otp && !body.pin ? 'otp' : 'pin', 'REAUTH_FAILED', null); // N5: the method the person tried
     refuse(req, res, 401, 'REAUTH_FAILED');
     return { sent: true };
   }
@@ -83,8 +86,8 @@ const flagsOf = (shop) => policy.get(shop);
 async function list(req, res) {
   res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
   const flags = await flagsOf(shopOf(req));
-  const rows = await links.listOf(shopOf(req), me(req));
-  const self = (await identityAuth.rowsOfCandidates(query, [me(req)]))[0];
+  const rows = await links.listOf(shopOf(req), identityIdOf(req));
+  const self = (await identityAuth.rowsOfCandidates(query, [identityIdOf(req)]))[0];
   const available = provider.registry().filter((row) => provider.configured(row)).map((row) => ({ key: row.key, label: row.label, live: provider.connectBuilt(), accepted: !provider.signinMethodRefusal(flags, row.key) }));
   return res.json({
     reproof: self && self.pin_hash ? 'pin' : 'code', // the re-proof this person can give: the PIN they set, else a code sent to their own address
@@ -93,23 +96,31 @@ async function list(req, res) {
   });
 }
 
+/** what must hold before any proof is asked: the provider is on and connectable, the device says who it is, the session is listed -> { device, sessionJti } or { stop } (the problem to answer) */
+function startGate(req, row) {
+  if (!row || !provider.configured(row) || !provider.connectBuilt()) return { stop: { status: 404, code: 'PROVIDER_OFF', detail: WORDS.PROVIDER_OFF } };
+  const device = sessions.deviceOfSignin(req);
+  if (!device.device_id) return { stop: { status: 400, code: 'NO_DEVICE', detail: 'This device must say who it is before it can connect an account.' } };
+  const sessionJti = sessionOf(req);
+  if (!sessionJti) return { stop: { status: 401, code: 'SESSION_EXPIRED', detail: 'Sign in again before connecting an account.' } };
+  return { device, sessionJti };
+}
+
 /* POST /provider/link/start — re-proof, then the one-use `lt` and the address that starts the round trip */
 async function startLink(req, res) {
   res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
   const body = req.body || {};
   const row = provider.rowOf(body.provider);
-  if (!row || !provider.configured(row) || !provider.connectBuilt()) return refuse(req, res, 404, 'PROVIDER_OFF');
-  const dev = sessions.deviceOfSignin(req);
-  if (!dev.device_id) return problem(req, res, { status: 400, code: 'NO_DEVICE', detail: 'This device must say who it is before it can connect an account.' });
-  const jti = sessionOf(req);
-  if (!jti) return problem(req, res, { status: 401, code: 'SESSION_EXPIRED', detail: 'Sign in again before connecting an account.' });
+  const gate = startGate(req, row);
+  if (gate.stop) return problem(req, res, gate.stop);
+  const { device, sessionJti } = gate;
   const shop = shopOf(req);
   if (provider.signinMethodRefusal(await flagsOf(shop), row.key)) return refuse(req, res, 403, 'SIGNIN_PROVIDER_NOT_ACCEPTED');
   const proven = await reprove(req, res);
   if (proven.sent) return;
-  const lt = provider.randomRef();
-  await pending.put('linkstart', lt, { provider: row.key, identity_id: me(req), entity_id: shop, device_id: dev.device_id, jti });
-  const url = provider.startUrl(row.key, { device_id: dev.device_id, lt, next: provider.nextOf(body.next) || '/app.html#/settings' });
+  const linkToken = provider.randomRef();
+  await pending.put('linkstart', linkToken, { provider: row.key, identity_id: identityIdOf(req), entity_id: shop, device_id: device.device_id, jti: sessionJti });
+  const url = provider.startUrl(row.key, { device_id: device.device_id, lt: linkToken, next: provider.nextOf(body.next) || '/app.html#/settings' });
   if (!url) return refuse(req, res, 404, 'PROVIDER_OFF');
   return res.json({ url });
 }
@@ -159,45 +170,62 @@ async function finishLink(started, claims, req) {
 /* POST /provider/link/finish { code } — the signed-in session that started the link writes it: same account, same session id, same device, or nothing is written */
 async function confirmLink(req, res) {
   res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
-  const dev = sessions.deviceOfSignin(req);
+  const device = sessions.deviceOfSignin(req);
   const held = await pending.take('linkstart', String((req.body && req.body.code) || ''));
-  const jti = sessionOf(req);
   // one blind answer for a made-up, spent, expired or someone-else's code (the row is spent either way)
-  if (!held || !held.confirm || !jti || held.jti !== jti || held.identity_id !== me(req) || held.device_id !== dev.device_id || String(held.entity_id) !== String(shopOf(req))) {
-    return refuse(req, res, 403, 'LINK_CONFIRM_FAILED');
-  }
+  if (!confirmIsOurs(held, req, device)) return refuse(req, res, 403, 'LINK_CONFIRM_FAILED');
+  const ok = await linkable(held, held.claims || {}, req);
+  if (ok.word) return refuse(req, res, 403, ok.word === 'SIGNIN_REFUSED' ? 'LINK_CONFIRM_FAILED' : ok.word);
+  return writeConfirmed(req, res, held, ok.person);
+}
+
+/** the confirm row belongs to THIS request: a confirm row, the same listed session, the same account, device and shop as the start */
+function confirmIsOurs(held, req, device) {
+  const sessionJti = sessionOf(req);
+  if (!held || !held.confirm || !sessionJti || held.jti !== sessionJti) return false;
+  return held.identity_id === identityIdOf(req) && held.device_id === device.device_id && String(held.entity_id) === String(shopOf(req));
+}
+
+/** the one link write of a confirmed start: a clash is said in words, a made link is audited and the person told */
+async function writeConfirmed(req, res, held, person) {
   const claims = held.claims || {};
   const shop = held.entity_id;
-  const ok = await linkable(held, claims, req);
-  if (ok.word) return refuse(req, res, 403, ok.word === 'SIGNIN_REFUSED' ? 'LINK_CONFIRM_FAILED' : ok.word);
   const done = await links.add(shop, held.identity_id, Object.assign({ provider: held.provider }, claims));
   if (!done.added) {
     audit(req, shop, held.identity_id, 'fail', held.provider, done.code, claims);
     return refuse(req, res, done.code === 'LINK_EXISTS' ? 409 : 403, WORDS[done.code] ? done.code : 'LINK_CONFIRM_FAILED');
   }
   audit(req, shop, held.identity_id, 'link', held.provider, null, claims);
-  notice(ok.person, (provider.rowOf(held.provider) || {}).label || held.provider, 'connected to');
+  notice(person, (provider.rowOf(held.provider) || {}).label || held.provider, 'connected to');
   return res.json({ ok: true, linked: true });
 }
+
+/** this person's own link with that id (a foreign, made-up or gone id is null) */
+async function ownLinkOf(req, shop, id) {
+  if (!UUID.test(id)) return null;
+  return (await links.listOf(shop, identityIdOf(req))).find((row) => String(row.link_id).toLowerCase() === id.toLowerCase()) || null;
+}
+
+/** a PIN, or a verified address a code can reach: the person still has a way in after the unlink */
+const hasOtherWayIn = (person) => !!person.pin_hash || (!!person.email && person.status === 'active');
 
 /* DELETE /provider/links/:link_id — own link only; re-proof; not the last way in; not an enforced provider for staff */
 async function unlink(req, res) {
   res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
   const id = String(req.params.link_id || '');
   const shop = shopOf(req);
-  const own = UUID.test(id) ? (await links.listOf(shop, me(req))).find((row) => String(row.link_id).toLowerCase() === id.toLowerCase()) : null;
-  if (!own) return refuse(req, res, 404, 'LINK_NOT_FOUND'); // a foreign id, a made-up id and a gone id answer the same
+  const ownLink = await ownLinkOf(req, shop, id);
+  if (!ownLink) return refuse(req, res, 404, 'LINK_NOT_FOUND'); // a foreign id, a made-up id and a gone id answer the same
   const proven = await reprove(req, res);
   if (proven.sent) return;
   const { person } = proven;
   const flags = await flagsOf(shop);
-  if (flags.signin_required === own.provider && !owner.isOwner(req)) return refuse(req, res, 403, 'LINK_ENFORCED');
-  const otherWay = !!person.pin_hash || (!!person.email && person.status === 'active'); // a PIN, or a verified address a code can reach
-  if (!otherWay) return refuse(req, res, 409, 'LAST_WAY_IN');
-  const done = await links.remove(shop, me(req), own.link_id);
+  if (flags.signin_required === ownLink.provider && !owner.isOwner(req)) return refuse(req, res, 403, 'LINK_ENFORCED');
+  if (!hasOtherWayIn(person)) return refuse(req, res, 409, 'LAST_WAY_IN');
+  const done = await links.remove(shop, identityIdOf(req), ownLink.link_id);
   if (!done.removed) return refuse(req, res, 404, 'LINK_NOT_FOUND');
-  audit(req, shop, me(req), 'unlink', own.provider, null, done.link);
-  notice(person, (provider.rowOf(own.provider) || {}).label || own.provider, 'removed from');
+  audit(req, shop, identityIdOf(req), 'unlink', ownLink.provider, null, done.link);
+  notice(person, (provider.rowOf(ownLink.provider) || {}).label || ownLink.provider, 'removed from');
   return res.json({ ok: true, removed: true });
 }
 

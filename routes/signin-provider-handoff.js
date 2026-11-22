@@ -1,3 +1,6 @@
+// routes/signin-provider-handoff.js — POST /api/signin/provider/handoff: swaps the one-time code for a session
+// OWNER     cb-security
+// RISK      security · personal-data
 // OWNS      POST /api/signin/provider/handoff (SEC-112 P1a, route 4): the one-time code the callback left in the web address → a session, through the ONE session writer
 // FLOW      page (#h=code, X-Device-Id) ──▶ POST { code } ──▶ lib/signin-provider-door.decide ──▶ per-account cap ──▶ identity-auth.issueToken (the writer POST /verify uses) ──▶ the SAME body as POST /verify; audit `in` method google
 // CALLED BY routes/signin-provider.js (router.post)
@@ -62,50 +65,71 @@ const jtiOf = (token) => {
   try {
     return (require('jsonwebtoken').decode(token) || {}).jti || null;
   } catch (failure) {
+    log.warn('signin_provider', { why: 'token id not read: ' + String((failure && failure.code) || 'ERR') });
     return null;
   }
 };
 
-// @does A one-time code from the provider hand-off and this device's id -> we check it, find the one account connected to that provider identity and start its session -> the same answer as the code sign-in, or a refusal in words.
-async function handoff(req, res) {
-  res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
-  /* M2: ONE device read, the session writer's own (header first, then body); the check and the session use the same value, and a header and a body that disagree are refused */
-  const dev = sessions.deviceOfSignin(req);
-  const device = door.deviceIdOf(dev && dev.device_id);
-  if (!device) return problem(req, res, { status: 400, code: 'NO_DEVICE', detail: 'This device must say who it is before it can sign in.' });
+/** the one device this sign-in speaks for, or the refusal to send; header and body must agree (M2) */
+function deviceOrRefusal(req) {
+  const sessionDevice = sessions.deviceOfSignin(req);
+  const device = door.deviceIdOf(sessionDevice && sessionDevice.device_id);
+  if (!device) return { sessionDevice, refusal: { status: 400, code: 'NO_DEVICE', detail: 'This device must say who it is before it can sign in.' } };
   const header = door.deviceIdOf(req.headers['x-device-id']);
-  if (header && header !== device) return problem(req, res, { status: 400, code: 'DEVICE_MISMATCH', detail: 'This device said two different things. Start again from the sign-in page.' });
-  let decided;
+  if (header && header !== device) return { sessionDevice, refusal: { status: 400, code: 'DEVICE_MISMATCH', detail: 'This device said two different things. Start again from the sign-in page.' } };
+  return { sessionDevice, device };
+}
+/** the code the door decides on: the door's answer, or our own 503 in true words (M3: a fault of ours is never "not switched on") */
+async function decideCode(req, res, device) {
   try {
-    decided = await door.decide(String((req.body && req.body.code) || ''), device);
+    return await door.decide(String((req.body && req.body.code) || ''), device);
   } catch (failure) {
     log.error('signin_provider', { why: 'handoff failed: ' + String((failure && failure.code) || 'ERR') });
-    return refused(req, res, { refusal: 'SIGNIN_UNAVAILABLE', status: door.STATUS.SIGNIN_UNAVAILABLE, detail: door.WORDS.SIGNIN_UNAVAILABLE }); // M3: a fault of ours is a 503 in true words, never "not switched on"
+    return { refusal: 'SIGNIN_UNAVAILABLE', status: door.STATUS.SIGNIN_UNAVAILABLE, detail: door.WORDS.SIGNIN_UNAVAILABLE, ourFault: true };
   }
-  if (decided.refusal) {
-    const one = decided.payload && decided.payload.links && decided.payload.links.length === 1 ? decided.payload.links[0] : null;
-    if (one) note(req, { identity_id: one.identity_id, parent_entity_id: one.entity_id }, 'fail', decided.refusal, null, decided.payload.claims, decided.payload.provider);
-    return refused(req, res, decided);
-  }
+}
+/** a refused code that names exactly one connected account leaves one failure row for that account */
+function noteSingleLinkRefusal(req, decided) {
+  const links = decided.payload && decided.payload.links;
+  const onlyLink = links && links.length === 1 ? links[0] : null;
+  if (onlyLink) note(req, { identity_id: onlyLink.identity_id, parent_entity_id: onlyLink.entity_id }, 'fail', decided.refusal, null, decided.payload.claims, decided.payload.provider);
+}
+/** the body POST /verify hands over, so the page cannot tell the two doors apart */
+const sessionBody = (identity, token) => ({
+  message: 'Verified successfully',
+  token,
+  ...(identity.identity_type === 'actor' && !identity.pin_hash ? { requires_pin_setup: true } : {}),
+  entity: { identity_id: identity.identity_id, bridge_id: identity.bridge_id, display_name: identity.display_name, email: identity.email },
+  identity: identityAuth.personShape(identity),
+  constitution: null
+});
+/** open the session through the one writer; the writer's own refusals are worded as POST /verify words them */
+async function openSession(req, res, decided, sessionDevice) {
   const { identity } = decided;
-  req.signinAccount = identity.identity_id;
-  if (await overBudget(req, res)) return; // 429 RATE_LIMITED is already sent
   try {
-    const token = await identityAuth.issueToken(query, identity, dev);
+    const token = await identityAuth.issueToken(query, identity, sessionDevice);
     note(req, identity, 'in', null, jtiOf(token), decided.claims, decided.provider);
-    return res.json({
-      message: 'Verified successfully',
-      token,
-      ...(identity.identity_type === 'actor' && !identity.pin_hash ? { requires_pin_setup: true } : {}),
-      entity: { identity_id: identity.identity_id, bridge_id: identity.bridge_id, display_name: identity.display_name, email: identity.email },
-      identity: identityAuth.personShape(identity),
-      constitution: null
-    });
+    return res.json(sessionBody(identity, token));
   } catch (failure) {
     if (sessionRefused(failure, req, res)) return note(req, identity, 'fail', failure.code, null, decided.claims, decided.provider);
     log.error('signin_provider', { why: 'session not opened: ' + String((failure && failure.code) || 'ERR') });
     return problem(req, res, { status: 500, code: 'INTERNAL', detail: 'Sign-in failed. Try again, or use your code.' });
   }
+}
+
+// @does A one-time code from the provider hand-off and this device's id -> we check it, find the one account connected to that provider identity and start its session -> the same answer as the code sign-in, or a refusal in words.
+async function handoff(req, res) {
+  res.set({ 'Cache-Control': 'no-store', Pragma: 'no-cache' });
+  const { sessionDevice, device, refusal } = deviceOrRefusal(req);
+  if (refusal) return problem(req, res, refusal);
+  const decided = await decideCode(req, res, device);
+  if (decided.refusal) {
+    if (!decided.ourFault) noteSingleLinkRefusal(req, decided);
+    return refused(req, res, decided);
+  }
+  req.signinAccount = decided.identity.identity_id;
+  if (await overBudget(req, res)) return; // 429 RATE_LIMITED is already sent
+  return openSession(req, res, decided, sessionDevice);
 }
 
 module.exports = { handoff, accountBudget };

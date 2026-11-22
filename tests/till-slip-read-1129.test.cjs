@@ -31,7 +31,7 @@ function grab(name, optional) {
 }
 const PAGE_FNS = ['esc', 'r2', 'rmoney', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule', 'NOT_DECIDED', 'taxFigure',
   'shopMinor', 'booksMajor', 'buyerFromMajor', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'shopTax', 'bandWordsOf', 'packKinds', 'kindWord', 'kindWordsOf', 'kindRowsOf',
-  'classesOf', 'reducedNoteHTML', 'unratedBaseOf', 'unratedApart', 'noRateWord', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'lineZeroWordOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'packCollectsWithoutId',
+  'classesOf', 'reducedNoteHTML', 'unratedBaseOf', 'unratedApart', 'noRateWord', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'zeroKindIdOf', 'zeroKindWord', 'lineZeroWordOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'packCollectsWithoutId',
   'cashRule', 'payWayId', 'cashDue', 'cashRoundWords', 'restBeforeLast', 'changeOf', 'cashRoundOf'];
 
 /** a till page for one shop: the real packs and money engine, the page's own helpers, the whole slip file, plain stand-ins for the rest */

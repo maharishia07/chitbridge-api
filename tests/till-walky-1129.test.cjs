@@ -31,7 +31,7 @@ const t = (name, fn) => { try { fn(); console.log('  ok ' + name); } catch (e) {
 
 const bill = { no: 'C1/2026/0004', total: 32, kind: 'sale', customer: { name: 'Maya Retail', identity_id: MAYA }, payments: [{ how: 'On credit', amount: 32 }] };
 t('bill read back from the server keeps who it was made out to (name AND id)', () => {
-  assert.ok(/b\.customer_id \? \{ name: b\.customer \|\| 'Walk-in', identity_id: b\.customer_id \}/.test(SRC), 'dayReread keeps customer_id as identity_id');
+  assert.ok(/customer\.identity_id = b\.customer_id/.test(SRC), 'dayReread keeps customer_id as identity_id');
 });
 t('A$22.00 back against A$20.00 owing: no cash, A$20.00 off the debt, A$2.00 kept as credit, said', () => {
   const owed = api.retOwedFor(bill, 22);
@@ -49,7 +49,7 @@ t('the header says the bill was On credit, never "paid by Cash"', () => {
 t('the slip names the credit kept', () => { assert.ok(/till-ret-slip-kept/.test(SRC) && /kept_credit/.test(SRC)); });
 t('the api bill row carries customer_id beside the name', () => {
   const routes = fs.readFileSync(path.join(__dirname, '..', 'routes', 'till.js'), 'utf8');
-  assert.ok(/customer_id: \(business\.customer && business\.customer\.identity_id\)/.test(routes));
+  assert.ok(/customer_id: customer\.identity_id/.test(routes));
 });
 t('books: the note with no refund parts and the party posts a return against Maya (Cr debtors 22.00), no cash', () => {
   const H = require('./support/books-harness.cjs'); H.load();

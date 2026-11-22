@@ -32,7 +32,7 @@ function page(extra) {
     isReturnRow: (b) => b.kind === 'credit_note', Buffer, atob: (s) => Buffer.from(s, 'base64').toString(), CloudHost: { person: null },
     window: { CBTax: { moneyOf: (inv) => inv && inv._money } }, CBTax: { moneyOf: (inv) => inv && inv._money }, RET_FOR: null, RET_QTY: null }, extra || {});
   vm.createContext(ctx);
-  vm.runInContext(['retLineOf', 'retRateOf', 'retMoney', 'appSessionClaims', 'tillViewOnly', 'dayRateFigures', 'dayRepAddKinds', 'dayRepAddLines', 'dayRepAddRates', 'dayRepAddPays', 'dayRepRows'].map(sourceOf).join('\n'), ctx);
+  vm.runInContext(['retLineOf', 'retRateOf', 'retMoney', 'appSessionClaims', 'tillViewOnly', 'dayRateFigures', 'dayRepIssuedRates', 'dayRepKindRows', 'dayRepAddKinds', 'dayRepAddLines', 'dayRepAddRates', 'dayRepAddPays', 'dayRepRows'].map(sourceOf).join('\n'), ctx);
   return ctx;
 }
 let pass = 0;
