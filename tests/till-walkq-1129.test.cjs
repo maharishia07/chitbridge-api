@@ -32,7 +32,7 @@ function page(extra) {
     isReturnRow: (b) => b.kind === 'credit_note', Buffer, atob: (s) => Buffer.from(s, 'base64').toString(), CloudHost: { person: null },
     window: { CBTax: { moneyOf: (inv) => inv && inv._money } }, CBTax: { moneyOf: (inv) => inv && inv._money }, RET_FOR: null, RET_QTY: null }, extra || {});
   vm.createContext(ctx);
-  vm.runInContext(['retLineOf', 'retRateOf', 'retMoney', 'retTaxRowsHTML', 'appSessionClaims', 'tillViewOnly', 'dayRateFigures', 'dayRepRows'].map(sourceOf).join('\n'), ctx);
+  vm.runInContext(['retLineOf', 'retRateOf', 'retMoney', 'appSessionClaims', 'tillViewOnly', 'dayRateFigures', 'dayRepRows'].map(sourceOf).join('\n'), ctx);
   return ctx;
 }
 let pass = 0;
@@ -52,9 +52,7 @@ p = page(); p.RET_FOR = serverBill(2); p.RET_QTY = [1]; m = p.retMoney();
 eq('Q-F-02 one of two: taxable is half of the line', [P(m.taxable), P(m.tax)], [21144, 3806]);
 p = page(); const own = { name: 'X', qty: 1, net: 118, taxable: 100, tax: 18, gst_rate: 18 };
 eq('Q-F-02 a line that carries its own figures is read as it is', p.retLineOf({ invoice: { ItemList: [{ AssAmt: 1 }] } }, 0, own), own);
-const html = page().retTaxRowsHTML({ taxable: -422.88, tax: -76.12, by_rate: { 18: { taxable: -422.88, tax: -76.12 } } });
-eq('Q-F-02 the slip prints taxable and the rate row', [/Taxable value[^]*M42288/.test(html), /18% tax on M42288[^]*M7612/.test(html)], [true, true]);
-eq('Q-F-02 a note with no tax prints no tax rows', page().retTaxRowsHTML({ taxable: 0, tax: 0 }), '');
+/* the slip's tax rows moved to till-slip.js slipCreditNoteTaxHTML (AL-F-01): tests/al-credit-note-tax.test.cjs */
 
 /* Q-F-03 / Q-F-05 are wired in the page: the order matters, so it is read from the source */
 const ri = sourceOf('retIssue'), fi = sourceOf('finish');

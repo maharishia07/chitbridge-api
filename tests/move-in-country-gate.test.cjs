@@ -187,8 +187,11 @@ t('W1.3 the tax ID is the PACK\'s: AU checks an ABN (refused with its sentence);
   assert.strictEqual(bad.rows[0].action, 'skip'); assert.ok(/^ABN 123:/.test(bad.rows[0].why), bad.rows[0].why);
   IN.moveIn = { sources: ['qbo'], supplyKindFor: () => undefined };
   try {
-    const pl = plan('contacts', { country: 'IN', source_country: 'IN', side: 'customer', world: { parties: [] }, rows: [{ line: 2, name: 'Kumar Traders', abn: '33AAAAA0000A1Z5', gstin: '' }] });
+    const pl = plan('contacts', { country: 'IN', source_country: 'IN', side: 'customer', world: { parties: [] }, rows: [{ line: 2, name: 'Kumar Traders', abn: '33AAAAA0000A1Z9', gstin: '' }] });
     assert.strictEqual(pl.rows[0].action, 'add', pl.rows[0].why); assert.strictEqual(pl.rows[0].data.tax_scheme, 'GSTIN');
+    /* AL-F-03: the preview asks the write's own check, so a GSTIN in the tax-ID column with a wrong check character is SKIPPED in the preview, in the write's words */
+    const wrong = plan('contacts', { country: 'IN', source_country: 'IN', side: 'customer', world: { parties: [] }, rows: [{ line: 3, name: 'Bad Check Co', abn: '33AAAAA0000A1Z5', gstin: '' }] });
+    assert.strictEqual(wrong.rows[0].action, 'skip'); assert.ok(/does not check out/.test(wrong.rows[0].why), wrong.rows[0].why);
   } finally { delete IN.moveIn; }
 });
 
