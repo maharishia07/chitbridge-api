@@ -8,13 +8,13 @@
 const fs = require('fs');
 const path = require('path');
 const PARTS = ['guards-list-1.cjs', 'guards-list-2.cjs', 'guards-list-3.cjs'];
-/** @returns {string} 'const GUARDS = [' + every entry line of the three parts + '\n];' */
+/** @returns {string} a comment line, 'const GUARDS = [' + every entry line of the three parts + '\n];' */
 function guardsListText() {
   const bodies = PARTS.map((part) => {
     const text = fs.readFileSync(path.join(__dirname, '..', '..', 'scripts', part), 'utf8');
     const from = text.indexOf('const GUARDS_PART = [') + 'const GUARDS_PART = ['.length;
     return text.slice(from, text.indexOf('\n];', from));
   });
-  return 'const GUARDS = [' + bodies.join('') + '\n];\n';
+  return '/* the offline guard list, parts 1..3 joined */\nconst GUARDS = [' + bodies.join('') + '\n];\n';
 }
 module.exports = { guardsListText };

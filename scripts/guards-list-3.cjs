@@ -462,5 +462,6 @@ const GUARDS_PART = [
   'delivery-closed.test.cjs', // enrolled 2026-11-22 (walk BA): passes offline
   'walkw-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'walkw-credit-qty-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
+  'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
