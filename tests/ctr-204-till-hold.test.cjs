@@ -136,6 +136,11 @@ const it = async (name, fn) => { n++; try { await fn(); console.log('  ok   ' + 
       const no = rowsByKind[k].no; DB.stores.queue[no] = rowsByKind[k];
       await host.drain({ force: true }); await host.drain({ force: true });
       const row = DB.stores.queue[no];
+      if (k === 'cn') { /* AF-F-01 (1129, later): a credit note refused for good is PARKED, not held: no retry time, waits for a person, asked once */
+        assert.ok(row && !row._hold && row._parked, k + ' is parked, never held: ' + JSON.stringify(row));
+        assert.strictEqual(calls.length, 1, k + ' is asked once, never again');
+        continue;
+      }
       assert.ok(row && !row._hold && row._nextAt > Date.now(), k + ' was held: ' + JSON.stringify(row));
       assert.strictEqual(calls.length, 2, k + ' is no longer retried');
     }

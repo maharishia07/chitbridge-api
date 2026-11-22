@@ -22,7 +22,7 @@ function sourceOf(name) {
   for (; i < till.length; i++) { if (till[i] === '{') depth++; else if (till[i] === '}' && --depth === 0) break; }
   return till.slice(start + 1, i + 1);
 }
-const NAMES = ['packKinds', 'kindWord', 'kindWordsOf', 'classesOf', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf', 'lineZeroWordOf', 'bandWordsOf', 'slipRateOf', 'dayAddKinds', 'dayKindRows', 'dayTaxSection', 'daySlipRow'];
+const NAMES = ['packKinds', 'kindWord', 'kindWordsOf', 'classesOf', 'unratedBaseOf', 'unratedApart', 'noRateWord', 'noReasonZeroWord', 'kindLabelOf', 'borderKindsPack', 'packSplitsByState', 'kindRowsOf', 'lineZeroWordOf', 'bandWordsOf', 'slipRateOf', 'dayAddKinds', 'dayKindRows', 'dayTaxSection', 'daySlipRow'];
 const ARABIC = { exempt: { ar: '\u0645\u0639\u0641\u0627\u0629', en: 'Exempt' }, zero_rated: { ar: '\u0628\u0646\u0633\u0628\u0629 \u0635\u0641\u0631', en: 'Zero-rated' } };
 function tillWith(country, arabic) {
   const base = R.packFor(country);

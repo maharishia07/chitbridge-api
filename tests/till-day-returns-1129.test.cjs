@@ -26,7 +26,7 @@ const ctx = { rmoney: (x) => Math.round(Number(x) * 100) / 100, r2: (x) => Math.
   isReturnRow: (b) => b.kind === 'credit_note', window: { CBTax: { moneyOf: (inv) => inv && inv._money } }, CBTax: { moneyOf: (inv) => inv && inv._money },
   dayRepTable: (title, cols, rows) => ({ title, rows }) };
 vm.createContext(ctx);
-vm.runInContext(['dayRateFigures', 'dayRepRows', 'dayAddIssued', 'dayRepCount', 'dayRepSummary'].map(sourceOf).join('\n'), ctx);
+vm.runInContext(['dayRateFigures', 'dayRepAddKinds', 'dayRepAddLines', 'dayRepAddRates', 'dayRepAddPays', 'dayRepRows', 'dayAddIssued', 'dayRepCount', 'dayRepSummary'].map(sourceOf).join('\n'), ctx);
 let pass = 0;
 const eq = (name, got, want) => {
   if (JSON.stringify(got) !== JSON.stringify(want)) { console.log('FAIL ' + name + '\n   got  ' + JSON.stringify(got) + '\n   want ' + JSON.stringify(want)); process.exitCode = 1; } else { pass++; console.log('   ok   ' + name); }

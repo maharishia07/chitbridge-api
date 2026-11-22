@@ -36,12 +36,12 @@ const CARD_BILL = { no: 'C1/1', at: '2026-11-21T09:00:00Z', total: 44, payments:
 function sheet(may) {
   const toasts = [], issued = [];
   const ctx = { console, JSON, String, Number, Array, Object, Math, toasts, issued, RET_FOR: CARD_BILL, RET_HOW: 'Card', RET_REASON: '', RET_OWED: 'owed', RET_WHY: 'returned', RET_WHYS: [['returned', 'Returned']],
-    esc: (x) => String(x), rateMay: () => (may ? { ok: true } : { ok: false, why: 'no' }), money: (x) => String(x), rmoney: (x) => x, toastLine: (t) => toasts.push(t), tillStopped: async () => false, retCanIssue: () => true,
+    esc: (x) => String(x), rateMay: () => (may ? { ok: true } : { ok: false, why: 'no' }), money: (x) => String(x), rmoney: (x) => x, toastLine: (t) => toasts.push(t), tillStopped: async () => false, dayReopenAsk: async () => true /* Q-F-03: retIssue asks first */, retCanIssue: () => true,
     retMoney: () => ({ total: 22, taxable: 20, tax: 2, saved: 0, byRate: {}, lines: [] }), retPlan: (a, t, how) => ({ refunds: [{ how, amount: t }], ask: 'sure', yes: 'y', done: 'd', refusal: '' }),
     retConfirm: async () => true, negatedTax: (x) => x, WHO: null, HOST: { creditNote: async (body) => { issued.push(body); return { ok: true, bill: body }; } }, retClose() {}, retSlipHTML: () => '', slipDocButtons() {}, autoPrint() {}, menuFresh() {}, paintStatus() {}, cbQuiet() {},
     document: { getElementById: () => null }, creditNoteTitle: () => '' };
   vm.createContext(ctx);
-  vm.runInContext(['retPaidSet', 'retIsOther', 'retOtherSaid', 'retOtherMay', 'retReasonSet', 'retHowOptions', 'retIssue'].map(lift).join(''), ctx);
+  vm.runInContext(['retOriginalOf', 'retPaidSet', 'retIsOther', 'retOtherSaid', 'retOtherMay', 'retReasonSet', 'retHowOptions', 'retIssue'].map(lift).join(''), ctx);
   return ctx;
 }
 const run = (ctx, code) => vm.runInContext(code, ctx);
