@@ -88,8 +88,7 @@ const catalogueMintLimiter = rateLimit({
 }); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
-const { creditNoteMoney, isCounterTakings } = require('../lib/till-credit-note-money'); /* the credit note's money as signs; which live rows are the counters' takings */
-const COUNTER_ROW_SQL = "AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)"; /* AJ-F-08 (walk AJ): a credit note is a counter's own only when it carries its counter (till.id); a rail credit note has none (no till sale). Here, not in lib/counter-bill: that file is vendored byte-for-byte into the till kit */
+const { creditNoteMoney, isCounterTakings } = require('../lib/till-credit-note-money'); const COUNTER_ROW_SQL = "AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)"; /* the credit note's money as signs; which live rows are the counters' takings */ /* AJ-F-08 (walk AJ): a credit note is a counter's own only when it carries its counter (till.id); a rail credit note has none (no till sale). Here, not in lib/counter-bill: that file is vendored byte-for-byte into the till kit */
 const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -1272,8 +1271,7 @@ function shopBlock(row, flags, particulars, holdsStock, registration) {
   return {
     /* E-F-06: the shop's own IANA zone (identities.timezone) — the one the web's CB_SHOP_TZ reads; null = none stated (never guessed) */
     timezone: row.timezone || null,
-    /* P-F-06: does this shop's pack number invoices by blocks (invoice-lease.leasesFor, the one reader)? The counter asks for a block only when true; absent (an older snapshot) = ask, as before */
-    invoice_blocks: invoiceLease.leasesFor(country),
+    invoice_blocks: invoiceLease.leasesFor(country), /* P-F-06: does this shop's pack number invoices by blocks (invoice-lease.leasesFor, the one reader)? The counter asks for a block only when true; absent (an older snapshot) = ask, as before */
     /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
     slip_footer: slipFooter,
     ...shopIdentity(party, row),

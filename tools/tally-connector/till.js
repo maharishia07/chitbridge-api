@@ -941,8 +941,7 @@ function rollUp(now) {
   for (const d of days) {
     if (!rollup.isClosed('day', d, now)) continue;          /* today is still being billed */
     if (readSummary('day', d)) continue;                     /* already done — and it is never redone */
-    const rows = readLines(F.bills(d));
-    const nos = rows.map((b) => b.no).filter(Boolean);
+    const rows = readLines(F.bills(d)); const nos = rows.map((b) => b.no).filter(Boolean);
     const sum = rollup.summary('day', d, rollup.totals(rows), {
       till, bills_from: nos[0] || null, bills_to: nos[nos.length - 1] || null });
     sum.bill_nos = nos; /* AJ-F-08: the bills this summary holds, so the live day counts each once (routes/till.js inFiling) */
