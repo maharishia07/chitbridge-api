@@ -810,6 +810,7 @@ const GUARDS = [
   'books-reclass-rate.test.cjs', // enrolled by red1128 (was missing: the every-test-is-enrolled guard)
   'supply-kind-in-note-day.test.cjs', // enrolled by red1128 (was missing)
   'walkh-list-country.test.cjs', // enrolled by red1128 (walkh, was missing)
+  'walkx-sample-country.test.cjs', // WALK-X X-F-01: AE/AU lists hold no India shelf or item
   'walkl-measure-credit-note-sign-1128.test.cjs', // L-F-08 (1128): a pile's money subtracts credit notes (measure.signedValue)
   'walkn-counts-1129.test.cjs', // N-F-03/04 (1129): work counts only received work; a draft is not on the rail and does not bill an order
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
