@@ -60,7 +60,7 @@ const stub = (file, exp) => { const id = require.resolve(root(file)); require.ca
   });
 
   /* 2 ── applyVersion is one transaction ───────────────────────────────────────────────────────────────── */
-  stub('db/index.js', { query: async () => ({ rows: [] }), withEntity: fakeWithEntity, withTransaction: (fn) => fakeWithEntity(null, fn), onEntity: async (i, d, fn) => fn(d), readBatch: async () => ({}), trySavepoint: async (d, fn, fb) => { try { return await fn(d); } catch (_) { return fb; } }, inlineSql: dbReal.inlineSql });
+  stub('db/index.js', { query: async () => ({ rows: [] }), withEntity: fakeWithEntity, withTransaction: (fn) => fakeWithEntity(null, fn), onEntity: async (i, d, fn) => (d ? fn(d) : fakeWithEntity(i, fn)), readBatch: async () => ({}), trySavepoint: async (d, fn, fb) => { try { return await fn(d); } catch (_) { return fb; } }, inlineSql: dbReal.inlineSql });
   const amend = require(root('lib/amend'));
   /* the stand-in for amend.record keeps its real contract: the caller's `inside` step runs INSIDE the one transaction (RAIL-147) */
   amend.record = async (entity, chit, edits, who, inside = async (_c, prepared) => prepared) => fakeWithEntity(entity, async (db) => { await inside(db, edits); await db.query('INSERT INTO chit_line_amendment'); return { amendments: edits }; });
@@ -84,7 +84,10 @@ const stub = (file, exp) => { const id = require.resolve(root(file)); require.ca
     await proposals.applyVersion('buyer', 'c1', ROW, { name: 'Buyer' });
     const kinds = world.ops.map((o) => o.sql);
     assert.ok(kinds.some((k) => /chit_line_amendment/.test(k)) && kinds.some((k) => /UPDATE chit_header/.test(k)) && kinds.some((k) => /state_log/.test(k)), JSON.stringify(kinds));
-    assert.strictEqual(new Set(world.ops.map((o) => o.tx)).size, 1, 'one transaction: ' + JSON.stringify(world.ops.map((o) => o.tx)));
+    const writes = world.ops.filter((o) => !/^s*SELECT/i.test(o.sql) && !/chit_line_amendment/.test(o.sql)); /* the amendment row goes through amend.record, which JOINS the caller's handle (LV-04, givenDb): proved by the source line below; this stub cannot tell a joined handle from a new one */
+    assert.ok(/amend.record([^;]*undefined, db)/.test(require('fs').readFileSync(root('lib/chit-proposal.js'), 'utf8')), 'applyVersion hands amend.record its own handle'); /* fold 1129: a read before the transaction opens is not a write; every WRITE is in the one */
+    assert.ok(writes.length >= 4, 'the writes: ' + writes.length);
+    assert.strictEqual(new Set(writes.map((o) => o.tx)).size, 1, 'one transaction for every write: ' + JSON.stringify(writes.map((o) => o.tx + ':' + o.sql.slice(0, 40))));
   });
 
   /* 3 ── reward replay with another spend ──────────────────────────────────────────────────────────────── */
