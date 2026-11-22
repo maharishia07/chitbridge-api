@@ -1150,6 +1150,8 @@ const GUARDS = [
   'as-rcm-1129.test.cjs', // AS-F-01 (1129): RCM from an unregistered supplier with no state is taxed at the buyer's state (needs the engines tax change adopted)
   'books-bill-ref.test.cjs', // AZ-F-03: the one resolver of a booked bill's names (stored ref, client_ref, entry id, entry no, rail bill no); a name no bill carries is refused; a down read is not swallowed (9 checks)
   'books-return-registration.test.cjs', // GREY-AU U-F-09: the not-registered answer of GET /returns in the pack's own words, the empty form, the base kept (6 checks)
+  'books-store-gstclass.test.cjs', // AU BAS G10: the net tax of entries that also carry a line on given roles; nil for no row; a down read is thrown (7 checks)
+  'home-facts-sold.test.cjs', // M144 / BD-F-01: the Home Till card's books day from the Day book rows, no figure across two currencies, a quiet unprovisioned ledger (9 checks)
   'tax-zero-guard.test.cjs', // TAX-EXPLICIT (1129): no new `<taxish> || 0` / `?? 0` and no swallowing catch in the tax files unless tests/support/tax-zero-allow.json names it with its reason
   'walkr-1129.test.cjs', // WALK R (1129): zero-rated / exempt sales on their own ledgers and VAT201 boxes 4/5 (hand case in fils), the issuer posts its rail credit note, the buyer's note waits for the supplier list
   'walkt-1129.test.cjs', // WALK T (1129) T-F-01: VAT201 Box 9 counts only a bill's 5% lines (hand 12000 / 600 in fils, not 41000), 0% lines of the same bill out, a reversal nets away

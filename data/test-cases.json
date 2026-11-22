@@ -1000,7 +1000,7 @@
   "bridge": "The crossing — what the layers DO, not a place, so every file here also sits on another row. ⭐ IDENTIFY — a typed name resolves to one identity, or 404. Never best-effort. ⭐ CROSS — one copy per participant, never shared, with clearances, governance and the retention floor frozen onto each. ⭐ PROTECT — RLS then refuses rows that are not yours. ⚠ KNOWN GAP — not tamper-evident. Ownership is proven; byte-identity is not, and that is what a dispute needs. See BACKLOG-test-cases.md.",
   "connector": "How a chit leaves the building. routes/connectors.js declares it: \"L3.1+ : a connector = a first-class ACTOR (identities row) grouped by SITE (Model 1). CARD 23-connectors-and-integrations/connector-actors OWNS the 14 connector routes (/api/connectors): make one · its connections · its key · health · and the two doors a device and an ERP agent call with their own key. CALLED BY server.js (app.use('/api/connectors')).\" ⭐ IoT and ERP are two shapes of one connection — which is why co-assist, IoT, ERP and Tally all land here. · The files are ADAPTER (one per foreign system), KIT (the spine) and CHANNEL (how a chit reaches a person). ⚠ IoT has no adapter yet — its 2 file(s) are the signal blueprint and lifecycle scripts."
  },
- "foot": "These six rows are the ARCHITECTURE, not a file inventory. 139 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 2835 cases read from a test file, plus 1628 written by hand for the journeys no file covers.",
+ "foot": "These six rows are the ARCHITECTURE, not a file inventory. 139 scripts in scripts/ (every prove-*.js among them) are deliberately absent — they exercise the layers, they are not layers. The Cases tab carries them: 2837 cases read from a test file, plus 1628 written by hand for the journeys no file covers.",
  "contents": {
   "engine": [
    {
@@ -72729,7 +72729,7 @@
     "lib/vaultcrypto.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T10:49:00+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database"
    ]
@@ -74047,7 +74047,7 @@
     "lib/tax-lines.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T02:55:21+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via country-setup.js)"
    ]
@@ -75102,7 +75102,7 @@
     "lib/problem-world.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T04:14:57+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database"
    ]
@@ -76617,6 +76617,37 @@
    "changed_at": "2026-11-17T17:44:56+05:30"
   },
   {
+   "case_key": "chitbridge-api/tests/books-bill-ref.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "AZ-F-03: the one resolver of the names a person calls a booked bill by (lib/books-bill-ref.js namedRef).",
+   "claim": "AZ-F-03: the one resolver of the names a person calls a booked bill by (lib/books-bill-ref.js namedRef).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 38 lines. Run: node chitbridge-api/tests/books-bill-ref.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/books-bill-ref.js",
+    "lib/books-store.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T13:14:21+05:30",
+   "needs": [
+    "a database (via country-setup.js)"
+   ]
+  },
+  {
    "case_key": "chitbridge-api/tests/books-card-split.test.cjs",
    "module_key": "chitbridge-api/tests",
    "module_name": "API guards",
@@ -77229,7 +77260,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · integration · 169 lines. Run: node chitbridge-api/tests/books-evidence.realstack.cjs",
+   "note": "test.guard · integration · 170 lines. Run: node chitbridge-api/tests/books-evidence.realstack.cjs",
    "layer": "engine",
    "test_type": "integration",
    "group": "test.guard",
@@ -77248,7 +77279,7 @@
     "middleware/auth.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-19T00:17:54+05:30",
+   "changed_at": "2026-11-22T13:27:08+05:30",
    "needs": [
     "a database",
     "the API running"
@@ -78455,7 +78486,7 @@
     "lib/books.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T09:57:47+05:30"
+   "changed_at": "2026-11-22T13:14:21+05:30"
   },
   {
    "case_key": "chitbridge-api/tests/books-replay-locked-month.test.cjs",
@@ -78577,6 +78608,36 @@
    "changed_at": "2026-11-17T07:25:44+05:30",
    "needs": [
     "a database"
+   ]
+  },
+  {
+   "case_key": "chitbridge-api/tests/books-return-registration.test.cjs",
+   "module_key": "chitbridge-api/tests",
+   "module_name": "API guards",
+   "intro": "",
+   "title": "GREY-AU U-F-09: the answer of GET /returns for a shop that said it is NOT registered for the tax (lib/books-return-registration.js).",
+   "claim": "GREY-AU U-F-09: the answer of GET /returns for a shop that said it is NOT registered for the tax (lib/books-return-registration.js).",
+   "priority": "Medium",
+   "pre": "",
+   "data": "",
+   "steps": [],
+   "note": "test.guard · unit · 24 lines. Run: node chitbridge-api/tests/books-return-registration.test.cjs",
+   "layer": "engine",
+   "test_type": "unit",
+   "group": "test.guard",
+   "automated": true,
+   "seq": 90,
+   "step": "",
+   "areas": [
+    "engine"
+   ],
+   "subjects": [
+    "lib/books-return-registration.js"
+   ],
+   "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
+   "changed_at": "2026-11-22T13:14:21+05:30",
+   "needs": [
+    "a database (via tax-shelf.js)"
    ]
   },
   {
@@ -86982,7 +87043,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T07:17:11+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database"
    ]
@@ -89026,7 +89087,7 @@
     "lib/work-rows.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T03:44:44+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via select.js)"
    ]
@@ -101491,7 +101552,7 @@
     "lib/work-rows.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-05T14:02:32+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via crm-stub.cjs)"
    ]
@@ -101658,7 +101719,7 @@
     "lib/dues-view.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T02:58:02+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via books-harness.cjs)"
    ]
@@ -101815,7 +101876,7 @@
     "lib/books.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T20:19:12+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via route-golden.cjs)",
     "the API running (via route-golden.cjs)"
@@ -104148,7 +104209,7 @@
     "middleware/books-grant.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T02:58:02+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database"
    ]
@@ -113211,7 +113272,7 @@
     "lib/tax-slab.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T12:08:44+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via books-hooks.js)"
    ]
@@ -115526,7 +115587,7 @@
     "lib/credit-qty.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T18:32:49+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via bill-privacy.js)"
    ]
@@ -115581,7 +115642,7 @@
     "lib/catalogue-write.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T19:42:01+05:30",
+   "changed_at": "2026-11-22T13:14:21+05:30",
    "needs": [
     "a database (via catalogue-write.js)"
    ]
@@ -116398,7 +116459,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T18:49:32+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/a3c-client-view.test.cjs",
@@ -116838,7 +116899,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T10:41:55+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/arrow-probe.cjs",
@@ -118218,7 +118279,7 @@
     "lib/known-findings.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-13T04:05:01+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/bulk-resume.test.cjs",
@@ -119635,7 +119696,7 @@
     "lib/crm-api.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-11-19T04:55:28+05:30",
+   "changed_at": "2026-11-22T13:16:58+05:30",
    "needs": [
     "a browser"
    ]
@@ -119918,7 +119979,7 @@
     "public/engine/signin.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T12:45:39+05:30",
+   "changed_at": "2026-11-22T13:16:58+05:30",
    "needs": [
     "the API running"
    ]
@@ -121803,7 +121864,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-12T21:02:43+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/index-page-breaks.cjs",
@@ -121916,7 +121977,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T16:58:21+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/iot-agent-retry.test.cjs",
@@ -122091,7 +122152,7 @@
     "lib/lift-fn.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T17:50:19+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/l1c-1129.test.cjs",
@@ -122578,7 +122639,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T14:53:33+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/lib/break-run.cjs",
@@ -122678,7 +122739,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T11:30:30+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/lib/crm-marketing-api.cjs",
@@ -123196,7 +123257,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T23:49:00+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/lib/theme-measure.cjs",
@@ -127934,7 +127995,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T18:51:24+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/shop-tidy.cjs",
@@ -128485,7 +128546,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T11:04:45+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/step-press.test.cjs",
@@ -128539,7 +128600,7 @@
     "lib/lift-fn.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T13:00:24+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/storefront-offer-ancestors.cjs",
@@ -137316,7 +137377,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-12T09:25:13+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/ui-codes-sweep.test.cjs",
@@ -137417,7 +137478,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T22:41:39+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/ui-codes-utility-pages.test.cjs",
@@ -138401,7 +138462,7 @@
     "lib/today.js"
    ],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-11-17T21:56:10+05:30",
+   "changed_at": "2026-11-22T13:27:08+05:30",
    "needs": [
     "a browser"
    ]
@@ -139038,7 +139099,7 @@
     "lib/walk.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-10-15T07:11:33Z",
+   "changed_at": "2026-11-22T13:16:58+05:30",
    "needs": [
     "a browser (via walk.cjs)"
    ]
@@ -140158,7 +140219,7 @@
     "lib/walk.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T09:37:51+05:30",
+   "changed_at": "2026-11-22T13:16:58+05:30",
    "needs": [
     "a browser (via walk.cjs)"
    ]
@@ -140832,7 +140893,7 @@
     "lib/walk.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T10:50:50+05:30",
+   "changed_at": "2026-11-22T13:27:08+05:30",
    "needs": [
     "a browser (via walk.cjs)"
    ]
@@ -141401,7 +141462,7 @@
     "lib/walk.js"
    ],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T00:59:04+05:30",
+   "changed_at": "2026-11-22T13:27:08+05:30",
    "needs": [
     "a browser (via walk.cjs)"
    ]
@@ -141539,7 +141600,7 @@
    "pre": "",
    "data": "",
    "steps": [],
-   "note": "test.guard · system · 340 lines. Run: node chitbridge-web/e2e/walk-ui-standard.cjs",
+   "note": "test.guard · system · 341 lines. Run: node chitbridge-web/e2e/walk-ui-standard.cjs",
    "layer": "web",
    "test_type": "system",
    "group": "test.guard",
@@ -141551,7 +141612,7 @@
    ],
    "subjects": [],
    "run_by": "a person, against a live environment — never unattended",
-   "changed_at": "2026-11-13T20:20:58+05:30",
+   "changed_at": "2026-11-22T13:27:08+05:30",
    "needs": [
     "a browser"
    ]
@@ -141851,7 +141912,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T15:53:15+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/e2e/walks-sides-count.test.cjs",
@@ -143537,7 +143598,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-22T02:48:50+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/chit-mark-paid-dead.test.cjs",
@@ -143562,7 +143623,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T17:56:05+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/chit-pay-ask.test.cjs",
@@ -144679,7 +144740,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T10:41:19+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/home-assign-popup.test.cjs",
@@ -144804,7 +144865,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-21T16:19:07+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/jan-7-method-models.test.cjs",
@@ -145059,7 +145120,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-13T18:04:10+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/match-other-unit.test.cjs",
@@ -145084,7 +145145,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-12T22:16:35+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/misfix-1121-web.test.cjs",
@@ -145515,7 +145576,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T18:35:25+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/readab-1129-handlers.test.cjs",
@@ -145640,7 +145701,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-06T16:05:07+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/rewards-pane.test.cjs",
@@ -145765,7 +145826,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T18:10:52+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/shop-attempt-key.test.cjs",
@@ -145890,7 +145951,7 @@
    ],
    "subjects": [],
    "run_by": "the guard suite, unattended (node C:\\dev\\suite.cjs)",
-   "changed_at": "2026-11-17T19:13:50+05:30"
+   "changed_at": "2026-11-22T13:16:58+05:30"
   },
   {
    "case_key": "chitbridge-web/tests/sig-stars.test.cjs",
