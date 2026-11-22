@@ -1144,7 +1144,7 @@ const allocationsOf = (body, currency) =>
     ? body.allocations.filter((item) => item && typeof item === 'object').map((item) => ({ against_ref: String(item.against_ref || ''), amount_minor: moneyOps.roundMinor(item.amount_minor, currency) }))
     : null;
 // @does A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).
-router.post('/payments', auth, noKey, editor, payOut('body'), onceOnly, on, ...checked('POST /payments'), async (req, res) => {
+router.post('/payments', auth, noKey, editor, payOut('body'), onceOnly, on, ...checked('POST /payments'), require('../lib/books-approval').paymentGate, async (req, res) => {
   try {
     const e = ctx(req),
       b = req.body || {},
