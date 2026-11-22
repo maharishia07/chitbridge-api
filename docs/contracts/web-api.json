@@ -511,7 +511,9 @@
     },
     "may": {
      "ask": {
-      "ok": true
+      "ok": true,
+      "why": "read_only",
+      "say": "Your access is view-only. You can read this chit but not change it."
      }
     }
    },
@@ -567,7 +569,10 @@
       "group": {
        "code": "1300",
        "name": "Customers (Sundry Debtors)"
-      }
+      },
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false
      }
     ],
     "liabilities": [
@@ -588,7 +593,10 @@
         "code": "2200",
         "name": "Output CGST"
        }
-      ]
+      ],
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false
      }
     ],
     "equity": [
@@ -600,7 +608,10 @@
       "role": "profit_to_date",
       "prior_month_minor": -70000,
       "prior_year_minor": 0,
-      "group": null
+      "group": null,
+      "change_minor": 0,
+      "change_bp": null,
+      "change_over": false
      }
     ],
     "total_liabilities_minor": 188000,
@@ -816,7 +827,12 @@
      "estimated": true,
      "why": "This is the total the books owe for tax; the return for the period itself could not be read, so the amount and its date are an estimate.",
      "form": "GSTR-3B",
-     "short": "GST"
+     "short": "GST",
+     "earlier": {
+      "payable_minor": 0,
+      "before": "2027-04-01",
+      "counted": false
+     }
     },
     "series": [
      {
@@ -1429,6 +1445,14 @@
      "worst": "d90_plus",
      "no_terms_minor": 0,
      "terms": "ok"
+    },
+    "tb_control": {
+     "customer": {
+      "list_minor": 118000,
+      "tb_minor": 118000,
+      "differs_minor": 0
+     },
+     "supplier": null
     }
    },
    "optional": [
@@ -1767,7 +1791,10 @@
        "doc": null,
        "files": [],
        "count": 0,
-       "flag": null
+       "flag": null,
+       "flag_why": "No tax invoice on file",
+       "cite": "ato.gov.au",
+       "cite_status": "checked"
       }
      }
     ],
@@ -1811,9 +1838,17 @@
      "why": "no sales posted in this period",
      "prior": {
       "minor": null,
-      "why": "no sales posted in this period"
+      "why": "no sales posted in this period",
+      "currency": "INR",
+      "through": "2026-04-09",
+      "bills": 1,
+      "partial": false
      },
-     "change_bp": null
+     "change_bp": null,
+     "currency": "INR",
+     "through": "2027-04-09",
+     "bills": 1,
+     "partial": false
     },
     "bars": [
      {
@@ -2124,11 +2159,19 @@
       },
       "reopen": {
        "may": false,
-       "why": null
+       "why": null,
+       "first": {
+        "fiscal_year": "2026-27",
+        "period": 1,
+        "start_date": "2026-04-01"
+       }
       },
       "lock_trail": [],
       "before_books": true,
-      "profit_minor": -70000
+      "profit_minor": -70000,
+      "open_below_locked": true,
+      "checked": 0,
+      "of": 0
      }
     ],
     "books_start": {
@@ -2357,7 +2400,9 @@
       "due": "2025-10-28",
       "ended": true,
       "stagger": 1,
-      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+      "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+      "state": "open",
+      "closed": false
      }
     ],
     "period": {
@@ -2369,7 +2414,9 @@
      "due": "2026-10-28",
      "ended": true,
      "stagger": 1,
-     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file"
+     "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
+     "state": "open",
+     "closed": false
     },
     "boxes": [
      {
@@ -2545,7 +2592,11 @@
       "group": "sundry_debtors",
       "dr_minor": 118000,
       "cr_minor": 0,
-      "net_minor": 118000
+      "net_minor": 118000,
+      "prior_net_minor": 100000,
+      "change_minor": 18000,
+      "change_bp": 1800,
+      "change_over": false
      }
     ],
     "over_rule": {
@@ -2556,7 +2607,8 @@
     "compare": null,
     "total_dr_minor": 297000,
     "total_cr_minor": 297000,
-    "balanced": true
+    "balanced": true,
+    "bank": []
    },
    "optional": [],
    "also_optional": [
@@ -2836,7 +2888,11 @@
       "unbilled": {
        "n": 0,
        "minor": 0,
-       "currency": null
+       "currency": null,
+       "by_currency": [],
+       "no_currency": 0,
+       "unpriced": 0,
+       "cost_hidden": false
       },
       "contact_prefs": {
        "migrated": false,
@@ -3141,7 +3197,11 @@
     "unbilled": {
      "n": 0,
      "minor": 0,
-     "currency": null
+     "currency": null,
+     "by_currency": [],
+     "no_currency": 0,
+     "unpriced": 0,
+     "cost_hidden": false
     },
     "bills": {
      "n": 1,
