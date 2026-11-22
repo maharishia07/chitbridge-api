@@ -6169,8 +6169,9 @@ function packHasUpi(){ try { var pack = shopPack(); return !!(pack && pack.chart
  * the buyer's identity or ABN from A$1,000 · reg-ae ER Art. 59: full or simplified, the buyer's TRN on a full one). India's pack has no such member
  * (Rule 46 is the slip as it always was), so this answers null there and nothing on an Indian bill changes. `buyerId` = the buyer's tax id, if any.
  */
-function invoiceRule(total, buyerId){
-  try { var p = shopPack(); return p && typeof p.taxInvoice === 'function' ? p.taxInvoice(shopMinor(total), { buyer_registered: !!buyerId }) : null; }
+function invoiceRule(total, buyerId, taxable){
+  /* 1129: the bill's TAXABLE value rides along (India's r.46(e) line is on taxable value, not the total); an absent one is passed as absent, never as 0 */
+  try { var p = shopPack(), opts = { buyer_registered: !!buyerId }; if (taxable != null && taxable !== '' && isFinite(Number(taxable))) opts.taxable_minor = shopMinor(taxable); return p && typeof p.taxInvoice === 'function' ? p.taxInvoice(shopMinor(total), opts) : null; }
   catch (_) { return null; }
 }
 /** the bill's buyer is NAMED (a typed name or their tax id) — what reg-au's buyer_identity asks for; "Walk-in" names nobody */
@@ -19078,7 +19079,7 @@ function notInvoiceWhy(bill){
 function buyerWarnWords(m){
   if (!m || shopTax().kind !== 'tax' || !(Number(m.tax) > 0)) return '';
   var cust = custKnown(), nm = String((document.getElementById('cname') || {}).value || '').trim();
-  var rule = invoiceRule(m.net, (window.BUYER_TAX_TYPED || (cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '')));
+  var rule = invoiceRule(m.net, (window.BUYER_TAX_TYPED || (cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '')), m.base != null ? m.base : m.taxable);   /* the cart's money has base; a stored bill has taxable */
   if (!rule || !rule.buyer_identity || buyerNamed({ name: nm, gstin: (window.BUYER_TAX_TYPED || (cust && cust.gstin ? String(cust.gstin).trim().toUpperCase() : '')) })) return '';
   return 'Over ' + money(buyerFromMajor()) + ' a tax invoice names the buyer';
 }
