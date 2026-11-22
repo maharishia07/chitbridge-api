@@ -23170,7 +23170,7 @@ async function dayReread(reopen){ if (frozenStop('re-reading the day')) return 0
   for (var i = 0; i < h.bills.length; i++) {
     var b = h.bills[i];
     if (!b || !b.no || have[String(b.no)] || dayKeyOf(b.at) !== day) continue;
-    var row = Object.assign({}, b, { customer: { name: b.customer || 'Walk-in' }, _sent: { chit_id: b.chit_id }, _verified: Date.now(),
+    var row = Object.assign({}, b, { customer: (b.customer_id ? { name: b.customer || 'Walk-in', identity_id: b.customer_id } : { name: b.customer || 'Walk-in' }) /* Y-F-01: the id rides too */, _sent: { chit_id: b.chit_id }, _verified: Date.now(),
                                      _from_server: true });
     try { await DB.put('bills', row); n++; } catch (e) { cbQuiet('dayReread:2', e); }
   }
@@ -26573,6 +26573,12 @@ function retPaidBy(bill){
   });
   return best ? best.how : 'Cash';
 }
+/** Y-F-01 · how the bill reads in the sheet's header: a bill left On credit says so (the cash default is for the refund, not for how it was paid) */
+function retPaidWords(bill){
+  var credit = 0, money_ = 0;
+  ((bill && bill.payments) || []).forEach(function(p){ if (!p || !p.how) return; if (p.how === 'On credit') credit += Number(p.amount) || 0; else if (p.how !== 'Points') money_ += Number(p.amount) || 0; });
+  return credit > 0 && !(money_ > 0) ? 'on credit' : (credit > 0 ? 'part on credit' : 'paid by ' + retPaidBy(bill));
+}
 /** the ways money can go back: how this bill was paid, then the shop's own tenders (expWays — the list checkout offers, Cash first) */
 function retWays(bill){
   var out = [];
@@ -26611,8 +26617,12 @@ function retPlan(against, total, tender){
   if (tender !== RET_OWED) return { refunds: [{ how: tender, amount: total }], ask: txf('Give back {total} in {tender} against {no}?', { total: money(total), tender: tender, no: against.no }),
                                     yes: tx('Yes, give it back'), done: txf('{total} back in {tender}', { total: money(total), tender: tender }), refusal: '' };
   var owed = retOwedFor(against, total);     /* the books would refuse a half-and-half; so does the till */
-  return { refunds: [], ask: txf('Take {total} off what {who} owes, against {no}?', { total: money(total), who: retCustomerName(against), no: against.no }),
-           yes: tx('Yes, take it off'), done: txf('{total} off what they owe', { total: money(total) }), refusal: owed.fits ? '' : owed.sentence };
+  var kept = owed.fits ? owed.credit : 0;    /* Y-F-01: the part beyond the balance stays as credit, said before and after */
+  var name = retCustomerName(against), take = money(rmoney(total - kept));
+  return { refunds: [], ask: kept ? txf('Take {take} off what {who} owes and keep the other {kept} as credit on the account, against {no}?', { take: take, who: name, kept: money(kept), no: against.no })
+                                   : txf('Take {total} off what {who} owes, against {no}?', { total: money(total), who: name, no: against.no }),
+           yes: tx('Yes, take it off'), done: kept ? txf('{take} off what they owe, {kept} kept as credit', { take: take, kept: money(kept) }) : txf('{total} off what they owe', { total: money(total) }),
+           kept: kept, refusal: owed.fits ? '' : owed.sentence };
 }
 /** says the refusal, or asks the cashier to confirm: true only when the return should go ahead */
 async function retConfirm(plan){
@@ -26641,7 +26651,7 @@ function retOwedRefusal(identityId, max, total){
   if (!booksOn()) return 'The shop\u2019s Ledger is off, so this goes back another way.';
   if (!identityId) return 'This bill has no customer the shop knows, so this goes back another way.';
   if (max < 0.005) return 'Nothing is owing on this bill any more.';
-  return total > max + 0.004 ? ('They owe ' + money(max) + ' on this bill, less than this return. Give it back another way, or return less.') : '';
+  return '';   /* Y-F-01: a return bigger than the balance is NOT refused - it settles the balance and the rest stays as credit (retOwedFor words it) */
 }
 /** is "Reduce what they owe" offered for this bill, does a return of `total` fit, and the sentence that says why not (or what it will do) */
 function retOwedFor(bill, total){
@@ -26654,7 +26664,10 @@ function retOwedFor(bill, total){
   var max = owes == null ? left : Math.min(left, Math.max(0, owes));
   var refusal = retOwedRefusal(identityId, max, total);
   return { offered: true, fits: !refusal, max: max,
-           sentence: refusal || ('Takes ' + money(total) + ' off what they owe, as far as this counter knows (' + money(max) + ' owing on this bill).') };
+           sentence: refusal || (total > max + 0.004
+             ? ('They owe ' + money(max) + ' on this bill. This takes all of it off, and the other ' + money(rmoney(total - max)) + ' stays as credit on their account.')
+             : ('Takes ' + money(total) + ' off what they owe, as far as this counter knows (' + money(max) + ' owing on this bill).')),
+           credit: total > max + 0.004 && !refusal ? rmoney(total - max) : 0 };
 }
 /** the "Back as" options: Reduce what they owe first (greyed with its sentence when it cannot be used), then the cash ways */
 function retHowOptions(ways, owed){
@@ -26758,7 +26771,7 @@ function retPaint(){
   box.innerHTML =
     '<div class="retagainst">' + tx('Against') + ' <b>' + esc(RET_FOR.no) + '</b> · '
       + esc(atShop(RET_FOR.at)) + ' · ' + money(Number(RET_FOR.total) || 0)
-      + (retPaidBy(RET_FOR) ? ' · ' + txf('paid by {how}', { how: esc(retPaidBy(RET_FOR)) }) : '') + '</div>'
+      + (retPaidWords(RET_FOR) ? ' · ' + esc(retPaidWords(RET_FOR)) : '') + '</div>'
     + '<div class="retlines">' + (RET_FOR.lines || []).map(function(l, n){
         var left = retLeft(RET_FOR, n), q = Number(RET_QTY[n]) || 0;
         return '<div class="retrow' + (left > 0 ? '' : ' none') + '" data-testid="till-ret-' + n + '">'
@@ -27175,6 +27188,7 @@ async function retIssue(){
     /* ⭐⭐ MONEY OUT — the counter's first. Recorded as its own array rather than a negative payment, because a
        payment is money TAKEN and every reader of 'payments' assumes that. */
     override_reason: other ? typed : null,   /* AF-F-01 */
+    kept_credit: plan.kept || 0,   /* Y-F-01: the part of a return that stayed as credit; on the paper only */
     refunds: plan.refunds,     /* CTR-187: [] + the customer = taken off what they owe (books-hooks posts it) */
     customer: against.customer || { name: 'Walk-in' },
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */
@@ -27227,6 +27241,7 @@ function retSlipHTML(cn){
     + '<span style="float:right">' + money(Math.abs(Number(cn.total) || 0)) + '</span></div>'
     + (Number(cn.tax) ? '<div>of which tax <span style="float:right">' + money(Math.abs(Number(cn.tax))) + '</span></div>' : '')
     + '<div>' + (cn.refunds && cn.refunds.length ? 'in ' + esc(cn.refunds[0].how || 'Cash') : 'Taken off what you owe') + '</div>'
+    + (!(cn.refunds && cn.refunds.length) && Number(cn.kept_credit) > 0 ? '<div data-testid="till-ret-slip-kept">Kept as credit on your account <span style="float:right">' + money(Number(cn.kept_credit)) + '</span></div>' : '')
     + '</div>';
 }
 /**

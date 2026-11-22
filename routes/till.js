@@ -3896,6 +3896,7 @@ function billWho(row, business) {
     no: business.bill_no || null,
     at: business.billed_at || row.created_at,
     customer: (business.customer && business.customer.name) || 'Walk-in',
+    customer_id: (business.customer && business.customer.identity_id) || null, /* Y-F-01: the party the bill was made out to, so a return can be taken off what they owe */
     by: till.by || null,
     till: { id: till.id || null, name: till.name || null }
   };
