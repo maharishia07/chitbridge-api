@@ -805,6 +805,7 @@ const GUARDS = [
   'books-returns.test.cjs',
   'acc-290a-needs-answer.test.cjs',
   'p1-7-bas-basis.test.cjs',
+  'au-g10-inclusive.test.cjs',
   'books-tally-remoteid.test.cjs',
   'chit-currency-default.test.cjs',
   'country-registry-callers.test.cjs',

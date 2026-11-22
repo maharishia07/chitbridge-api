@@ -23,6 +23,7 @@ const NEEDS_ENGINES = [
   'books-close-country.test.cjs',
   'books-returns.test.cjs',
   'p1-7-bas-basis.test.cjs',
+  'au-g10-inclusive.test.cjs',
   'pay-fix.test.cjs',
   'rcm-post.test.cjs',
   'engines-pinned.test.js',
