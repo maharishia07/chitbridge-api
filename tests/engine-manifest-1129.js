@@ -10,6 +10,6 @@
  * PENDING: the five moved out of routes in read1129 (books-bs-shape: P&L/BS shapes; chits-send-bill: the send steps; tax-engine-line, tax-line-status: the tax engine's line input and status; till-credit-note-money: credit-note signs) pick or regroup money and tax figures that engines own, so cb-capability decides engine or not, as for the l16 four. And: these two sum or check money for a page (the tenders of a bill against its total; the input tax the off-rail purchases posted). Whether that is engine (books/counter) or stays here is
  * cb-capability's call, as for the l16 four; the money-no-arithmetic guard sees neither. Keep this list small and shrinking.
  */
-const INFRA = ['books-backfill.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js', 'products-import-rows.js', 'products-media-guard.js'];
+const INFRA = ['books-backfill.js', 'books-events-batch.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js', 'products-import-rows.js', 'products-media-guard.js'];
 const PENDING = ['offrail-itc.js', 'tender-sum.js', 'books-bs-shape.js', 'chits-send-bill.js', 'tax-engine-line.js', 'tax-line-status.js', 'till-credit-note-money.js', 'bill-no.js', 'rail-invoice-number.js', 'credit-original.js', 'rcm-lines.js', 'clearance-gather.js'];
 module.exports = { INFRA, PENDING };

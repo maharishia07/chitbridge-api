@@ -4,7 +4,9 @@
  * 0 or over 100 events is 400; a batch result equals the single door's answer for the same line; a shop that asks the owner to approve a Bookkeeper's entries gets 409 BOOKS_BATCH_HELD and nothing posts.
  * Run: node tests/books-events-batch.test.cjs   (BOOKS_ENGINES_SRC=<chitbridge-engines/src>)
  * CARD      14-accounting/ledger-accounts-day-book-entries-reverse
- * UNIT      routes/books.js
+ * UNIT      routes/books-events-batch.js
+ * UNIT      lib/books-events-batch.js
+ * MIN       loud - a mid-batch writer error answers ok:false with a code and the refused index (never silent partial success); the receipt is always returned and one trace line is logged.
  */
 'use strict';
 const { rig, counter } = require('./support/books-manual-rig.cjs');
@@ -46,6 +48,23 @@ const { ok, eq, done } = counter();
   const h = await q('POST', '/events/batch', { events: [line('h0')] });
   held.bindsRequest = realBinds;
   eq('held shop: 409 BOOKS_BATCH_HELD, nothing posted', [h.status, h.body.code, T.entries.length - n1], [409, 'BOOKS_BATCH_HELD', 0]);
+  ok('route: the body carries the receipt beside the old keys', r2.body.ok === false && r2.body.capability === 'CAP-BOOKS-EVENTS-BATCH' && r2.body.written === 3 && r2.body.held === 0 && r2.body.refused.length === 2 && 'request_id' in r2.body, JSON.stringify(r2.body.refused));
+  const { postEventsBatch } = require('../lib/books-events-batch');
+  const log = require('../lib/logger'), seen = [], realWarn = log.warn;
+  log.warn = (name, fields) => seen.push([name, fields]);
+  const said = (err) => ({ status: err.status || 500, code: err.code || 'INTERNAL', detail: err.message });
+  const writes = [];
+  const flaky = async (e, b, event) => { if (event.n === 2) throw new Error('disk gone'); writes.push(event.n); return { ok: true, entry_no: event.n }; };
+  const loud = await postEventsBatch({ entity: 'e', books: {}, by: 'p', request_id: 'rq1', isHeld: async () => false, said, post: flaky }, [{ n: 0 }, { n: 1 }, { n: 2 }, { n: 3 }]);
+  eq('loud: a writer error mid-batch is ok:false with its index and code, the rest still counted', [loud.ok, loud.written, loud.refused, loud.code], [false, 3, [{ index: 2, code: 'INTERNAL' }], 'BOOKS_BATCH_PARTIAL']);
+  ok('loud: ONE trace line names the capability and the request id, at warn level', seen.length === 1 && seen[0][1].capability === 'CAP-BOOKS-EVENTS-BATCH' && seen[0][1].id === 'rq1', JSON.stringify(seen));
+  log.warn = realWarn;
+  const held0 = await postEventsBatch({ entity: 'e', books: {}, request_id: 'rq2', isHeld: async () => true, said, post: flaky }, [{ n: 0 }, { n: 1 }]);
+  eq('held: a receipt, nothing written, the code and the count held', [held0.ok, held0.written, held0.held, held0.refusal.code, writes.length], [false, 0, 2, 'BOOKS_BATCH_HELD', 3]);
+  eq('bad size: a receipt with BOOKS_BAD_REQUEST', (await postEventsBatch({ request_id: 'rq3', isHeld: async () => false, said }, [])).refusal.code, 'BOOKS_BAD_REQUEST');
+  let thrown = null;
+  try { await postEventsBatch({ request_id: 'rq4', isHeld: async () => { throw Object.assign(new Error('policy read failed'), { code: 'POLICY_DOWN' }); }, said }, [{ n: 0 }]); } catch (e) { thrown = e; }
+  ok('loud: a failure of the gate itself is thrown, never swallowed', !!thrown && thrown.code === 'POLICY_DOWN');
   R.close && R.close();
   done();
 })();

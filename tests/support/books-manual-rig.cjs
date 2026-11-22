@@ -33,7 +33,7 @@ async function rig(shopRow, shopDay) {
   const K = require(path.join(H.API, 'lib', 'books-hooks'));
   const realDay = K.dayOf;
   K.dayOf = (ts, c) => (ts instanceof Date && Math.abs(ts.getTime() - Date.now()) < 5000 ? (shopDay || '2026-10-10') : realDay(ts, c));   /* only "now" moves; shopDay: a test that locks a month needs the shop's day past that month's end (a running month cannot be locked, WALK K K-F-01) */
-  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books')));
+  const app = express(); app.use(express.json()); app.use('/api/books', require(path.join(H.API, 'routes', 'books'))); app.use('/api/books', require(path.join(H.API, 'routes', 'books-events-batch')));
   const srv = app.listen(0); const port = srv.address().port;
   const q = (m, p, b) => call(port, m, '/api/books' + p, b);
   await X.store.saveSetting(X.db, SHOP, shopRow ? { enabled: false, country: shopRow.country } : { enabled: false });

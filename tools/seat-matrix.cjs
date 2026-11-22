@@ -76,7 +76,7 @@ const show = (cell) => (cell === true ? 'yes' : cell === false ? '-' : String(ce
 
 /** { rows, problems }: a row per route of the books contract; a problem is a gate the tool does not know, or a declared staff answer that disagrees with the gates */
 function build() {
-  const chains = chainOf(fs.readFileSync(path.join(root, 'routes', 'books.js'), 'utf8'));
+  const chains = chainOf(['books', 'books-events-batch'].map((name) => fs.readFileSync(path.join(root, 'routes', name + '.js'), 'utf8')).join('\n')); /* the books routes and the batch door that moved out of them (1129): one gate-chain scan */
   const rows = [];
   const problems = [];
   Object.entries(contract.ROUTES).forEach(([key, row]) => {
