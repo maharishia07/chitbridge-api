@@ -173,20 +173,31 @@ function failWords(e, fallback) {
   var plain = m ? rewordPlain(m) : '';
   return plain && plain !== m ? plain : fallback || 'something went wrong';
 }
-/** cbApiParam(raw) → the ?api= value only when it names this site, this deployment's own api (window.CB_API) or localhost on a localhost page; else '' with a console note. SEC-FIX GF-21/GF-20: a crafted link must not aim a Bearer token at another host */
-function cbApiParam(raw) {
+/** the origin of this deployment's own api (window.CB_API, config.js), '' when none is set or it is not an address */
+function cbOwnApiOrigin() {
   try {
-    if (!raw) return '';
-    var u = new URL(raw, location.href),
-      h = u.hostname,
-      mine = location.hostname;
-    var local = /^(localhost|127[.]0[.]0[.]1)$/,
-      known = '';
-    try { known = window.CB_API ? new URL(window.CB_API, location.href).origin : ''; } catch (_) { known = ''; } /* the deployment's own api (config.js) */
-    if (/^https?:$/.test(u.protocol) && (u.origin === location.origin || (known && u.origin === known) || (local.test(h) && local.test(mine)))) return raw; /* localhost only from a localhost page */
+    return window.CB_API ? new URL(window.CB_API, location.href).origin : '';
+  } catch (failure) {
+    if (typeof cbQuiet === 'function') cbQuiet('api param: the deployment api address could not be read, only this site and localhost are accepted', failure);
+    return '';
+  }
+}
+/** may a ?api= address be used: this site, this deployment's own api, or localhost on a localhost page */
+function cbApiParamAllowed(address) {
+  var local = /^(localhost|127[.]0[.]0[.]1)$/;
+  var known = cbOwnApiOrigin();
+  var sameSite = address.origin === location.origin || (known && address.origin === known);
+  return /^https?:$/.test(address.protocol) && (sameSite || (local.test(address.hostname) && local.test(location.hostname))); /* localhost only from a localhost page */
+}
+/** cbApiParam(param) → the ?api= value only when it names this site, this deployment's own api (window.CB_API) or localhost on a localhost page; else '' with a console note. SEC-FIX GF-21/GF-20: a crafted link must not aim a Bearer token at another host */
+function cbApiParam(param) {
+  try {
+    if (!param) return '';
+    if (cbApiParamAllowed(new URL(param, location.href))) return param;
     if (typeof console !== 'undefined' && console.warn) console.warn('?api= ignored: not this deployment’s api'); /* never used, never sent a token */
     return '';
-  } catch (_) {
+  } catch (failure) {
+    if (typeof cbQuiet === 'function') cbQuiet('api param: the ?api= value is not an address, it is ignored', failure);
     return '';
   }
 }
