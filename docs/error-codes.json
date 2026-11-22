@@ -6860,6 +6860,16 @@
    "raised_by": []
   },
   {
+   "code": "REFUND_TENDER_MISMATCH",
+   "status": "409",
+   "title": "Refund by another tender",
+   "shopkeeper": "This refund goes back by a different tender than the bill was paid with.",
+   "hint": "Refund by the tender the bill was paid with, or ask the owner or a manager to approve it with a reason.",
+   "owner_area": "chits",
+   "since": "2026-11-21",
+   "raised_by": []
+  },
+  {
    "code": "REFUSED",
    "status": "varies",
    "title": "Refused",

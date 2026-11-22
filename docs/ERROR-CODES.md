@@ -151,6 +151,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | PERIOD_NOT_ENDED | 422 | Period not ended | That period has not ended yet, so it cannot be closed. | Close it once its last day has passed. | books | 2026-11-17 |
 | PERIOD_UNKNOWN | 400 | Period not known | Pick week, month so far, quarter or year to date. | Choose one of those four. | books | 2026-11-17 |
 | PIN_ALREADY_SET | 409 | PIN already set | This person already has a PIN, so it cannot be set again this way. | Change it with the current PIN, or ask the owner to reset it. | signin | 2026-11-21 |
+| REFUND_TENDER_MISMATCH | 409 | Refund by another tender | This refund goes back by a different tender than the bill was paid with. | Refund by the tender the bill was paid with, or ask the owner or a manager to approve it with a reason. | chits | 2026-11-21 |
 | SEARCH_TOO_LONG | 400 | Search too long | The search can be at most 60 characters. | Shorten the search and try again. | books | 2026-11-17 |
 | SIGN_IN_FOR_MARKS | 403 | Sign in as a person | Sign in as a person to work on marks. | A counter or device key cannot mark. | accounting | 2026-11-15 |
 | STORE_MISMATCH | 409 | Another store is open | This page is open on another store than the one you are working in. Nothing was saved. Open the store again. | Open the store again. | network | 2026-11-14 |

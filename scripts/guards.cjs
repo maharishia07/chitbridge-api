@@ -405,6 +405,10 @@ const GUARDS = [
   'acc-265b-note-after-cancel.test.cjs', // ⭐ ACC-265b: a credit note against a cancelled or rejected bill is refused (409 BILL_WITHDRAWN, billOf's own withdrawn flag); a sale with a live note is not REJECTED either (rail WITHDRAWN list); real-Postgres: acc-265b-note-after-cancel.realstack.cjs
   'acc-328-opening-twice.test.cjs', // ⭐ ACC-328/329: the same opening posted twice is 409 BOOKS_CONFLICT (a retry of the same ref still replays), a NEW opening dated in the future is 422; a reversal of an old future opening still works
   'acc-286-credit-note-cap.test.cjs', // ⭐ ACC-286: a counter credit note cannot credit more than its bill (409 CREDIT_NOTE_OVER_BILL), four in a row and ten at once, under the bill's lock
+  'af-late-day-in-locked-month.test.cjs', // AF-F-02: a till day that arrives after its month is locked posts in the next open month WITH the note "<Month> locked" (never silent); a typed date is still refused
+  'af-bank-signoff-seat.test.cjs', // AF-F-03: the bank sign-off is refused to a seat the books refuse (the ONE mayReadMoney gate)
+  'af-refund-tender.test.cjs', // AF-F-01: a refund goes back by the tender the bill was paid with, else a manager's reason (409 REFUND_TENDER_MISMATCH)
+  'af-home-money-card.test.cjs', // AF-F-03: the Home finance card is greyed with the books' sentence, no figure, for a seat mayReadMoney refuses
   'fin-77-parallel-payments.test.cjs', // ⭐ FIN-77: two full-due payments at once settle once (the duplicate question is asked under the party lock); IN and AU
   'acc-283-refund-gap.test.cjs', // ⭐ ACC-283: a refund that is not the credit note's total waits in words with gap_minor (AU A$69.00 for A$68.98); equal and credit-only refunds post
   'acc-272-unknown-registration.test.cjs', // ⭐ ACC-272: POST /api/tax/compute and /api/invoice/build ask a shop with no tax number that never said it is registered (409 TAX_REGISTRATION_UNKNOWN, the till's own code), never price it at no tax; confirmed unregistered still 0%
@@ -1055,6 +1059,7 @@ const GUARDS = [
   'api-tolerant-doors.test.cjs', // S33-T (#1105-#1108): every tolerant door ignores an unknown key and refuses a known key of the wrong kind; the strict catalogue doors name the key they refuse (44 checks)
   'till-queue-poison.test.cjs', // S33-T: the counter's own drain parks a refused queued row (400) with the server's words and sends the rows behind it; a refused bill is never deleted
   'till-park.test.cjs', // till-park (12 Nov): a queued CHANGE refused for good (400/404/409/422) is parked once with the server's words, never retried; a bill never parked; Drop is the owner's; the price grain (JPY 0, INR 2, KWD 3) refuses a finer typed price and rounds a bulk step
+  'till-refund-tender-1129.test.cjs', // AF-F-01 (1129): a refund defaults to the bill's own tender; another needs a reason and an owner/manager seat; the drain parks a credit note refused 409/422, never loops
   'ctr-204-till-hold.test.cjs', // CTR-204 (till half, api #1240): a sale answered 409 CHIT_REPLAY_DIFFERS is HELD (no retry, the server's words), one cashier confirm renumbers it; TILL_SERIES_COLLISION still auto-renumbers
   'ctr-227-no-country-bill.test.cjs', // CTR-227 (k78, enrolled with the merge): a bill with no country is refused in words
   'ctr-155-114-till.test.cjs', // CTR-155 + CTR-114: a 403 MEMBERSHIP_SUSPENDED holds that one bill and the queue goes on (a plain 403 still stops it); usignBecome clears busy when becomeShop throws

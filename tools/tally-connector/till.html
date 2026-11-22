@@ -4412,7 +4412,9 @@ var NEVER_OK = ['BILL_NO_BAD', 'TAX_NOT_CHARGEABLE', 'SUPPLY_KIND_UNKNOWN', 'MON
 var NEVER_OK_WORDS = 'This bill’s number or tax is not accepted for this shop. Fix it and send again, or set it aside.';
 function neverOk(row, status, code){ return (status === 422 || status === 400) && NEVER_OK.indexOf(code) >= 0 && isSaleRow(row); }
 function parksOn(row, status, code){
-  return !!(row && row.tillPost) && FINAL_REFUSALS.indexOf(status) >= 0 && code !== WAITS_FOR_BILL;
+  /* AF-F-01 (1129): a CREDIT NOTE refused for good (409 REFUND_TENDER_MISMATCH, 422 ...) is parked too: a refund is never retried into the same refusal; 5xx and a dropped line still climb the ladder */
+  var final = FINAL_REFUSALS.indexOf(status) >= 0 && code !== WAITS_FOR_BILL;
+  return final && !!(row && (row.tillPost || row.kind === 'credit_note'));
 }
 /** the rows a drain may try: a parked row waits for a person, whatever Send now says */
 function sendableRows(rows){ return (rows || []).filter(function(row){ return !isParkedRow(row); }); }
@@ -4429,7 +4431,7 @@ async function refusedRow(row, status, said, code){
   if (neverOk(row, status, code)) { delete row._nextAt; row._hold = { at: row._at, why: NEVER_OK_WORDS, said: row._why, never: true }; }   /* 1128: a refusal that cannot change is held for a person, never retried */
   if (parksOn(row, status, code)) { delete row._nextAt; row._parked = { at: row._at, status: status, code: code || null, why: row._why }; }
   try { await DB.put('queue', row); } catch (e) { cbQuiet('drain:4', e); }
-  return (row._parked ? 'A change was refused and set aside for you to fix: ' : 'Bill ' + row.no + ': ') + row._why;
+  return (row._parked ? (row.kind === 'credit_note' ? 'Refused: ' : 'A change was refused and set aside for you to fix: ') : 'Bill ' + row.no + ': ') + row._why;
 }
 /**
  * ⚠⚠ A CHANGED WORLD CLEARS THE WAIT. The ladder answers "this keeps failing for the same reason"; the
@@ -6768,7 +6770,7 @@ function chitOfCN(cn){
       against: cn.against || null,
       reason: cn.reason || null, reason_words: cn.reason_words || null,
       /* ⭐ money OUT, named as its own thing — every reader of business_json.payment assumes money taken */
-      refund: { parts: cn.refunds || [], total: rmoney(Math.abs(Number(cn.total) || 0)) },
+      refund: Object.assign({ parts: cn.refunds || [], total: rmoney(Math.abs(Number(cn.total) || 0)) }, cn.override_reason ? { override: { reason: cn.override_reason } } : {}),   /* AF-F-01: a refund by a tender the bill did not use carries its typed reason; the server decides who may */
       heads: cn.heads || null, supply: cn.supply || null, by_rate: cn.by_rate || {},
       taxable: cn.taxable, tax: cn.tax,
     },
@@ -25131,6 +25133,7 @@ function parkedRewardWords(row){ return 'Points for bill ' + rewardBillNo(row) +
 /** what the row is about, in words: the change as the owner made it, the points' bill, or the item */
 function parkedName(row){
   var item = parkedItem(row);
+  if (row && row.kind === 'credit_note') return 'Refund ' + (row.no || '') + (row.against && row.against.bill_no ? ' against ' + row.against.bill_no : '');   /* AF-F-01: a refused credit note is named, not a change */
   return isRewardRow(row) ? 'Points for bill ' + rewardBillNo(row) : (row.says || (item && item.name) || 'A change to the shop');
 }
 /** the customer a parked points row is for, from the holder it carries ({scheme: identity|phone, value}) — null when this counter does not know them */
@@ -26419,7 +26422,7 @@ async function openBills(keepOpen){
  * the direction, and the log holds the signed figure — and following it means every bare "+" that adds up a
  * day nets the return without being taught anything. [[feedback-adopt-dont-reinvent]]
  */
-var RET_FOR = null, RET_QTY = null, RET_WHY = '', RET_HOW = '';
+var RET_FOR = null, RET_QTY = null, RET_WHY = '', RET_HOW = '', RET_REASON = '';
 /**
  * ⚠️⚠️ NOT EVERY HOST CAN ISSUE A CREDIT NOTE YET. The desktop kit (AgentHost + tools/tally-connector/till.js)
  * has its own numbering and its own chit builders, and neither knows the credit-note series — so it has no
@@ -26511,7 +26514,7 @@ async function retOpen(no){
   if (!bill) { toastLine('Only bills from the last ' + RET_DAYS + ' days that were rung on this counter can be returned here.'); return; }
   if (bill.kind === 'credit_note') { toastLine('That is already a credit note.'); return; }
   RET_PRIOR = await retPriorFor(no);
-  RET_FOR = bill; RET_QTY = {}; RET_WHY = 'returned';
+  RET_FOR = bill; RET_QTY = {}; RET_WHY = 'returned'; RET_REASON = '';
   /* ⭐ M44 (walk 2026-10-10): the refund starts as the bill was PAID — it took payments[0], which was Card on a cash bill */
   RET_HOW = retPaidBy(bill);
   if (retWays(bill).indexOf(RET_HOW) < 0) RET_HOW = 'Cash';
@@ -26553,6 +26556,19 @@ function retWays(bill){
   return out;
 }
 function retHow(v){ RET_HOW = v; retPaint(); }
+/**
+ * ⭐ AF-F-01 (walk AF, 1129): a refund goes back by the tender the BILL used. Another tender needs a typed reason and an owner or manager seat (the api refuses it otherwise,
+ * 409 REFUND_TENDER_MISMATCH). The ONE role check is rateMay (owner / manager), the server decides again. A bill with no tender of its own (on credit, points) is not judged.
+ */
+function retPaidSet(bill){
+  var out = [];
+  ((bill && bill.payments) || []).forEach(function(p){ if (p && p.how && p.how !== 'Points' && p.how !== 'On credit' && Number(p.amount) !== 0 && out.indexOf(p.how) < 0) out.push(p.how); });
+  return out;
+}
+function retIsOther(bill, tender){ var paid = retPaidSet(bill); return tender !== RET_OWED && paid.length > 0 && paid.indexOf(tender) < 0; }
+function retOtherSaid(bill){ var paid = retPaidSet(bill).join(' and '); return 'This bill was paid by ' + paid + ', so the refund goes back by ' + paid + '. A manager or the owner can send it another way, with a reason.'; }
+function retOtherMay(){ var may = rateMay(); return !!(may && may.ok); }
+function retReasonSet(v){ RET_REASON = String(v || ''); }
 /**
  * ⭐⭐ CTR-187 — A RETURN ON AN ON-CREDIT BILL OFFERS "Reduce what they owe" FIRST. The money never left the shop: the customer owes, so the
  * return takes the amount OFF what they owe (a credit note against the invoice, Xero's "allocate"), instead of paying cash out of the drawer
@@ -26616,8 +26632,13 @@ function retOwedFor(bill, total){
 /** the "Back as" options: Reduce what they owe first (greyed with its sentence when it cannot be used), then the cash ways */
 function retHowOptions(ways, owed){
   var pick = function(tender){ return RET_HOW === tender ? ' selected' : ''; };
+  var may = retOtherMay();
   return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>' + tx('Reduce what they owe') + '</option>' : '')
-    + Object.keys(ways).map(function(tender){ return '<option value="' + esc(tender) + '"' + pick(tender) + '>' + esc(tender) + '</option>'; }).join('');
+  return (owed.offered ? '<option value="' + RET_OWED + '"' + pick(RET_OWED) + (owed.fits ? '' : ' disabled') + '>Reduce what they owe</option>' : '')
+    + Object.keys(ways).map(function(tender){
+        var other = RET_FOR && retIsOther(RET_FOR, tender);   /* AF-F-01: another tender than the bill's own is greyed for a seat that may not approve it */
+        return '<option value="' + esc(tender) + '"' + pick(tender) + (other && !may ? ' disabled' : '') + '>' + esc(tender) + '</option>';
+      }).join('');
 }
 /** the supply kind a returned line was billed under: the ORIGINAL invoice's own `_cb.kinds` entry for that line (the kind the pack named when it was sold), or undefined when it named none. The return carries it so the books post it back to the kind's own ledger (AE-F-11). */
 function retKindOf(bill, index){ var kinds = bill && bill.invoice && bill.invoice._cb && bill.invoice._cb.kinds; var found = (Array.isArray(kinds) ? kinds : []).filter(function(k){ return k && k.line === index && k.kind; })[0]; return found ? found.kind : undefined; }
@@ -26721,6 +26742,8 @@ function retPaint(){
         + retHowOptions(ways, owed) + '</select></label>'
     + '</div>'
     + (owed.offered ? '<div class="u" data-testid="till-ret-owed-note">' + esc(owed.sentence) + '</div>' : '')
+    + (retPaidSet(RET_FOR).length && !retOtherMay() ? '<div class="u" data-testid="till-ret-tender-note">' + esc(retOtherSaid(RET_FOR)) + '</div>' : '')
+    + (retIsOther(RET_FOR, RET_HOW) ? '<label class="u" data-testid="till-ret-reason-row">Why another way <input data-cbsid="CTR008-I16" data-testid="till-ret-reason" value="' + esc(RET_REASON) + '" placeholder="e.g. card machine down" onchange="retReasonSet(this.value)" oninput="retReasonSet(this.value)"></label>' : '')
     + '<div class="rettotal"><span>' + tx('To give back') + '</span><b data-testid="till-ret-total">' + money(m.total) + '</b></div>';
   var go = document.getElementById('retgo');
   if (go) { go.disabled = !(m.total > 0); go.textContent = m.total > 0 ? txf('Give back {total}', { total: money(m.total) }) : tx('Nothing chosen'); }
@@ -27089,6 +27112,9 @@ async function retIssue(){
   var against = RET_FOR, why = RET_WHY, how = RET_HOW;
   var words = (RET_WHYS.filter(function(w){ return w[0] === why; })[0] || RET_WHYS[0])[1];
   var plan = retPlan(against, m.total, how);
+  var other = retIsOther(against, how), typed = String(RET_REASON || '').trim();
+  if (other && !retOtherMay()) { toastLine(retOtherSaid(against)); return; }
+  if (other && !typed) { toastLine('Say why it goes back by ' + how + ' and not by ' + retPaidSet(against).join(' and ') + ' — the reason is kept on the credit note.'); return; }
   if (!(await retConfirm(plan))) return;
   var body = {
     /* ⚠️ THE DISCRIMINATOR. isSaleRow() is an allow-list of sale kinds, so this keeps a credit note out of the
@@ -27106,6 +27132,7 @@ async function retIssue(){
     heads: against.heads || null, supply: against.supply || null,
     /* ⭐⭐ MONEY OUT — the counter's first. Recorded as its own array rather than a negative payment, because a
        payment is money TAKEN and every reader of 'payments' assumes that. */
+    override_reason: other ? typed : null,   /* AF-F-01 */
     refunds: plan.refunds,     /* CTR-187: [] + the customer = taken off what they owe (books-hooks posts it) */
     customer: against.customer || { name: 'Walk-in' },
     /* ⚠️ the LEVEL travels with the name ([TILL-128]) — entity or co-assist, never guessed downstream */

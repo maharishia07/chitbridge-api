@@ -481,7 +481,7 @@ async function sendSender(sendState, req, res) {
         "Open ChitBridge → Settings and set the shop's bridge id, then send this bill again."
     }, 'CHIT_NO_BRIDGE_ID') });
   }
-  Object.assign(sendState, { sender_id, sender_bridge_id, sender_display_name });
+  Object.assign(sendState, { sender_id, sender_bridge_id, sender_display_name, seat_manager: require('../lib/owner').mayAt(req, 'manager').ok }); /* AF-F-01: who may approve a refund by another tender, from the session */
 }
 
 /**
