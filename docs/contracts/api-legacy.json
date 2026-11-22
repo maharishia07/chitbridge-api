@@ -33768,25 +33768,21 @@
      "scenario": "respond-by-staff",
      "status": 403,
      "body_keys": {
-      "error": "Not permitted",
-      "message": "Only the business owner can answer a connection request. Sign in as the business itself.",
-      "type": "https://chitbridge.com/problems/network_owner_only",
+      "type": "https://chitbridge.com/problems/owner_only",
       "title": "Owner only",
       "status": 403,
-      "code": "NETWORK_OWNER_ONLY",
+      "code": "OWNER_ONLY",
       "detail": "Only the business owner can answer a connection request. Sign in as the business itself.",
-      "hint": "Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      },
      "fixture": {
-      "error": "Not permitted",
-      "message": "Only the business owner can answer a connection request. Sign in as the business itself.",
-      "type": "https://chitbridge.com/problems/network_owner_only",
+      "type": "https://chitbridge.com/problems/owner_only",
       "title": "Owner only",
       "status": 403,
-      "code": "NETWORK_OWNER_ONLY",
+      "code": "OWNER_ONLY",
       "detail": "Only the business owner can answer a connection request. Sign in as the business itself.",
-      "hint": "Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it.",
       "request_id": "req-test"
      }
     }
@@ -63090,11 +63086,25 @@
      "status": 422,
      "body_keys": {
       "error": "Incomplete rule",
-      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+      "message": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Incomplete rule",
-      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+      "message": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -63446,11 +63456,25 @@
      "status": 422,
      "body_keys": {
       "error": "Incomplete rule",
-      "message": "The rate is needed (0 for a zero-rated slab)."
+      "message": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Incomplete rule",
-      "message": "The rate is needed (0 for a zero-rated slab)."
+      "message": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -78335,6 +78359,110 @@
       "hint": "If it keeps happening, tell us the request id.",
       "request_id": "req-test"
      }
+    },
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -78491,6 +78619,32 @@
       "status": 422,
       "detail": "Choose the day your books start, like 2026-07-01.",
       "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
       "request_id": "req-test"
      }
     }

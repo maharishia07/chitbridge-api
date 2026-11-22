@@ -292,6 +292,7 @@
  ],
  "GET /api/books/backfill": [
   401,
+  403,
   404,
   500
  ],
