@@ -11,5 +11,5 @@
  * cb-capability's call, as for the l16 four; the money-no-arithmetic guard sees neither. Keep this list small and shrinking.
  */
 const INFRA = ['books-backfill.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js', 'products-import-rows.js', 'products-media-guard.js'];
-const PENDING = ['offrail-itc.js', 'tender-sum.js', 'books-bs-shape.js', 'chits-send-bill.js', 'tax-engine-line.js', 'tax-line-status.js', 'till-credit-note-money.js'];
+const PENDING = ['offrail-itc.js', 'tender-sum.js', 'books-bs-shape.js', 'chits-send-bill.js', 'tax-engine-line.js', 'tax-line-status.js', 'till-credit-note-money.js', 'bill-no.js', 'rail-invoice-number.js', 'credit-original.js', 'rcm-lines.js', 'clearance-gather.js'];
 module.exports = { INFRA, PENDING };

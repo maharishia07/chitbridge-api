@@ -63,6 +63,12 @@ const call = (port, method, p, body) => new Promise((done) => {
   const c1 = await q('POST', '/year/2026-27/close', {});
   ok('close with months open → 422, the refusal in plain words, nothing written', c1.status === 422 && c1.body.ok === false && /Every month must be locked/.test(c1.body.error) && c1.body.refusals.length >= 1
     && X.T.periods.filter((p) => p.fiscal_year === '2026-27').every((p) => p.status === 'open'), JSON.stringify(c1.body));
+  /* AW-F-04: a year before the books began has no months to lock: the lock answers 404, so the refusal must not ask for them */
+  const before = await q('GET', '/year/2025-26/status');
+  const beforeMonths = (before.body.refusals || []).find((r) => r.name === 'months_open');
+  const noLock = await q('POST', '/periods/2025-26/1/lock', { reason: 'x' });
+  ok('AW-F-04 the lock route has no month in a year before the books (404), so the status does not ask for locks: it says the year is before the books', noLock.status === 404 && before.body.can_close === false && beforeMonths && /before these books began/.test(beforeMonths.why) && !/Every month must be locked|still open/.test(beforeMonths.why), noLock.status + ' ' + JSON.stringify(before.body.refusals));
+  ok('AW-F-04 a year the books do hold still names its open months (2026-27)', /Every month must be locked/.test(mo.why));
   /* 3 · refused: Suspense not nil (an opening that does not balance) */
   const op = await q('POST', '/opening', { date: '2026-04-01', rows: [{ code: codeOfRole('cash'), dr_minor: 50000 }] });
   ok('an opening 500 short of balancing puts it in Suspense', op.status === 200 && op.body.suspense_minor === 50000, JSON.stringify(op.body));

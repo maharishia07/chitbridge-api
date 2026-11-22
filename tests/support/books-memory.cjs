@@ -556,6 +556,9 @@ const fakeDb = {
       const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
       return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
     }
+    /* AZ-F-03 (lib/books-bill-ref): the entry numbers of some entries; the rail bills' own numbers (books-store.billNos): no chit is held in memory */
+    if (/^SELECT entry_id, entry_no FROM journal_entry WHERE entity_id = \$1 AND entry_id = ANY/.test(t.trim())) return { rows: (T.entries || []).filter((x) => x.entity_id === v[0] && v[1].indexOf(x.entry_id) >= 0).map((x) => ({ entry_id: x.entry_id, entry_no: x.entry_no })) };
+    if (/^SELECT h\.chit_id, COALESCE\(h\.business_json/.test(t.trim())) return { rows: [] };
     /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
     if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
     { const off = require('./books-offrail-memory.cjs').answer(fakeDb.T, t, v); if (off) return off; } /* V-F-07: lib/offrail-itc's read */

@@ -33,6 +33,7 @@ const client = {
       const owned = params[0] === OWNED_CHIT && params[1] === SHOP && /entity_id = \$2/.test(text);
       return { rows: owned ? [{ '?column?': 1 }] : [] };
     }
+    if (/FROM standard_document/.test(text)) return { rows: [{ one: 1 }] }; /* AR-F-06: the standard is known (an unknown one is refused before the write) */
     if (/INSERT INTO entity_compliance/.test(text)) {
       seen.inserts.push(params);
       return { rows: [{}] };

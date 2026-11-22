@@ -536,6 +536,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | QUICK_KEY_SESSION_ONLY | 403 | Quick keys need a person | Quick-key groups are managed by a signed-in person, not by a key. | Sign in as the owner or a manager to change them. | quick-keys | 2026-10-23 |
 | RATE_LIMITED | 429 | Slow down | Too many requests came in a short time. | Wait the seconds shown, then try again. | server | 2026-10-31 |
 | READ_ONLY | 403 | View only | Your access is view-only. | Ask the owner for edit access. | books | 2026-10-23 |
+| RECEIPT_DATE_AHEAD | 400 | Receipt dated ahead | A goods receipt is dated a day that has not come yet on your calendar, so nothing was put on the shelf. | Date the receipt today or earlier and send it again. | chits | 2026-11-22 |
 | RECEIPT_DATE_UNREADABLE | 400 | Expiry date not readable | The expiry on a goods-in line is not a real date, so the goods were not put on the shelf. | Write the date as year-month-day, for example 2027-03-12, and send it again. | chits | 2026-11-21 |
 | RECEIPT_ITEM_UNKNOWN | 400 | Not one of your products | A goods-in line names a product that is not in your catalogue, so nothing was put on the shelf. | Add the product to the catalogue first, then receive it. | chits | 2026-11-21 |
 | RECEIPT_LOT_EXPIRED | 400 | Lot already expired | A goods-in line carries a lot whose expiry date has passed, so it is not taken into stock. | Check the date on the pack; expired goods are returned or written off, not received. | chits | 2026-11-21 |
@@ -602,6 +603,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TAX_FAILED | 500 | Tax could not be worked out | We could not work out the tax just now. | Try again in a moment. If it keeps happening, tell us the request id. | tax | 2026-10-22 |
 | TAX_ID_BAD | varies | Tax number not accepted | That tax number is not accepted for your country. | Check the number and try again. | profile | 2026-10-22 |
 | TAX_LINE_UNAVAILABLE | 422 | Tax not set on a line | A line has no tax answer, so this was not made. Nothing was saved. | Set the line's tax, or mark it zero with the reason, then try again. | accounting | 2026-11-21 |
+| RCM_INPUT_UNREADABLE | 422 | Reverse charge not understood | A reverse-charge answer on this bill could not be read, so this was not made. Nothing was saved. | Say true or false, or name the category on the line (gta, legal ...), then try again. | accounting | 2026-11-22 |
 | TAX_REGISTRATION_UNKNOWN | 409 | Registration not said yet | Nobody has said whether this business is registered for its tax, so this waits. | Answer it in Settings → Country setup: yes with the number, or no. | till | 2026-11-05 |
 | TAX_SHELF_UNREADABLE | 503 | Tax not checked | The shop’s tax details could not be read, so this was not made. Nothing was saved. | Try again in a moment; if it repeats, tell us. | accounting | 2026-11-21 |
 | TERMS_NOT_MIGRATED | 503 | Terms update pending | Terms arrive after the next update. | Try again after the update. | books | 2026-10-22 |
@@ -809,4 +811,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TARGET_CANNOT_HOLD | 400 | Cannot hold this work | That person cannot hold this kind of work (view-only, off shift, or the shop is in pull mode), so it stayed where it was. | Pick someone who can edit and is on shift. | chits | 2026-11-18 |
 | ACTOR_NOT_FOUND | 404 | Person not found | That person is not on your team. | Pick someone from your team list. | chits | 2026-11-18 |
 | BOOKS_GRANT_NOT_ASSIGNED | 403 | Client not assigned to you | This client is not assigned to you. Ask the partner to assign it. | Ask the partner to assign this client to you. | network | 2026-11-17 |
+| INVOICE_INCOMPLETE | 422 | Invoice has no total | The invoice carries part of its money block but no total, so it was not sent. Nothing was saved. | Send it with its complete money block, or send the lines and let the server price them. | accounting | 2026-11-22 |
+| CREDIT_NOTE_REASON_MISSING | 422 | Credit note needs a reason | A credit note here must say why it is issued, so it was not sent. Nothing was saved. | Add a short reason, such as goods returned or price corrected, and send it again. | accounting | 2026-11-22 |
+| STANDARD_UNKNOWN | 422 | Standard not known | That standard or document is not one we know, so nothing was recorded. | Check the names against your readiness list and send it again. | rail | 2026-11-22 |
 <!-- codes:end -->

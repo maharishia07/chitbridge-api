@@ -1860,6 +1860,7 @@ router.post('/opening', auth, ownerOrAccountant, openingGate, on, ...checked('PO
       cur = curOf(req);
     const rows = Array.isArray(b.rows) ? b.rows : [];
     if (!rows.length) return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'No rows.', 'No rows.');
+    require('../lib/books-input').openingRows(rows); /* AS-F-07: 100.5 paise is refused in words, never rounded to 101 */
     const bad = rows.map((item, index) => (Number(item.dr_minor) > 0 === Number(item.cr_minor) > 0 ? index + 1 : 0)).filter(Boolean);
     if (bad.length)
       return refuse(req, res, 400, 'BOOKS_BAD_REQUEST', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.', 'Row ' + bad.join(', ') + ': one amount — a debit or a credit, not both.');
@@ -1873,7 +1874,7 @@ router.post('/opening', auth, ownerOrAccountant, openingGate, on, ...checked('PO
 });
 /* ── MOVE IN FROM XERO / QUICKBOOKS (IM1) — three doors, owner only, the ledger on: the columns guessed, the dry run, the import (lib/move-in) ── */
 const MI = require('../lib/move-in');
-const { moveInBody, moveInPlan } = require('../lib/books-movein'); // the move-in doors' shared reads and the plan
+const { moveInBody, moveInPlan, moveInReady } = require('../lib/books-movein'); // the move-in doors' shared reads and the plan
 /** POST /move-in/preflight { kind, source, csv | xlsx, sheet?, header_row? } → { kind, source, headers, fields, guess: [{ incoming, field, how, confidence, why }], missing, ready, rows_total, sample, sheet, sheets, header_row } — reads nothing of the shop; nothing is written */
 // @does A customer, supplier or item file from another package in -> we read its columns and guess which field each is -> the headers, guesses and sample rows (owner only).
 router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/preflight'), async (req, res) => {
@@ -1887,7 +1888,7 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
       fields: g.fields,
       guess: g.guess,
       missing: g.missing,
-      ready: g.ready,
+      ...moveInReady(req, kind, g.ready), // AR-F-07: ready and refusal, from the SAME shop-side gate the import asks
       rows_total: parsed.rows.length,
       sample: parsed.rows.slice(0, 5),
       sheet: parsed.sheet || null,
