@@ -1154,7 +1154,9 @@ const GUARDS = [
   'home-facts-sold.test.cjs', // M144 / BD-F-01: the Home Till card's books day from the Day book rows, no figure across two currencies, a quiet unprovisioned ledger (9 checks)
   'policy-stock.test.cjs', // OPS-121: the below-zero switch row, an enum of two ways, allow as the default, owner words passed in (7 checks)
   'signin-provider-door.test.cjs', // SEC-112 P1a: every refusal has its sentence and status, one answer for spent / foreign-device codes (6 checks)
-  'signin-provider-handoff.test.cjs', // SEC-112 P1a: the handoff route: NO_DEVICE first, the door's refusal, a 503 in true words, DEVICE_REVOKED, the token in the body only (5 checks)
+  'signin-provider-handoff.test.cjs', // SEC-112 P1a: the handoff route: NO_DEVICE first, the door's refusal, a 503 in true words, DEVICE_REVOKED, the token in the body only (7 checks)
+  'signin-provider-connect.test.cjs', // SEC-112 P1a: connect/list/unlink at the handler: the list contract, a fault never leaks, blind 401/403, an unlink twice is 404 (13 checks)
+  'stock-below-zero.test.cjs', // AT-F-03: the refusal below zero: flag, in words, a resend is not refused, an unreadable log throws (7 checks)
   'tax-zero-guard.test.cjs', // TAX-EXPLICIT (1129): no new `<taxish> || 0` / `?? 0` and no swallowing catch in the tax files unless tests/support/tax-zero-allow.json names it with its reason
   'walkr-1129.test.cjs', // WALK R (1129): zero-rated / exempt sales on their own ledgers and VAT201 boxes 4/5 (hand case in fils), the issuer posts its rail credit note, the buyer's note waits for the supplier list
   'walkt-1129.test.cjs', // WALK T (1129) T-F-01: VAT201 Box 9 counts only a bill's 5% lines (hand 12000 / 600 in fils, not 41000), 0% lines of the same bill out, a reversal nets away
