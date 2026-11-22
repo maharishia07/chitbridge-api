@@ -10,13 +10,13 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 216 | `list` | `amend.js` | list(entity_id, chit_id) — |
-| 203 | `rows` | `crm.js` | still in them: |
+| 204 | `rows` | `crm.js` | still in them: |
 | 188 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 179 | `words` | `variant.browser.js` |  |
-| 164 | `withEntity` | `books-hooks.js` |  |
+| 165 | `withEntity` | `books-hooks.js` |  |
 | 146 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 141 | `answer` | `availability.js` | from March; then nearest. |
-| 131 | `money` | `bill-privacy.js` |  |
+| 142 | `answer` | `availability.js` | from March; then nearest. |
+| 130 | `money` | `bill-privacy.js` |  |
 | 129 | `item` | `bank-band.js` |  |
 | 114 | `list` | `cap-flag.js` |  |
 | 114 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
@@ -24,7 +24,7 @@ of file each thing is; this says what already does the job.
 | 109 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
-| 98 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 99 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 91 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 89 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -71,8 +71,8 @@ of file each thing is; this says what already does the job.
 | 58 | `note` | `dbwatch.js` |  |
 | 57 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 57 | `account` | `home-facts.js` | OMITTED: |
+| 55 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 54 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
-| 54 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 52 | `sheet` | `cap-employees.js` |  |
 | 52 | `lines` | `cart.js` |  |
 | 52 | `status` | `books-backfill.js` | read: |
@@ -148,6 +148,7 @@ of file each thing is; this says what already does the job.
 | 29 | `reason` | `lab-kit.js` | W9: |
 | 29 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 29 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
+| 29 | `move` | `rail.js` | Order = the order the server refused in: |
 | 29 | `recorded` | `stock-below-zero.js` | is this movement (the unique key: |
 | 29 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 29 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
@@ -158,7 +159,6 @@ of file each thing is; this says what already does the job.
 | 28 | `head` | `list-ctl.js` |  |
 | 28 | `panel` | `sides.js` |  |
 | 28 | `chart` | `fx-rates.js` |  |
-| 28 | `move` | `rail.js` | Order = the order the server refused in: |
 | 28 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 27 | `figures` | `bank-demo.js` |  |
 | 27 | `currency` | `ui-money.js` | the currency a money field uses: |
@@ -195,6 +195,7 @@ of file each thing is; this says what already does the job.
 | 23 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
 | 23 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 23 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
+| 23 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
 | 22 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
 | 22 | `send` | `cap-quotes.js` |  |
@@ -203,7 +204,6 @@ of file each thing is; this says what already does the job.
 | 22 | `outcome` | `crm-calls.js` | Body { outcome, followup_id?, after? · due_at? }. |
 | 22 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 22 | `report` | `raida.js` | register at the one moment it must not. |
-| 22 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 21 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 21 | `shows` | `edition.js` |  |
 | 21 | `actions` | `workflow.js` | actions(chit, me) — |

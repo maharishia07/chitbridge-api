@@ -11,7 +11,7 @@ const CLOCK = require('../lib/shop-clock');
 const { NOT_A_UUID_WORDS } = require('../lib/knownerr');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
-const { refusalOf, statementFault, returnFromRailAnswer, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
+const { refusalOf, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper
 const logger = require('../lib/logger');
 /**
  * routes/books.js — SPEC-books-v2 §5, in the shapes the Ledger screen reads (chitbridge-web public/app/cap-books.js).
@@ -165,9 +165,7 @@ async function gateOn(req, res, next, whenOff) {
     req.books = s;
     req.booksCountry = st || null;
     next();
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 }
 const on = (req, res, next) => /* the ledger-off refusal is status: 404 LEDGER_OFF, written in gateOn; the register reads a route's statuses from the gate's own text */ gateOn(req, res, next, null);
 /** GET /dues with the ledger off: nobody owes anybody yet — the same shape, empty (a side not asked for stays null) */
@@ -200,9 +198,7 @@ router.get('/status', auth, owner, ...checked('GET /status'), async (req, res) =
     const r = await withEntity(e, async (h) => ({ s: await B.settingOf(h, e), country: await CS.status(h, e) }));
     const s = r.s;
     res.json({ migrated: s !== null, enabled: !!(s && s.enabled), walkin_grain: s ? s.walkin_grain : null, engines: E.status(), country: r.country });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 // @does Optional walk-in grain in -> we check the country allows books, switch the shop's books on and lay the chart of accounts -> the opened setting (owner only).
 router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res) => {
@@ -216,25 +212,19 @@ router.post('/enable', auth, owner, ...checked('POST /enable'), async (req, res)
     /* P-F-02 / S2-F-07: a start date chosen at the switch posts the bills from that day, through the ONE backfill (books-backfill) */
     const late = b.start_date ? await require('../lib/books-backfill').run(ctx(req), { start_date: String(b.start_date), by: byOf(req) }) : null;
     res.json({ ok: r.ok, accounts_added: r.accounts_added, fiscal_year: r.fiscal_year, parties_numbered: r.parties_numbered, backfill: late });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 // @does A start date in -> we post every bill from that day through the one posting path, once, and say how many were posted, wait, or sit in the opening balances -> the counts and the words (owner only, safe to press again).
 router.post('/backfill', auth, owner, on, ...checked('POST /backfill'), async (req, res) => {
   try {
     res.json(await require('../lib/books-backfill').run(ctx(req), { start_date: String((req.body || {}).start_date || ''), by: byOf(req) }));
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 // @does Nothing in -> we read the start day and how many bills before it are in the opening balances -> the start day and the words the Books screen says.
 router.get('/backfill', auth, owner, on, ...checked('GET /backfill'), async (req, res) => {
   try {
     res.json(await require('../lib/books-backfill').status(ctx(req)));
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 // @does Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).
 router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req, res) => {
@@ -252,9 +242,7 @@ router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req
     });
     require('../lib/books-hooks').forget(e);
     res.json({ ok: true, enabled, walkin_grain: grain });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /**
  * ⭐ CB FINANCE · TERMS (F2) — GET /terms?party_id&side → { terms_migrated, may_set, why_not, default, party: { party_id, side, own, effective } | null, events }
@@ -302,9 +290,7 @@ router.get('/terms', auth, noKey, on, ...checked('GET /terms'), async (req, res)
       party: out.party,
       events: out.events
     });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 // @does A party or the shop default with credit limit, interest and early-pay terms in -> we save the terms and log each changed key -> the saved terms (owner only).
 router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, res) => {
@@ -319,9 +305,7 @@ router.post('/terms', auth, owner, on, ...checked('POST /terms'), async (req, re
       return problem(req, res, { status: 503, code: 'TERMS_NOT_MIGRATED', detail: SAID.termsNotMigrated, legacy: { error: SAID.termsNotMigrated, message: SAID.termsNotMigrated } });
     const out = await withEntity(e, (h) => (pid ? T.saveParty(h, e, pid, side, b, byOf(req)) : T.saveShop(h, e, b, byOf(req))));
     res.json({ ok: true, terms: out });
-  } catch (err) {
-    problem(req, res, refusalOf(err, req));
-  }
+  } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /**
  * GET /health → { enabled, currency, country, walkin_grain, last_check, engines, year: { fiscal_year, from, start_month }, waiting: [{ id, chit_id, ref, reason, tries, since, job, todo, name, candidates }],
@@ -1302,6 +1286,14 @@ router.post('/bank/marks', auth, noKey, editor, bankWriter, on, ...checked('POST
     problem(req, res, refusalOf(err, req));
   }
 });
+/** a statement sign-off's refusals answered in words, by code (BOOKS_NOT_MIGRATED 503; CURRENCY_MISMATCH, STATEMENT_ALREADY_SIGNED AM-F-04, BOOKS_FIGURE_DIFFERS WALK U U-F-02: 409) → the problem to send, or null (refusalOf answers any other error) */
+const STATEMENT_FAULT_STATUS = { BOOKS_NOT_MIGRATED: 503, CURRENCY_MISMATCH: 409, STATEMENT_ALREADY_SIGNED: 409, BOOKS_FIGURE_DIFFERS: 409 };
+function statementFault(err) {
+  const status = err && STATEMENT_FAULT_STATUS[err.code];
+  if (!status) return null;
+  const legacy = { code: err.code, error: err.message, message: err.message }; if (err.code === 'CURRENCY_MISMATCH') legacy.field = err.field;
+  return { status, code: err.code, detail: err.message, legacy };
+}
 /** AM-F-05 (Athi, 22 Nov): a sign-off for a period that ends in a LOCKED month waits on the Waiting list, in words (the owner's press posts it) → { waiting } or { statement } */
 async function signOffStatement(req, e, body) {
   const lockedWait = require('../lib/books-locked-wait');
@@ -1322,8 +1314,7 @@ router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked(
     if (made.waiting) return res.status(202).json({ statement: null, waiting: made.waiting });
     res.status(201).json({ statement: made.statement });
   } catch (err) {
-    const fault = statementFault(err);
-    if (fault) return problem(req, res, fault);
+    const fault = statementFault(err); if (fault) return problem(req, res, fault);
     problem(req, res, refusalOf(err, req));
   }
 });
@@ -2552,6 +2543,12 @@ async function movedByLockNotes(owner, form) {
   const inSpan = (day) => day >= span.start && day <= span.end;
   const moved = (await withEntity(owner, (h) => S.movedByLock(h, owner))).filter((entry) => inSpan(entry.posting_date) || inSpan(entry.doc_date));
   return moved.map((entry) => entry.entry_no + ' · ' + entry.words);
+}
+/** TOUR-FIX1: the 200 answer of a return that is made from the rail, not the ledgers (India: GSTR-1 / 3B) */
+function returnFromRailAnswer(err) {
+  const pack = err.pack || null;
+  const why = pack === 'IN' ? "Your GSTR-1 and GSTR-3B are made from your bills, not from these books. Close and pay the month's GST here." : err.message;
+  return { form: null, pack, code: err.code, why, rail: pack === 'IN' ? '/api/tax/gstr' : null };
 }
 /** GET /returns?period&frequency&simpler&stagger&emirate — BAS1: the shop's OWN return (AU BAS · AE VAT201) READ from the posted books for one period, with the pack's period
  *  table and due dates; every box names the ledgers it counts (lib/books-period.taxReturn → engines gst-returns.returnFor). Owner, or the shop's auditor (ACC-229: whole-entity + can_see_costs, 403 BOOKS_RETURN_READ_NOT_ALLOWED). Prepared, never lodged.
