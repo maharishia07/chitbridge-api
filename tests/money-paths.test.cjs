@@ -227,7 +227,9 @@ function agreeing(r) {
       const order = await send({ purpose: 'order', subject: 'PO', recipients: [{ entity_id: SHOP }], line_items: [line('Item A', 180, 1, w.rate)] }, { as: 'buyer' });
       /* an order: the BUYER sends, the recipient is the SELLER — the seller's flags and the seller's country decide the tax */
       ok(`C7 ${cc}: a buyer's order carries the engine's total ${expect} on both copies`, order.status === 200 && !agreeing(order) && order.sentCopy.summary_json.total_value === expect, J([order.status, order.answer, agreeing(order)]));
-      const note = await send({ purpose: 'credit_note', subject: 'CN', recipients: [{ entity_id: BUYER }], line_items: [line('Item A', 180, 1, w.rate)] });
+      /* AI-F-02: a rail credit note must name a bill (lib/credit-cap, proven by ai-rail-credit-note-bill and acc-286). This test measures the header's money, not the cap, so the cap is stood down for the one send. */
+      const cap = require('../lib/credit-cap'), capWas = cap.holdUnderLock; cap.holdUnderLock = async () => {};
+      let note; try { note = await send({ purpose: 'credit_note', subject: 'CN', recipients: [{ entity_id: BUYER }], line_items: [line('Item A', 180, 1, w.rate)] }); } finally { cap.holdUnderLock = capWas; }
       ok(`C8 ${cc}: a composed credit note carries the engine's total ${expect}`, note.status === 200 && !agreeing(note) && note.sentCopy.summary_json.total_value === expect, J([note.status, note.answer]));
     }
 

@@ -1902,7 +1902,14 @@ router.post('/move-in/preflight', auth, owner, on, ...checked('POST /move-in/pre
 // @does The file and the owner's column choices in -> we plan the move-in without writing anything -> what would be added, merged, skipped or held (owner only).
 router.post('/move-in/preview', auth, owner, on, ...checked('POST /move-in/preview'), async (req, res) => {
   try {
-    const { m, pl } = await withEntity(ctx(req), (h) => moveInPlan(req, h));
+    const e = ctx(req);
+    const { m, pl } = await withEntity(e, async (h) => {
+      const done = await moveInPlan(req, h);
+      /* AI-F-03: what Suspense will hold is the posting engine's own dry run, never the plan's sum (lib/move-in previewSuspense) */
+      const said = await MI.previewSuspense(h, e, done.pl, { world: done.w, as_at: done.m.as_at, currency: curOf(req), client_ref: done.m.client_ref, by: byOf(req) });
+      done.pl.notes = (done.pl.notes || []).concat(said);
+      return done;
+    });
     res.json(Object.assign({ kind: m.kind, source: m.source, side: m.side, as_at: m.as_at }, pl));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
