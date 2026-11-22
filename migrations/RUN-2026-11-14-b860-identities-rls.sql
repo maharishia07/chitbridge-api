@@ -32,6 +32,19 @@
 BEGIN;
 SET LOCAL lock_timeout = '5s';   -- ALTER takes ACCESS EXCLUSIVE: fail fast instead of queueing behind a long read; a failed run changed nothing and is safe to run again
 
+-- GUARD (VERIFY-EL-DB A2, L2a): step 0 above is not left to memory. Refuse to run while cb_app can still SELECT any credential column of identities (SEC-186 revoke not run):
+-- the counterparty arm below would let one shop read another shop's live otp_code. Nothing has changed when this raises; run the SEC-186 revoke, then this file.
+DO $guard$
+DECLARE c text; open_cols text[] := ARRAY[]::text[];
+BEGIN
+  FOREACH c IN ARRAY ARRAY['otp_code', 'otp_code_hash', 'pin_hash'] LOOP
+    IF has_column_privilege('cb_app', 'public.identities', c, 'SELECT') THEN open_cols := open_cols || c; END IF;
+  END LOOP;
+  IF array_length(open_cols, 1) IS NOT NULL THEN
+    RAISE EXCEPTION 'b860 refused: cb_app can still SELECT identities.% - run RUN-2026-11-16-sec-186-revoke-credential-columns.sql first (b860 header, step 0)', array_to_string(open_cols, ', ') USING ERRCODE = '42501';
+  END IF;
+END $guard$;
+
 ALTER TABLE identities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE identities FORCE ROW LEVEL SECURITY;
 
