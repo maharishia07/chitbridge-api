@@ -275,12 +275,7 @@ const costWatch = async (req, entity_id) => ((await cost.isCostBlind(req, entity
 const erasedKeys = (payload, stored) => (payload.merge === true || !stored ? [] : Object.keys(stored).filter((key) => !Object.prototype.hasOwnProperty.call(payload.item_data || {}, key)));
 /** strips cost (and every nested cost / cost_* key) from every row's item_data in place — the ONE rule every cost-blind answer of this file uses */
 function stripCosts(items) {
-  items.forEach((item) => {
-    if (!item) return;
-    cost.dropCostKeys(item.item_data);
-    /* P2WAVE-SEC GF-catalogue-02#L36: a parked change rides on the row (scheduled[].patch) and carries the same cost keys as the item */
-    if (Array.isArray(item.scheduled)) item.scheduled.forEach((parked) => parked && cost.dropCostKeys(parked.patch));
-  });
+  items.forEach((item) => item && [item.item_data].concat((item.scheduled || []).map((parked) => parked && parked.patch)).forEach((part) => cost.dropCostKeys(part))); /* GF-catalogue-02#L36: a parked change (scheduled[].patch) carries the item's cost keys too */
   return items;
 }
 /**
@@ -2408,5 +2403,4 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
 
 router.openapi = { paths: pathsOf() }; // S9: the 26 routes (lib/products-contract.js)
 
-router.stripCosts = stripCosts; /* the one cost-blind strip, handed to tests/p2wave-sec-1130.test.cjs */
-module.exports = router;
+router.stripCosts = stripCosts; module.exports = router; /* stripCosts: the one cost-blind strip, handed to tests/p2wave-sec-1130.test.cjs */
