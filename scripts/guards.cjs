@@ -790,7 +790,7 @@ const GUARDS = [
   'marketing-plain-reason.test.cjs', // walk E (1128): marketing refusals read in plain words
   'readiness-registration-word.test.js', // E-F-02 (1128): the registration word comes from the country pack
   'supply-kind-1128.test.cjs', // supplykind-1128: supply kind follow-ups on the api path
-  'supply-kind-export.test.cjs', // G-F-01 (1128): a sale that states it is an export lands on the export ledger
+  'supply-kind-export.test.cjs', 'ag-counter-kinds.test.cjs', /* AG-F-01/02 (1129): a till bill's tax kind is the catalogue's */ // G-F-01 (1128): a sale that states it is an export lands on the export ledger
   'till-never-ok-hold-1128.test.cjs', // walk F (1128): a till sale refused 422 with a code a retry cannot fix is held, not retried
   'till-park-agent-1129.test.cjs', // 1129 tillPark4xx: the shop PC's queue parks a refused entry once with the server's words; 503/429 retry; a 409 duplicate is sent; 401 stays re-sign-in
   'till-stock-warn-noslab-1129.test.cjs', // counterSmall (1129): till 'Only N in stock' warns never blocks; a stated rate is not 'No tax rate'
