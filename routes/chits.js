@@ -867,7 +867,15 @@ async function sendBody(sendState, req, res) {
      mint.lines() is idempotent, so a forward or a draft-resume keeps the ids it already had. */
   const line_items = mint.lines(req.body.line_items || []); // `let`: rated below, once the sender is known
   /* `let`: the page stamp below gives a chit with no business data a business_json of its own ({ page }) */
-  const business_json = businessJsonOf(req.body);
+  let business_json = businessJsonOf(req.body);
+  /* ⭐ AJ-F-02 (walk AJ, 21 Nov 2026): ONE reader of "the money the sender stated" - business_json.currency, or the body's own `currency_code` / `currency` (a door that names it there was silently ignored and its USD 100.00 was booked as AED 100.00). Carry, never relabel (DEC-073/074, ACC-377): the stated code goes on the chit as business_json.currency, where orderMoneyOf and the books read it; an unknown or withdrawn code ("XXX") is refused in words; two different codes are refused, never one picked. */
+  const asked = req.body.currency_code != null && req.body.currency_code !== '' ? req.body.currency_code : req.body.currency;
+  if (typeof asked === 'string' && asked.trim()) {
+    const code = require('../lib/money').refuseNewCurrency(asked);
+    const inside = business_json && typeof business_json === 'object' && business_json.currency ? String(business_json.currency).trim().toUpperCase() : '';
+    if (inside && inside !== code) return problem(req, res, { status: 422, ...said({ error: 'Two currencies', code: 'MONEY_CURRENCY_MISMATCH', message: 'This bill names ' + code + ' and also ' + inside + '. Name one currency and send it again.' }, codeOfStatus(422)) });
+    if (!inside) business_json = Object.assign({}, business_json && typeof business_json === 'object' ? business_json : {}, { currency: code });
+  }
   refuseWithdrawnCurrency(business_json);
   /* ⭐ WHICH DETAIL PAGE THIS CHIT IS MADE WITH (N03, M-D6/M-D7) — checked at the door, stamped on every copy just
      before the copies are built (below). An unknown name is refused HERE, before anything is written; opening never
@@ -7037,6 +7045,7 @@ router.use(require('./chits-trace')); /* LEAN-PLAN §8 slice 1: the trace routes
 router.openapi = { paths: Object.assign(pathsOf(), require('../lib/chits-jobs-contract').pathsOf(), require('../lib/chits-holds-contract').pathsOf()), schemas: {} };
 router.use(require('./chit-proposals')); /* RAIL-106: /:chit_id/proposals — the one proposal mechanism (pro-forma rounds, counters, amendments after agreement) */
 router.sendSeller = sendSeller; /* tests show whose money a send is priced in */
+router.sendBody = sendBody; /* AJ-F-02: tests/aj-currency-door.test.cjs runs the one reader of the stated money */
 router.sendMoney = sendMoney; /* the send step that prices a chit — exported so a test can show WHO it asks the tax engine for */
 router.moneyOfInvoice = moneyOfInvoice;
 router.recordRaise = recordRaise; /* lib/ctpreturn records a dispute raised on another installation through the same writers */
