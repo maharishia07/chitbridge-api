@@ -8,8 +8,7 @@
 'use strict';
 const { waiting } = require('../lib/not-migrated');
 const CLOCK = require('../lib/shop-clock');
-const { NOT_A_UUID_WORDS } = require('../lib/knownerr');
-const { declaresStatuses } = require('../lib/contract-kit');
+const { NOT_A_UUID_WORDS } = require('../lib/knownerr'); const { declaresStatuses } = require('../lib/contract-kit');
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { schemaValidate } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const { refusalOf, SAID, operationFor, pathsOf } = require('../lib/books-contract'); // the contract (each route's operation) and the ledger's refusal mapper

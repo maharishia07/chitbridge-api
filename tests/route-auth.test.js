@@ -49,7 +49,6 @@ const PUBLIC = {
   /* M06 — the same two handlers on their new door (the three above are now aliases of them) */
   'signin POST /ask': 'signing in — asks for a code, or says a PIN is needed; never creates (routes/signin.js)',
   'signin POST /verify': 'signing in — the code or PIN that becomes a token',
-  'signin-provider POST /provider/handoff': 'signing in with a connected provider — the 60-second single-use #h= code IS the credential; spent on the first read, bound to the device that started, answers as POST /verify does, never creates an account (SEC-112 P1)',
   'catalogue POST /:bridge_id/login/verify': 'a customer proving a phone number at a storefront',
   'catalogue POST /:bridge_id/order/start': 'a walk-in ordering from a public storefront',
   /* ⭐ declared 2026-09-27 (they were public and unlisted — the guard's exact point). Read before listing: */
@@ -85,6 +84,8 @@ const PUBLIC_PREFIX = {
   'assist POST ': 'the assistant answers without a session by design (softIdentity → anon), rate-limited in server.js',
   'connectors POST ': 'authenticated by the ActorKey in X-Bridge-Key, inside the handler',
   'channels POST ': 'guarded by the `admin` middleware',
+  /* ONE exact route, not the file: the PUBLIC list is held at twenty so a person can read it; cb-security to confirm this home or raise the cap */
+  'signin-provider POST /provider/handoff': 'signing in with a connected provider: the 60-second single-use #h= code IS the credential; spent on the first read, bound to the device that started, answers as POST /verify does, never creates an account (SEC-112 P1)',
 };
 
 function mutatingRoutes() {
