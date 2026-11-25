@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * lenssec-1129.test.cjs — the security-lens review fixes of batch 1129 (walks/reviews/L-sec-*.md, VERIFY-lens-sec-2026-11-21.md).
+ * FINDINGS  L-sec-network-01#L32 (client built/invited receipts dropped, builtPaths created_by) · LENS-SEC network-01 F1 (retest 1130 names the register id for the coverage map)
  *
  * OWNS      the proof of four fixes, each red on the parent commit:
  *           1 network-design: a `built`/`invited` receipt the CLIENT sends is dropped (receiptsOnly); builtPaths reads only stores this operator minted (created_by)
@@ -101,6 +102,6 @@ const access = require(path.join(API, 'lib', 'access.js'));
     }
   });
 
-  console.log(failed ? failed + ' FAILED' : 'all ok');
+  console.log(failed ? failed + ' FAILED' : 'all ok (5 checks)');
   process.exit(failed ? 1 : 0);
 })();
