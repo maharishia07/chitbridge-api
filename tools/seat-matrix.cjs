@@ -43,7 +43,8 @@ const passes = (req) => ({
   onDues: () => true,
   onceOnly: () => true,
   auth: () => true,
-  periodsReader: () => true
+  periodsReader: () => true,
+  declaresStatuses: () => true /* names statuses for the register, refuses nothing */
 });
 const KNOWN = Object.keys(passes({}));
 /** the gate chain of every route of routes/books.js, in order: { 'GET /pl': ['auth', 'moneyReader', 'on'] } */
