@@ -9,13 +9,14 @@
 const fs = require('fs'); const path = require('path'); const assert = require('assert'); const vm = require('vm');
 const src = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8');
 const cut = (name) => { const i = src.indexOf('function ' + name + '('); assert.ok(i > 0, name + ' found'); let d = 0, j = src.indexOf('{', i); for (let k = j; k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}' && --d === 0) return src.slice(i, k + 1); } };
-function counterNameWith(claim, id, person) {
-  const ctx = { TILL_CLAIM: claim, ls: { get: (k, d) => (k === 'cb_till_id' ? id : d) }, shopLs: (k) => k, tillId: () => id, personOn: () => !!person, cbQuiet() {}, String, Number, RegExp };
+function counterNameWith(claim, id, person, given) {
+  const ctx = { TILL_CLAIM: claim, ls: { get: (k, d) => (k === 'cb_till_id' ? id : k === 'cb_till_given' && given ? given : d) }, shopLs: (k) => k, tillId: () => id, personOn: () => !!person, onAgent: () => false, tillGivenKey: () => 'cb_till_given', cbQuiet() {}, String, Number, RegExp };
   vm.runInNewContext(cut('counterName') + ';this.out = counterName();', ctx); return ctx.out;
 }
-assert.strictEqual(counterNameWith(null, 'C2'), 'Counter 2', 'no answer from the shop yet: as before');
-assert.strictEqual(counterNameWith({ counters: 3 }, 'C2'), 'Counter 2', 'the shop holds counters: the numbered name');
+assert.strictEqual(counterNameWith(null, 'C2', false, 'C2'), 'Counter 2', 'the shop gave this counter C2 and holds no answer count yet: the numbered name');
+assert.strictEqual(counterNameWith({ counters: 3 }, 'C2', false, 'C2'), 'Counter 2', 'the shop holds counters: the numbered name');
 assert.strictEqual(counterNameWith({ counters: 0 }, 'C2'), 'Counter', 'the shop says it holds none: a leftover id is not named');
+assert.strictEqual(counterNameWith(null, 'C2'), 'Counter', 'RW2-09: a shop sign-in with no paired key gets no claim; the device-wide leftover C2 is never named (Settings says 0 counters)');
 assert.strictEqual(counterNameWith({ counters: 0 }, 'C2', true), 'Counter 2', 'a person device is not in the key register: unchanged');
 const dayWarn = (items, h) => { const ctx = { S: { at: 'x', items }, dayStatus: () => ({ state: 'open' }), DAY: () => ({ priceAge: () => h }), cbQuiet() {}, Date }; vm.runInNewContext(cut('dayWarnWords') + ';this.out = dayWarnWords();', ctx); return ctx.out; };
 assert.strictEqual(dayWarn([], 108), '', 'no items, no stale-prices warning');

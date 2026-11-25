@@ -5599,11 +5599,12 @@ var CloudHost = {
     return all.filter(function(b){ return !!since && dayKeyOf(b.at) >= since && !isDocRow(b); }).sort(function(a,b){ return String(b.at).localeCompare(String(a.at)); });
   },
   /** FX-CT1: `till` asks for ONE counter's bills (the day report's check) — filtered by the server, before its limit */
-  async history(days, till){
+  async history(days, till, chit){
     if (!this.cred() || !lineUp()) return { bills: [], offline: true };
     try {
+      /* RW2-05: `chit` asks for ONE bill by its id, of any age (the server ignores the window for it) */
       var r = await fetchBy(this.api + '/api/till/bills?days=' + (days||30) + '&limit=' + (till ? 500 : 200)
-        + (till ? '&till=' + encodeURIComponent(till) : ''), { headers: this.auth() }, SLOW);
+        + (till ? '&till=' + encodeURIComponent(till) : '') + (chit ? '&chit=' + encodeURIComponent(chit) : ''), { headers: this.auth() }, SLOW);
       if (!r.ok) return { bills: [], offline: true, why: 'HTTP ' + r.status };
       return await r.json();
     } catch (e) { return { bills: [], offline: true, why: e.message }; }
@@ -6302,7 +6303,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-28.rw1ctr';
+var TILL_BUILD = '2026-11-28.rw2ctr';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -10754,6 +10755,8 @@ function counterName(){
   /* CTR-146: a plain number is a name (C5 = Counter 5); a code such as DQLG is not one, so it is not shown */
   /* FW-40: the shop's register is the one source of how many counters there are. When its last answer says it holds none (till.counters = 0), a device-wide leftover id (cb_till_id, from another shop) is not a counter of THIS shop and is not named as one */
   if (!personOn() && TILL_CLAIM && Number(TILL_CLAIM.counters) === 0) return 'Counter';
+  /* RW2-09: and a number the shop never gave THIS shop's counter is a leftover too. A sign-in with no paired key gets no `till` block (no claim), so TILL_CLAIM stayed null and the counters=0 test above never ran: the device's C2 from an earlier shop printed as "Counter 2" beside Settings' "0 counters". Given = tillClaim() stored the shop's answer under this shop's own key. */
+  if (!personOn() && !onAgent()) { var given = ''; try { given = String(ls.get(tillGivenKey(), '') || ''); } catch (e) { cbQuiet('counterName:3', e); } if (!given) return 'Counter'; }
   return /^C?\d+$/i.test(id) ? ('Counter ' + id.replace(/^C/i, '')) : 'Counter';
 }
 
@@ -26525,10 +26528,10 @@ async function retPriorFor(no){
   } catch (e) { cbQuiet('retPriorFor:1', e); }
   return out;
 }
-async function retOpen(no){
+async function retOpen(no, given){
   var rows = [];
   try { rows = await retBills(); } catch (e) { cbQuiet('retOpen:1', e); }
-  var bill = rows.filter(function(b){ return String(b.no) === String(no) || String(b.printed_as || '') === String(no); })[0];
+  var bill = given || rows.filter(function(b){ return String(b.no) === String(no) || String(b.printed_as || '') === String(no); })[0];
   if (!bill) { toastLine('Only bills from the last ' + RET_DAYS + ' days that were rung on this counter can be returned here.'); return; }
   if (bill.kind === 'credit_note') { toastLine('That is already a credit note.'); return; }
   RET_PRIOR = await retPriorFor(no);
@@ -27555,7 +27558,7 @@ async function paintEarlier(){
   var mine = WHO ? rows.filter(function(b){ return b.by && b.by.id === WHO.id; }) : rows;
   var body = '';
   if (r.offline) body = '<div style="color:var(--warn);padding:10px">The line is down, so earlier bills cannot be read. Today\'s are on this device and are still here.</div>';
-  else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No counter bills in the last ' + days + ' days.</div>';
+  else if (!rows.length) body = '<div style="color:var(--dim);padding:10px">No bills rung on a counter in the last ' + days + ' days. Sales made another way (an invoice, an order) are in the Day book, not here.</div>';
   else {
     var total = rows.reduce(function(a,b){ return rmoney(a + (b.total||0)); }, 0);
     /* ⭐ M47 (walk 2026-10-10): "Mayur Bhavan: 10 bill(s)" left the other 15 unexplained — the split is WHO billed them */
@@ -29428,19 +29431,24 @@ function returnAskedId(){
   var found = /[?&]return=([A-Za-z0-9_-]{8,64})(?:&|$)/.exec(location.search);
   return found ? found[1] : '';
 }
+function retInWindow(b){ var since = dayKeyOf(Date.now() - RET_DAYS * 86400000); return !!since && dayKeyOf(b.at) >= since; }
 async function returnFindBill(id){
   var rows = []; try { rows = await retBills(); } catch (e) { cbQuiet('returnFindBill:1', e); }
   var byId = function(b){ return b && b.kind !== 'credit_note' && ((b._sent && String(b._sent.chit_id) === id) || String(b.chit_id) === id); };
   var held = rows.filter(byId)[0];
   if (held) return { bill: held };
-  var h = null; try { h = await HOST.history(RET_DAYS); } catch (e) { cbQuiet('returnFindBill:2', e); }
+  /* RW2-05: the bill is read BY ITS ID, of any age (Square and Lightspeed refund any past sale); only the answer "no such counter bill" is a refusal */
+  var h = null; try { h = await HOST.history(365, null, id); } catch (e) { cbQuiet('returnFindBill:2', e); }
   if (!h || h.offline || !Array.isArray(h.bills)) return { why: 'The line is down, so this bill cannot be read from the shop. Try again when it is back.' };
   var got = h.bills.filter(byId)[0];
-  if (!got || !got.no) return { why: 'That bill is not among the shop’s counter bills of the last ' + RET_DAYS + ' days, so it cannot be returned here.' };
+  if (!got || !got.no) return { why: 'The shop holds no counter bill with that address, so it cannot be returned here. A sale made another way is returned from its own page.' };
   var same = rows.filter(function(b){ return String(b.no) === String(got.no) && b.kind !== 'credit_note'; })[0];
   if (same) return { bill: same };
   var row = Object.assign({}, got, { customer: serverBillCustomer(got), _sent: { chit_id: got.chit_id }, _verified: Date.now(), _from_server: true });
-  try { await DB.put('bills', row); TODAY_BILLS = null; } catch (e) { cbQuiet('returnFindBill:3', e); return { why: 'This device could not keep the bill to return it.' }; }
+  /* a bill older than the window is not kept on the device (the Earlier list would never show it): it is returned from memory */
+  if (retInWindow(row)) {
+    try { await DB.put('bills', row); TODAY_BILLS = null; } catch (e) { cbQuiet('returnFindBill:3', e); return { why: 'This device could not keep the bill to return it.' }; }
+  }
   return { bill: row };
 }
 async function returnFromAddress(){
@@ -29453,7 +29461,7 @@ async function returnFromAddress(){
   RET_PRIOR = await retPriorFor(found.bill.no);
   var left = (found.bill.lines || []).reduce(function(sum, l, n){ return sum + retLeft(found.bill, n); }, 0);
   if (!(left > 0)) { toastLine('Everything on bill ' + found.bill.no + ' has already come back on a credit note.'); return; }
-  await retOpen(found.bill.no);
+  await retOpen(found.bill.no, found.bill);
 }
 /** a row → that order, in place: Despatch with it chosen (the same list loadTasks reads) */
 async function onlineOrderPick(id){
