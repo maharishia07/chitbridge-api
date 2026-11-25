@@ -184,9 +184,7 @@ function helpersCalledBy(source, fileText, keeps) {
   follow(source, 2);
   return found.join('\n');
 }
-
 const statusesWritten = (source) => [...source.matchAll(/(?:\.status\(\s*|\.sendStatus\(\s*|status:\s*)(\d{3})\b/g)].map((match) => Number(match[1])).filter((status) => status >= 400);
-
 /** a status written straight onto the response with a body, the way a route answered before the standard */
 const rawErrorWrites = (source) => /\.status\(\s*(?:[45]\d\d|[^)\d][^)]*)\)\s*\.(?:json|send|end)\(/.test(source) || /\.sendStatus\(\s*[45]\d\d/.test(source);
 
