@@ -24,6 +24,8 @@ const naiveAsUtc = (() => {
 pg.types.setTypeParser(1114, naiveAsUtc);                                          /* timestamp without time zone */
 pg.defaults.parseInputDatesAsUTC = true;
 const SESSION_TZ = "SET TimeZone = 'UTC'";
+/* P1 speed money-01 F1 (1130): JIT OFF. The open-items statement (a recursive CTE) is costed at ~26M rows, which crosses jit_above_cost, and Postgres then spends 2.4-13.6 s COMPILING a query that runs in 30-120 ms (sit-ae2, 5,000 to 10,000 rows). This is an OLTP api: no statement here is long enough to repay a compile. Rides the same trips as the zone pin. */
+const JIT_OFF = 'SET jit = off';
 
 async function tryConnect(config) {
   return new Promise((resolve, reject) => {
@@ -49,10 +51,10 @@ function armPool(p) {
   const ms = require('../lib/limits').statementTimeoutMs();
   p.on('connect', (c) => require('../lib/dbwatch').watch(c));   /* E07: every statement timed; slow ones logged by fingerprint */
   /* one trip per NEW connection, not per request: the zone pin (M210) rides with the statement deadline */
-  p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
+  p.on('connect', (c) => { c.query(SESSION_TZ + '; ' + JIT_OFF + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
   return p;
 }
-const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + '; SET LOCAL ' + JIT_OFF.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
 
 /**
  * ⭐ HX1 · THE ATTEMPTS COME FROM CONFIG, NOTHING ELSE (db/connect-config.js): DATABASE_URL, then DB_POOLER_URL when it is set.
@@ -394,7 +396,7 @@ const readBatch = async (entityId, actorId, statements) => {
   /* review EL-platform-01 F7: the batch runs under the same transaction settings as beginSql - READ ONLY for an auditor's request, UTC, the statement deadline - as
      set_config(..., true) columns of the ONE select, so the result positions below do not move. A transaction pooler does not carry a session SET. */
   const ms = require('../lib/limits').statementTimeoutMs();
-  const head = (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; ' : 'BEGIN; ') + "SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true), set_config('TimeZone', 'UTC', true)" + (ms ? ", set_config('statement_timeout', '" + Math.floor(ms) + "', true)" : '') + ';';
+  const head = (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; ' : 'BEGIN; ') + "SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true), set_config('TimeZone', 'UTC', true), set_config('jit', 'off', true)" + (ms ? ", set_config('statement_timeout', '" + Math.floor(ms) + "', true)" : '') + ';';
   const texts = [], at = [];
   let bound = entityId;   /* the shop each statement really runs under: the batch's, until a statement switches it (the switch stays for the next ones) */
   statements.forEach((s) => {
