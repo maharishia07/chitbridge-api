@@ -466,6 +466,15 @@ const GUARDS_PART = [
   'books-split-units-1129.test.cjs', // readability 1129 (g1): the units split out of books, books-hooks and catalogue-write keep their rules
   'retest-1130-catalogue-failclosed.test.js', // retest 1130: EL-catalogue-01#L53/#L62 and GF-catalogue-01#L48 fail closed (gate read, source read, cost strip)
   'retest-1130-supply-kind.test.cjs', // retest 1130: AJ-F-01 supply_kind word reaches the engine, an unknown kind is refused
+  'accw2-gst-gap.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'at0204-default-period.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'finw2-earlier-tax.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'policy-words-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'signoffw-till-chips.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'signoffw-unbroken-run.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'till-earlier-window-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'till-start-mode-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'ufo2-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
