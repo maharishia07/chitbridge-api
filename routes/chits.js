@@ -4380,7 +4380,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     /* RW1-27: a bill of mine says how much of it is already credited, so the sheet can grey "Credit note" with the reason (null when not judged: the button stays, the cap judges at send) */
-    const _credit = await withEntity(entity_id, (db) => creditCap.creditedOf(db, entity_id, chit_id)).catch((e) => { cbLog.fellBack('chits GET /:chit_id: credited read failed, carried on without it', e); return null; });
+    const _credit = String(req.query.with || '').split(',').includes('credit') ? await withEntity(entity_id, (db) => creditCap.creditedOf(db, entity_id, chit_id)).catch((e) => { cbLog.fellBack('chits GET /:chit_id: credited read failed, carried on without it', e); return null; }) : null; /* only on ?with=credit: the chit sheet's Credit note button asks, every other open of a chit stays at its round-trip budget (w4ctr) */
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
