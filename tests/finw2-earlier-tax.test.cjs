@@ -20,5 +20,11 @@ const b = CF.gstLine(row({ payable_minor: 1252 + 100000, earlier_returns: [Q1] }
 ok('a return larger than what is left is cut (1,000.00 left of 1,803.50)', b.earlier.returns[0].payable_minor === 100000 && b.earlier.other_minor === 0, JSON.stringify(b.earlier));
 const c = CF.gstLine(row({}), day('2026-11-25'), day('2026-12-02')).line;
 ok('no return list: the lump as before, no new keys', c.earlier.payable_minor === 430820 && c.earlier.returns === undefined && c.earlier.other_minor === undefined, JSON.stringify(c.earlier));
+/* FW-34: the Finance card's money lines carry their own door */
+const HF = require('../lib/home-facts-finance');
+const lines = HF.chequeLines({ toCollect: 35000, toPay: 3403050, remind: { on: true } }, { dueList: [], late: [], next: null, held: [] }, 'AUD', { plural: (n, w) => n + ' ' + w, toNumber: Number });
+const payLine = lines.find((x) => /^To pay/.test(x.text)), colLine = lines.find((x) => /^To collect/.test(x.text));
+ok('FW-34: To pay A$34,030.50 opens Payables', payLine && payLine.money.amount === 34030.5 && payLine.act.href === '/finance.html#/payables', JSON.stringify(payLine));
+ok('FW-34: To collect A$350.00 opens Collections', colLine && colLine.money.amount === 350 && colLine.act.href === '/finance.html#/collections', JSON.stringify(colLine));
 console.log(fail ? fail + ' FAILED' : 'all ok');
 process.exit(fail ? 1 : 0);
