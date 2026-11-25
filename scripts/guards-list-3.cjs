@@ -475,6 +475,13 @@ const GUARDS_PART = [
   'till-earlier-window-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'till-start-mode-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'ufo2-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'eprred-thrown-refusal.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'home-bank-signed-to.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'open-items-timed.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw127-1130.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw1acc-1130.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw1ctr-1130.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw1fin-needs.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
