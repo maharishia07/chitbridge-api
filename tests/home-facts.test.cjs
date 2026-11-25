@@ -280,7 +280,7 @@ const get = (port, p) => new Promise((ok) => {
   t('bank: last statement + the carried difference, in its own currency', [r.json.lines[0].text, r.json.lines[1].money, r.json.state], ['Last statement {when} · ANZ Business', { amount: 123.45, currency: 'AUD' }, 'needs_you']);
   t('bank: figures carry minor units and the currency; nothing about lines to add', JSON.stringify(r.json.figures), JSON.stringify({ statement: { date: '2026-10-31', account: 'ANZ Business', difference_minor: 12345, currency: 'AUD' } }));
   BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 0, currency: 'AUD' }); r = await g('bank');
-  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Matches the books', 'in_use']);
+  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Nothing unexplained', 'in_use']);
   BL.latest = async () => null; BL.unsigned = async () => ({ at: new Date('2026-11-14T03:00:00Z') }); r = await g('bank');
   t('bank: loaded and worked on but not signed says so with its day, in_use, never Not started', [r.json.lines, r.json.state], [[{ text: 'Worked on {when} · not signed off yet', at: '2026-11-14' }], 'in_use']);
   BL.latest = async () => null; BL.unsigned = async () => null; F.bankPosted = 6; r = await g('bank');
