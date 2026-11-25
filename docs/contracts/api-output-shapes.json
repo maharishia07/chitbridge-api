@@ -6042,6 +6042,9 @@
           "order_billed": {
             "type": "boolean"
           },
+          "credit": {
+            "type": "object"
+          },
           "live_set": {
             "type": "array",
             "items": {
