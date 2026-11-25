@@ -1593,6 +1593,10 @@
    "junk_fuzz": true,
    "foreign_id_404": true
   },
+  "POST /api/books/backfill": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/books/bank/marks": {
    "output_allowlist": true,
    "junk_fuzz": true,
@@ -1660,6 +1664,10 @@
   "POST /api/books/events": {
    "output_allowlist": true,
    "junk_fuzz": true
+  },
+  "POST /api/books/events/batch": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/books/fx-rates": {
    "output_allowlist": true,

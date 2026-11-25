@@ -49,13 +49,15 @@ const lab = harness({
   owns: (route) => OURS.includes(route),
   before: async () => { if (router) router._resetStoreCheck(); },
   legacyFile: path.join(HERE, 'docs', 'contracts', 'api-legacy.json'),
-  inherited: () => false,
+  inherited: (scenario, answer) => answer.status === 401 && scenario.id === 'signed-out', /* the real sign-in gate answers a signed-out call in the old body (inherited, not ours) */
   notFrozen: () => true,
   added: () => true /* new doors: no old body was frozen */
 });
 const { check } = lab;
 const WORLDS = [
   { id: 'plain', setup: {} },
+  { id: 'signed-out', setup: { realAuth: true } },
+  { id: 'a-key', setup: { asKey: true } }, /* a key cannot connect a provider: personOnly answers 403 KEY_CANNOT_SIGN_IN on the four signed-in routes */
   { id: 'db-fails', setup: { db: 'fail' } }
 ];
 const fails = () => { throw new Error(SECRET_SQL); };
@@ -107,6 +109,16 @@ const EXTRAS = [
   Object.assign(X('link-finish-other-session', LINKFINISH, 403, '/api/signin/provider/link/finish', { pending: { take: async () => ({ confirm: true, provider: 'stand', identity_id: '11111111-1111-4111-8111-111111111111', entity_id: '11111111-1111-4111-8111-111111111111', device_id: DEVICE, jti: 'someone-elses', claims }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' }, setup: { session: SESSION } }),
   Object.assign(X('link-start-wrong-proof', LINKSTART, 401, '/api/signin/provider/link/start', { identityAuth: { rowsOfCandidates: async () => [{ identity_id: 'i1', bridge_id: 'B', display_name: 'A', email: 'a@example.test', user_id: 'ana', identity_type: 'entity', status: 'active', parent_entity_id: null, pin_hash: 'h' }], verifyCredential: async () => ({ ok: false }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { provider: 'stand', pin: '0000' } }),
   Object.assign(X('link-delete-ok', UNLINK, 200, '/api/signin/provider/links/11111111-1111-4111-8111-111111111111', { links: { listOf: async () => [{ link_id: '11111111-1111-4111-8111-111111111111', provider: 'stand' }], remove: async () => ({ removed: true, link: { provider: 'stand', issuer: 'i', tenant: '', subject: 's' } }) }, identityAuth: { rowsOfCandidates: async () => [{ identity_id: 'i1', bridge_id: 'B', display_name: 'A', email: 'a@example.test', user_id: 'ana', identity_type: 'entity', status: 'active', parent_entity_id: null, pin_hash: 'h' }], verifyCredential: async () => ({ ok: true }) } }), { method: 'DELETE', body: { pin: '4827' } }),
+  /* the refusals the register's error_tests column reads (statuses each route declares): the handoff's table of refusals, the connect step's own */
+  Object.assign(X('handoff-provider-off', HANDOFF, 404, '/api/signin/provider/handoff', { provider: { configured: () => false }, pending: { take: async () => ({ provider: 'stand', device_id: DEVICE, claims, links: [{ link_id: 'l1', identity_id: 'i1', entity_id: 'i1' }] }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' } }),
+  Object.assign(X('handoff-many-links', HANDOFF, 409, '/api/signin/provider/handoff', { pending: { take: async () => ({ provider: 'stand', device_id: DEVICE, claims, links: [{ link_id: 'l1', identity_id: 'i1', entity_id: 'i1' }, { link_id: 'l2', identity_id: 'i2', entity_id: 'i2' }] }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' } }),
+  Object.assign(X('handoff-store-fails', HANDOFF, 503, '/api/signin/provider/handoff', { pending: { take: fails } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' } }),
+  Object.assign(X('handoff-session-not-opened', HANDOFF, 500, '/api/signin/provider/handoff', { store: { linksFor: async () => [{ link_id: 'l1', identity_id: 'i1', entity_id: 'i1' }] }, pending: { take: async () => ({ provider: 'stand', device_id: DEVICE, claims, links: [{ link_id: 'l1', identity_id: 'i1', entity_id: 'i1' }] }) }, identityAuth: { rowsOfCandidates: async () => [{ identity_id: 'i1', bridge_id: 'B', display_name: 'A', email: 'a@example.test', user_id: 'ana', identity_type: 'entity', status: 'active', parent_entity_id: null }], issueToken: fails, personShape: (identity) => ({ identity_id: identity.identity_id }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' } }),
+  Object.assign(X('link-start-provider-off', LINKSTART, 404, '/api/signin/provider/link/start', { provider: { rowOf: () => null } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { provider: 'nope', pin: '4827' }, setup: { session: SESSION } }),
+  Object.assign(X('link-start-store-fails', LINKSTART, 503, '/api/signin/provider/link/start', { identityAuth: { rowsOfCandidates: fails } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { provider: 'stand', pin: '4827' }, setup: { session: SESSION } }),
+  Object.assign(X('link-finish-exists', LINKFINISH, 409, '/api/signin/provider/link/finish', { pending: { take: async () => ({ confirm: true, provider: 'stand', identity_id: '11111111-1111-4111-8111-111111111111', entity_id: '11111111-1111-4111-8111-111111111111', device_id: DEVICE, jti: SESSION.jti, claims }) }, identityAuth: { rowsOfCandidates: async () => [{ identity_id: '11111111-1111-4111-8111-111111111111', bridge_id: 'B', display_name: 'A', email: 'a@example.test', user_id: 'ana', identity_type: 'entity', status: 'active', parent_entity_id: null, pin_hash: 'h' }] }, links: { add: async () => ({ added: false, code: 'LINK_EXISTS' }) } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' }, setup: { session: SESSION } }),
+  Object.assign(X('link-finish-store-fails', LINKFINISH, 503, '/api/signin/provider/link/finish', { pending: { take: fails } }, { 'x-device-id': DEVICE }), { method: 'POST', body: { code: 'a-code-that-is-long-enough-1' }, setup: { session: SESSION } }),
+  Object.assign(X('link-delete-last-way-in', UNLINK, 409, '/api/signin/provider/links/11111111-1111-4111-8111-111111111111', { links: { listOf: async () => [{ link_id: '11111111-1111-4111-8111-111111111111', provider: 'stand' }] }, identityAuth: { rowsOfCandidates: async () => [{ identity_id: 'i1', bridge_id: 'B', display_name: 'A', email: null, user_id: 'ana', identity_type: 'entity', status: 'active', parent_entity_id: null, pin_hash: null }], verifyCredential: async () => ({ ok: true }) } }), { method: 'DELETE', body: { pin: '4827' } }),
   Object.assign(X('link-delete-unknown', UNLINK, 404, '/api/signin/provider/links/22222222-2222-4222-8222-222222222222', {}), { method: 'DELETE', body: { pin: '4827' } })
 ];
 
@@ -159,7 +171,7 @@ function checkCodesRegistered(recording) {
   check('a failing list still answers 200 with an empty list', at('list-fails-the-page-still-loads', LIST).status === 200 && sameValue(at('list-fails-the-page-still-loads', LIST).body, { providers: [], standin: false }));
   check('a missing store answers 200 with an empty list', at('list-store-not-there', LIST).status === 200 && at('list-store-not-there', LIST).body.providers.length === 0);
   check('no answer of the three routes says the cause of a failure', Object.values(recording).every((one) => !/SELECT|vault|relation "|pg /.test(JSON.stringify(one.body) + (one.text || ''))));
-  check('no answer is a 5xx but the sign-in fault answer by design: 503 SIGNIN_UNAVAILABLE (a fault is otherwise a redirect back or an empty list)', Object.values(recording).every((one) => one.status < 500 || (one.status === 503 && one.body && one.body.code === 'SIGNIN_UNAVAILABLE')));
+  check('no answer is a 5xx but the sign-in fault answer by design: 503 SIGNIN_UNAVAILABLE (a fault is otherwise a redirect back or an empty list), and the one 500 INTERNAL of the handoff when the session writer fails with a fault it has no word for', Object.entries(recording).every(([key, one]) => one.status < 500 || (one.status === 503 && one.body && one.body.code === 'SIGNIN_UNAVAILABLE') || (one.status === 500 && one.body && one.body.code === 'INTERNAL' && key.endsWith('|handoff-session-not-opened'))));
   const proved = allowlistWorld.checkAllowList(recording, contract.OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));

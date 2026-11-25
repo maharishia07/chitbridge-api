@@ -5792,17 +5792,19 @@
     },
     "GET /api/signin/provider/links": {
       "file": "signin-provider.js",
-      "trips": 50,
+      "trips": 10,
       "wire": null,
-      "fired": false,
-      "why": "answered 503 on the stub"
+      "fired": true,
+      "status": 503,
+      "basis": "SEC-112 connect step, hand ceiling by reading the code path (no run): the route's own reads are the shop's sign-in flags (policy.get), the person's links (one withEntity read) and the person's own row (identity-auth rowsOfCandidates), each a trip or two; the sign-in middleware is counted apart. The offline stub answers 503 (no store) = a floor; live measure on sit-in pending (cb-speed)"
     },
     "POST /api/signin/provider/handoff": {
       "file": "signin-provider.js",
-      "trips": 50,
+      "trips": 20,
       "wire": null,
-      "fired": false,
-      "why": "stub answered 400 (a floor); needs a live measure on sit-in"
+      "fired": true,
+      "status": 400,
+      "basis": "SEC-112 P1a, hand ceiling by reading the code path (no run): the one-time code is spent (signin-pending take), the linked account's row, the shop's sign-in flags, the link read again, then the ONE session writer (identity-auth issueToken: the device and session rows) and one sign-in event row; the per-account budget is in memory. The offline stub answers 400 (no device) = a floor; live measure on sit-in pending (cb-speed)"
     },
     "POST /api/signin/provider/link/finish": {
       "file": "signin-provider.js",

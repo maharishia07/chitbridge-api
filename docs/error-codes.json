@@ -518,7 +518,6 @@
     "POST /api/relationships/suppliers",
     "POST /api/signin/ask",
     "POST /api/signin/provider/link/finish",
-    "POST /api/signin/provider/link/start",
     "PUT /api/actors/:id/status",
     "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
     "PUT /api/chits/:chit_id/status"
@@ -3997,7 +3996,6 @@
     "POST /api/relationships/suppliers",
     "POST /api/signin/ask",
     "POST /api/signin/provider/link/finish",
-    "POST /api/signin/provider/link/start",
     "PUT /api/actors/:id/status",
     "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
     "PUT /api/chits/:chit_id/status"
@@ -8173,8 +8171,7 @@
    "owner_area": "auth",
    "since": "2026-11-22",
    "raised_by": [
-    "DELETE /api/signin/provider/links/:link_id",
-    "POST /api/signin/provider/link/finish"
+    "DELETE /api/signin/provider/links/:link_id"
    ]
   },
   {
@@ -8540,8 +8537,7 @@
    "owner_area": "auth",
    "since": "2026-11-22",
    "raised_by": [
-    "POST /api/signin/provider/link/finish",
-    "POST /api/signin/provider/link/start"
+    "POST /api/signin/provider/link/finish"
    ]
   },
   {
@@ -8553,8 +8549,7 @@
    "owner_area": "auth",
    "since": "2026-11-22",
    "raised_by": [
-    "DELETE /api/signin/provider/links/:link_id",
-    "POST /api/signin/provider/link/finish"
+    "DELETE /api/signin/provider/links/:link_id"
    ]
   },
   {
@@ -8566,8 +8561,7 @@
    "owner_area": "auth",
    "since": "2026-11-22",
    "raised_by": [
-    "POST /api/signin/provider/link/finish",
-    "POST /api/signin/provider/link/start"
+    "POST /api/signin/provider/link/finish"
    ]
   },
   {
@@ -8579,8 +8573,7 @@
    "owner_area": "auth",
    "since": "2026-11-22",
    "raised_by": [
-    "DELETE /api/signin/provider/links/:link_id",
-    "POST /api/signin/provider/link/finish"
+    "DELETE /api/signin/provider/links/:link_id"
    ]
   },
   {
@@ -10587,7 +10580,6 @@
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
     "GET /api/signin/provider/:key/callback",
-    "GET /api/signin/provider/links",
     "POST /api/signin/ask",
     "POST /api/signin/pin",
     "POST /api/signin/provider/handoff",
@@ -11004,7 +10996,6 @@
    "since": "2026-10-22",
    "raised_by": [
     "GET /api/signin/provider/:key/start",
-    "GET /api/signin/provider/links",
     "POST /api/catalogue/:bridge_id/login/verify",
     "POST /api/catalogue/:bridge_id/order/confirm",
     "POST /api/signin/provider/handoff",
@@ -11574,7 +11565,6 @@
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
     "GET /api/identity/documents",
-    "GET /api/signin/provider/links",
     "POST /api/catalogue/:bridge_id/login/verify",
     "POST /api/catalogue/:bridge_id/order/confirm",
     "POST /api/catalogue/:bridge_id/support",
@@ -11583,7 +11573,6 @@
     "POST /api/connectors/ingest",
     "POST /api/identity/documents/:scheme/code",
     "POST /api/identity/documents/:scheme/verify",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start",
     "POST /api/signin/verify",
     "PUT /api/actors/change-pin",
@@ -11601,14 +11590,12 @@
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
     "GET /api/identity/documents",
-    "GET /api/signin/provider/links",
     "POST /api/catalogue/:bridge_id/login/verify",
     "POST /api/catalogue/:bridge_id/order/confirm",
     "POST /api/catalogue/:bridge_id/support",
     "POST /api/connectors/:actorId/regenerate-key",
     "POST /api/identity/documents/:scheme/code",
     "POST /api/identity/documents/:scheme/verify",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start",
     "POST /api/signin/verify",
     "PUT /api/actors/change-pin",
@@ -11625,8 +11612,6 @@
    "since": "2026-11-07",
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
-    "GET /api/signin/provider/links",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start",
     "POST /api/signin/verify",
     "PUT /api/actors/change-pin"
@@ -11643,7 +11628,6 @@
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
     "GET /api/identity/documents",
-    "GET /api/signin/provider/links",
     "POST /api/catalogue/:bridge_id/login/verify",
     "POST /api/catalogue/:bridge_id/order/confirm",
     "POST /api/catalogue/:bridge_id/support",
@@ -11652,7 +11636,6 @@
     "POST /api/connectors/ingest",
     "POST /api/identity/documents/:scheme/code",
     "POST /api/identity/documents/:scheme/verify",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start",
     "POST /api/signin/verify",
     "PUT /api/actors/change-pin",
@@ -12167,11 +12150,9 @@
    "raised_by": [
     "DELETE /api/actors/:id/pin",
     "DELETE /api/signin/provider/links/:link_id",
-    "GET /api/signin/provider/links",
     "PATCH /api/actors/:id",
     "POST /api/actors",
     "POST /api/actors/:id/otp",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start",
     "POST /api/signin/verify",
     "PUT /api/actors/:id/status",
@@ -12189,8 +12170,6 @@
    "since": "2026-11-07",
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
-    "GET /api/signin/provider/links",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start",
     "POST /api/signin/verify",
     "PUT /api/actors/change-pin"
@@ -12812,7 +12791,6 @@
    "raised_by": [
     "GET /api/signin/provider/:key/callback",
     "GET /api/signin/provider/:key/start",
-    "GET /api/signin/provider/links",
     "POST /api/signin/provider/handoff",
     "POST /api/signin/provider/link/start"
    ]
@@ -12977,8 +12955,6 @@
    "since": "2026-11-22",
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
-    "GET /api/signin/provider/links",
-    "POST /api/signin/provider/link/finish",
     "POST /api/signin/provider/link/start"
    ]
   },
@@ -13793,7 +13769,6 @@
    "since": "2026-10-22",
    "raised_by": [
     "GET /api/catalogue/:bridge_id",
-    "GET /api/signin/provider/links",
     "POST /api/assist",
     "POST /api/assist/catalogue-structure",
     "POST /api/assist/conform",
@@ -13908,7 +13883,6 @@
     "POST /api/catalogue/:bridge_id/support",
     "POST /api/signin/provider/handoff",
     "POST /api/signin/provider/link/finish",
-    "POST /api/signin/provider/link/start",
     "POST /api/signin/verify"
    ]
   },
@@ -15400,7 +15374,6 @@
     "DELETE /api/signin/provider/links/:link_id",
     "GET /api/identity/documents",
     "GET /api/signin/provider/:key/callback",
-    "GET /api/signin/provider/links",
     "GET /api/till/snapshot",
     "POST /api/actors",
     "POST /api/actors/:id/otp",
@@ -15584,7 +15557,6 @@
    "raised_by": [
     "DELETE /api/signin/provider/links/:link_id",
     "GET /api/signin/provider/:key/callback",
-    "GET /api/signin/provider/links",
     "POST /api/signin/ask",
     "POST /api/signin/pin",
     "POST /api/signin/provider/handoff",

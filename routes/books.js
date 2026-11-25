@@ -1306,7 +1306,7 @@ async function signOffStatement(req, e, body) {
 }
 /** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
 // @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
-router.post('/bank/statements', auth, noKey, editor, bankWriter, on, ...checked('POST /bank/statements'), async (req, res) => {
+router.post('/bank/statements', auth, noKey, editor, bankWriter, on, require('../lib/contract-kit').declaresStatuses([503]) /* BOOKS_NOT_MIGRATED, from the statement-fault table */, ...checked('POST /bank/statements'), async (req, res) => {
   try {
     const e = ctx(req),
       body = req.body || {};

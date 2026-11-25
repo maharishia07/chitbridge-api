@@ -150,7 +150,10 @@
   500
  ],
  "DELETE /api/signin/provider/links/:link_id": [
+  401,
+  403,
   404,
+  409,
   503
  ],
  "GET /.well-known/ctp.json": [
@@ -1449,6 +1452,8 @@
   404
  ],
  "GET /api/signin/provider/links": [
+  401,
+  403,
   503
  ],
  "GET /api/signin/sessions": [
@@ -2164,6 +2169,13 @@
   500
  ],
  "POST /api/books/events": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/events/batch": [
   400,
   401,
   403,
@@ -3794,15 +3806,25 @@
  "POST /api/signin/provider/handoff": [
   400,
   401,
-  403
+  403,
+  404,
+  409,
+  500,
+  503
  ],
  "POST /api/signin/provider/link/finish": [
   400,
-  403
+  401,
+  403,
+  409,
+  503
  ],
  "POST /api/signin/provider/link/start": [
   400,
-  401
+  401,
+  403,
+  404,
+  503
  ],
  "POST /api/signin/renew": [
   400,

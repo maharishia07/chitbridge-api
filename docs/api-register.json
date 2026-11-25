@@ -3,10 +3,10 @@
  "stage": "2b",
  "counts": {
   "routes": 700,
-  "no_does": 6,
+  "no_does": 1,
   "not_started": 0,
-  "partial": 60,
-  "meets": 640,
+  "partial": 0,
+  "meets": 700,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 700,
-    "failing": 2
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 215,
@@ -30,7 +30,7 @@
    },
    "trips_budgeted": {
     "applies": 700,
-    "failing": 2
+    "failing": 0
    }
   },
   "reported": {
@@ -73,7 +73,7 @@
   },
   "resource_cap_causes": {},
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 173
+  "output_allowlist_from_recordings": 175
  },
  "machine_columns": [
   "schema_in",
@@ -820,11 +820,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c4bb9db106b7e05b"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler hash moved by a verbatim split only (read1129chits 9d5e69c55, RAIL-1128 M2 / FIN-66): the Mark-paid clear is now clearPaymentMark + paymentMarkBlock, same uuid and copy gate, same UPDATE, same payment_cleared trail and outbox close in the one transaction, same 409 CHIT_VOIDED / 422 PAYMENT_TENDER_ON_BILL words (compared with lib/chits-parts paymentClearShutSaid), same 404; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -2951,9 +2950,9 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 217,
+   "line": 223,
    "hash": "15900ae8e4b2bb16",
-   "does": "",
+   "does": "A link id and the person's PIN or a fresh code (signed-in person) -> we disconnect that provider account unless it is the only way in or the business requires it -> a done answer, or a refusal in words.",
    "errors": {
     "count": 2,
     "statuses": [
@@ -2985,7 +2984,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -3043,13 +3042,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route, SEC-112 P1a/P1b (fix/sso-1129 0c34c443f, signin split, Athi 17 Nov: SEC-112 P0-P2 un-parked); handlers in routes/signin-provider-handoff.js and routes/signin-provider-connect.js read in full: own link only (a foreign, made-up or gone id is the same 404 LINK_NOT_FOUND), re-proof, never the last way in (409 LAST_WAY_IN), not an enforced provider for staff (403 LINK_ENFORCED); outstanding sign-in codes die with it; refusals 400/401/403/404/409/503 declared and tested by named scenes; 500 cannot be answered (guarded to 503).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -11944,11 +11943,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "492dfcae23444d22"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by crFinish CR-1 4e81f17fe: the owner's empty-shop 200 goes through publicResponseFor, the ONE public shape (visibility private), so it carries the same keys as every public answer; a stranger still gets the one 404; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -13223,11 +13221,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1b46542ddf31a0f7"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler hash moved by AE-F-19 withFreshWait (read1129chits): the books_wait of the bundle is read again against the live supplier list on the bundle itself instead of being reassigned; same read (supplier-list freshWait), same keys, same statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -17224,11 +17221,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6d910a4b03f439a8"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by fixLVspeed fcd40121b: the list reads the register with { readOnly: true } (no row lock for a read); same rows, same answer, same statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -17581,11 +17577,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c20e04c7506579bf"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by Y-F-05 17d034713: no_money from the books' own read gate (routes/books gates.mayReadMoney) so a seat the books refuse (cashier, viewer) gets the list without dues; same keys, money keys absent for that seat; same statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js",
     "cap-crm.js",
@@ -17710,11 +17705,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bad7a92fc1a3ae76"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash and shape moved by three lanes: Y-F-05 17d034713 (no_money), LV-17 (bills { n, last_at } counted over the whole history, the dearer of the chit bills and the ledger bills, new key in the closed shape), lens-sec 23b4c8830 (otp_contact, the login phone, is no longer sent; the web callers cap-crm-record and cap-crm-leads read it only as a fall-back after phone, so an absent key is safe); points via pointsOf verbatim; statuses unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-crm-groups-window.js",
@@ -17964,11 +17958,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bc936a72cf608b62"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by Y-F-05 17d034713: ledgerEntry gets noMoneyReader so a seat the books refuse sees no money in the timeline rows; same keys, same statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-record.js",
     "cap-crm.js"
@@ -20212,11 +20205,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "387414ee576f9b88"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by walk BB 27c568690 (BB-F-09): days must be a whole number from 1 to 365 or absent (30), else 400 INVALID_INPUT with the old {error, message} keys beside the Problem; it used to answer 200 with a silently changed window; 400 declared and tested; answer keys unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
@@ -26320,11 +26312,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bb33aff88751be4d"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler unchanged, output shape widened: the e-invoice block gains DocDtls { Typ, No, Dt } (closed by recordings, captured), the invoice document header the engine now carries (engines v1.109.0, walk V); same statuses and gate.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -27385,11 +27376,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "543ece033c3254f7"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 / reviews4 36552dd4c: placeInTree answers 403 for a member suspended out of the tree (membership.standsInTree), 404 for an unread account; statuses 403 and 404 declared, registered and tested; answer keys unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network-member.js"
    ],
@@ -27508,11 +27498,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b24f4e7bff0cd996"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 / reviews4 36552dd4c: placeInTree answers 403 for a member suspended out of the tree, 404 for an unread account; statuses declared, registered and tested; answer keys unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network-member.js",
     "network-app.js"
@@ -29097,11 +29086,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f70a2f7ee8427371"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by P-F-04 (till categories): carriedCategories reads the categories list else the legacy single category, the way the till reads them, so an item the till shows under Drinks is counted under it here; SQL only, same keys and statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-catalogue.js",
@@ -29702,11 +29690,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c8247b0ad26e05e5"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by read1129routes dd0f0bad4 (S12 split): the media guard (types, uuid shape, signedInAs, headers) is in lib/products-media-guard, mediaReach says public / private / hidden; the same rules: a private catalogue's picture is read only by that shop's own signed-in people, anything else is the one 404, only an allowed type is served under its own type; same statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "catalogue-lines.js"
@@ -30404,11 +30391,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "58b9c1e4f72c982e"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash and shape moved by lens-sec 23b4c8830: otp_contact (the login phone) is deleted from every row after partyFields.decorate used it for a minted party's phone; the web reads phone first; same statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -31849,7 +31835,7 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 189,
+   "line": 190,
    "hash": "d776c008e6d01246",
    "does": "The provider's answer and the start cookie -> we check the answer end to end, spend the start row, find any links and keep a 60-second handoff -> a redirect to the sign-in page with a one-time code (or a reason).",
    "errors": {
@@ -31934,11 +31920,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d776c008e6d01246"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the SSO connect step (fix/sso-1129 0c34c443f): a start row with intent link ends in finishLinkVisit (nothing written, a one-time #k= confirm code or a #c= word) instead of the sign-in hand-off; the sign-in path (#h=) is unchanged; still a 302 only and the same 404s.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -31960,7 +31945,7 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 125,
+   "line": 126,
    "hash": "1b12f10ad6a0df9a",
    "does": "A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.",
    "errors": {
@@ -32045,11 +32030,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "1b12f10ad6a0df9a"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the SSO connect step (fix/sso-1129 0c34c443f): an optional lt (the one-use token of the signed-in re-proof) turns the visit into a LINK for that one account (linkingOf: a spent, foreign or other-device lt is a finished sign-in refused as SSO_HANDOFF), query lt added to the declared query; still a 302 only, every refusal a 302 back with #e=<CODE>, 404 for an unknown or switched-off provider; no body keys to leak.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -32071,13 +32055,14 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 214,
-   "hash": "edb710ed006e381e",
-   "does": "",
+   "line": 217,
+   "hash": "131065bebe6c5300",
+   "does": "Nothing in (signed-in person) -> we read the provider accounts this person has connected and which providers can be connected here -> the links (never a subject or issuer), the providers and the re-proof the person can give.",
    "errors": {
     "count": 2,
     "statuses": [
      401,
+     403,
      500,
      503
     ],
@@ -32101,14 +32086,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": false,
@@ -32120,6 +32105,7 @@
    },
    "declared": [
     401,
+    403,
     500,
     503
    ],
@@ -32155,17 +32141,17 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route, SEC-112 P1a/P1b (fix/sso-1129 0c34c443f, signin split, Athi 17 Nov: SEC-112 P0-P2 un-parked); handlers in routes/signin-provider-handoff.js and routes/signin-provider-connect.js read in full: a signed-in PERSON (a key is refused 403 KEY_CANNOT_SIGN_IN) reads their own connected provider accounts and the providers that can be connected here; never a subject or issuer; 401, 403, 503 declared and tested (a fault is the one 503 SIGNIN_UNAVAILABLE, so a 500 cannot be answered: cannot_answer entry), answer shape closed, trips line hand-counted (live measure pending, cb-speed).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 10,
     "wire": null,
     "screens": []
    },
@@ -32183,7 +32169,7 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 86,
+   "line": 87,
    "hash": "da3261f9647dfced",
    "does": "Nothing in -> we list the outside sign-in providers switched on here (an empty list when none is, or the tables are not ready) -> the providers and whether they are test ones.",
    "errors": {
@@ -32261,11 +32247,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "da3261f9647dfced"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler unchanged, output shape widened: each provider carries live (true when the connect step exists here, critic H2 0c34c443f) beside key and label; the list still answers 200 empty on any fault; same statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -32845,11 +32830,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "07bdf1285c8fc09b"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler unchanged, output shape widened: the e-invoice block gains DocDtls { Typ, No, Dt } (closed by recordings, captured), the invoice document header the engine now carries (engines v1.109.0, walk V); same statuses and gate.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js"
    ],
@@ -35537,11 +35521,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8ed32910605f3933"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by fixLVcounter 9cc3c918e (LV-11): the holder shape names a key's counter `counter` (it never had `id`), so the own-counter fence reads the right field; the own-counter fence now runs; same keys and statuses (403 LEASE_NOT_YOUR_COUNTER already declared).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -36722,11 +36705,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "105f7e770bec40b9"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler hash unchanged in meaning, shape widened: AM-F-03 (1c043b152, walk AM) a filed day summary claiming more than its bills is read from the bills and the gap is told in summary_says_more (only present when there is one), AJ-F-08 inFiling counts a bill once; the new key is in the closed output shape and the contract; same statuses; the figure itself comes from lib/rollup (no second calculation).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-mis-trend.js",
     "till.html"
@@ -39199,11 +39181,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e2ef9ca34095919c"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler unchanged, chain/operation widened: the flags schema gains negative_stock (OPS-121 / AZ-F-01 8e6e2ff43, the shop's oversell switch: allow and flag by default, or block), one more value in the closed flags object; same statuses and gate.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-catsetup.js",
@@ -41019,11 +41000,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "bc980a7febee3a85"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the AK seat rule (1d9e1f97b seats 1129): the Bookkeeper or Accountant label sets the manager hat in a shop only (hatForNewActor; a practice or an unknown keeps the hat sent); the meter call joined on one line; same statuses and answer keys; the owner-only door is unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-employees.js",
@@ -41620,11 +41600,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4511f69e19eebcab"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews4 GF-catalogue-01 M14 (03aa6b9eb) and readRed2 (7775a973c): a blank price is NO price (null), never 0, an unreadable price refuses that line in the answer's refused[] with its words; adoptPrice and typedRefusal are the named steps; same statuses; refused[] was already an answer key.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-adopt.js"
    ],
@@ -42364,11 +42343,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "66478c5b452034ec"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 ce52591f1: a VIEWER seat attaches nothing (viewerGate hands on to access.writeGate: the rail's read_only 403, the owner passes); 403 was already declared and tested; chain, operation and answer unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "attach-ui.js"
@@ -43902,7 +43880,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 218,
-   "hash": "cdca9f55eb651c2a",
+   "hash": "fde73a3fe0a04895",
    "does": "A start date in -> we post every bill from that day through the one posting path, once, and say how many were posted, wait, or sit in the opening balances -> the counts and the words (owner only, safe to press again).",
    "errors": {
     "count": 2,
@@ -43936,7 +43914,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -43961,6 +43939,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -43990,13 +43969,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route of lateBooks 1129 (P-F-02 / S2-F-07): owner-only press of the start day that posts the bills from then through the one posting path (lib/books-backfill run), safe to press again; its output shape was not closed (no recorded success): scene backfill-run added to api-problem-books, shape closed from the recordings (api-allowlist --from-recordings, closed_by recordings), evidence output_allowlist true; statuses 401/403/404/422/500 declared and tested; hand-counted trips line.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -44284,7 +44263,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1309,
-   "hash": "14cbabdab24947ae",
+   "hash": "b781a7e70f389295",
    "does": "A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).",
    "errors": {
     "count": 3,
@@ -44325,7 +44304,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -44387,11 +44366,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "14cbabdab24947ae"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved with sign1129a's read of this route (WALK U U-F-01/02/03 bank-write seat, AM-F-04 STATEMENT_ALREADY_SIGNED 409, CURRENCY_MISMATCH 409, BOOKS_FIGURE_DIFFERS 409, 202 waiting when the period is held by a lock): status_codes was red because the 503 BOOKS_NOT_MIGRATED sits in the STATEMENT_FAULT_STATUS table, which the register cannot read: declaresStatuses([503]) added to the chain (a pass-through that refuses nothing); owner cb-finance for the figure rules, untouched.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-store.js"
    ],
@@ -45777,7 +45755,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-events-batch.js",
    "line": 25,
-   "hash": "81ed0ae303132c52",
+   "hash": "7ce19bafcdf6aadc",
    "does": "A list of up to 100 events in -> we post each one through the one event writer -> one result per line (owner or accountant).",
    "errors": {
     "count": 1,
@@ -45807,10 +45785,10 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
@@ -45835,6 +45813,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -45864,13 +45843,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route of the bank Add speed lane (a7e7a64ac): up to 100 lines through the ONE event writer (lib/books-manual post), a refused line named by index, a held shop is 409 BOOKS_BATCH_HELD with nothing posted; the route file was not mounted in the area test so no worlds ran: mounted in api-problem-books (401/403/404/500 now tested, 422 from the contract run), scenes events-batch-posted and events-batch-partial record the success answer, shape closed from recordings, evidence output_allowlist true; the 400 and 409 it answers by the receipt are proved by tests/books-events-batch.test.cjs.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -53559,11 +53538,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3b6016a7ba31f496"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews1 rail F1 80a6527d5: chit_wide is read by the ONE boolean reader isTrue (true, 1, \"true\", \"1\"), the way is_draft, is_dispute and priority are; no new status or key, chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-crm-record.js",
@@ -53700,11 +53678,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5db5a8258aa04870"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by two reads of the rail lane: isTrue(is_dispute) (reviews1 rail F1 80a6527d5) and the F5b/B3 helpers named (read1129chits 9d5e69c55: disputeSenderName, scopedMessageId, firstMessageAnswer, same replay answer with duplicate:true, same entity-name rule for a dispute from an actor); same statuses and keys, chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "rail-thread.js"
    ],
@@ -53826,11 +53803,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f0b9046d97b3e73f"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews6 EL-01 M1 (money crosses the Mark-paid door in minor units: 400 AMOUNT_IN_MINOR for a decimal or two amounts; amount_minor kept whole in pressPayment; amount derived from it in the copy currency) and the named steps of read1129chits 9d5e69c55 (amountInMinorRefusal, paidRefusal, afterPaid, copyTakesNoPayment, same 409 CHIT_VOIDED and 422 PAYMENT_TENDER_ON_BILL); amount_minor is declared in the body schema and 400 AMOUNT_IN_MINOR is registered; the Idempotency-Key door and replay are unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -56447,11 +56423,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c1cf2e929ae52f05"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler hash moved by two extractions of the send catch (answerLostRace: the client_ref race answer verbatim; billNumberRaceProblem: AB-F-06 b907 unique bill-number index answers the same 409 BILL_NUMBER_TAKEN as the check, naming the holder, 327f26a9f); the chain/operation moved with the 1129 send refusals the walk lanes decided and registered (AB-F-06 BILL_NUMBER_TAKEN, AP-F-08 TAX_RATE_NOT_IN_PACK 6681e4774, AJ-F-02/AP-F-07 MONEY_CURRENCY_MISMATCH, AW-F-03 malformed day summary 88e7cadf4, AR-F-02 credit reason, P-F-01 TENDER_SUM_MISMATCH abae76959, AT-F-11 the subject is capped at 500 characters in the body schema like manual_subject); codes are in docs/error-codes.json with their sentences, statuses declared and tested; the replay (duplicate:true) and the idempotent door are unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-readiness.js",
@@ -58175,11 +58150,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "789748e9b7d7a764"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by fixLVcounter 9cc3c918e (lensVerify3): if the bind of the minted key to the counter fails, abandonMinted closes the key and frees the pending hold before the error is rethrown, never a live key on no counter; the success answer is unchanged; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js",
@@ -63005,11 +62979,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ea356855e1659347"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the signer (identity id, display name, owner flag) being handed to forms.signForm (platform review fixes 1129 265ef1b79: the signForm race); same statuses and answer keys; write gate unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "authority-forms.html"
    ],
@@ -63364,11 +63337,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6fa8504de14802cb"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by walk AR 09acd8917 / 6dd53b65e (AR-F-06, narrowed to the clearance door): an unknown standard is refused in words (STANDARD_UNKNOWN, nothing recorded), no evidence is recorded as pending and never counted as met, the message says so; the frozen legacy bodies of every other refusal stay; the verification stamp is still never accepted from the client.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-readiness.js",
     "core.js"
@@ -63980,11 +63952,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "beb8b155a6d4c9d6"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by LV-07/LV-08 446eac621 (SEC-92): the readiness of a shop is shown only to that shop or to one that lists it as a party, as the GET above; every other handle answers the one 404 NOT_FOUND; same statuses and keys.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html"
    ],
@@ -65218,11 +65189,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a3af70f71658931f"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews1 P2 9c690119d: the invoice discount rounds in the invoice's own currency decimals through the one rounder (lib/money round, JPY 0, KWD 3) instead of S.R2; same keys and statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -66078,11 +66048,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "603b264b32acafc5"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 23b4c8830 and reviews4 M17 (36552dd4c): a build is the business owner's (isOwner: a key is refused too, 403 in words) and a design over 500 nodes is 413 in words (MAX_NODES, one named cap); the dry-run answer is the same literal on one line; 413 declared, registered and tested.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js",
     "screens.js"
@@ -66203,11 +66172,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2ac694557c8e4da1"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews4 M17 (36552dd4c): re-issue is the business owner's through lib/owner isOwner (a key is refused too), same 403 words; same answer keys.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js"
    ],
@@ -66324,11 +66292,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "58fd1d2c38df707f"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 23b4c8830: draftRefusal (the 400 / 413 checks of the draft, now with the 500-node cap) extracted verbatim, the root-handle lines joined; 413 declared, registered and tested.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "network-app.js"
    ],
@@ -69122,11 +69089,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "67e4634fc9c82808"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by read1129routes dd0f0bad4 (S12 split): the media guard constants and helpers moved to lib/products-media-guard verbatim; same upload limits, types and statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
@@ -69871,11 +69837,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3b62fdacd29b5f67"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash and contract moved by walk S2 d1a458314 (S2-F-02, S2-F-04) and read1129routes dd0f0bad4: skip_bad_rows (optional body key, in the closed body schema) takes the good rows and returns rejects and rejects_csv (new answer keys, in the shape), the default tax rate of the country is given to an item without one (lib/default-tax-rate), a 0% item with no reason is flagged on its line; without skip_bad_rows the whole file is refused as before (409); importPlan is the old checks moved verbatim.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-catalogue.js",
     "catalogue-lines.js",
@@ -70965,11 +70930,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "185964d5d98cd842"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by a verbatim split only (readRed2 4408df184 and the AE-F-19 helpers): sellerOfBillAnswer and localSupplierAnswer build the same two answer objects the handler built inline (same keys: message, supplier{...}, books, restored); same 404 noBusiness; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-bank-post.js",
@@ -73491,9 +73455,9 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 211,
-   "hash": "c7ea3889f30ffef4",
-   "does": "",
+   "line": 213,
+   "hash": "6d61ccc693e5c6fc",
+   "does": "A one-time code from the provider hand-off and this device's id -> we spend the code, find the one account connected to that provider identity and start its session -> the same answer as the code sign-in, or a refusal in words.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -73502,7 +73466,6 @@
      403,
      404,
      409,
-     429,
      500,
      503
     ],
@@ -73523,14 +73486,14 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
-    "trips_budgeted": false
+    "trips_budgeted": true
    },
    "applies": {
     "strict_input": true,
@@ -73546,7 +73509,6 @@
     403,
     404,
     409,
-    429,
     500,
     503
    ],
@@ -73580,17 +73542,17 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route, SEC-112 P1a/P1b (fix/sso-1129 0c34c443f, signin split, Athi 17 Nov: SEC-112 P0-P2 un-parked); handlers in routes/signin-provider-handoff.js and routes/signin-provider-connect.js read in full: the 60-second single-use #h= code is spent in the first read, the device must be the one that started, one connected account is signed in through the ONE session writer (identity-auth issueToken) and answered as POST /verify answers, nobody is created and no e-mail finds an account; refusals 400/401/403/404/409/503 come from the door table and are declared by declaresStatuses, 429 is the limiter's and published only, 500 is the session writer's unnamed fault; every refusal is tested by a named scene (api-problem-signin-provider 355 checks 0 failed on sit-grund 2026-11-25), codes registered, body schema closed, trips line hand-counted (live measure pending, cb-speed).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
-    "trips": 50,
+    "trips": 20,
     "wire": null,
     "screens": []
    },
@@ -73608,9 +73570,9 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 216,
+   "line": 221,
    "hash": "54755884cf9648a6",
-   "does": "",
+   "does": "The one-time code from the connect step (signed-in person) -> we check it is this person's own session and device and write the link -> a done answer, or a refusal in words.",
    "errors": {
     "count": 2,
     "statuses": [
@@ -73641,7 +73603,7 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
+    "error_tests": true,
     "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
@@ -73698,13 +73660,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route, SEC-112 P1a/P1b (fix/sso-1129 0c34c443f, signin split, Athi 17 Nov: SEC-112 P0-P2 un-parked); handlers in routes/signin-provider-handoff.js and routes/signin-provider-connect.js read in full: only this writes the link: the confirm code must belong to the same account, session and device as the start, else the one blind 403 LINK_CONFIRM_FAILED; a clash is 409 LINK_EXISTS; refusals 400/401/403/409/503 declared and tested by named scenes; 500 cannot be answered (guarded to 503); body schema closed.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -73726,9 +73688,9 @@
    "owner_area": "signin-provider",
    "owner_agent": "cb-security",
    "file": "routes/signin-provider.js",
-   "line": 215,
+   "line": 219,
    "hash": "cb72b45a3fb0e743",
-   "does": "",
+   "does": "A provider and the person's PIN or a fresh code (signed-in person) -> we re-check the person and make a one-use address that starts connecting that provider to this account -> the address, or a refusal in words.",
    "errors": {
     "count": 2,
     "statuses": [
@@ -73759,8 +73721,8 @@
     "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
-    "error_tests": false,
-    "status_codes": false,
+    "error_tests": true,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -73816,13 +73778,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: NEW route, SEC-112 P1a/P1b (fix/sso-1129 0c34c443f, signin split, Athi 17 Nov: SEC-112 P0-P2 un-parked); handlers in routes/signin-provider-handoff.js and routes/signin-provider-connect.js read in full: re-proof with the person's own PIN or a fresh code every time, then a one-use address (this device, this session, one minute) that starts connecting a provider to THIS account; refusals 400/401/403/404/503 declared (404 PROVIDER_OFF via declaresStatuses) and tested by named scenes; 500 cannot be answered (guarded to 503); body schema closed.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -76904,11 +76866,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e068c6a0b6558c0d"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the readability pass (75348b0b6) only: declarations joined (entity_id and keyId or input in one const), same statements, same order, same answers and statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -77389,11 +77350,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7f3689362e7c81e7"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by fixLVcounter 9cc3c918e (LV-11): the lease asks for the key's own counter (req.till.counter, the holder shape) so the 403 LEASE_NOT_YOUR_COUNTER fence really runs; same keys and statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -77512,11 +77472,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2298fc9d88d7d7a9"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by fixLVcounter 9cc3c918e: closeLease is fenced to its holder or the owner (by: { owner, till_id }); the refusal is the existing LEASE_NOT_YOUR_COUNTER 403; same success keys; read with the destructuring merge of the readability pass.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -77872,11 +77831,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c26ecf7c12cbf069"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by read1129routes 4dba6a1ec: the screen-key pairing refusal is the named pairRefusal (S9: a stranger or a non-counter key signs in first, only the owner or a manager pairs a screen; the counter key keeps its own narrow right); same 403 words and codes TILL_SIGN_IN_FIRST / OWNER_ONLY; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "till.html"
@@ -79704,11 +79662,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "19e892df06056a1f"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the readability pass (75348b0b6) only: declarations joined (entity_id and keyId or input in one const), same statements, same order, same answers and statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -79828,11 +79785,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "9242148e07fe2c3c"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the readability pass (75348b0b6) only: declarations joined (entity_id and keyId or input in one const), same statements, same order, same answers and statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -79950,11 +79906,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3ea5be212fa949c2"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by the readability pass (75348b0b6) only: declarations joined (entity_id and keyId or input in one const), same statements, same order, same answers and statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -81169,11 +81124,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a9d76f6aebf8c92"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by LV-12/LV-13 9869c721b: the route is the owner's or a platform operator's (ownerOrPlatform, 403 in words) and setRegionOverride is told whether it is the platform acting; 403 declared and tested; answer unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -81663,11 +81617,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a4fe9a39ad56e94"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews1 rail F1 80a6527d5 only: priority is read by the one boolean reader isTrue; same 200, same statuses and keys; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -81907,11 +81860,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "23e5cabc8b8d5f3f"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by reviews6 EL-04 M11 (d9e4468ee): an accept at the count may carry counted_minor, and a count that moved is a 409 COUNT_MOVED in words with the new figure, nothing accepted; noteOf extracted verbatim; counted_minor is in the body schema and COUNT_MOVED is registered, declared and tested; the one status writer (lib/chit-move) is untouched.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts-shell.js",
     "app.html",
@@ -82253,11 +82205,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "18688c69fabefdbe"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by read1129chits 9d5e69c55: voidRefusal and withdrawOwnCopies named steps (the 404 for no copy, the 403 for a non-sender, the one transaction where every copy asks the rail gate and nothing is written if any refuses); same answers and statuses; chain and operation unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "core.js"
@@ -82378,11 +82329,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ffb1d7c4987b667d"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 23b4c8830 (network-01 F5): only the business itself answers a connection request, never a staff seat under it (respondRefusal: 403 OWNER_ONLY, or the respondOwnerOnly words for parent_entity_id); the operation declares and the tests cover the 403; answer unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "core.js"
    ],
@@ -83615,11 +83565,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e6044e51df277e2d"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 ce52591f1 / 23b4c8830: a built / invited receipt is the SERVER's (run.receiptsOnly drops one a client sends, so a forged bridge id never reaches plan()) and a draft over 500 nodes is 413; 413 declared, registered and tested; answer keys unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-network.js",
     "core.js"
