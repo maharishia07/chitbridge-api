@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 699,
+  "partial": 2,
+  "meets": 698,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -13121,7 +13121,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3952,
-   "hash": "393d1e8d76cb0d01",
+   "hash": "2818d0b2dffa97d7",
    "does": "A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.",
    "errors": {
     "count": 0,
@@ -13223,7 +13223,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "393d1e8d76cb0d01"
+    "stale_since": "2818d0b2dffa97d7"
    },
    "status": "partial",
    "callers": [
@@ -34974,7 +34974,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3795,
-   "hash": "a8c0186a848ea76a",
+   "hash": "0905362493dba680",
    "does": "Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.",
    "errors": {
     "count": 0,
@@ -35058,10 +35058,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1254 stage2: handler re-read and 13 columns checked after the hash moved; CTR-225: ?page= read (absent = page 1, legacy keys kept), total is now the whole window (was the page rows), count unchanged; page passes the route validator (checked live); FIELDS rows added",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "0905362493dba680"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "till.html"
    ],
@@ -35315,7 +35316,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4171,
+   "line": 4175,
    "hash": "6188ec56258d1181",
    "does": "An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.",
    "errors": {
@@ -35551,7 +35552,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4002,
+   "line": 4006,
    "hash": "4cc02b7049e1cf09",
    "does": "Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.",
    "errors": {
@@ -36737,7 +36738,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3971,
+   "line": 3975,
    "hash": "750f4ada473ad2b1",
    "does": "Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.",
    "errors": {
@@ -76534,7 +76535,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4042,
+   "line": 4046,
    "hash": "8e1f08ad996388b1",
    "does": "A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.",
    "errors": {
@@ -77502,7 +77503,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4104,
+   "line": 4108,
    "hash": "8a112e94e9427f75",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {
