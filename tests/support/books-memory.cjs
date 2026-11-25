@@ -92,6 +92,16 @@ function create() {
       });
       return Array.from(out.values());
     },
+    async statedExportLines(db, e, from, to, taxRoles, salesRole) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      const stated = (h) => T.chits.some((c) => c.entity_id === e && c.chit_id === h.source_chit_id && c.business_json && c.business_json.invoice && c.business_json.invoice._cb && c.business_json.invoice._cb.export === 'stated');
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening && stated(x)).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (ls.some((l) => (taxRoles || []).indexOf(acct(l).role) >= 0)) return;
+        ls.filter((l) => acct(l).role === salesRole).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor); r.cr_minor += Number(l.cr_minor); out.set(acct(l).code, r); });
+      });
+      return Array.from(out.values());
+    },
     async taxedOnlyLines(db, e, from, to, taxRole, roles) {
       const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
       T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
