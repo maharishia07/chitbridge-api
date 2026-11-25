@@ -69,7 +69,7 @@ function create() {
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
     async giveBackNo(db, e, series, fy, n) { const k = e + '|' + series + '|' + (fy || '-'); if (T.counters.get(k) === n + 1) T.counters.set(k, n); },
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
-    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':') || x.source_ref === 'walkin-late:' + chit_id || (Array.isArray(x.source_chit_ids) && x.source_chit_ids.map(String).indexOf(String(chit_id)) >= 0))); },
+    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':') || x.source_ref === 'walkin-late:' + chit_id || x.source_ref === 'bill:' + chit_id || (Array.isArray(x.source_chit_ids) && x.source_chit_ids.map(String).indexOf(String(chit_id)) >= 0))); },
     async entriesBySourceBase(db, e, base) {
       return T.entries.filter((x) => x.entity_id === e && (x.source_ref === base || String(x.source_ref || '').indexOf(base + ':r') === 0))
         .map((x) => Object.assign(clone(x), { reversed: T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id) }));
