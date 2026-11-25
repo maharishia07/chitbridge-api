@@ -16,7 +16,7 @@ const of = (at, any, rows, ch) => LOG.tbBankOf(at, any || at, AS, rows || tb(202
 
 /** a stand-in for the SQL (its own WHERE and ORDER BY words) */
 function runLatest(sql, params, all) {
-  assert.ok(/ORDER BY account_id, period_to DESC, seq DESC/.test(sql));
+  assert.ok(/ORDER BY c.account_id, c.period_to DESC, c.seq DESC/.test(sql));
   const asOf = /period_to <= \$2::date/.test(sql) ? params[1] : null;
   const seen = new Map();
   all.filter((r) => !asOf || r.period_to <= asOf).sort((x, y) => (x.account_id < y.account_id ? -1 : x.period_to < y.period_to ? 1 : x.period_to > y.period_to ? -1 : y.seq - x.seq)).forEach((r) => { if (!seen.has(r.account_id)) seen.set(r.account_id, r); });
