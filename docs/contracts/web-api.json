@@ -862,7 +862,10 @@
     "gst.earlier",
     "gst.earlier.before",
     "gst.earlier.counted",
-    "gst.earlier.payable_minor"
+    "gst.earlier.other_minor",
+    "gst.earlier.overdue_minor",
+    "gst.earlier.payable_minor",
+    "gst.earlier.returns"
    ]
   },
   "GET /api/books/cheques": {
