@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 6,
   "not_started": 0,
-  "partial": 89,
-  "meets": 611,
+  "partial": 87,
+  "meets": 613,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -27339,7 +27339,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -27463,7 +27463,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -66291,7 +66291,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -69836,7 +69836,7 @@
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
-    "status_codes": false,
+    "status_codes": true,
     "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
@@ -74423,11 +74423,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "f3dde70bdda416b1"
+    "signed_off_by_date": "cb-api 2026-11-25 PR#1395 batch 1129 re-sign, diff origin/main...HEAD read per route (handler tokens, chain, operation), 13 machine columns true, stage2: the hash moved by one rename only, simLeadSecret to simSecretOf, same body, same fail-closed throw, no status, key, chain or schema change; lib/dev-otp.js moved a local variable name only.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -77050,11 +77049,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "23e3d51c1d0f82bc"
+    "signed_off_by_date": "cb-api 2026-11-25 PR#1395 batch 1129 re-sign, diff origin/main...HEAD read per route (handler tokens, chain, operation), 13 machine columns true, stage2: the hash moved by one declaration merge only (const entity_id and const keyId became one statement); every call, status and key the same; lib/api-keys.js and lib/till-contract.js not in the batch diff.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],

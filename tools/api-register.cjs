@@ -161,7 +161,8 @@ function otherRouteTexts(file) {
  * helpersCalledBy(source, fileText) — the text of the same-file helpers a handler answers through (unknownProvider(req, res), refuseVisit(req, res, code)): a helper that holds the problem( call
  * is part of how the route answers, so its errors count for the route (error_shape, codes_registered, the card's codes; never the statuses or the hash). One declaration per name (function name(...) or const name = ...), followed two levels deep, never the handler itself.
  */
-function helpersCalledBy(source, fileText) {
+function helpersCalledBy(source, fileText, keeps) {
+  const keep = keeps || ((body) => /\bproblem\(/.test(body) && !rawErrorWrites(body)); /* by default only a helper that answers with problem( and writes no raw status */
   const seen = new Set();
   const found = [];
   const declared = (name) => new RegExp('^(?:async\\s+)?function\\s+' + name + '\\s*\\(|^const\\s+' + name + '\\s*=', 'm').exec(fileText);
@@ -176,7 +177,7 @@ function helpersCalledBy(source, fileText) {
       if (!at || /\b(?:router|app)\.(?:get|post|put|patch|delete|use)\(/.test(bodyAt(at.index))) return;
       seen.add(name);
       const body = bodyAt(at.index);
-      if (/\bproblem\(/.test(body) && !rawErrorWrites(body)) found.push(body); /* only a helper that answers with problem( and writes no raw status */
+      if (keep(body)) found.push(body);
       if (depth > 1) follow(body, depth - 1);
     });
   };
@@ -199,14 +200,14 @@ function impliedStatuses(leaf, hasValidation, usesAuth) {
   return { implied, takesInput: BODY_METHODS.includes(leaf.method) || hasValidation };
 }
 
-/** the status_codes column: declared statuses against the res.status() literals in the handler */
-function statusColumn(declared, used, leaf, stackFacts) {
+/** the status_codes column: declared statuses against the res.status() literals in the handler. `viaHelpers` are the statuses the same-file helpers the handler calls write (a split step answers `{ status: 409, ...words.x() }`): they can justify a declared status, never require one */
+function statusColumn(declared, used, leaf, stackFacts, viaHelpers) {
   const { implied, takesInput } = impliedStatuses(leaf, stackFacts.hasValidation, stackFacts.usesAuth);
   const allowedExtra = (stackFacts.hasGate ? [401, 403] : []).concat(stackFacts.gateStatuses);
   if (!declared.length) return false;
   const covers = used.concat(implied).every((status) => declared.includes(status));
   const inputAnswered = !takesInput || declared.includes(400) || declared.includes(422);
-  const noInvention = declared.every((status) => used.concat(implied, allowedExtra).includes(status) || (takesInput && (status === 400 || status === 422)));
+  const noInvention = declared.every((status) => used.concat(implied, allowedExtra, viaHelpers || []).includes(status) || (takesInput && (status === 400 || status === 422)));
   return covers && inputAnswered && noInvention;
 }
 
@@ -441,7 +442,7 @@ function knownKeysTyped(operation) {
 }
 
 /** the thirteen machine columns of one route, each true or false */
-function machineColumns({ source, helperText, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
+function machineColumns({ source, helperText, helperStatusText, declared, facts, legacyEntry, leaf, tested, registered, operation, result, scope, evidence, budget }) {
   const key = leaf.method + ' ' + leaf.path;
   const answered = source + '\n' + (helperText || ''); /* the handler and the same-file helpers that answer with problem( */
   const codes = codesWritten(answered);
@@ -455,7 +456,7 @@ function machineColumns({ source, helperText, declared, facts, legacyEntry, leaf
     error_shape: usesProblem && !rawErrorWrites(source) && legacyOk,
     codes_registered: (codes.length > 0 || usesProblem) && codes.every((code) => registered.has(code)),
     error_tests: declared.length > 0 && declared.every((status) => tested.includes(status) || !!(scope.cannotAnswer && scope.cannotAnswer[key] && scope.cannotAnswer[key].has(status))),
-    status_codes: statusColumn(declared, statusesWritten(source), leaf, facts),
+    status_codes: statusColumn(declared, statusesWritten(source), leaf, facts, statusesWritten(helperStatusText || '')),
     strict_input: strictOrTolerant(scope, key, operation, leaf, facts, evidence),
     output_allowlist: outputAllowlistColumn(operation, evidence),
     foreign_id_404: foreignIdColumn(leaf, evidence, idExempt(scope, key)),
@@ -477,13 +478,14 @@ function rowOf(leaf, context) {
   const handlerText = ownHandlers.map((fn) => fn.toString()).join('\n');
   const source = handlerText;
   const helperText = helpersCalledBy(handlerText, fileText);
+  const helperStatusText = helpersCalledBy(handlerText, fileText, (body) => statusesWritten(body).length > 0); /* the split steps that carry the refusal statuses */
   const operation = context.operations[key];
   /* a status the document only DOCUMENTS (x-documented-statuses: a limiter's 429, not written by the handler) is not one the route must write or test */
   const documentedOnly = (operation && operation['x-documented-statuses']) || [];
   const declared = Object.keys((operation && operation.responses) || {}).map(Number).filter((status) => status >= 400 && !documentedOnly.includes(status));
   const facts = stackFactsOf(leaf, context.shared);
   const legacyEntry = context.legacy[key];
-  const columns = machineColumns({ source, helperText, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
+  const columns = machineColumns({ source, helperText, helperStatusText, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(withoutSeats(operation));
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);

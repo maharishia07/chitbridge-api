@@ -118,5 +118,10 @@ t('machine_keyed: a test file that carries the cases but not this route FAILS', 
 t('machine_keyed: no key order, a one-character reason, or a route the register lacks are each refused', keyedHere({ key_order: [] }).length === 1 && keyedHere({ reason: 'x' }).length === 1 && register.machineKeyedProblems([keyedEntry()], new Map()).length === 1);
 t('machine_keyed: only a sound entry reaches the register column (machineKeyedOf)', register.machineKeyedOf([keyedEntry({ route: realKeyedRoute })]).has(realKeyedRoute) && register.machineKeyedOf([keyedEntry({ route: realKeyedRoute, test: 'tests/no-such-file.test.cjs' })]).size === 0 && register.machineKeyedOf(undefined).size === 0);
 t('machine_keyed: the committed scope file lists the ERP door and the register passes it', register.machineKeyedOf(require(path.join(API, 'docs', 'contracts', 'api-hardening-scope.json')).machine_keyed).has(realKeyedRoute));
+/* status_codes: a split step that answers { status: 409, ...words.x() } counts for the route that calls it (it can justify a declared status, never require one) */
+const splitFile = 'async function step(req) {\n  return { refusal: { status: 409, ...words.fileProblems() } };\n}\nasync function other() {\n  return { status: 418 };\n}\nrouter.post("/x", async (req, res) => { const plan = await step(req); });\n';
+const viaHelpers = register.helpersCalledBy('async (req, res) => { const plan = await step(req); }', splitFile, (body) => /status:\s*\d{3}/.test(body));
+t('status_codes: a same-file split step that writes a status is found by the handler that calls it, and one it never calls is not', /status: 409/.test(viaHelpers) && !/418/.test(viaHelpers));
+t('status_codes: the default helper reader still wants problem( (a split step with a bare status is not an error-shape helper)', register.helpersCalledBy('async (req, res) => { await step(req); }', splitFile) === '');
 console.log('\n  ' + (pass + fail) + ' checks, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
