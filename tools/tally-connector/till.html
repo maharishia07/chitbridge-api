@@ -29418,6 +29418,43 @@ async function billFromAddress(){
   if (MODE !== 'sell') setMode('sell');
   await tasksBill(id);
 }
+/**
+ * RW1-27 (re-walk 1): the counter is opened AT a bill's return — /till.html?return=<chit_id> — from the chit sheet's "Credit note" and the Day book's sale entry. ONE return flow: this only finds the bill
+ * and calls retOpen(), which holds the sheet, the lines, the cap and the posting (retIssue → HOST.creditNote); nothing here prices or posts. The bill is read off this device, else off the
+ * server's own history of the last RET_DAYS days (the owner's browser need not be the counter that rang it) and kept as a SENT, VERIFIED row exactly as dayReread keeps a day's. Who may: the ones
+ * retOpen/retIssue already ask (a stopped counter, a closed day, a refund by another tender = rateMay); the server's cap and tender checks decide again and say why.
+ */
+function returnAskedId(){
+  var found = /[?&]return=([A-Za-z0-9_-]{8,64})(?:&|$)/.exec(location.search);
+  return found ? found[1] : '';
+}
+async function returnFindBill(id){
+  var rows = []; try { rows = await retBills(); } catch (e) { cbQuiet('returnFindBill:1', e); }
+  var byId = function(b){ return b && b.kind !== 'credit_note' && ((b._sent && String(b._sent.chit_id) === id) || String(b.chit_id) === id); };
+  var held = rows.filter(byId)[0];
+  if (held) return { bill: held };
+  var h = null; try { h = await HOST.history(RET_DAYS); } catch (e) { cbQuiet('returnFindBill:2', e); }
+  if (!h || h.offline || !Array.isArray(h.bills)) return { why: 'The line is down, so this bill cannot be read from the shop. Try again when it is back.' };
+  var got = h.bills.filter(byId)[0];
+  if (!got || !got.no) return { why: 'That bill is not among the shop’s counter bills of the last ' + RET_DAYS + ' days, so it cannot be returned here.' };
+  var same = rows.filter(function(b){ return String(b.no) === String(got.no) && b.kind !== 'credit_note'; })[0];
+  if (same) return { bill: same };
+  var row = Object.assign({}, got, { customer: serverBillCustomer(got), _sent: { chit_id: got.chit_id }, _verified: Date.now(), _from_server: true });
+  try { await DB.put('bills', row); TODAY_BILLS = null; } catch (e) { cbQuiet('returnFindBill:3', e); return { why: 'This device could not keep the bill to return it.' }; }
+  return { bill: row };
+}
+async function returnFromAddress(){
+  var id = returnAskedId(); if (!id) return;
+  try { history.replaceState(null, '', location.pathname + location.search.replace(/([?&])return=[^&]*&?/, '$1').replace(/[?&]$/, '') + location.hash); } catch (e) { cbQuiet('returnFromAddress:1', e); }
+  if (MODE !== 'sell') setMode('sell');
+  if (!retCanIssue()) { toastLine(RET_WHYNOT); return; }
+  var found = await returnFindBill(id);
+  if (!found.bill) { toastLine(found.why); return; }
+  RET_PRIOR = await retPriorFor(found.bill.no);
+  var left = (found.bill.lines || []).reduce(function(sum, l, n){ return sum + retLeft(found.bill, n); }, 0);
+  if (!(left > 0)) { toastLine('Everything on bill ' + found.bill.no + ' has already come back on a credit note.'); return; }
+  await retOpen(found.bill.no);
+}
 /** a row → that order, in place: Despatch with it chosen (the same list loadTasks reads) */
 async function onlineOrderPick(id){
   try { document.getElementById('onlinedlg').close(); } catch (e) { cbQuiet('onlineOrderPick:1', e); }
@@ -29871,7 +29908,8 @@ try { paintSide(); } catch (e) { cbQuiet('top:20', e); }
 /* the watchdog rides the repaint that already runs - a second timer would be a second path ([TILL-144]) */
 setInterval(function(){ if (!HOST) return; HOST.state().then(function(st){ STATE = st || STATE; if (st && st.snapshot) S = catRestamp(st.snapshot); paintStatus(); watchTick(); keyWatch(); }).catch(function(e){ cbQuiet('top:21', e); }); }, 15000);
 setInterval(function(){ if (HOST && HOST.drain) HOST.drain(); }, 20000);
-TILL_BOOT.then(billFromAddress).catch(function(e){ cbQuiet('top:23', e); });   /* F-43: opened by Bill it on the Tasks & Orders page */
+TILL_BOOT.then(billFromAddress).catch(function(e){ cbQuiet('top:23', e); });
+TILL_BOOT.then(returnFromAddress).catch(function(e){ cbQuiet('top:23b', e); });   /* RW1-27: opened by Credit note on the chit sheet / the Day book */   /* F-43: opened by Bill it on the Tasks & Orders page */
 if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0)
   navigator.serviceWorker.register('/till-sw.js').catch(function(e){ cbQuiet('top:22', e); });
 /* ═══ CTR-243 helpers that sit at the end of the page, so no anonymous function of theirs shifts the readability ratchet's ordinals above ═══ */
