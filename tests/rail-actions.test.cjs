@@ -285,6 +285,13 @@ const tally = {};
   t('not a bill (a task, an order, a bill I issued) → the rail\'s answer, the same object', RA.forBill('bill_issued', gap, task) === task && RA.forBill(null, gap, task) === task);
   t('the chit read composes it (routes/chits.js: railActions.forBill over docOf + books_wait)', /railActions\.forBill\(\s*_doc,\s*bundle\.books_wait,/.test(SRC) && /doc: _doc,/.test(SRC) && /books_wait: bundle\.books_wait \|\| null/.test(SRC));
 
+  /* ── FW-29 · an expense is a record the books took at send: Accept greyed on the read AND refused by the status writer, one word ── */
+  t('FW-29 · an expense chit: Accept is refused (already_booked, with a sentence); Dispute and the rest stay the rail answer',
+    (() => { const v = RA.forBill('expense', null, { accept: { ok: true }, dispute: { ok: true } }); return v.accept.ok === false && v.accept.why === 'already_booked' && /already in your books/.test(v.accept.say) && v.dispute.ok === true; })());
+  t('FW-29 · …a viewer stays refused by the rail first (level wins)', RA.forBill('expense', null, { accept: { ok: false, why: 'read_only' } }).accept.why === 'read_only');
+  t('FW-29 · bookedRecord: only an expense is a booked record (a task, an order, a bill received are not)', RA.bookedRecord('expense').ok === false && ['bill_received', 'bill_issued', null, undefined].every((d) => RA.bookedRecord(d) === null));
+  t('FW-29 · the status writer asks the same word (lib/chit-move: accepted on an expense → 409 already_booked)', /railActions\.bookedRecord\(FOLDER_INV\.docOf\(header\.rows\[0\], entity_id\)\)/.test(MOVE) && /code: 'already_booked'/.test(MOVE));
+
   /* RAIL-193: the status words a delivery is refused on are the rail's own — states of its table and ends of the road, the refusal word one of rail.WHY */
   t('RAIL-193 · deliveryOn: the withdrawn words are states of rail.TRANSITIONS and of the closed bucket', RA.WITHDRAWN.every((w) => Object.keys(rail.TRANSITIONS).includes(w) && RA.BUCKETS.close.includes(w)));
   t('RAIL-193 · deliveryOn refuses rejected and cancelled with the rail word wrong_step and a sentence naming the status', ['rejected', 'cancelled'].every((w) => { const v = RA.deliveryOn(w); return v.ok === false && v.why === 'wrong_step' && Object.keys(rail.WHY).includes(v.why) && v.from === w && v.say.includes(w); }));
