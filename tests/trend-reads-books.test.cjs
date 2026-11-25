@@ -47,6 +47,12 @@ const summaryRow = (key, gross) => ({ business_json: { summary: { period: 'week'
   S.week = [summaryRow('2026-W38', 540), summaryRow('2026-W37', 100)]; /* the counters' own summary: only the cash day, the credit bill is in none */
   r = await TS.trend(SHOP, 'actor', { period: 'week', n: 4, now: NOW });
   ok('a stored summary of the same week is replaced, never added to: 1940.00 not 2480.00', r.body.slots[3].gross_minor === 194000, String(r.body.slots[3].gross_minor));
+  ok('RW1-18: W37 (counters only) is NAMED in the note, W38 (in the books) is not', /2026-W37/.test(r.body.sales_note || '') && !/W38/.test(r.body.sales_note || ''), String(r.body.sales_note));
+  /* hand-computed: Accounts since 1 July = Aug 49,665.00 + Sep 49,555.00 + Oct 49,390.00 + Nov 350.00 = 148,960.00; Trend adds July 45,915.00 = 194,875.00; so July alone is the gap, named "Jul 2026" */
+  const sm = (key, gross, till) => ({ period: 'month', key, till, totals: { gross, total: gross } });
+  const words = TS.summariesOnlyWords([sm('2026-07', 45915, { id: 'C1' }), sm('2026-08', 49665, { id: 'BOOKS' })], 'month', { state: 'read' });
+  ok('a month the books hold nothing for is named: Jul 2026 only', /Jul 2026/.test(words) && !/Aug/.test(words), String(words));
+  ok('no counter-summary period shown: no note; books off: left to the existing words', TS.summariesOnlyWords([sm('2026-08', 1, { id: 'BOOKS' })], 'month', { state: 'read' }) === null && TS.summariesOnlyWords([sm('2026-07', 5, { id: 'C1' })], 'month', { state: 'off' }) === null);
   const t = TS.teaser([S.shop && { country: 'IN', currency_code: 'INR', books: S.shop.books }].map((x) => ({ rows: [x] }))[0], { rows: S.week }, NOW, await TS.booksSold(SHOP, { rows: [S.shop] }));
   ok('the Home teaser is the same week from the same books', !!t && t.spark[7] === 194000, JSON.stringify(t));
 
