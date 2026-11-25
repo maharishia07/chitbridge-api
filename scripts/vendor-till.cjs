@@ -78,9 +78,10 @@ const ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role
    counter still bills, and the sheet says to set the rate in the catalogue */
 /* ⭐ 1128: /app/till-dayrep.js is on the shelf ('cb-till-v8') — the day report's table builders, split out of till.html (api kit master, copied to web public/app/) */
 /* ⭐ tillLocale 1128: /app/cb-words.js (tx) and the Hindi and Arabic packs are on the shelf ('cb-till-v9') — the till speaks through the app's own pack, offline too; a missing pack is English, never an error */
+/* ⭐ signin split 1129: /app/signin-more-ways.js and /app/signin-session.js (the two halves of the window split out of signin-ui.js) are on the shelf ('cb-till-v11') */
 /* ⭐ HX1: /config.js is on the shelf — the page reads its api from it (window.CB_API), and an offline start must still know it */
-const SW = `${GEN}const SHELF = 'cb-till-v9';
-const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-ui.js', '/app/their-bill.js', '/app/tax-slab-ui.js', '/app/till-dayrep.js', '/app/cb-words.js', '/app/strings-hi.js', '/app/strings-ar.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
+const SW = `${GEN}const SHELF = 'cb-till-v11';
+const KEEP = ['/till.html', '/promo.html', '/config.js', '/app/signin-more-ways.js', '/app/signin-session.js', '/app/signin-ui.js', '/app/their-bill.js', '/app/tax-slab-ui.js', '/app/till-dayrep.js', '/app/till-slip.js', '/app/cb-words.js', '/app/strings-hi.js', '/app/strings-ar.js', '/engine/offers.js', '/engine/tax.js', '/engine/search.js', '/engine/gs1.js', '/engine/lots.js', '/engine/nums.js', '/engine/pricing.js', '/engine/locale.js', '/engine/rewards.js', '/engine/qr.js', '/engine/money.js', '/engine/docnumber.js', '/engine/screen.js', '/engine/variant.js', '/engine/units.js', '/engine/profilemap.js', '/engine/jurisdiction.js', '/engine/govcontext.js', '/engine/rollup.js', '/engine/verdict.js', '/engine/orders.js', '/engine/orderhub.js', '/engine/dayopen.js', '/engine/signin.js', '/engine/scalecode.js', '/engine/qty.js', '/engine/versions.json', '/till.webmanifest', '/till-icon.svg'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(SHELF).then((c) => c.addAll(KEEP)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== SHELF).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
@@ -176,7 +177,23 @@ const WEB_VOICE_KIT = () => ['cb-words.js', 'strings-hi.js', 'strings-ar.js'].ma
 /* CON-98: the kit reads a bill's total through the ONE pick, lib/counter-bill.js (no requires), carried beside core.js; the master is the lib file */
 const API_MASTERED_KIT = () => [[path.join(API, 'lib', 'counter-bill.js'), path.join(API, 'tools', 'tally-connector', 'counter-bill.js'), 'copy']];
 /* 1128: the day report's table builders are a part file of the till page — the kit master is copied to web public/app/ (the web serves it there, the service worker shelves it) */
-const PAGE_PARTS = () => [[path.join(API, 'tools', 'tally-connector', 'till-dayrep.js'), path.join(WEB, 'app', 'till-dayrep.js'), 'copy']];
+const PAGE_PARTS = () => [[path.join(API, 'tools', 'tally-connector', 'till-dayrep.js'), path.join(WEB, 'app', 'till-dayrep.js'), 'copy'],
+  [path.join(API, 'tools', 'tally-connector', 'till-slip.js'), path.join(WEB, 'app', 'till-slip.js'), 'copy']];
+/* 1129: the slip's builders are a second part file of the till page (till-slip.js) */
+/** the one sign-in window and its two halves: the ONLY copies that run WEB → API (the web masters, the kit carries a byte copy) */
+const WEB_SIGNIN_KIT = () => [
+  /**
+   * ⭐⭐⭐ THE ONE SIGN-IN WINDOW, INTO THE KIT (DECISIONS 2026-10-08: CBSignin mounts on index · till · CB Accounts · CB CRM).
+   * ⚠️⚠️ THE ONLY COPY THAT RUNS WEB → API. Its master is web public/app/signin-ui.js — the file index, Accounts and CRM load — and
+   * the shop PC has no web host, so the kit carries a byte copy and till.js serves it at the same path (/app/signin-ui.js).
+   * Edit the WEB file; this writes the kit's. The kit's update path (routes/integrations.js KIT_NAMES, till.js live:[]) refreshes
+   * it like till.html. The engine it widens (/engine/signin.js) is adopted on both sides by chitbridge-engines/tools/adopt.cjs.
+   */
+  [path.join(WEB, 'app', 'signin-ui.js'), path.join(API, 'tools', 'tally-connector', 'signin-ui.js'), 'copy'],
+  /* 1129: the window's two halves (other ways to sign in; the session it keeps) travel the same way, loaded before signin-ui.js */
+  [path.join(WEB, 'app', 'signin-more-ways.js'), path.join(API, 'tools', 'tally-connector', 'signin-more-ways.js'), 'copy'],
+  [path.join(WEB, 'app', 'signin-session.js'), path.join(API, 'tools', 'tally-connector', 'signin-session.js'), 'copy'],
+];
 const COPIES = () => [
   [path.join(API, 'tools', 'tally-connector', 'till.html'), path.join(WEB, 'till.html'), 'copy'],
   /* ⭐⭐ THE ROLLUP RULE GOES INTO THE KIT, because the program on the shop PC requires it directly — the day,
@@ -193,14 +210,6 @@ const COPIES = () => [
   /* ⭐ THE SHOP'S SCREEN rides the same rail as the counter: one master, both hosts, the same engines and the same
      snapshot. It is the counter's data with a different job — advertising it instead of billing it. */
   [path.join(API, 'tools', 'tally-connector', 'promo.html'), path.join(WEB, 'promo.html'), 'copy'],
-  /**
-   * ⭐⭐⭐ THE ONE SIGN-IN WINDOW, INTO THE KIT (DECISIONS 2026-10-08: CBSignin mounts on index · till · CB Accounts · CB CRM).
-   * ⚠️⚠️ THE ONLY COPY THAT RUNS WEB → API. Its master is web public/app/signin-ui.js — the file index, Accounts and CRM load — and
-   * the shop PC has no web host, so the kit carries a byte copy and till.js serves it at the same path (/app/signin-ui.js).
-   * Edit the WEB file; this writes the kit's. The kit's update path (routes/integrations.js KIT_NAMES, till.js live:[]) refreshes
-   * it like till.html. The engine it widens (/engine/signin.js) is adopted on both sides by chitbridge-engines/tools/adopt.cjs.
-   */
-  [path.join(WEB, 'app', 'signin-ui.js'), path.join(API, 'tools', 'tally-connector', 'signin-ui.js'), 'copy'],
   /**
    * ⭐⭐ FX-F10W2 · DOES THEIR BILL AGREE — ONE rule for the counter's Receive form, its slip and the books' Waiting row. Master: api
    * lib/their-bill.js (books-hooks requires it); the web serves a byte copy at /app/their-bill.js and the kit carries one that till.js serves at
@@ -404,7 +413,7 @@ const touchesWeb = (file) => Boolean(file) && file.startsWith(WEB + path.sep);
 const SCOPE = process.argv.includes('--kit-only') ? (pair) => !touchesWeb(pair[0]) && !touchesWeb(pair[1]) : process.argv.includes('--web-only') ? (pair) => touchesWeb(pair[1]) : () => true;
 
 if (process.argv.includes('--check')) {
-  for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), WEB_VOICE_KIT(), API_MASTERED_KIT(), PAGE_PARTS()).filter(SCOPE)) {
+  for (const [from, to, body] of COPIES().concat(WEB_SIGNIN_KIT(), WEB_MASTERED_KIT(), WEB_VOICE_KIT(), API_MASTERED_KIT(), PAGE_PARTS()).filter(SCOPE)) {
     const text = want(from, body);
     const have = fs.existsSync(to) ? norm(fs.readFileSync(to, 'utf8')) : '';
     if (have !== text) {
@@ -416,7 +425,7 @@ if (process.argv.includes('--check')) {
   process.exit(0);
 }
 
-for (const [from, to, body] of COPIES().concat(WEB_MASTERED_KIT(), WEB_VOICE_KIT(), API_MASTERED_KIT(), PAGE_PARTS())) {
+for (const [from, to, body] of COPIES().concat(WEB_SIGNIN_KIT(), WEB_MASTERED_KIT(), WEB_VOICE_KIT(), API_MASTERED_KIT(), PAGE_PARTS())) {
   fs.mkdirSync(path.dirname(to), { recursive: true });
   fs.writeFileSync(to, want(from, body));
   console.log('wrote ' + to);

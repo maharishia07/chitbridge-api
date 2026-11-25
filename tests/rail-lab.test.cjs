@@ -30,8 +30,8 @@ ok('isLabChit: only business_json.lab === true marks a chit (a string "true", 1,
 /* ── G2 · the send door ── */
 const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222';
 const ROWS = {
-  [SHOP]: { identity_id: SHOP, bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders', country: 'IN', currency_code: 'INR', policy_flags: {}, status: 'active', user_id: 'mayur' },
-  [CUST]: { identity_id: CUST, bridge_id: 'CBCUST0001', display_name: 'Chola Auto Care', country: 'IN', currency_code: 'INR', policy_flags: {}, status: 'active', user_id: 'chola' },
+  [SHOP]: { identity_id: SHOP, bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders', country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', policy_flags: {}, status: 'active', user_id: 'mayur' },
+  [CUST]: { identity_id: CUST, bridge_id: 'CBCUST0001', display_name: 'Chola Auto Care', country: 'IN', currency_code: 'INR', gstn: '29BBBBB0000B1Z5', policy_flags: {}, status: 'active', user_id: 'chola' },
 };
 function rows(s, p, ctx) {
   if (/to_regprocedure\('chit_deliver/.test(s)) return [{ ok: true }];
@@ -55,7 +55,7 @@ require(path.join(G.API, 'lib', 'events')).notifyAfter = () => {};
 const app = h.app('/api/chits', require(path.join(G.API, 'routes', 'chits')));
 const ME = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders' };
 const order = (extra) => Object.assign({ purpose: 'order', recipients: [{ entity_id: CUST, name: 'Chola Auto Care', role: 'to' }],
-  line_items: [{ particulars: 'Rice', quantity: 2, price: 50 }] }, extra || {});
+  line_items: [{ particulars: 'Rice', quantity: 2, price: 50, gst_rate: 5 }] }, extra || {});
 
 (async () => {
   console.log('\n══ RAIL-LAB-SRV1 · one lab rule — the facts card\'s may_sample and the send door ══\n');

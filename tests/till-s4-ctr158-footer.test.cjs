@@ -3,7 +3,7 @@
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert');
 const API = path.join(__dirname, '..');
-let page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+let page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8')).replace(/\r\n/g, '\n');
 const route = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 const profile = fs.readFileSync(path.join(API, 'lib', 'profile.js'), 'utf8').replace(/\r\n/g, '\n');
 if (process.env.CTR158_MUTATE === '1') page = page.replace('    + slipFooterHTML(shop)\n', '    + \'<div style="text-align:center">Thank you · visit again</div><div style="text-align:center">Billed on ChitBridge</div>\'\n');

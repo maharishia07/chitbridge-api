@@ -195,6 +195,10 @@ const WRITES_READY = [
   X('date-given-dues-read', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=2026-02-30' }),
   X('date-given-dues-year-out-of-range', 'GET /api/books/dues', 400, { url: MOUNT + '/dues?asOf=9999-12-31' }), /* FIN-103: a day outside the books' years (1900-2100) is a 400, it was a RangeError 500 */
   X('date-given-ledger-read', 'GET /api/books/ledger/:account', 400, { url: MOUNT + '/ledger/1300?from=31-12-2026', patch: LEDGER_PATCH }),
+  X('backfill-run', 'POST /api/books/backfill', 200, { body: { start_date: '2026-04-01' }, patch: { backfill: { run: async () => ({ start_day: '2026-04-01', posted: 2, waiting: 1, before_start: 3, days: ['C1 2026-04-02 -> JV/2026-27/000003'], problems: [{ what: 'walk-in day', counter: 'C2', day: '2026-04-03', why: 'a period is locked' }], words: 'Posted 2 bills from 2026-04-01; 1 waits; 3 earlier bills are in your opening balances.' }) } } }), /* lateBooks 1129 (P-F-02 / S2-F-07): the owner's press of the start day: the library's answer stands in (its own proof is tests/books-backfill.test.cjs), the route's gates, schema and answer filter run for real */
+  X('backfill-nothing-to-post', 'POST /api/books/backfill', 200, { body: { start_date: '2026-04-01' }, patch: { backfill: { run: async () => ({ start_day: '2026-04-01', posted: 0, waiting: 0, before_start: 0, days: [], problems: [], words: 'Your books start on 2026-04-01.' }) } } }),
+  X('events-batch-posted', 'POST /api/books/events/batch', 200, { body: { events: [{ kind: 'expense', class: 'rent', paid_from: 'bank', date: '2026-10-05', amount_minor: 10000, client_ref: 'bank:t:1' }, { kind: 'expense', class: 'rent', paid_from: 'bank', date: '2026-10-06', amount_minor: 20000, client_ref: 'bank:t:2' }] }, patch: { manual: { post: async (entity, books, event) => ({ ok: true, duplicate: event.client_ref === 'bank:t:2', entry_no: 'JV/2026-27/00000' + event.client_ref.slice(-1), entry_id: ENTRY, posting_date: '2026-10-05' }) } } }), /* SPD bank Add (1129): up to 100 lines in one request through the one event writer (lib/books-manual.post); a refused line is named by index, the others post */
+  X('events-batch-partial', 'POST /api/books/events/batch', 200, { body: { events: [{ kind: 'expense', class: 'rent', paid_from: 'bank', date: '2026-10-05', amount_minor: 10000, client_ref: 'bank:t:3' }, { kind: 'expense', class: 'no-such-account', paid_from: 'bank', date: '2026-10-05', amount_minor: 10000, client_ref: 'bank:t:4' }, 'junk'] }, patch: { manual: { post: async (entity, books, event) => { if (event.class === 'no-such-account') throw Object.assign(new Error('No such account'), { status: 422, code: 'BOOKS_UNKNOWN_ACCOUNT' }); return { ok: true, duplicate: false, entry_no: 'JV/2026-27/000009', entry_id: ENTRY, posting_date: '2026-10-05' }; } } } }),
   X('outbox-retried', 'POST /api/books/outbox/retry', 200, { patch: { hooks: { retryOutbox: async () => RETRIED } } }),
   X('payment-preview-advance', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000 }, patch: { books: { proposeFor: async () => PROPOSAL, duplicateWarnings: async () => [] } } }),
   X('payment-preview-settles', 'POST /api/books/payments/preview', 200, { body: { party_id: PARTY, amount_minor: 1000, allocate: 'oldest_first' }, patch: { books: { proposeFor: async () => PROPOSAL_SETTLES, duplicateWarnings: async () => [{ code: 'W1', words: 'The same money within 24 hours.', entry_no: 'R/1' }] } } }),
@@ -464,7 +468,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema'), backfill: lib('books-backfill') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -577,7 +581,6 @@ function checkRefusals() {
   const unknown = refusalOf(new Error(SECRET_SQL));
   check('refusalOf: anything else is a 500 INTERNAL that says nothing of its cause', unknown.status === 500 && unknown.code === 'INTERNAL' && !JSON.stringify(unknown).includes('vault'), unknown);
 }
-
 /**
  * API-8 output allow-list (S34), the way tests/api-problem-till.test.cjs proves it: a books route whose success schema is CLOSED (additionalProperties false, derived in
  * docs/contracts/api-output-shapes.json) and whose recorded success answers fit that schema, with no key pruned, is proved here — the generator's proxy world cannot seat the
@@ -670,7 +673,6 @@ function writeAllowList(proved) {
   Object.keys(routes).filter((route) => !Object.keys(routes[route]).length).forEach((route) => delete routes[route]);
   fs.writeFileSync(EVIDENCE_FILE, JSON.stringify(Object.assign({}, onDisk, { routes }), null, 1) + '\n'); /* every row keeps its place (the file is not one sorted list); a newly proved route is added at the end */
 }
-
 /** lib/tax-contract.js as a unit: the words of a tax refusal and of a fault, as the service always said them */
 function checkTaxWords() {
   const { taxSaid, faultOf } = require(path.join(HERE, 'lib', 'tax-contract.js'));
@@ -681,7 +683,6 @@ function checkTaxWords() {
   const fault = faultOf(new Error(SECRET_SQL), { id: 'r1' });
   check('faultOf: anything else is a 500 TAX_FAILED that says nothing of its cause', fault.status === 500 && fault.code === 'TAX_FAILED' && fault.legacy.error === 'Failed' && !JSON.stringify(fault).includes('vault'), fault);
 }
-
 /** lib/contract-kit.js as a unit: a table of routes becomes operations whose refusals are Problem responses, with the statuses the register can check */
 function checkKit() {
   console.log('\n-- lib/contract-kit.js: the operations an area builds from its table --');
@@ -697,7 +698,6 @@ function checkKit() {
   check('kit: allowedStatuses adds the shared refusals of a gated route and closed to anything unknown', contract.allowedStatuses()('POST /api/x/thing/:id').includes(503) && contract.allowedStatuses()('GET /nowhere').length === 0);
   check('kit: the paths fragment writes an express :id as {id}', Object.keys(contract.pathsOf()).includes('/api/x/thing/{id}'));
 }
-
 /** the whole sweep in four sentences: who is refused, how a malformed request is answered, and that every recorded refusal was replayed */
 function checkAnswers(recording) {
   const answers = Object.values(recording);
@@ -713,7 +713,6 @@ function checkAnswers(recording) {
   check('every refusal recorded before the sweep is replayed against the code: ' + frozen + ' answers, each once, byte for byte', frozen > 300);
   check('a 500 never says its cause: no answer of any route carries the database text', answers.every((one) => !JSON.stringify(one.body || {}).includes('vault')));
 }
-
 process.on('unhandledRejection', (failure) => console.log('  (unhandled rejection: ' + String(failure && failure.message).slice(0, 80) + ')'));
 (async () => {
   if (flagValue('--freeze')) return freeze(flagValue('--freeze'));
@@ -721,6 +720,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-opening.js')) }); /* l16: the opening balances page's doors, its own file under the same mount */
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-events-batch.js')) }); /* SPD bank Add: POST /events/batch, its own file under the same mount (1129) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();
   app.use((req, res, next) => {

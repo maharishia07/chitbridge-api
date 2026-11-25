@@ -108,7 +108,7 @@ const srv = { listen: (p, h, cb) => S.start().then(cb), address: () => ({}), clo
   r = await get('/api/work/facts?unbilled=1');
   ok('W11: facts?unbilled=1 → the one open order in, not billed, its own value in minor units', JSON.stringify(r.body.figures.unbilled) === JSON.stringify({ n: 1, minor: 120050, currency: 'INR', by_currency: [{ currency: 'INR', minor: 120050, n: 1 }], no_currency: 0, unpriced: 0 }), JSON.stringify(r.body.figures.unbilled));
   /* W36: the one chit's billed scalar (routes/chits ONE_SHOT) is the SAME test as MARKS_SQL - one fragment, never a second copy */
-  { const OO = require(path.join(API, 'lib', 'open-orders')), frag = "business_json->>'bill_no' IS NOT NULL AND business_json->'order'->>'from' = ";
+  { const OO = require(path.join(API, 'lib', 'open-orders')), frag = "business_json->>'bill_no' IS NOT NULL AND COALESCE(role, '') <> 'Draft' AND business_json->'order'->>'from' = "; /* WALK-N N-F-04: only a SENT bill closes an order; the test is still ONE fragment (billNames) in both statements */
     ok('W36: billedOfChitSql and MARKS_SQL share the one billed test', OO.billedOfChitSql('$1', '$2').includes(frag + '$2::text') && OO.MARKS_SQL.includes(frag + 'ANY($2::text[])'), OO.billedOfChitSql('$1', '$2')); }
   ok('W11: the plain facts carry no unbilled figure', !('unbilled' in (await get('/api/work/facts')).body.figures));
 

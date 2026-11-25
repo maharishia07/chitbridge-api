@@ -1618,6 +1618,50 @@
     "why": "not reached: answered 404"
    }
   },
+  "POST /api/signin/provider/handoff": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 400"
+   }
+  },
+  "GET /api/signin/provider/links": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
+  "POST /api/signin/provider/link/start": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/signin/provider/link/finish": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 403"
+   }
+  },
+  "DELETE /api/signin/provider/links/:link_id": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 401"
+   },
+   "foreign_id_404": {
+    "pass": true
+   }
+  },
   "POST /api/signin/renew": {
    "strict_input": {
     "pass": true
@@ -2929,7 +2973,8 @@
     "pass": true
    },
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 422"
    }
   },
   "POST /api/governance/supplier-acceptance": {
@@ -4036,6 +4081,20 @@
     "pass": true
    }
   },
+  "POST /api/books/backfill": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "GET /api/books/backfill": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
   "POST /api/books/setting": {
    "strict_input": {
     "pass": true
@@ -4856,6 +4915,15 @@
    }
   },
   "GET /api/books/opening/years": {
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
+  "POST /api/books/events/batch": {
+   "strict_input": {
+    "pass": true
+   },
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 404"

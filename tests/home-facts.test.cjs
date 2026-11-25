@@ -121,6 +121,8 @@ function answer(text, params) {
   /* REP-52: the rows books-store.entryLines answers — one row per LINE with its account role (the card sums lines by role; the `tenders` jsonb is the Day book column's) */
   if (/COUNT\(DISTINCT h\.entry_id\) AS n FROM journal_line/.test(sql)) return { rows: [{ n: F.bankPosted || 0 }] };
   if (/SELECT min(h.posting_date)::text AS day FROM journal_entry/.test(sql)) return { rows: [{ day: F.booksDay ? todayKey : null }] };
+  /* BD-F-01: the books hold 8 bills on 20 Nov 2026 (Rs 2,71,971.43 sold), none of them a counter closing */
+  if (F.booksPast && /GROUP BY x.day/.test(sql)) return { rows: [{ day: '2026-11-20', sold: 27197143, taken: 27081143, bills: 8, cur_lo: 'INR', cur_hi: 'INR' }] };
   if (/FROM journal_line l JOIN journal_entry h|GROUP BY x.day/.test(sql)) { const lines = F.booksDay ? [
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'cash', dr_minor: 40000, cr_minor: 0, line_no: 1 },   /* a day, closed once (reversed below) */
     { entry_id: 'd1', event_type: 'walkin_day', covers: 3, source_chit_id: null, account_role: 'sales', dr_minor: 0, cr_minor: 40000, line_no: 2 },
@@ -183,7 +185,7 @@ const get = (port, p) => new Promise((ok) => {
   /* till */
   let r = await g('till');
   t('till: 200', r.status, 200);
-  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold {money} · 12 bills', { amount: 4320.5, currency: 'INR' }]);
+  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold today {money} · 12 bills', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
   t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'C1 open', value: 1 });
   F.allShut = true; r = await g('till');
@@ -202,11 +204,14 @@ const get = (port, p) => new Promise((ok) => {
   F.booksBills = false;
   F.booksDay = false;
   F.allShut = true; F.c2open = true; r = await g('till');
-  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold {money} · 12 bills', 'Counter C1 closed {time}', 'C2 open']);
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold today {money} · 12 bills', 'Counter C1 closed {time}', 'C2 open']);
   F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
   t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, 'Sold {money} · 12 bills on {date}');
-  F.stale = false; F.summary = false; r = await g('till');
+  /* BD-F-01: the counters' newest closing is old; the books hold a newer day (bills sent by the api): the card reads the books' day and names it */
+  F.booksPast = true; F.shopYear = { country: 'IN', currency_code: 'INR', books: { enabled: true }, gov: null }; r = await g('till');
+  t('till (BD-F-01): the books newer day wins over the old counter closing: Sold 2,71,971.43 (27197143 paise) · 8 bills on that date', [r.json.lines[0].text, r.json.lines[0].money, r.json.figures.bills, r.json.figures.day], ['Sold {money} · 8 bills on {date}', { amount: 271971.43, currency: 'INR' }, 8, '2026-11-20']);
+  F.booksPast = false; F.shopYear = null; F.stale = false; F.summary = false; r = await g('till');
   t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['C1 open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
   F.summary = true;

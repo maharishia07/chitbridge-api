@@ -3,7 +3,7 @@
  * ID        SCR045
  * RISK      plain
  * OWNER     cb-ux-locale
- * OWNS      cbLang · CBSTR · tx · txf · txn · bidiWrap · cbIsRawId · rewordPlain · friendlyErr · toast · toastHost · toastLevel · CBConfirm
+ * OWNS      cbLang · CBSTR · tx · txf · txn · bidiWrap · cbIsRawId · rewordPlain · friendlyErr · failWords · bodyWords · cbApiParam · toast · toastHost · toastLevel · CBConfirm
  * CALLED BY every page that speaks through tx() or toast(): the back-office pages (before app/accounts-shell.js) and the customer pages
  *           (shop · store · network-shop · embed), which load THIS and never accounts-shell.js (CUSTOMER-DELINK, 21 Nov 2026: a customer page loads no back-office code)
  * FLOW      loaded after helpers.js (esc) → the page's own script calls tx / toast / CBConfirm
@@ -128,14 +128,14 @@ function txn(one, other, n, vars) {
   var count = Number(n) || 0;
   var cat = 'other';
   try {
-    cat = new Intl.PluralRules(CBLocale.locale()).select(count);
+    cat = new Intl.PluralRules((globalThis.CBLocale ? globalThis.CBLocale.locale() : undefined)).select(count);
   } catch (_) {
     cat = count === 1 ? 'one' : 'other';
   }
   var m = CBSTR[cbLang()] || {};
   /* the exact category, then the catch-all, then English — never a key on screen */
   var text = m[one + '\u0005' + cat] || m[one + '\u0005other'] || (count === 1 ? one : other);
-  var all = { count: CBLocale.number(count) };
+  var all = { count: globalThis.CBLocale ? globalThis.CBLocale.number(count) : String(count) };
   for (var k in vars || {}) if (Object.prototype.hasOwnProperty.call(vars, k)) all[k] = vars[k];
   return text.replace(/\{(\w+)\}/g, function (whole, key) {
     return Object.prototype.hasOwnProperty.call(all, key) ? bidiWrap(all[key]) : whole;
@@ -155,6 +155,56 @@ function friendlyErr(e) {
   const m = (e && e.message) || String(e || '');
   /* the api's own sentence keeps its words, so the toast can still find its code and hint (B7) */
   return e && e.code && e.message ? m : rewordPlain(m);
+}
+
+/** a message as words only: a string with its markup and edge spaces removed, else '' */
+function wordsOnly(text) {
+  return typeof text === 'string' ? text.replace(/<[^>]*>/g, '').trim() : '';
+}
+/**
+ * failWords(e, fallback) → the words a screen paints for a failed call: the problem's OWN shopkeeper words (RFC 9457 detail / the error-code
+ * register sentence core.js put on e.message) when the error came from the api or our own offline/timeout path (e.code, e.status or e.kind),
+ * else the network line from rewordPlain, else the screen's fallback. Never a raw TypeError / library message, and never markup:
+ * the caller still esc()s it. e2e/fail-words.test.cjs. Reviews8 (the ~30 raw e.message sites of cap-flag, cap-folders, cap-intake).
+ */
+function failWords(e, fallback) {
+  var m = e ? wordsOnly(e.message) : '';
+  if (m && (e.code || e.status || e.kind)) return m;
+  var plain = m ? rewordPlain(m) : '';
+  return plain && plain !== m ? plain : fallback || 'something went wrong';
+}
+/** the origin of this deployment's own api (window.CB_API, config.js), '' when none is set or it is not an address */
+function cbOwnApiOrigin() {
+  try {
+    return window.CB_API ? new URL(window.CB_API, location.href).origin : '';
+  } catch (failure) {
+    if (typeof cbQuiet === 'function') cbQuiet('api param: the deployment api address could not be read, only this site and localhost are accepted', failure);
+    return '';
+  }
+}
+/** may a ?api= address be used: this site, this deployment's own api, or localhost on a localhost page */
+function cbApiParamAllowed(address) {
+  var local = /^(localhost|127[.]0[.]0[.]1)$/;
+  var known = cbOwnApiOrigin();
+  var sameSite = address.origin === location.origin || (known && address.origin === known);
+  return /^https?:$/.test(address.protocol) && (sameSite || (local.test(address.hostname) && local.test(location.hostname))); /* localhost only from a localhost page */
+}
+/** cbApiParam(param) → the ?api= value only when it names this site, this deployment's own api (window.CB_API) or localhost on a localhost page; else '' with a console note. SEC-FIX GF-21/GF-20: a crafted link must not aim a Bearer token at another host */
+function cbApiParam(param) {
+  try {
+    if (!param) return '';
+    if (cbApiParamAllowed(new URL(param, location.href))) return param;
+    if (typeof console !== 'undefined' && console.warn) console.warn('?api= ignored: not this deployment’s api'); /* never used, never sent a token */
+    return '';
+  } catch (failure) {
+    if (typeof cbQuiet === 'function') cbQuiet('api param: the ?api= value is not an address, it is ignored', failure);
+    return '';
+  }
+}
+/** bodyWords(body, fallback) → the same words from a raw JSON answer (a page that calls fetch itself): detail, then message, then title, strings only, no markup */
+function bodyWords(body, fallback) {
+  var b = body || {}, m = [b.detail, b.message, b.title].filter(function (v) { return typeof v === 'string' && v.trim(); })[0] || '';
+  return m.replace(/<[^>]*>/g, '').trim() || fallback || 'something went wrong';
 }
 
 /** the look of a host the page did not draw itself; a page with a bottom dock sets --cb-toast-bottom to clear it (shop.html) (same tokens and sizes as the pages that carry their own #toast rules) */
@@ -196,15 +246,19 @@ function toast(msg, undo) {
   const node = toastHost(_lvl === 'error');
   /* B7: a toast that says the api's refusal also says its next step (hint) and carries the error code as data-cb-error-code (ERR-14 part 1) */
   const _ref = toastRefusal(msg);
-  node.innerHTML = `<div class="toast ${_lvl === 'error' ? 'err' : _lvl === 'warn' ? 'warn' : ''}" data-cbsid="CMP069"${_ref.attr}>${esc(msg)}${_ref.hint}${undo ? '<button id="undoBtn" data-cbsid="SCR045-B02">' + tx('Undo') + '</button>' : ''}</div>`;
+  node.innerHTML = `<div class="toast ${_lvl === 'error' ? 'err' : _lvl === 'warn' ? 'warn' : ''}" data-cbsid="CMP069"${_ref.attr}>${esc(msg)}${_ref.hint}${undo ? '<button id="undoBtn" data-cbsid="SCR045-B02">' + tx('Undo') + '</button><button id="undoX" data-cbsid="CMP005" aria-label="' + tx('Dismiss') + '" title="' + tx('Dismiss') + '">✕</button>' : ''}</div>`;
   if (undo) {
     document.getElementById('undoBtn').onclick = () => {
       undo();
       node.innerHTML = '';
     };
+    document.getElementById('undoX').onclick = () => {
+      node.innerHTML = '';
+    };
   }
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => (node.innerHTML = ''), 4500);
+  /* WCAG 2.2.1: a toast that carries an action (Undo) waits to be pressed or dismissed; only a plain notice fades */
+  if (!undo) toast._t = setTimeout(() => (node.innerHTML = ''), 4500);
 }
 function toastLevel(m) {
   const s = String(m);

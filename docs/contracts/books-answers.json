@@ -226,7 +226,21 @@
    "body": {
     "ready": false,
     "why": "The saved proof arrives after the next update. It is shown here but not kept; run the move-in again after the update to keep it.",
-    "imports": []
+    "imports": [],
+    "sources": [
+     {
+      "source": "xero",
+      "label": "Xero",
+      "ready": true,
+      "why": null
+     },
+     {
+      "source": "qbo",
+      "label": "QuickBooks",
+      "ready": true,
+      "why": null
+     }
+    ]
    }
   },
   "GET /api/books/returns|close-006": {
@@ -1543,7 +1557,8 @@
     "ok": true,
     "accounts_added": 101,
     "fiscal_year": "2026-27",
-    "parties_numbered": null
+    "parties_numbered": null,
+    "backfill": null
    }
   },
   "POST /api/books/enable|close-007": {
@@ -1554,7 +1569,8 @@
     "ok": true,
     "accounts_added": 104,
     "fiscal_year": "2026",
-    "parties_numbered": null
+    "parties_numbered": null,
+    "backfill": null
    }
   },
   "POST /api/books/enable|movein-001": {
@@ -1565,7 +1581,8 @@
     "ok": true,
     "accounts_added": 101,
     "fiscal_year": "2026-27",
-    "parties_numbered": null
+    "parties_numbered": null,
+    "backfill": null
    }
   },
   "POST /api/books/enable|period-001": {
@@ -1576,7 +1593,8 @@
     "ok": true,
     "accounts_added": 114,
     "fiscal_year": "2027-28",
-    "parties_numbered": null
+    "parties_numbered": null,
+    "backfill": null
    }
   },
   "POST /api/books/entries/:id/reverse|period-080": {
@@ -2857,7 +2875,7 @@
        "note": "default tax GST on Expenses = Taxable supply 10% — not kept (no slot for a per-account default)",
        "candidates": [
         {
-         "code": "5100",
+         "code": "6015",
          "name": "Wages"
         },
         {
@@ -2966,7 +2984,7 @@
        "note": "default tax GST Free Expenses = GST-free supply 0% — not kept (no slot for a per-account default)",
        "candidates": [
         {
-         "code": "5100",
+         "code": "6015",
          "name": "Wages"
         },
         {

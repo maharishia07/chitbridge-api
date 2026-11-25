@@ -13,7 +13,7 @@
  * Run: node tests/bill-checks.test.js   · no DB, no browser.
  */
 const assert = require('assert'), fs = require('fs'), path = require('path'), vm = require('vm');
-const PAGE = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const PAGE = (fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8')).replace(/\r\n/g, '\n');
 const PM = require('../lib/profile-map');
 const ORD = require('../lib/orders');
 

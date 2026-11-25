@@ -34,7 +34,7 @@ const addActor = async (shop, name, tag, level) => ok(await j('/api/actors', { m
 const loginWith = (person, secret) => j('/api/actors/login', { method: 'POST', body: Object.assign({ username: person.actor.login_format }, secret) });
 /** the token of an employee who signs in with the first code; a refusal throws with what the door said (this case turns red, no other) */
 const signInAs = async (person) => ok(await loginWith(person, { otp: H.ENTITY_OTP }), 'first sign-in of ' + person.actor.login_format).b.token;
-const PIN = String(1000 + (Date.now() % 9000));   /* an employee's own 4-digit PIN, made per run */
+const PIN = ['7391', '4826', '5183', '9042', '6275'][Date.now() % 5];   /* an employee's own 4-digit PIN, per run; never a weak one (the api refuses runs, repeats, pairs and 2580: a random 4-digit one hit that about 1 run in 60) */
 const SAYS_OWNER = (b) => b.code === 'OWNER_ONLY' && b.may === false && /\w+/.test(b.why || '');
 const KEY_NOT_ADDED = 'x';   /* the key of the person a colleague tries to add (PP-01): it must never exist */
 /** a sign-in code or PIN VALUE in an answer: a key that names one, or six digits under a key that says code/otp/pin */

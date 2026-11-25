@@ -27,7 +27,7 @@ const readOf = (row) => async () => ({ rows: row ? [row] : [] });
   const kept = CS.clean({ country: 'IN', currency: 'INR', fy_start_month: 4, tax: { registered: false }, source: { country: 'backfill b299 (today’s facts)', currency: 'typed' } });
   ok('saving an assumed (b299) country is the one-tap confirm: its source stops saying backfill', kept.source.country === 'confirmed by the owner' && kept.source.currency === 'typed');
   const src = CF.read(API);
-  ok('the send route asks the gate right after the sender is known, and lets a draft through', /sendSender,\s*sendMoneyStated,/.test(src) && /if \(req\.body\.is_draft\) return false;\s*\n\s*const refusal/.test(src));
+  ok('the send route asks the gate right after the sender is known, and lets a draft through', /sendSender,\s*sendMoneyStated,/.test(src) && /if \((?:isTrue\()?req\.body\.is_draft\)?\) return false;\s*\n\s*const refusal/.test(src));
 const fs = require('fs');
   /* ── N1: one reader per fact returns null + a reason, never India ── */
   const regional = require(path.join(API, 'lib/regional'));
@@ -109,7 +109,7 @@ for (const dir of ['lib', 'routes', 'middleware']) {
   for (const full of sourceFiles(path.join(__dirname, '..', dir), [])) {
     const rel = path.relative(path.join(__dirname, '..'), full).split(path.sep).join('/');
     const raw = fs.readFileSync(full, 'utf8');
-    if (adopted.has(rel) || /ADOPTED from|DO NOT EDIT/.test(raw.slice(0, 400))) continue;
+    if (adopted.has(rel) || /ADOPTED from|DO NOT EDIT/.test(raw.slice(0, 1200))) continue;
     const hits = (stripComments(raw).match(API_LITERAL) || []).length;
     if (hits) found[rel] = hits;
   }

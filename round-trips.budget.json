@@ -424,7 +424,7 @@
       "wire": null,
       "fired": true,
       "status": 422,
-      "basis": "ASSETS-1121 hand count by reading the code path (no run: the table probe, ONE register read; the engine works in memory); the offline stub reaches a 422 floor; live measure on sit-in pending",
+      "basis": "ASSETS-1121 hand count by reading the code path (no run: the table probe, ONE register read; the engine works in memory); the offline stub reaches a 422 floor; live measure on sit-in pending; 1129 web: the bank sheet Add sends ALL its accept marks in one request (up to 200, was one request per line): per request the cost is unchanged",
       "awaiting_client": {
         "pr": "ASSETS-1121 web: Accounts › Assets & depreciation reads the schedule (preview any day)",
         "since": "2026-11-21"
@@ -452,7 +452,7 @@
       "wire": 3,
       "fired": true,
       "status": 422,
-      "basis": "live from sit-in 2026-11-06"
+      "basis": "live from sit-in 2026-11-06; 1129 speed: the debtors and creditors reads are the OPEN documents from today (lib/books-side-items), same two statements, same wire: rows read fall with the history (3,605 -> 5 on a five-year fixture, tests/books-cashflow-open-items.test.cjs)"
     },
     "GET /api/books/cheques": {
       "file": "books.js",
@@ -640,7 +640,7 @@
       "wire": 12,
       "fired": true,
       "status": 200,
-      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added"
+      "basis": "live 17 Nov 2026 on a throwaway Postgres: X-DB-Trips 2 at 1 and 7 years of books (one transaction); statements sent: the stub run sends 3 on an empty shop, the live count is a ceiling of 12 until sit-in measures it; MIS weekday series (17 Nov): the same soldByDay statement, its lower bound widened to last year's week, so no statement is added; 1129: its cash read takes the open documents only (same statements, far fewer rows)"
     },
     "GET /api/books/pl": {
       "file": "books.js",
@@ -4740,14 +4740,17 @@
     },
     "POST /api/signin/verify": {
       "file": "signin.js",
-      "trips": 7,
-      "wire": 10,
+      "trips": 11,
+      "wire": 18,
       "fired": true,
       "status": 200,
       "registered_only": true,
       "fixture_body": {
         "username": "till@shop",
         "pin": "1234"
+      },
+      "fixture_headers": {
+        "x-device-id": "round-trips-device-1"
       },
       "fixture_row": {
         "identity_id": "00000000-0000-4000-8000-000000000001",
@@ -4765,7 +4768,8 @@
         "parent_entity_id": "00000000-0000-4000-8000-000000000001",
         "user_id": "shop",
         "actor_role": "cashier"
-      }
+      },
+      "note": "22 Nov 2026 (red1129): fired WITH a device id now (SEC-113 fails a person sign-in without one: it answered 400 NO_DEVICE at 10 statements). A listed person session opens in 11 trips / 18 statements (K-SEC PR A); cb-speed to look for a cheaper open"
     },
     "POST /api/simulator/feedback": {
       "file": "simulator.js",
@@ -5516,6 +5520,14 @@
         "rules": {}
       }
     },
+    "POST /api/books/backfill": {
+      "file": "books.js",
+      "trips": 50,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "walks P-F-02 / S2-F-07, a ONE-OFF owner press, not a screen read: fixed part 4 trips (gate, setting, lowering the start day, the count before it); then each closed counter day posts through postDay and each unposted bill through postChit (the one poster the nightly sweep uses, its own transaction per bill), read 200 at a time and stopped at 25 pages (5,000 bills, a named stop in the answer). The per-bill work is the posting itself and runs once per bill ever (a bill with its entry is not read again); 50 is the harness's own ceiling for a budgeted-not-measured route. Live measure pending on sit-in"
+    },
     "POST /api/books/bank/marks": {
       "file": "books.js",
       "trips": 4,
@@ -5539,6 +5551,14 @@
         "pr": "FIN-70 web: Accounts › Bank reconciliation reads and signs off on the server (bkbLoad/bkbSave)",
         "since": "2026-11-14"
       }
+    },
+    "GET /api/books/backfill": {
+      "file": "books.js",
+      "trips": 3,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "walks P-F-02 / S2-F-07 hand count by reading the code path (no run: the books setting and country gate, lib/books-backfill status() reads the setting once, the count of bills before the start in one transaction); no loop over rows. The offline stub reaches a 422 floor; live measure pending on sit-in"
     },
     "GET /api/books/bank/log": {
       "file": "books.js",
@@ -5762,6 +5782,51 @@
       "status": 200,
       "extra": true,
       "basis": "measured X-DB-Trips on sit-in 2026-11-17 by tests/flags-trips.realstack.cjs (real sign-in, cb_app, RLS on, throwaway Postgres): the dearest successful call over a firm auditor, a firm adviser and an owner on his own books = 2; 1 once warm"
+    },
+    "DELETE /api/signin/provider/links/:link_id": {
+      "file": "signin-provider.js",
+      "trips": 1,
+      "wire": 4,
+      "fired": true,
+      "status": 404
+    },
+    "GET /api/signin/provider/links": {
+      "file": "signin-provider.js",
+      "trips": 10,
+      "wire": null,
+      "fired": true,
+      "status": 503,
+      "basis": "SEC-112 connect step, hand ceiling by reading the code path (no run): the route's own reads are the shop's sign-in flags (policy.get), the person's links (one withEntity read) and the person's own row (identity-auth rowsOfCandidates), each a trip or two; the sign-in middleware is counted apart. The offline stub answers 503 (no store) = a floor; live measure on sit-in pending (cb-speed)"
+    },
+    "POST /api/signin/provider/handoff": {
+      "file": "signin-provider.js",
+      "trips": 20,
+      "wire": null,
+      "fired": true,
+      "status": 400,
+      "basis": "SEC-112 P1a, hand ceiling by reading the code path (no run): the one-time code is spent (signin-pending take), the linked account's row, the shop's sign-in flags, the link read again, then the ONE session writer (identity-auth issueToken: the device and session rows) and one sign-in event row; the per-account budget is in memory. The offline stub answers 400 (no device) = a floor; live measure on sit-in pending (cb-speed)"
+    },
+    "POST /api/signin/provider/link/finish": {
+      "file": "signin-provider.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/signin/provider/link/start": {
+      "file": "signin-provider.js",
+      "trips": 0,
+      "wire": 0,
+      "fired": true,
+      "status": 400
+    },
+    "POST /api/books/events/batch": {
+      "file": "books.js",
+      "trips": 1,
+      "wire": 3,
+      "fired": true,
+      "status": 400,
+      "why": "red1129: placeholder = the single door row; the batch posts up to 100 lines through the same writer (trips grow per line, measured on sit-in by measure.cjs MODE=batch)"
     }
   }
 }

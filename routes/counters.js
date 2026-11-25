@@ -40,7 +40,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { withTransaction } = require('../db');
 const keys = require('../lib/api-keys');
-const { isPending, patchCounter, readLocked, view } = require('../lib/counters-store'); // S7: the register's reads and writes live in lib/, not on this router
+const { abandonMinted, isPending, patchCounter, readLocked, view } = require('../lib/counters-store'); // S7: the register's reads and writes live in lib/, not on this router
 
 const sessionOnly = (req, res, next) => {
   if (req.api_key) return problem(req, res, { status: 403, ...words.sessionOnly() });
@@ -63,7 +63,7 @@ router.get('/', auth, sessionOnly, async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const out = await withTransaction(async (db) => {
-      const { counters, list, devices } = await readLocked(db, entity_id);
+      const { counters, list, devices } = await readLocked(db, entity_id, { readOnly: true }); // LV-speed: a list writes nothing, no row lock
       return Object.values(counters)
         .sort((first, second) => keys.TILL_IDS.indexOf(first.id) - keys.TILL_IDS.indexOf(second.id))
         .map((item) => view(item, list, devices));
@@ -207,13 +207,19 @@ router.post('/:id/open', auth, sessionOnly, ownerOnly, checked('POST /:id/open')
       throw e;
     }
     const c = got.counter;
-    await withTransaction(async (db) => {
-      await keys.patchKeyWith(db, entity_id, minted.jti, {
-        counter: id,
-        till: { id, issued: Number(c.next) > 1, at: new Date().toISOString() }
+    try {
+      await withTransaction(async (db) => {
+        await keys.patchKeyWith(db, entity_id, minted.jti, {
+          counter: id,
+          till: { id, issued: Number(c.next) > 1, at: new Date().toISOString() }
+        });
+        await patchCounter(db, entity_id, id, { held_by: minted.jti, held_at: new Date().toISOString(), opened_at: new Date().toISOString() });
       });
-      await patchCounter(db, entity_id, id, { held_by: minted.jti, held_at: new Date().toISOString(), opened_at: new Date().toISOString() });
-    });
+    } catch (e) {
+      /* LV (lensVerify3): the bind failed after the key was minted - close the key and free the pending hold, never leave a live key on no counter */
+      await abandonMinted(entity_id, minted, id, nonce);
+      throw e;
+    }
     res.json({ key: minted.key, counter: Object.assign(view(Object.assign({}, c, { held_by: minted.jti }), [minted]), { state: 'open' }) });
   } catch (e) {
     problem(req, res, words.counterFault(e, req, 'Failed'));

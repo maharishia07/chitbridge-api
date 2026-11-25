@@ -35,7 +35,7 @@ require.cache[rlPath].exports = tagged;
 /* ── server.js, without listening (tools/load-app.cjs) ───────────────────────────────────────────────────────── */
 const app = loadApp();
 
-const isGlobal = (fn) => !!fn.__limiter && /Please try again in 15 minutes/.test(JSON.stringify(fn.__limiter.message || ""));   // the blanket /api one
+const isGlobal = (fn) => !!fn.__limiter && /Please try again in 15 minutes|asked for a lot in a short time|Too many requests from this network/.test(JSON.stringify(fn.__limiter.message || ""));   // the blanket /api ones: per person (api-global) and per address (api-ip-ceiling), T-F-02
 const GUARD_NAME = /^(auth|customerAuth|requireScope|admin|requireAdmin|authenticate|verifyToken|requireAuth|authed|requireRole)$/;
 const guardish = (fn) => fn.__guard || GUARD_NAME.test(fn.name || '');
 
@@ -136,7 +136,7 @@ it('signed-in traffic is not throttled by the new limiters: renew / logout / ses
   });
   const OWN = ['/api/books/year/:fy/reopen', '/api/books/periods/:fy/:p/reopen', /* rate_limited: the two reopens have their own 10 a minute per business (routes/books.js reopenLimiter) */ '/api/chits/jobs/open', '/api/chits/holds', '/api/chits/my-work', '/api/chits/hand-over-all', '/api/crm/followups', /* API-1118-REPORTED: signed-in doors with their OWN per-business budget (lib/rate-limit namedLimiter: 120, 120 per person, 30, 30 a minute) */ /* ASSIGN-1 + column 16: a signed-in door with its OWN limiter (10 a minute per business, routes/chits-jobs.js), by design */ '/api/till', '/api/offers', '/api/pricing', '/api/invoice', '/api/integrations', '/api/products', '/api/ctp', '/api/assist', '/api/governance/ai-draft', '/api/connectors/reissue-code', '/api/connectors/:actorId/erp-test', '/api/catalogue', '/deliver', '/query'];
   const guarded = leaves.filter((l) => guardedBy(l) && !OWN.some((p) => l.path === p || l.path.startsWith(p + '/')));
-  const M06 = ['POST /api/signin/pin', 'POST /api/actors/set-pin',   // signed-in but PIN-guessing doors: M06 put them in authLimiter on purpose
+  const M06 = ['POST /api/signin/pin', 'POST /api/actors/set-pin', 'POST /api/signin/provider/link/start', 'DELETE /api/signin/provider/links/:link_id', /* SEC-112 connect: re-proof doors (PIN or code guesses) */   // signed-in but PIN-guessing doors: M06 put them in authLimiter on purpose
     'POST /api/channels/:id/approve', 'POST /api/channels/:id/template-approve', 'POST /api/channels/:id/revoke'];   // R2-09: platform-key doors (x-cb-admin-key guesses), no signed-in user; they share the sign-in budget on purpose
   const newlyLimited = guarded.filter((l) => !M06.includes(key(l))).filter((l) => limitersFor(l).some((e) => e.fn.__limiter.max <= 30 || /Too many attempts/.test(JSON.stringify(e.fn.__limiter.message || ''))));
   assert.deepStrictEqual(newlyLimited.map(key), [], 'a signed-in route sits behind a strict public limiter');

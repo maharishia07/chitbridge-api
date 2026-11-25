@@ -30,7 +30,7 @@ t('the program serves it at the web\'s own path and refreshes it with the kit', 
 t('the kit zip carries it', () => assert.ok(/'till-dayrep\.js'/.test((read(path.join(API, 'routes', 'integrations.js')).match(/const KIT_NAMES = \[([^\]]*)\]/) || [])[1] || '')));
 t('the offline shelf holds it (the service worker lists it, and the shelf was bumped)', () => {
   const sw = read(path.join(WEB, 'till-sw.js'));
-  assert.ok(/'\/app\/till-dayrep\.js'/.test(sw) && /cb-till-v9/.test(sw));
+  assert.ok(/'\/app\/till-dayrep\.js'/.test(sw) && /cb-till-v11/.test(sw));
 });
 t('the page loads it before its main script, with the missing-file hook', () => {
   const page = read(path.join(KIT, 'till.html'));
@@ -42,7 +42,7 @@ t('the page loads it before its main script, with the missing-file hook', () => 
 console.log('\n== till-dayrep · the sums, as the bills were issued ==\n');
 const ctx = vm.createContext({
   esc: (s) => String(s), money: (n) => 'Rs ' + n, rmoney: (n) => Math.round(n * 100) / 100, r2: (n) => Math.round(n * 100) / 100,
-  hhmm: () => '10:00', bohniOf: () => null, schemeWord: () => 'GST', cbQuiet: () => {}, window: {}
+  hhmm: () => '10:00', bohniOf: () => null, schemeWord: () => 'GST', cbQuiet: () => {}, isReturnRow: (b) => !!(b && b.kind === 'credit_note'), window: {}
 });
 vm.runInContext(part, ctx);
 t('1 bill / 2 bills: no table says "1 bills"', () => { assert.strictEqual(ctx.dayRepCount(1, 'bill', 'bills'), '1 bill'); assert.strictEqual(ctx.dayRepCount(2, 'bill', 'bills'), '2 bills'); });

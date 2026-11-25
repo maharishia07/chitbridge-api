@@ -1,4 +1,4 @@
-// OWNS      the provider-sign-in doors of P0: GET /api/signin/providers, GET /api/signin/provider/:key/start, GET /api/signin/provider/:key/callback
+// OWNS      the provider-sign-in doors (and the connect step's three signed-in routes, handlers in routes/signin-provider-connect.js): GET /api/signin/providers, GET /api/signin/provider/:key/start, GET /api/signin/provider/:key/callback, POST /api/signin/provider/handoff (P1a, routes/signin-provider-handoff.js)
 // FLOW      page ──▶ start (device id, next) ──▶ start row + __Host-cb_sso ──▶ 302 provider ──▶ callback (cookie → row, code exchange, ID token checks, link lookup) ──▶ handoff row ──▶ 302 web #h=<one-time code>
 // CALLED BY server.js (mounted at /api/signin BEFORE routes/signin.js) · the web's sign-in page (P1a)
 // CARD      18-identity-sign-in-and-access/sign-in
@@ -25,6 +25,14 @@ const pending = require('../lib/signin-pending');
 const store = require('../lib/signin-provider-store');
 const { deviceIdOf } = require('../lib/person-session');
 const { contract } = require('../lib/signin-provider-contract');
+const { schemaOptions } = require('../lib/signin-contract');
+const { handoff } = require('./signin-provider-handoff');
+const connect = require('./signin-provider-connect');
+const auth = require('../middleware/auth');
+const { declaresStatuses } = require('../lib/contract-kit'); /* names the statuses a handler answers through a table or a helper in its own file (the register reads text, not tables) */
+
+/** a key cannot connect a provider: a person does (as every session route) */
+const personOnly = (req, res, next) => (req.api_key ? problem(req, res, { status: 403, code: 'KEY_CANNOT_SIGN_IN', detail: 'A key cannot sign in — sign in.' }) : next());
 
 const COOKIE = '__Host-cb_sso';
 const COOKIE_SECONDS = 600;
@@ -100,6 +108,19 @@ async function startChecks(req, row) {
   return { device, next };
 }
 
+/** the extra fields a connect-step visit adds to the start row: {} when there is no `lt`, null when the `lt` is spent, foreign or for another device */
+async function linkingOf(req, checks, row) {
+  const linkToken = typeof req.query.lt === 'string' ? req.query.lt : '';
+  if (!linkToken) return {};
+  return (await connect.takeLinkStart(linkToken, checks.device, row.key)) || null;
+}
+
+/** the callback of a connect-step visit: no session here and nothing written; a refusal word, or a one-time confirm code for the signed-in session */
+async function finishLinkVisit(res, started, claims, req) {
+  const done = await connect.finishLink(started, claims, req);
+  return res.redirect(302, provider.webSigninUrl() + (done.code ? '#k=' + encodeURIComponent(done.code) : '#c=' + encodeURIComponent(done.word)));
+}
+
 /* 2 · start: a top-level visit from the page */
 // @does A provider key, this device's id and a page to return to -> we write a one-use start row and send the browser to the provider (or back to the sign-in page with a reason) -> a redirect.
 router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start'), async (req, res) => {
@@ -109,9 +130,12 @@ router.get('/provider/:key/start', ...contract.checked('GET /provider/:key/start
   const checks = await startChecks(req, row);
   if (checks.refusal) return refuseVisit(req, res, checks.refusal);
   try {
+    /* connect step: an `lt` (from the signed-in re-proof) turns this visit into a LINK for that one account; a spent, foreign or other-device lt is a finished sign-in */
+    const linking = await linkingOf(req, checks, row);
+    if (!linking) return refuseVisit(req, res, 'SSO_HANDOFF');
     const started = await provider.authRequest(row.key);
     const ref = provider.randomRef();
-    await pending.put('start', ref, { provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next });
+    await pending.put('start', ref, Object.assign({ provider: row.key, state: started.state, nonce: started.nonce, verifier: started.verifier, device_id: checks.device, intent: 'signin', next: checks.next }, linking));
     setCookie(res, ref);
     return res.redirect(302, started.url);
   } catch (failure) {
@@ -174,6 +198,7 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
   if (spent.refusal) return refuseVisit(req, res, spent.refusal);
   const answer = await checkAnswer(row, req.query, spent.started);
   if (answer.refusal) return refuseVisit(req, res, answer.refusal);
+  if (spent.started.intent === 'link') return finishLinkVisit(res, spent.started, answer.claims, req);
   try {
     const code = await keepHandoff(row, spent.started, answer.claims);
     return res.redirect(302, provider.webSigninUrl() + '#h=' + encodeURIComponent(code));
@@ -182,6 +207,20 @@ router.get('/provider/:key/callback', ...contract.checked('GET /provider/:key/ca
     return refuseVisit(req, res, 'PROVIDER_OFF');
   }
 });
+
+/* 4 · handoff: the page swaps the one-time #h= code for the session (P1a); the session is in the body, never an address */
+// @does A one-time code from the provider hand-off and this device's id -> we spend the code, find the one account connected to that provider identity and start its session -> the same answer as the code sign-in, or a refusal in words.
+router.post('/provider/handoff', declaresStatuses([401, 403, 404, 503]) /* the door table (lib/signin-provider-door STATUS): spent code 401, not linked or refused 403, provider off 404, our fault 503 */, ...contract.checked('POST /provider/handoff', schemaOptions), handoff);
+
+/* 5-7 · connect: a signed-in person links a provider to their own account (re-proof every time), lists the links, unlinks */
+// @does Nothing in (signed-in person) -> we read the provider accounts this person has connected and which providers can be connected here -> the links (never a subject or issuer), the providers and the re-proof the person can give.
+router.get('/provider/links', auth, personOnly, ...contract.checked('GET /provider/links', schemaOptions), connect.list);
+// @does A provider and the person's PIN or a fresh code (signed-in person) -> we re-check the person and make a one-use address that starts connecting that provider to this account -> the address, or a refusal in words.
+router.post('/provider/link/start', auth, personOnly, declaresStatuses([404]) /* the provider is off or cannot connect (PROVIDER_OFF) */, ...contract.checked('POST /provider/link/start', schemaOptions), connect.startLink);
+// @does The one-time code from the connect step (signed-in person) -> we check it is this person's own session and device and write the link -> a done answer, or a refusal in words.
+router.post('/provider/link/finish', auth, personOnly, ...contract.checked('POST /provider/link/finish', schemaOptions), connect.confirmLink);
+// @does A link id and the person's PIN or a fresh code (signed-in person) -> we disconnect that provider account unless it is the only way in or the business requires it -> a done answer, or a refusal in words.
+router.delete('/provider/links/:link_id', auth, personOnly, ...contract.checked('DELETE /provider/links/:link_id', schemaOptions), connect.unlink);
 
 router.openapi = { paths: contract.pathsOf(), schemas: {} };
 module.exports = router;

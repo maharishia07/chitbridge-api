@@ -110,6 +110,26 @@
  "cannot_answer_about": "error_tests exemption (API-STANDARD S33-S38, critic 6 Nov 2026 section 5): a status a route declares (the register implies 404 on every route with a : in its path, and 500 on every route) but can never answer, so no test can ever show it. Each entry names a route, the status and the reason; reviewed by cb-api. Read only by the error_tests column; status_codes is judged as before.",
  "cannot_answer": [
   {
+   "route": "GET /api/signin/provider/links",
+   "status": 500,
+   "reason": "the handler is wrapped by guarded() in routes/signin-provider-connect.js, which turns every fault into the one 503 SIGNIN_UNAVAILABLE in true words (never a crash, never a 500), so no request can provoke a 500; the 503 is tested"
+  },
+  {
+   "route": "POST /api/signin/provider/link/start",
+   "status": 500,
+   "reason": "the handler is wrapped by guarded() in routes/signin-provider-connect.js, which turns every fault into the one 503 SIGNIN_UNAVAILABLE in true words (never a crash, never a 500), so no request can provoke a 500; the 503 is tested"
+  },
+  {
+   "route": "POST /api/signin/provider/link/finish",
+   "status": 500,
+   "reason": "the handler is wrapped by guarded() in routes/signin-provider-connect.js, which turns every fault into the one 503 SIGNIN_UNAVAILABLE in true words (never a crash, never a 500), so no request can provoke a 500; the 503 is tested"
+  },
+  {
+   "route": "DELETE /api/signin/provider/links/:link_id",
+   "status": 500,
+   "reason": "the handler is wrapped by guarded() in routes/signin-provider-connect.js, which turns every fault into the one 503 SIGNIN_UNAVAILABLE in true words (never a crash, never a 500), so no request can provoke a 500; the 503 is tested"
+  },
+  {
    "route": "GET /api/signin/providers",
    "status": 500,
    "reason": "the handler catches every fault (a failed store check or list) and answers 200 with an empty list by design, so the sign-in page is never broken; the only fault left is Express failing to write, which no request can provoke, so no test can show a 500"

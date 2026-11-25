@@ -106,7 +106,7 @@ const TIER_B = [
  * somebody lifted it out, so adding one is a decision about the package, not about an import.
  */
 const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', './versionref',
-                                    './handle', './bridgeid', 'crypto']);
+                                    './handle', './bridgeid', './units', 'crypto']);
 
 /**
  * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING
@@ -163,6 +163,7 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
      the balance is kept and holds the one transaction that moves the log and the cache together. The interesting
      rule it owns is not a business rule at all — it is the row lock, and a lock is infrastructure. */
   'stock-store.js',
+  'stock-below-zero.js',   /* AT-F-03: the refusal of used-more-than-on-hand, under the balance lock (reads stock_movement) */
   /* ADOPTION: it reads a CHIT and says which movements it implies. That is shape-reading plus one business
      rule ("stock moves when goods move"), and the rule lives in its header rather than in an algorithm —
      no arithmetic, no state. If the chit shape changed tomorrow this file changes and nothing else does,
@@ -172,6 +173,8 @@ const ADOPTION_LIBS = [   // could be someone else's — see ENGINE-CORE.md "Wha
   'default-tax-rate.js', /* WALK-D: a registered shop's new product takes the pack's standard_rate; the rate is the pack's, the engine prices */
   /* CTR-178: finds a counter bill with no stock movement and posts it again — the books sweep's pattern, CB's own rule, no arithmetic */
   'stock-sweep.js',
+  'stock-void.js', /* AU-F-01: a withdrawn goods receipt's movements given back through stock-store.post - reads stock_movement, decides no money */
+  'stock-post-lines.js', /* SPEED 1129 (stock-post-lines): one bill's stock lines through the guard and the store on one handle - the post loop's body, no arithmetic of its own */
   /* ADOPTION (R104, 24 Oct): stocked.js — is this item COUNTED as stock at all? The trade's answer (catalogue-blueprint.forVertical via
      govresolve.verticalOf) overridden by the item's own item_data.stocked, read in ONE query with batch_tracked. CB's own decision, the
      same kind as bill-use (whether it is stock); it sits here and not in the adopted lotfields.js because that file is engines'. */
@@ -271,7 +274,7 @@ const INFRA_LIBS = [
   'pricing-contract.js',
   /* API-4 sweep, chits: the contract of the chit routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the rail: sending, sealing and the status writer are not in it. (2026-10-23) */
   'chits-contract.js',
-  'chits-input.js', 'chits-parts.js',
+  'chits-input.js', 'chits-parts.js', 'chits-cancel-flag.js',
   /* API-4 sweep, orders: the contract of the repeat-supply, work and counters routes (their OpenAPI operations and the words of their refusals) — the contract of a door, not a rule of the platform. (2026-10-23) */
   'orders-contract.js',
   /* API-4 sweep, the schema engine: the contract of routes/schemas.js (its OpenAPI operations, the words of its refusals and the old 400 of its three chains) — the contract of a door, not a rule of the platform. tests/api-problem-schemas.test.cjs */
@@ -352,9 +355,9 @@ const INFRA_LIBS = [
   'books-reconcile.js',
   'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
-  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js',
+  'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js', 'books-locked-wait.js', 'books-waiting-row.js', 'books-bill-order.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
-  'books-cashflow.js',
+  'books-cashflow.js', 'books-side-items.js', /* SPEED 1129: which party items a control account's reader loads (open documents from today, every row for a past day): a choice of rows, no figure */
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
   'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
@@ -364,6 +367,7 @@ const INFRA_LIBS = [
   'sides.js', 'impact.js',
   /* [CB CRM] the party read model (assembled from the two lists, nothing stored) and the log / follow-up stores with their nightly sweep — SQL and the bell, no pure rule */
   'crm.js', 'crm-followups.js', 'memberships.js', 'crm-calls.js', 'crm-leads.js', 'crm-groups.js', 'marketing-results.js',   /* T3-P2-CRM: segments & groups counted from lib/crm's rows, the group writes, the group send — SQL + the one gate, not an engine */
+  'shop-day-ahead.js',   /* AT-F-04: is a typed date past the shop's today (shop clock + zone) */
   'privacy.js',   /* CO1: consent rows (b306) + the request register (b307) — SQL through the CRM's handle; the gate (mayMessage) is pure but tiny, not an engine */   /* L3: leads from a CSV — SQL over the lists + the one phone helper; the pure half (normalise · plan) is tested, not an engine */
   /* maps journal entries onto the Tally adapter's builders for the pack — writes no Tally XML of its own (critic M7) */
   'books-tally.js',
@@ -538,7 +542,7 @@ const INFRA_LIBS = [
   /* INFRA, THE SAME TEST (2026-10-02): `issued-invoice.js` holds only the CHECK that compares the server's recompute with
      the invoice the counter computed (CBTax.determine) — it names a difference and never returns a figure anyone posts. The
      place-of-supply rule is the engine's (lib/tax.js placeOfSupply). It asserts no rate of CB's own. */
-  'issued-invoice.js',     // the check that only names a difference
+  'issued-invoice.js', 'counter-kinds.js', // the check that only names a difference · AG-F-01: a counter bill's tax kind read from the catalogue (stamp at send, adopt into _cb.kinds)
   /* INFRA, THE SAME TEST (CTRY-76, 2026-10-30): `bill-paper.js` reads the SHOP's pack (country.packFor → pack.taxInvoice) over the
      frozen invoice's own figures and says held / refused for the buyer line; it asserts no threshold, rate or sentence of CB's own.
      Replaced by one CBInvoice.build call when the api adopts engines invoice.js (PLAN-AU-PILOT PR-A1). */
@@ -655,7 +659,7 @@ const ENGINE_OTHER = [
   /* ⭐⭐ [TILL-107] — the two trade blueprints and their product-code sequence, and the ONE path that writes a
      product into a catalogue. catalogue-write is CB's own sequence of decisions (declare → validate → stamp
      → insert → meter), extracted from routes/products.js when the counter became a second caller. */
-  'catalogue-blueprint.js', 'catalogue-write.js',
+  'catalogue-blueprint.js', 'catalogue-write.js', 'catalogue-rate-menu.js',
   /* ⭐⭐ [TILL-122] — the day/week/month rollup. CB's own rule about what a return does to a day's figures,
      extracted for the same reason catalogue-write was: the counter became a second caller. Athi: *"this can be
      kept in local and also in server."* It is vendored byte-equal into the kit, so the shop PC folds its own
@@ -955,6 +959,8 @@ const ENGINE_OTHER = [
 ];
 /** Not yet classified. Keep this SMALL and shrinking. Empty is the goal, not the requirement. */
 const PENDING_LIBS = [
+  /* red1129 (22 Nov): modules the batch-1129 lanes added with no bucket. Same rule: cb-capability decides engine / adoption / infra; listed here, said, never silently unclassified. */
+  'bill-number-taken.js', 'books-bill-ref.js', 'books-duplicate.js', 'chit-proposal-money.js', 'creator-edit.js', 'delivery-closed.js', 'home-facts-sold.js', 'policy-stock.js', 'reg-in-movein.js', 'request-log.js', 'signin-provider-door.js', 'signin-provider-link.js', 'stock-oversell.js',
   /* red1128 (21 Nov): modules the batch-1128 lanes added with no bucket. Whether each is engine, adoption or infra is cb-capability's call; listed here, said, never silently unclassified. */
   'account-budget.js', 'client-ip.js', 'einvoice-note.js', 'holds-stock.js', 'match-hold.js', 'message-client-id.js', 'return-overdue.js', 'shop-country.js', 'supplier-list.js',
   /* FIN-58 (2026-11-07): the 'UPI waiting' system party and its flip. It settles through the ONE payment path, but whether the

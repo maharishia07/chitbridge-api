@@ -17,7 +17,7 @@ const NZ = 'a1111111-1111-4111-8111-111111111111', AU = 'a2222222-2222-4222-8222
 const COUNTRY = { [NZ]: 'NZ', [AU]: 'AU' };
 const q = async (sql, p) => {
   const s = String(sql).replace(/\s+/g, ' ');
-  const rows = /^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s) ? p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: '123456789', display_name: 'x', policy_flags: {}, country: COUNTRY[id] })) : [];
+  const rows = /^SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY/.test(s) ? p[0].filter((id) => COUNTRY[id]).map((id) => ({ identity_id: id, gstn: '123456789', display_name: 'x', policy_flags: {}, country: COUNTRY[id] })) : [];
   return { rows, rowCount: rows.length };
 };
 const dbId = require.resolve(root('db/index.js'));
@@ -30,7 +30,7 @@ const chits = require(root('routes/chits'));
 let n = 0;
 const ok = async (what, fn) => { await fn(); n++; console.log('  ok  ' + what); };
 const res = () => ({ locals: {}, statusCode: null, body: null, status(c) { this.statusCode = c; return this; }, set() { return this; }, json(b) { this.body = b; return this; } });
-const stateOf = (who) => ({ sellerId: who, sender_id: who, purpose: 'invoice', business_json: {}, currency_code: 'NZD', toIds: [], orderLike: false, is_draft: false, line_items: [{ particulars: 'Flat white', quantity: 2, price: 5 }], receiverDetails: [] });
+const stateOf = (who) => ({ sellerId: who, sender_id: who, purpose: 'invoice', business_json: {}, currency_code: 'NZD', toIds: [], orderLike: false, is_draft: false, line_items: [{ particulars: 'Flat white', quantity: 2, price: 5, gst_rate: 10 }], receiverDetails: [] });
 
 (async () => {
   await ok('UC-CC-020: a NZ shop (no pack) sells: sendMoney does not refuse, money is null, the notice and tax_checked:false are carried', async () => {

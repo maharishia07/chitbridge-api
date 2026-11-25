@@ -27591,6 +27591,136 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "payment-amount-decimal-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Send the amount in the smallest unit",
+      "message": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "type": "https://chitbridge.com/problems/amount_in_minor",
+      "title": "Send the amount in the smallest unit",
+      "status": 400,
+      "code": "AMOUNT_IN_MINOR",
+      "detail": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "hint": "Use amount_minor; a decimal amount is not read.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Send the amount in the smallest unit",
+      "message": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "type": "https://chitbridge.com/problems/amount_in_minor",
+      "title": "Send the amount in the smallest unit",
+      "status": 400,
+      "code": "AMOUNT_IN_MINOR",
+      "detail": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "hint": "Use amount_minor; a decimal amount is not read.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "payment-amount-float-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Send the amount in the smallest unit",
+      "message": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "type": "https://chitbridge.com/problems/amount_in_minor",
+      "title": "Send the amount in the smallest unit",
+      "status": 400,
+      "code": "AMOUNT_IN_MINOR",
+      "detail": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "hint": "Use amount_minor; a decimal amount is not read.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Send the amount in the smallest unit",
+      "message": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "type": "https://chitbridge.com/problems/amount_in_minor",
+      "title": "Send the amount in the smallest unit",
+      "status": 400,
+      "code": "AMOUNT_IN_MINOR",
+      "detail": "Send the amount as amount_minor, a whole number in the smallest unit (50050 for 500.50), not a decimal.",
+      "hint": "Use amount_minor; a decimal amount is not read.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "payment-amount-and-minor-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Send one amount",
+      "message": "Send the amount once, as amount_minor (the smallest unit, a whole number).",
+      "type": "https://chitbridge.com/problems/amount_in_minor",
+      "title": "Send the amount in the smallest unit",
+      "status": 400,
+      "code": "AMOUNT_IN_MINOR",
+      "detail": "Send the amount once, as amount_minor (the smallest unit, a whole number).",
+      "hint": "Use amount_minor; a decimal amount is not read.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Send one amount",
+      "message": "Send the amount once, as amount_minor (the smallest unit, a whole number).",
+      "type": "https://chitbridge.com/problems/amount_in_minor",
+      "title": "Send the amount in the smallest unit",
+      "status": 400,
+      "code": "AMOUNT_IN_MINOR",
+      "detail": "Send the amount once, as amount_minor (the smallest unit, a whole number).",
+      "hint": "Use amount_minor; a decimal amount is not read.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "payment-amount-minor-fraction-refused",
+     "status": 400,
+     "body_keys": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount_minor",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount_minor must be a integer.",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount_minor",
+      "errors": [
+       {
+        "field": "amount_minor",
+        "code": "WRONG_VALUE",
+        "detail": "amount_minor must be a integer."
+       }
+      ]
+     },
+     "fixture": {
+      "error": "Validation failed",
+      "details": [
+       {
+        "field": "amount_minor",
+        "message": "Invalid value"
+       }
+      ],
+      "type": "https://chitbridge.com/problems/chit_invalid",
+      "title": "Chit details not valid",
+      "status": 400,
+      "code": "CHIT_INVALID",
+      "detail": "amount_minor must be a integer.",
+      "hint": "Read the list of fields it names, fix them and try again.",
+      "request_id": "req-test",
+      "field": "amount_minor",
+      "errors": [
+       {
+        "field": "amount_minor",
+        "code": "WRONG_VALUE",
+        "detail": "amount_minor must be a integer."
+       }
+      ]
+     }
     }
    ]
   },
@@ -30841,6 +30971,62 @@
       "message": "Say why you are rejecting this bill — the reason goes on the bill.",
       "why": "reason_required"
      }
+    },
+    {
+     "scenario": "status-count-moved",
+     "status": 409,
+     "body_keys": {
+      "error": "The count moved",
+      "message": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "counted_minor": 250000,
+      "type": "https://chitbridge.com/problems/count_moved",
+      "title": "The count moved",
+      "status": 409,
+      "code": "COUNT_MOVED",
+      "detail": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "hint": "Open the bill again to see the new figure.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The count moved",
+      "message": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "counted_minor": 250000,
+      "type": "https://chitbridge.com/problems/count_moved",
+      "title": "The count moved",
+      "status": 409,
+      "code": "COUNT_MOVED",
+      "detail": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "hint": "Open the bill again to see the new figure.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "status-count-gone",
+     "status": 409,
+     "body_keys": {
+      "error": "The count moved",
+      "message": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "counted_minor": null,
+      "type": "https://chitbridge.com/problems/count_moved",
+      "title": "The count moved",
+      "status": 409,
+      "code": "COUNT_MOVED",
+      "detail": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "hint": "Open the bill again to see the new figure.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "The count moved",
+      "message": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "counted_minor": null,
+      "type": "https://chitbridge.com/problems/count_moved",
+      "title": "The count moved",
+      "status": 409,
+      "code": "COUNT_MOVED",
+      "detail": "The count has changed since you looked, so nothing was accepted. Open the bill again to see the new figure.",
+      "hint": "Open the bill again to see the new figure.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -31257,6 +31443,32 @@
       "error": "Search failed",
       "message": "Something went wrong — please try again."
      }
+    },
+    {
+     "scenario": "availability-suspended-member",
+     "status": 403,
+     "body_keys": {
+      "error": "Membership suspended",
+      "message": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "type": "https://chitbridge.com/problems/membership_suspended",
+      "title": "Membership suspended",
+      "status": 403,
+      "code": "MEMBERSHIP_SUSPENDED",
+      "detail": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "hint": "Ask the network to resume it, then send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Membership suspended",
+      "message": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "type": "https://chitbridge.com/problems/membership_suspended",
+      "title": "Membership suspended",
+      "status": 403,
+      "code": "MEMBERSHIP_SUSPENDED",
+      "detail": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "hint": "Ask the network to resume it, then send again.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -31334,6 +31546,32 @@
      "fixture": {
       "error": "Load failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "stores-suspended-member",
+     "status": 403,
+     "body_keys": {
+      "error": "Membership suspended",
+      "message": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "type": "https://chitbridge.com/problems/membership_suspended",
+      "title": "Membership suspended",
+      "status": 403,
+      "code": "MEMBERSHIP_SUSPENDED",
+      "detail": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "hint": "Ask the network to resume it, then send again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Membership suspended",
+      "message": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "type": "https://chitbridge.com/problems/membership_suspended",
+      "title": "Membership suspended",
+      "status": 403,
+      "code": "MEMBERSHIP_SUSPENDED",
+      "detail": "This business is suspended from its network, so it cannot see the stores or stock of that network until it is resumed.",
+      "hint": "Ask the network to resume it, then send again.",
+      "request_id": "req-test"
      }
     }
    ]
@@ -33525,6 +33763,28 @@
        }
       ]
      }
+    },
+    {
+     "scenario": "respond-by-staff",
+     "status": 403,
+     "body_keys": {
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the business owner can answer a connection request. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the business owner can answer a connection request. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
     }
    ]
   },
@@ -35244,6 +35504,18 @@
      "fixture": {
       "error": "Acceptance failed",
       "message": "Something went wrong — please try again."
+     }
+    },
+    {
+     "scenario": "acceptance-of-a-shop-not-on-your-lists",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such supplier"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such supplier"
      }
     }
    ]
@@ -62814,11 +63086,25 @@
      "status": 422,
      "body_keys": {
       "error": "Incomplete rule",
-      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+      "message": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Incomplete rule",
-      "message": "Percent off is needed — the name is not the rule. Type the percentage (e.g. 10)."
+      "message": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "Percent off is needed — the name is not the rule. Type the percentage between 0 and 100 (e.g. 10).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -63170,11 +63456,25 @@
      "status": 422,
      "body_keys": {
       "error": "Incomplete rule",
-      "message": "The rate is needed (0 for a zero-rated slab)."
+      "message": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      },
      "fixture": {
       "error": "Incomplete rule",
-      "message": "The rate is needed (0 for a zero-rated slab)."
+      "message": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "type": "https://chitbridge.com/problems/definition_incomplete",
+      "title": "Rule has no value",
+      "status": 422,
+      "code": "DEFINITION_INCOMPLETE",
+      "detail": "The rate is needed, between 0 and 100 (0 for a zero-rated slab).",
+      "hint": "Fill in the value, then save again.",
+      "request_id": "req-test"
      }
     },
     {
@@ -69824,50 +70124,18 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       },
-       {
-        "field": "marks",
-        "code": "MISSING_FIELD",
-        "detail": "marks is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "Some of what was sent is missing or not valid.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       },
-       {
-        "field": "marks",
-        "code": "MISSING_FIELD",
-        "detail": "marks is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      }
     },
     {
@@ -70080,40 +70348,18 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      }
     },
     {
@@ -75708,40 +75954,18 @@
     },
     {
      "scenario": "staff-asks",
-     "status": 422,
+     "status": 403,
      "body_keys": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      },
      "fixture": {
-      "type": "https://chitbridge.com/problems/invalid_input",
-      "title": "Input not valid",
-      "status": 422,
-      "code": "INVALID_INPUT",
-      "detail": "account is needed.",
-      "hint": "Fix the fields listed and send it again.",
-      "request_id": "req-test",
-      "field": "account",
-      "errors": [
-       {
-        "field": "account",
-        "code": "MISSING_FIELD",
-        "detail": "account is needed."
-       }
-      ]
+      "error": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "message": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation.",
+      "may": false,
+      "why": "Only the owner or the shop's accountant or bookkeeper may keep or sign off a bank reconciliation."
      }
     },
     {
@@ -78078,6 +78302,506 @@
       "status": 400,
       "code": "BOOKS_BAD_REQUEST",
       "detail": "Which financial year? e.g. 2026-27.",
+      "hint": "Read the question shown and answer it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/books/backfill": {
+   "answers": [
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books/backfill": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 422,
+     "body_keys": {
+      "code": "BOOKS_START_DATE",
+      "error": "Choose the day your books start, like 2026-07-01.",
+      "message": "Choose the day your books start, like 2026-07-01.",
+      "type": "https://chitbridge.com/problems/books_start_date",
+      "title": "Books start date",
+      "status": 422,
+      "detail": "Choose the day your books start, like 2026-07-01.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "code": "BOOKS_START_DATE",
+      "error": "Choose the day your books start, like 2026-07-01.",
+      "message": "Choose the day your books start, like 2026-07-01.",
+      "type": "https://chitbridge.com/problems/books_start_date",
+      "title": "Books start date",
+      "status": 422,
+      "detail": "Choose the day your books start, like 2026-07-01.",
+      "hint": "Check what was sent and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "type": "https://chitbridge.com/problems/token_missing",
+      "title": "Token missing",
+      "status": 401,
+      "code": "TOKEN_MISSING",
+      "detail": "No token provided",
+      "hint": "Sign in, then try again.",
+      "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "POST /api/books/events/batch": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Only the owner may do this.",
+      "message": "Only the owner may do this.",
+      "type": "https://chitbridge.com/problems/owner_only",
+      "title": "Owner only",
+      "status": 403,
+      "code": "OWNER_ONLY",
+      "detail": "Only the owner may do this.",
+      "hint": "Ask the owner of the shop to do it.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Send between 1 and 100 events.",
+      "message": "Send between 1 and 100 events.",
+      "type": "https://chitbridge.com/problems/books_bad_request",
+      "title": "Ledger needs an answer",
+      "status": 400,
+      "code": "BOOKS_BAD_REQUEST",
+      "detail": "Send between 1 and 100 events.",
+      "hint": "Read the question shown and answer it.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Send between 1 and 100 events.",
+      "message": "Send between 1 and 100 events.",
+      "type": "https://chitbridge.com/problems/books_bad_request",
+      "title": "Ledger needs an answer",
+      "status": 400,
+      "code": "BOOKS_BAD_REQUEST",
+      "detail": "Send between 1 and 100 events.",
       "hint": "Read the question shown and answer it.",
       "request_id": "req-test"
      }

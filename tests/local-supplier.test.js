@@ -306,7 +306,7 @@ it('⭐⭐⭐ nothing mints a chit except sendChit', () => {
    * ⚠️ The risk is the ordinary one: the day sendChit gains a rule, these two stop obeying it and say nothing.
    * ⭐ THE LIST ONLY EVER SHRINKS. Anything new that appears here is a second construct being born.
    */
-  const DECLARED = ['cap-readiness.js'];
+  const DECLARED = ['cap-readiness.js', 'cap-readiness-ai.js']; /* the same declared exception: websplit B moved the readiness chit lines verbatim into the AI half (cap-readiness-ai.js); no new construct */
   const dir = path.join(__dirname, '..', '..', 'chitbridge-web', 'public', 'app');
   if (!fs.existsSync(dir)) return;                    /* API repo checked out alone — nothing to check */
   const mints = fs.readdirSync(dir)

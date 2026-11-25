@@ -60,9 +60,9 @@
   },
   "DELETE /api/definitions/:id": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "DELETE /api/folders/:id": {
    "output_allowlist": true,
@@ -104,14 +104,17 @@
    "junk_fuzz": true
   },
   "DELETE /api/relationships/suppliers/:id": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "DELETE /api/schemas/fields/:field_key": {
    "foreign_id_404": true,
    "output_allowlist": true,
    "junk_fuzz": true
+  },
+  "DELETE /api/signin/provider/links/:link_id": {
+   "output_allowlist": true
   },
   "GET /.well-known/ctp.json": {
    "output_allowlist": true
@@ -228,6 +231,10 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true
+  },
+  "GET /api/books/backfill": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "GET /api/books/bank/log": {
    "output_allowlist": true,
@@ -704,14 +711,14 @@
   },
   "GET /api/definitions": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/definitions/:id": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "GET /api/entities/constitutions": {
    "junk_fuzz": true,
@@ -1005,40 +1012,40 @@
    "junk_fuzz": true
   },
   "GET /api/network-design": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/network-design/availability": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/network-design/stores": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/network-offers": {
    "output_allowlist": true,
    "junk_fuzz": true
   },
   "GET /api/network/entities/:id/connections": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "GET /api/network/entities/:id/subtree": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "GET /api/network/entities/lookup": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/network/place": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/notifications": {
    "output_allowlist": true,
@@ -1116,42 +1123,42 @@
   },
   "GET /api/relationships/customers": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/relationships/customers/:id/rewards": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "GET /api/relationships/customers/groups": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/relationships/scorecard": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/relationships/scorecard/:entity_id": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "GET /api/relationships/suppliers": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/relationships/suppliers/:supplier_entity_id/catalogue": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/relationships/suppliers/availability": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/repeat": {
    "output_allowlist": true,
@@ -1180,6 +1187,9 @@
   },
   "GET /api/signin/provider/:key/start": {
    "junk_fuzz": true
+  },
+  "GET /api/signin/provider/links": {
+   "output_allowlist": true
   },
   "GET /api/signin/providers": {
    "junk_fuzz": true,
@@ -1385,9 +1395,9 @@
    "bfla_role_check": true
   },
   "PATCH /api/crm/followups": {
-   "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "PATCH /api/crm/followups/:id": {
@@ -1413,8 +1423,8 @@
   },
   "PATCH /api/entities/profile": {
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "PATCH /api/folders/:id": {
    "output_allowlist": true,
@@ -1442,15 +1452,15 @@
   },
   "PATCH /api/relationships/customers/:id": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "PATCH /api/relationships/suppliers/:id": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "PATCH /api/schemas/fields/:field_key": {
    "foreign_id_404": true,
@@ -1468,7 +1478,8 @@
   "PATCH /api/supplies/:id": {
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PATCH /api/testing/incidents/:id": {
    "foreign_id_404": true,
@@ -1582,18 +1593,25 @@
    "junk_fuzz": true,
    "foreign_id_404": true
   },
+  "POST /api/books/backfill": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
   "POST /api/books/bank/marks": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/bank/statement-files": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings",
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/bank/statements": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/books/check": {
    "output_allowlist": true,
@@ -1646,6 +1664,10 @@
   "POST /api/books/events": {
    "output_allowlist": true,
    "junk_fuzz": true
+  },
+  "POST /api/books/events/batch": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   },
   "POST /api/books/fx-rates": {
    "output_allowlist": true,
@@ -2035,8 +2057,8 @@
    "junk_fuzz": true
   },
   "POST /api/connections/request": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/connectors": {
    "output_allowlist_basis": "recordings",
@@ -2165,13 +2187,13 @@
   },
   "POST /api/definitions": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/definitions/freeze": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/entities/me/preview-token": {
    "output_allowlist": true
@@ -2377,16 +2399,16 @@
   },
   "POST /api/network-design/build": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/network-design/reissue": {
    "output_allowlist": true
   },
   "POST /api/network-design/validate": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/network-offers/:id/choice": {
    "output_allowlist": true,
@@ -2420,54 +2442,54 @@
   },
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "POST /api/network/connections/:id/decline": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "POST /api/network/connections/:id/disconnect": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "POST /api/network/connections/:id/resume": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "POST /api/network/connections/:id/suspend": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true,
    "bfla_role_check": true
   },
   "POST /api/network/entities": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/network/entities/:id/claim": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "POST /api/notifications/dismiss": {
    "output_allowlist": true,
@@ -2555,18 +2577,18 @@
   },
   "POST /api/relationships/customers": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/relationships/customers/:id/groups": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "POST /api/relationships/suppliers": {
    "output_allowlist_basis": "recordings",
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/repeat": {
    "output_allowlist": true,
@@ -2665,6 +2687,15 @@
    "output_allowlist": true,
    "junk_fuzz": true
   },
+  "POST /api/signin/provider/handoff": {
+   "output_allowlist": true
+  },
+  "POST /api/signin/provider/link/finish": {
+   "output_allowlist": true
+  },
+  "POST /api/signin/provider/link/start": {
+   "output_allowlist": true
+  },
   "POST /api/signin/renew": {
    "output_allowlist": true,
    "junk_fuzz": true
@@ -2687,16 +2718,19 @@
   },
   "POST /api/supplies": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/supplies/:id/issue": {
    "output_allowlist": true,
    "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/supplies/purchase": {
    "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "POST /api/tax/compute": {
    "output_allowlist": true,
@@ -2878,11 +2912,13 @@
    "bfla_role_check": true
   },
   "PUT /api/assist/container": {
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PUT /api/assist/region-override": {
    "foreign_id_404": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "bfla_role_check": true
   },
   "PUT /api/catalogue-face": {
    "output_allowlist": true,
@@ -2915,15 +2951,15 @@
    "output_allowlist": true
   },
   "PUT /api/connections/:id/respond": {
+   "junk_fuzz": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "junk_fuzz": true
+   "foreign_id_404": true
   },
   "PUT /api/definitions/:id": {
    "output_allowlist_basis": "recordings",
+   "junk_fuzz": true,
    "foreign_id_404": true,
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "output_allowlist": true
   },
   "PUT /api/entities/populations/:code/desk": {
    "junk_fuzz": true,
@@ -2959,8 +2995,8 @@
    "junk_fuzz": true
   },
   "PUT /api/network-design": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "PUT /api/network-offers/policy": {
    "output_allowlist": true,

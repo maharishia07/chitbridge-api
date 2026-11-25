@@ -15,7 +15,7 @@
  *   F-3  one request of +5 then -8 is judged as stored (5 - 8 = -3 → refused, nothing written); +5 then -5 in one request nets 0 and records
  *   F-4  the floor is per unit: with 12 kg delivered, -2 piece is refused (pieces net 0), and a replayed client_ref of an accepted correction is a 200 replay, never a refusal
  *   W-1  R rejects → R delivers 5: 409 CHIT_CONFLICT why wrong_step, status still rejected, no row; R moves it back to accepted → the same delivery records (5)
- *   W-2  S withdraws (void → S's sent copy cancelled) → S delivers 5: 409, no row; R (whose copy was only asked) still delivers 5
+ *   W-2  S withdraws (void → S's sent copy cancelled) → S delivers 5: 409, no row; R delivers 5: 409 too (BA-F-05: a delivery on a closed order is refused, both sides)
  * CI: picked up by the T2 loop over tests/*-truth.realstack.cjs (seeded api on :3000, TRUTH_DB cb_s41).
  * Run: API_BASE=http://127.0.0.1:3291 TRUTH_DB=postgres://postgres:cblocal@127.0.0.1:55432/cb_local node tests/rail-191-deliver-lines-truth.realstack.cjs   (api started as cb_app)
  */
@@ -123,13 +123,15 @@ async function refused(shop, o, rows, status, code, before) {
     expect((await heldBy(R, o.chit)).net === 5, 'net 5');
   });
 
-  await kase('W-2', 'S withdraws, S delivers: 409, no row; R, whose copy was only asked, still delivers', async () => {
+  await kase('W-2', 'S withdraws, S delivers: 409, no row; R delivers too: 409, the order is closed on both sides', async () => {
     const o = await order('w2');
     expect((await j('/api/chits/' + o.chit + '/void', { method: 'PUT', token: S.token, body: { reason: 'W-2 withdrawn' } })).status === 200, 'S withdraws');
     expect(/sent:cancelled/.test(await statusOf(S, o.chit)), 'S status ' + await statusOf(S, o.chit));
     const r = await refused(S, o, [row(o.sLine, 5)], 409, 'CHIT_CONFLICT', 0);
     expect(r.b.why === 'wrong_step' && /cancelled/.test(r.b.message), 'the word and the sentence: ' + JSON.stringify(r.b).slice(0, 300));
-    expect((await deliver(R, o, [row(o.rLine, 5)])).status === 200, 'R delivers on its own live copy');
+    /* WALK BA BA-F-05 (1129): a withdrawn order is closed for the other side too (deliveryOn: a delivery on a closed order is refused 409 wrong_step) */
+    const theirs = await deliver(R, o, [row(o.rLine, 5)]);
+    expect(theirs.status === 409 && theirs.b.why === 'wrong_step' && /cancelled/.test(theirs.b.message), 'R is refused too, the order is closed: ' + theirs.status + ' ' + JSON.stringify(theirs.b).slice(0, 200));
   });
 
   finish('rail-191-deliver-lines');

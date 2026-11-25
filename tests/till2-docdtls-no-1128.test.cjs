@@ -12,5 +12,5 @@ const lines = [{ name: 'Cable', quantity: 1, price: 100, gst_rate: 5 }];
 ok(tl.invoiceFor({ lines, seller: ae, buyer: {}, currency: 'AED', priceIncludesTax: true, chit_id: 'AE-0007' }).invoice.DocDtls.No === 'AE-0007', 'a number handed to invoiceFor lands in DocDtls.No');
 ok(tl.invoiceFor({ lines, seller: ae, buyer: {}, currency: 'AED', priceIncludesTax: true }).invoice.DocDtls.No === null, 'with none it is null (the bug this fixes at send)');
 const send = require('fs').readFileSync(__dirname + '/../lib/send-money.js', 'utf8');
-ok(send.includes('invoiceFor({ chit_id: billNoOf(business_json) ||') && send.includes('const billNoOf = (business_json) => (business_json && (business_json.bill_no || business_json.printed_as)) || null'), 'invoiceOfLines hands invoiceFor the bill number (bill_no, else printed_as, read by billNoOf)');
+ok(send.includes('chit_id: (business_json && (business_json.bill_no || business_json.printed_as)) ||'), 'invoiceOfLines hands invoiceFor the bill number (bill_no, else printed_as, read inline; 1129 fold)');
 console.log(n + ' passed');

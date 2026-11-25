@@ -91,7 +91,8 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
   const noTill = await verdict(free.sendNote(9999, { business_json: { against: { bill_no: 'B-1', chit_id: BILL }, invoice: { ValDtls: { TotInvVal: 9999 } } } }));
   const draft = await verdict(free.sendNote(9999, { is_draft: true }));
   const other = await verdict(free.sendNote(9999, { purpose: 'order' }));
-  ok('not a counter credit note (no till) · a draft · another purpose: untouched', [noTill, draft, other].join() === 'ok,ok,ok', [noTill, draft, other].join());
+  /* AI-F-02: a rail note (no till) is judged too now: 9,999.00 on a 3,540.00 bill is refused */
+  ok('a rail note (no till) is capped · a draft · another purpose: untouched', [noTill, draft, other].join() === 'CREDIT_NOTE_OVER_BILL,ok,ok', [noTill, draft, other].join());
   ok('against read three ways: an object with chit_id, an object with only bill_no, a bill number as text; a bad id is no id',
     cap.againstOf({ against: { chit_id: BILL } }).chit_id === BILL && cap.againstOf({ against: { bill_no: 'B-1' } }).bill_no === 'B-1' && cap.againstOf({ against: 'B-1' }).bill_no === 'B-1' && cap.againstOf({ against: { chit_id: 'not-an-id' } }).chit_id === null);
 
@@ -122,7 +123,7 @@ const verdict = (promise) => promise.then(() => 'ok', (e) => e.code);
     (text.match(/\$\d(::\w+(\[\])?)?/g) || []).forEach((use) => { (types[use.slice(0, 2)] = types[use.slice(0, 2)] || new Set()).add(use.slice(2)); });
     return Object.values(types).every((set) => set.size === 1 || (set.size === 2 && set.has('')));
   });
-  ok('SQL shape · four statements (the bill, the earlier notes, the own-bill read of ACC-265 for the cancel guard, and the withdrawn re-read under the lock of ACC-265b), every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 4 && typed.every(Boolean), JSON.stringify(typed));
+  ok('SQL shape · five statements (the bill, the earlier notes, the line-quantity read of W-F-03, the own-bill read of ACC-265 for the cancel guard, and the withdrawn re-read under the lock of ACC-265b), every parameter used with one cast (a bare use beside a cast is fine)', statements.length === 5 && typed.every(Boolean), JSON.stringify(typed));
 
   /* a note that is NOT judged says so on the answer (sendState.creditCap → credit_cap), and a failed read is a refusal in words, never a bare 500 */
   const stateOf = (extra) => Object.assign({ sender_id: SHOP, chit_id: 'c0000000-0000-4000-8000-0000000000aa', purpose: 'credit_note', currency_code: 'INR', is_draft: false, business_json: { till: { id: 'C1' }, against: { bill_no: 'B-9' }, refund: { total: 10 }, invoice: { ValDtls: { TotInvVal: 10 } } } }, extra || {});

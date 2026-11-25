@@ -1,0 +1,10 @@
+Account #,Full name,Type,Detail type,Description,Balance
+1000,Cheque Account,Bank,Checking,Main bank,
+1200,Accounts Receivable (A/R),Accounts receivable (A/R),Accounts Receivable (A/R),,
+2000,Accounts Payable (A/P),Accounts payable (A/P),Accounts Payable (A/P),,
+2200,GST Payable,Other Current Liabilities,Sales Tax Payable,,
+3000,Owner's Equity,Equity,Owner's Equity,,
+4000,Sales,Income,Sales of Product Income,,
+5000,Cost of sales,Cost of Goods Sold,Supplies & Materials - COGS,,
+6100,Advertising,Expenses,Advertising/Promotional,,
+6200,Bank charges,Expenses,Bank Charges,,

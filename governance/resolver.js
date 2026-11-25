@@ -15,7 +15,10 @@ class GovernanceError extends Error {
 
 // most-restrictive-wins ordering for exposure (index 0 = most restrictive)
 function tighterOrEqual(tiers, candidate, ceiling) {
-  return tiers.indexOf(candidate) <= tiers.indexOf(ceiling);
+  /* review EL-platform-01 F4: a value the tier list does not hold has index -1, which is "tighter than everything" - it passed. Unknown on either side is a breach (fail closed). */
+  const at = tiers.indexOf(candidate);
+  const bound = tiers.indexOf(ceiling);
+  return at >= 0 && bound >= 0 && at <= bound;
 }
 
 function resolve(constitution, override) {

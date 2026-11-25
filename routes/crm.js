@@ -79,6 +79,8 @@ const NOT_A_PARTY_ID = 'That is not a party id.';
  * `remove` is lib/owner.may (owner only, the sentence DELETE /parties/:id refuses with). A screen greys a button WITH `why`; it decides nothing from a hat.
  */
 /* A2: `assign` = the server's verdict on the Assign button and the Unassigned bucket (the partner or a manager: lib/owner mayAt, the gate assign-bulk uses); the page reads no token */
+/** Y-F-05: true when the books' own read gate (routes/books gates.mayReadMoney: owner, in-house accountant, live grant, auditor) refuses this seat — dues are books money; lazy so crm.js loads without books.js */
+const noMoney = async (req) => !(await require('./books').gates.mayReadMoney(req));
 const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY), assign: require('../lib/owner').mayAt(req, 'manager') });
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, ...keyFence() });
@@ -103,6 +105,7 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
     const listed = await crm.list(ctx(req), {
       actor: byOf(req),
       blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
+      no_money: await noMoney(req), // Y-F-05: dues are books money — the seat GET /dues refuses gets the list without them
       view: req.query.view === 'leads' ? 'leads' : null,
       consent:
         textOf(req.query.with, { trim: false })
@@ -119,6 +122,29 @@ router.get('/parties', auth, noKey, ...checked('GET /parties'), async (req, res)
   }
 });
 
+/** LV-17: the party's chit bills → { n, last } (the newest created_at as an ISO string, or null) */
+function billsInChits(rows) {
+  const times = rows.filter((row) => row.doc_kind === 'bill').map((row) => crm.iso(row.created_at));
+  let newest = null; for (const at of times) if (!newest || at > newest) newest = at;
+  return { n: times.length, last: newest };
+}
+/** the ledger's bills for this party on the caller's handle, a missing table read as none → { n, last } */
+async function billsInLedger(h, owner, partyId) {
+  const led = await require('../db').trySavepoint(h, () => h.query(`SELECT count(*)::int AS n, max(created_at) AS last FROM party_item WHERE entity_id = $1 AND party_id = $2 AND ref_kind = 'bill'`, [owner, partyId]), { rows: [] });
+  const found = led.rows[0]; return found ? { n: Number(found.n) || 0, last: found.last ? crm.iso(found.last) : null } : { n: 0, last: null };
+}
+/** a customer's programme points (reward-store, the same reader the customer's own pane uses), or null: not a customer, no programme, or the table not there yet */
+async function pointsOf(owner, party) {
+  if (!party.roles.customer) return null;
+  try {
+    const balance = await require('../lib/reward-store').balance(owner, { scheme: 'identity', value: party.party_id }, withEntity);
+    return balance.programme ? { programme: balance.programme.name, points: balance.points, worth: balance.worth } : null;
+  } catch (e) {
+    if (!(e && e.code === '42P01')) throw e;
+    return null;
+  }
+}
+
 /** the record: the list row + the relationship line (the scorecard's own arithmetic) + points + open follow-ups */
 // @does A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.
 router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (req, res) => {
@@ -126,10 +152,11 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
     const owner = ctx(req),
       id = idOf(req);
     const blind = await require('../lib/cost').isCostBlind(req, owner); // RAIL-146i: ONE can_see_costs read; a blind reader sees no supplier-side balance or limit
-    const found = await crm.one(owner, id, { stages: true, consent: true, blind });
+    const found = await crm.one(owner, id, { stages: true, consent: true, blind, no_money: await noMoney(req) });
     if (!found) return problem(req, res, { status: 404, ...notYourParty() });
     const p = found.party;
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
+    let chitBills = { n: 0, last: null }; /* LV-17: the party's bills counted by the server, never from a page of the timeline */
     /* the relationship: select.rows + measure.scorecard, exactly what /relationships/scorecard/:id answers — a local party has no chits */
     if (p.kind !== 'local') {
       const select = require('../lib/select'),
@@ -139,22 +166,19 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
       const rows = await select.rows(owner, { counterparty_id: p.party_id, limit: 5000 });
       const card = measure.scorecard(rows, { overdue_days: flags.overdue_days });
       rec.relationship = { relationship: card.relationship, completion: card.completion };
+      chitBills = billsInChits(rows);
     } else rec.relationship = null;
     /* points: a customer programme (reward-store, the same reader the customer's own pane uses) */
-    rec.points = null;
-    if (p.roles.customer) {
-      try {
-        const b = await require('../lib/reward-store').balance(owner, { scheme: 'identity', value: p.party_id }, withEntity);
-        if (b.programme) rec.points = { programme: b.programme.name, points: b.points, worth: b.worth };
-      } catch (e) {
-        if (!(e && e.code === '42P01')) throw e;
-      }
-    }
+    rec.points = await pointsOf(owner, p);
     /* the follow-ups: soft — before b276 the record is complete without them and says so */
     rec.migrated = true;
     rec.followups = [];
+    let ledgerBills = { n: 0, last: null };
     try {
-      rec.followups = await withEntity(owner, async (h) => F.list(h, owner, { party_id: p.party_id }));
+      rec.followups = await withEntity(owner, async (h) => {
+        ledgerBills = await billsInLedger(h, owner, p.party_id); /* in the SAME transaction (one trip) */
+        return F.list(h, owner, { party_id: p.party_id });
+      });
     } catch (e) {
       if (e && (e.code === 'CRM_NOT_MIGRATED' || F.isTableGone(e))) rec.migrated = false;
       else throw e;
@@ -165,11 +189,13 @@ router.get('/parties/:id', auth, noKey, ...checked('GET /parties/:id'), async (r
         moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage),
         may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
       });
+    /* the bills: the dearer of the chit bills and the ledger bills (the same rule the record always used on a page of the timeline), now over the WHOLE history */
+    rec.bills = { n: Math.max(chitBills.n, ledgerBills.n), last_at: [chitBills.last, ledgerBills.last].filter(Boolean).sort().pop() || null };
     await crm.withUnbilled([rec], owner, byOf(req), blind); /* CRM-D7: the SAME figure the list row carries (the one sum, work-rows.sumUnbilled); absent when the shop is truncated, hidden whole for a blind reader */
     rec.may = crmMay(req); /* W2-CRM: the record's actions — write · remove — are the server's word, with the sentence */
     /* S34: the party's keys (lib/crm.js assemble, in its order: a supplier-only party has no customer or lead), then what this record adds */
     // prettier-ignore
-    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, otp_contact: rec.otp_contact, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, unbilled: rec.unbilled, migrated: rec.migrated, followups: rec.followups, may: rec.may });
+    res.json({ party_id: rec.party_id, display_name: rec.display_name, user_id: rec.user_id, bridge_id: rec.bridge_id, email: rec.email, phone: rec.phone, gstn: rec.gstn, city: rec.city, status: rec.status, kind: rec.kind, on_chitbridge: rec.on_chitbridge, may_trade: rec.may_trade, roles: rec.roles, party_no: rec.party_no, last_activity: rec.last_activity, customer: rec.customer, lead: rec.lead, supplier: rec.supplier, legal_name: rec.legal_name, nickname: rec.nickname, state_code: rec.state_code, tax_ids: rec.tax_ids, terms: rec.terms, dues: rec.dues, gstin: rec.gstin, name: rec.name, contact_prefs: rec.contact_prefs, merged_from: rec.merged_from, relationship: rec.relationship, points: rec.points, unbilled: rec.unbilled, bills: rec.bills, migrated: rec.migrated, followups: rec.followups, may: rec.may });
   } catch (e) {
     problem(req, res, crmFault(e, req));
   }
@@ -201,7 +227,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
     const beforeIso = new Date(before).toISOString();
     const entries = [];
     let migrated = true;
-    const costView = require('../lib/cost-view'),
+    const costView = require('../lib/cost-view'), noMoneyReader = await noMoney(req), /* Y-F-05 */
       blind = await costView.blindOf(req, owner); /* RAIL-146h: ONE can_see_costs read (the owner pays none); a blind reader's cost-side money is null */
     let sides = null;
     /* chits (+ the latest external message of each) and disputes — through select.rows, the scorecard's own selector */
@@ -249,7 +275,7 @@ router.get('/parties/:id/timeline', auth, noKey, ...checked('GET /parties/:id/ti
           [owner, party, beforeIso, limit]
         )
       );
-      for (const x of led.rows) entries.push(ledgerEntry(x, blind, found.party.roles));
+      for (const x of led.rows) entries.push(ledgerEntry(x, blind, found.party.roles, noMoneyReader));
       if (isOwner(req)) {
         const ch = await soft(() =>
           h.query(

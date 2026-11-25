@@ -2948,6 +2948,38 @@
         "url": "/api/books/attention"
       }
     },
+    "GET /api/books/backfill": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "enabled",
+          "start_day",
+          "before_start",
+          "words"
+        ],
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "start_day": {},
+          "before_start": {
+            "type": "number"
+          },
+          "words": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 4,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/backfill"
+      }
+    },
     "GET /api/books/bank/rail": {
       "status": "200",
       "schema": {
@@ -4758,7 +4790,8 @@
         "required": [
           "ready",
           "why",
-          "imports"
+          "imports",
+          "sources"
         ],
         "properties": {
           "ready": {
@@ -4770,7 +4803,8 @@
               "null"
             ]
           },
-          "imports": {}
+          "imports": {},
+          "sources": {}
         },
         "additionalProperties": false
       },
@@ -7871,7 +7905,6 @@
           "bridge_id",
           "email",
           "phone",
-          "otp_contact",
           "gstn",
           "city",
           "status",
@@ -7893,6 +7926,8 @@
           "merged_from",
           "relationship",
           "points",
+          "unbilled",
+          "bills",
           "migrated",
           "followups",
           "may"
@@ -7920,7 +7955,6 @@
               "null"
             ]
           },
-          "otp_contact": {},
           "gstn": {},
           "city": {},
           "status": {
@@ -8000,6 +8034,9 @@
           "unbilled": {
             "type": "object"
           },
+          "bills": {
+            "type": "object"
+          },
           "migrated": {
             "type": "boolean"
           },
@@ -8062,6 +8099,10 @@
         },
         {
           "path": "unbilled",
+          "reason": "a value passed through (an expression: its keys are not written in the handler)"
+        },
+        {
+          "path": "bills",
           "reason": "a value passed through (an expression: its keys are not written in the handler)"
         },
         {
@@ -8640,7 +8681,29 @@
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
               },
-              "ItemList": {}
+              "ItemList": {},
+              "DocDtls": {
+                "type": "object",
+                "properties": {
+                  "Typ": {
+                    "type": "string"
+                  },
+                  "No": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "Dt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -10500,7 +10563,29 @@
                 "additionalProperties": false,
                 "x-closed-by": "recordings"
               },
-              "ItemList": {}
+              "ItemList": {},
+              "DocDtls": {
+                "type": "object",
+                "properties": {
+                  "Typ": {
+                    "type": "string"
+                  },
+                  "No": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "Dt": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "x-closed-by": "recordings"
+              }
             },
             "additionalProperties": false,
             "x-closed-by": "recordings"
@@ -11708,6 +11793,83 @@
         "body": {}
       }
     },
+    "POST /api/books/backfill": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "start_day",
+          "posted",
+          "waiting",
+          "before_start",
+          "days",
+          "problems",
+          "words"
+        ],
+        "properties": {
+          "start_day": {
+            "type": "string"
+          },
+          "posted": {
+            "type": "number"
+          },
+          "waiting": {
+            "type": "number"
+          },
+          "before_start": {
+            "type": "number"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "what",
+                "counter",
+                "day",
+                "why"
+              ],
+              "properties": {
+                "what": {
+                  "type": "string"
+                },
+                "counter": {
+                  "type": "string"
+                },
+                "day": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "words": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/backfill",
+        "body": {
+          "start_date": "2026-04-01"
+        }
+      }
+    },
     "POST /api/books/bank/statement-files": {
       "status": "201",
       "schema": {
@@ -12038,6 +12200,142 @@
       "example": {
         "url": "/api/books/check",
         "body": {}
+      }
+    },
+    "POST /api/books/events/batch": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "posted",
+          "failed",
+          "results",
+          "ok",
+          "capability",
+          "request_id",
+          "written",
+          "held",
+          "refused"
+        ],
+        "properties": {
+          "posted": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "index",
+                "client_ref",
+                "ok"
+              ],
+              "properties": {
+                "index": {
+                  "type": "number"
+                },
+                "client_ref": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "duplicate": {
+                  "type": "boolean"
+                },
+                "entry_no": {
+                  "type": "string"
+                },
+                "entry_id": {
+                  "type": "string"
+                },
+                "posting_date": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "number"
+                },
+                "code": {
+                  "type": "string"
+                },
+                "detail": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "capability": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "written": {
+            "type": "number"
+          },
+          "held": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "index",
+                "code"
+              ],
+              "properties": {
+                "index": {
+                  "type": "number"
+                },
+                "code": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false,
+              "x-closed-by": "recordings"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/events/batch",
+        "body": {
+          "events": [
+            {
+              "kind": "expense",
+              "class": "rent",
+              "paid_from": "bank",
+              "date": "2026-10-05",
+              "amount_minor": 10000,
+              "client_ref": "bank:t:3"
+            },
+            {
+              "kind": "expense",
+              "class": "no-such-account",
+              "paid_from": "bank",
+              "date": "2026-10-05",
+              "amount_minor": 10000,
+              "client_ref": "bank:t:4"
+            },
+            "junk"
+          ]
+        }
       }
     },
     "POST /api/books/move-in/import": {
@@ -19990,6 +20288,9 @@
           "slots": {},
           "live_capped": {
             "type": "boolean"
+          },
+          "summary_says_more": {
+            "type": "array"
           }
         },
         "additionalProperties": false
@@ -34744,7 +35045,6 @@
                 "display_name",
                 "email",
                 "phone",
-                "otp_contact",
                 "customer_since",
                 "identity_type",
                 "owner_scope",
@@ -34793,7 +35093,6 @@
                 },
                 "email": {},
                 "phone": {},
-                "otp_contact": {},
                 "customer_since": {
                   "type": "string"
                 },
@@ -37808,6 +38107,12 @@
           },
           "parties_numbered": {
             "type": "number"
+          },
+          "backfill": {
+            "type": [
+              "object",
+              "null"
+            ]
           }
         },
         "additionalProperties": false
@@ -39205,7 +39510,8 @@
           "sample",
           "sheet",
           "sheets",
-          "header_row"
+          "header_row",
+          "header_hint"
         ],
         "properties": {
           "kind": {
@@ -39247,9 +39553,11 @@
           },
           "sheet": {},
           "sheets": {},
+          "refusal": {},
           "header_row": {
             "type": "number"
-          }
+          },
+          "header_hint": {}
         },
         "additionalProperties": false
       },

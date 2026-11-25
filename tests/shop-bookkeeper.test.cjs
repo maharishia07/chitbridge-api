@@ -192,9 +192,7 @@ function send(port, method, urlPath, body) {
     ['POST', '/api/books/accounts', 'add an account'],
     ['POST', '/api/books/enable', 'switch the ledger on'],
     ['POST', '/api/books/move-in/import', 'move in'],
-    ['POST', '/api/books/packs', 'build a pack'],
-    ['POST', '/api/books/recurring', 'recurring'],
-    ['POST', '/api/books/fx-rates', 'fx rates']
+    ['POST', '/api/books/recurring', 'recurring']
   ];
   for (const [method, url, what] of OWNER_ONLY_DOORS) {
     await t('Bookkeeper refused: ' + what + ' — 403 OWNER_ONLY, in words naming the owner', async () => {

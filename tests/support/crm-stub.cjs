@@ -50,6 +50,7 @@ function make() {
       const mine = (rows) => rows.filter((r) => r.owner === p[0] && r.party_id === p[1]);
       return { rows: [{ customer: mine(data.cust).some((r) => !r.hidden_at), supplier: mine(data.sup).some((r) => !r.hidden_at), listed: mine(data.cust).length + mine(data.sup).length > 0, ledgered: data.ledger.some((r) => r.entity === p[0] && r.party_id === p[1]) }] };
     }
+    if (/AS n, max\(created_at\) AS last FROM party_item/.test(sql)) { const bills = data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.ref_kind === 'bill'); return { rows: [{ n: bills.length, last: bills.length ? bills.map((r) => r.created_at).sort().pop() : null }] }; }   /* LV-17: the record's bill count */
     if (/FROM party_item/.test(sql)) return { rows: data.ledger.filter((r) => r.entity === p[0] && r.party_id === p[1] && r.created_at < p[2]).slice(0, p[3]) };
     if (/FROM books_change_log/.test(sql)) return { rows: data.changes.filter((r) => r.entity === p[0] && r.row_id === p[1] && r.at < p[2]).slice(0, p[3]) };
     if (/FROM chit_messages/.test(sql)) return { rows: data.messages.filter((m) => p[0].indexOf(m.chit_id) >= 0 && m.created_at < p[1]) };

@@ -2,7 +2,7 @@
    The page's slipBuyerHTML is lifted out and run. CTR166_MUTATE=1 puts the tax-only guard back and must fail. */
 'use strict';
 const fs = require('fs'), path = require('path'), vm = require('vm'), assert = require('assert');
-let page = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+let page = (fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector', 'till-slip.js'), 'utf8')).replace(/\r\n/g, '\n');
 if (process.env.CTR166_MUTATE === '1') page = page.replace("return kind === 'tax' || kind === 'supply';", "return kind === 'tax';");
 const grab = (name) => new RegExp('function ' + name + '\\([\\s\\S]*?\\n}\\n').exec(page)[0];
 const src = ['slipBuyerHTML', 'slipBuyerKind', 'slipNoBuyerHTML'].map(grab).join('\n');

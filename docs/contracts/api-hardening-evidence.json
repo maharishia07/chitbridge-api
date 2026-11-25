@@ -603,6 +603,22 @@
   "GET /api/signin/providers": {
    "output_allowlist": true
   },
+  "POST /api/signin/provider/handoff": {
+   "strict_input": true
+  },
+  "GET /api/signin/provider/links": {
+   "output_allowlist": true
+  },
+  "POST /api/signin/provider/link/start": {
+   "strict_input": true
+  },
+  "POST /api/signin/provider/link/finish": {
+   "strict_input": true
+  },
+  "DELETE /api/signin/provider/links/:link_id": {
+   "strict_input": true,
+   "foreign_id_404": true
+  },
   "POST /api/signin/renew": {
    "strict_input": true
   },
@@ -1066,8 +1082,7 @@
    "output_allowlist": true
   },
   "POST /api/governance/verify": {
-   "strict_input": true,
-   "output_allowlist": true
+   "strict_input": true
   },
   "POST /api/governance/supplier-acceptance": {
    "strict_input": true,
@@ -1531,6 +1546,12 @@
    "strict_input": true,
    "output_allowlist": true
   },
+  "POST /api/books/backfill": {
+   "strict_input": true
+  },
+  "GET /api/books/backfill": {
+   "output_allowlist": true
+  },
   "POST /api/books/setting": {
    "strict_input": true
   },
@@ -1692,6 +1713,9 @@
    "strict_input": true
   },
   "POST /api/books/opening/replace": {
+   "strict_input": true
+  },
+  "POST /api/books/events/batch": {
    "strict_input": true
   },
   "POST /api/books/money-check/resolve": {

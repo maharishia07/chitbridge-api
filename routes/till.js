@@ -88,6 +88,7 @@ const catalogueMintLimiter = rateLimit({
 }); /* ⭐ a price changed at the counter must reach the TV, not wait out a timer */ /* ⭐ pairing mints a SCREEN key through the same mint the keys screen uses */
 const rewards = require('../lib/rewards'); /* ⭐ points a customer accumulates — the mechanism; the shop declares the rule */
 const counterBill = require('../lib/counter-bill'); /* ⭐ the shop's own bill by its number — what was paid (GET /bills) and what it earned (POST /reward) */
+const { creditNoteMoney, isCounterTakings } = require('../lib/till-credit-note-money'); const COUNTER_ROW_SQL = "AND (h.purpose <> 'credit_note' OR h.business_json -> 'till' ->> 'id' IS NOT NULL)"; /* the credit note's money as signs; which live rows are the counters' takings */ /* AJ-F-08 (walk AJ): a credit note is a counter's own only when it carries its counter (till.id); a rail credit note has none (no till sale). Here, not in lib/counter-bill: that file is vendored byte-for-byte into the till kit */
 const speech = require('../lib/speech'); /* ⭐ what somebody SAID, as text — a seam, with a provider behind it */ /* ⭐ what THIS vertical must capture about a consignment */
 const crypto = require('crypto');
 
@@ -142,8 +143,7 @@ const pickKeys = (source, list) => {
 };
 /** the snapshot body cut down to what a shop screen (TV) may be sent — only the allow-listed shop and item fields, only what is on the shelf */
 function screenView(body) {
-  const all = Array.isArray(body.items) ? body.items : [];
-  const shown = all.filter((item) => item && item.status === 'available');
+  const all = Array.isArray(body.items) ? body.items : [], shown = all.filter((item) => item && item.status === 'available');
   const gone = body.delta ? all.filter((item) => item && item.status !== 'available').map((item) => item.item_id) : [];
   return {
     at: body.at,
@@ -1113,10 +1113,7 @@ async function pushNetworkLines(entity_id, adoptedRows, items, network, project,
   for (const line of lines) {
     const record = networkRecord(line, project);
     if (!record) continue;
-    if (!catalogueRead.isPricedByStore(line, record.price)) {
-      network.unpriced++;
-      continue;
-    }
+    if (!catalogueRead.isPricedByStore(line, record.price)) { network.unpriced++; continue; }
     /* ⭐ where it came from — the slip, the chit and the shop screen can all say "from <brand>" */
     record.source = { key: line.source_key, title: line.source_title || null, owner: line.owner_entity_id || null, line: line.line_id };
     items.push(record);
@@ -1270,6 +1267,7 @@ function shopBlock(row, flags, particulars, holdsStock, registration) {
   return {
     /* E-F-06: the shop's own IANA zone (identities.timezone) — the one the web's CB_SHOP_TZ reads; null = none stated (never guessed) */
     timezone: row.timezone || null,
+    invoice_blocks: invoiceLease.leasesFor(country), /* P-F-06: does this shop's pack number invoices by blocks (invoice-lease.leasesFor, the one reader)? The counter asks for a block only when true; absent (an older snapshot) = ask, as before */
     /* CTR-158: the slip footer Print setup saved (string · '' unticked · null none saved) */
     slip_footer: slipFooter,
     ...shopIdentity(party, row),
@@ -1412,8 +1410,7 @@ function policyBlock(row, flags) {
 // @does A product and available or unavailable in, a counter key or a shop sign-in -> we mark the product's counter status, never retired -> the product's new status.
 router.post('/stock', auth, auth.requireScope('till'), ...checked('POST /stock'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const input = stockInput(req.body);
+    const entity_id = auth.entityOf(req), input = stockInput(req.body);
     if (!input.item_id) return refuseBad(req, res, 'item_id required');
     /* ⚠️ available and unavailable ONLY. 'retired' and 'redundant' carry an argument — what replaced it, until when — and nobody
        makes that call standing at a till with a customer waiting. The same two the bulk screen offers, for the same reason. */
@@ -1471,8 +1468,7 @@ const STOCK_BULK_MAX = 500;
 // @does Up to 500 product ids and a status in, a counter key or a shop sign-in -> we mark them all available or unavailable in one go -> how many changed.
 router.post('/stock/bulk', auth, auth.requireScope('till'), ...checked('POST /stock/bulk'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const input = stockBulkInput(req.body);
+    const entity_id = auth.entityOf(req), input = stockBulkInput(req.body);
     if (!input.ids.length) return refuseBad(req, res, 'item_ids required');
     if (input.ids.length > STOCK_BULK_MAX) {
       return problem(req, res, { status: 400, ...said('TILL_BAD_REQUEST', 'Too many', 'At most ' + STOCK_BULK_MAX + ' products in one change.') });
@@ -1543,8 +1539,7 @@ function bulkMessage(moved, asked, status) {
 // @does A counter's health code in, a paired counter key or a shop sign-in -> we keep the code against that key so support can see it, with nothing of the shop's sales -> a confirmation.
 router.post('/diagnostic', auth, auth.requireScope('till'), ...checked('POST /diagnostic'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const keyId = req.till && req.till.key && req.till.key.jti;
+    const entity_id = auth.entityOf(req), keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can report itself.');
     const diag = await require('../lib/api-keys').setDiag(entity_id, keyId, diagnosticPatch(req));
     if (!diag) return problem(req, res, { status: 404, ...notFound('This key is not listed for the shop.') });
@@ -1614,8 +1609,7 @@ async function lockedCounter(db, entity_id, counterId) {
 // @does A paired counter's own key -> we close that counter for the day so it is no longer listed as open -> a confirmation.
 router.post('/close', auth, auth.requireScope('till'), ...checked('POST /close'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const keyId = req.till && req.till.key && req.till.key.jti;
+    const entity_id = auth.entityOf(req), keyId = req.till && req.till.key && req.till.key.jti;
     if (!keyId) return refuseBad(req, res, 'Only a paired counter can close itself.');
     const body = req.body || {};
     const mine = await keyRowOf(entity_id, keyId);
@@ -1681,8 +1675,7 @@ function seriesContinues(counter, till, period) {
 // @does Break or billing in, a paired counter key or a shop sign-in -> we note what this counter is doing, if it holds the counter -> whether it was recorded.
 router.post('/state', auth, auth.requireScope('till'), ...checked('POST /state'), async (req, res) => {
   try {
-    const entity_id = auth.entityOf(req);
-    const keyId = req.till && req.till.key && req.till.key.jti;
+    const entity_id = auth.entityOf(req), keyId = req.till && req.till.key && req.till.key.jti;
     const body = req.body || {};
     const state = body.state === 'break' ? 'break' : 'billing';
     const mine = await keyRowOf(entity_id, keyId);
@@ -1753,8 +1746,7 @@ function flagsAnswer(item_id, data) {
  * → the writer's answer, or { rows: [] } when the product is not this shop's
  */
 async function setOfferOptOut(db, entity_id, item_id, body) {
-  const offer_id = String(body.offer_id);
-  const excluded = body.excluded === true || body.excluded === 'true';
+  const offer_id = String(body.offer_id), excluded = body.excluded === true || body.excluded === 'true';
   const current = await db.query('SELECT item_data FROM catalogue_items WHERE entity_id = $1 AND item_id = $2 FOR UPDATE', [entity_id, item_id]);
   if (!current.rows.length) return { rows: [] };
   const previous = (current.rows[0].item_data || {}).offers_excluded;
@@ -2450,7 +2442,8 @@ function rateAnswer(out) {
  */
 const invoiceLease = require('../lib/invoice-lease');
 /** the counter id the caller is: the key's own id when it has one (a key may lease only for itself), else the asked one; upper-cased as the register keeps it */
-const leaseTillOf = (req, asked) => String((req.till && req.till.id) || asked || '').toUpperCase();
+/* LV-11: the holder shape (lib/holder.js) names a key's counter `counter`; it never had an `id`, so this read was always the ASKED id and the 'own id only' fence below never ran */
+const leaseTillOf = (req, asked) => String((req.till && req.till.counter) || asked || '').toUpperCase();
 /** a refusal of the lease library (status, code and words are its own) becomes the problem answer; anything else is the door's usual failure */
 const leaseFault = (e, req) => (e && e.refused ? { status: e.status, ...relayed({ code: e.code, message: e.message, error: 'refused' }) } : failed(e, req));
 /** the lease library's two reads of the caller: is this counter one of the shop's (from its identity row, read once) and the shop's transaction handle */
@@ -2463,7 +2456,7 @@ router.post('/invoice-lease', auth, auth.requireScope('till'), ...checked('POST 
     const entity_id = auth.entityOf(req);
     const body = req.body || {};
     const till_id = leaseTillOf(req, body.till_id);
-    if (req.till && req.till.id && body.till_id && String(body.till_id).toUpperCase() !== till_id) return problem(req, res, { status: 403, ...said('LEASE_NOT_YOUR_COUNTER', 'Forbidden', 'A counter can only ask for its own invoice numbers.') });
+    if (req.till && req.till.counter && body.till_id && String(body.till_id).toUpperCase() !== till_id) return problem(req, res, { status: 403, ...said('LEASE_NOT_YOUR_COUNTER', 'Forbidden', 'A counter can only ask for its own invoice numbers.') });
     const notReady = await leaseNotReady();
     if (notReady) return problem(req, res, notReady);
     const facts = await invoiceLease.shopFactsOf(query, entity_id);
@@ -2481,7 +2474,7 @@ router.get('/invoice-lease/report', auth, auth.requireScope('till'), ...checked(
     if (badPaging) return refuseBad(req, res, badPaging + ' must be a whole number from 1.');
     const notReady = await leaseNotReady();
     if (notReady) return problem(req, res, notReady);
-    const till = req.till && req.till.id ? leaseTillOf(req) : req.query.till_id ? String(req.query.till_id).toUpperCase() : null;
+    const till = req.till && req.till.counter ? leaseTillOf(req) : req.query.till_id ? String(req.query.till_id).toUpperCase() : null;
     const report = await withEntity(entity_id, (db) => invoiceLease.reportFor(db, entity_id, { till_id: till, limit: req.query.limit, page: req.query.page }, new Date()));
     res.json(report);
   } catch (e) {
@@ -2496,7 +2489,7 @@ router.post('/invoice-lease/close', auth, auth.requireScope('till'), ...checked(
     if (notReady) return problem(req, res, notReady);
     const body = req.body || {};
     if (!UUID_RE.test(String(body.lease_id))) return refuseBad(req, res, 'lease_id must be the id of a block.');
-    const closed = await withEntity(entity_id, (db) => invoiceLease.closeLease(db, entity_id, { lease_id: String(body.lease_id), unused: body.unused }, new Date().toISOString()));
+    const closed = await withEntity(entity_id, (db) => invoiceLease.closeLease(db, entity_id, { lease_id: String(body.lease_id), unused: body.unused, by: { owner: require('../lib/owner').isOwner(req), till_id: leaseTillOf(req) } }, new Date().toISOString()));
     res.json(Object.assign({ ok: true }, closed));
   } catch (e) {
     problem(req, res, leaseFault(e, req));
@@ -2773,9 +2766,8 @@ router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
      */
     const holder = req.till && req.till.key; /* M04 — the holder, not req.api_key (middleware/auth holderOf) */
     const viaCounter = !!(holder && holder.scopes.includes('till'));
-    const shutSaid = screenPairRefusal(req, holder, viaCounter);
-    if (shutSaid) return problem(req, res, { status: 403, ...shutSaid });
-    /* S9: a screen key lasts a year, so only the owner or a manager hat may mint one (a cashier on the act hat may not); a counter key keeps its own narrow right above */
+    const refusal = pairRefusal(req, holder, viaCounter);
+    if (refusal) return problem(req, res, refusal);
     const entity_id = auth.entityOf(req);
     const shop = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
@@ -2967,10 +2959,7 @@ async function changeScreenKey(entity_id, keyId, edit) {
     const list = Array.isArray(flags.api_keys) ? flags.api_keys : [];
     const found = list.find((item) => item && String(item.jti) === keyId);
     if (!found) return;
-    if (!isScreenKey(found)) {
-      outcome = 'refused';
-      return;
-    }
+    if (!isScreenKey(found)) { outcome = 'refused'; return; }
     outcome = 'done';
     await policy.patchKey(db, entity_id, [], { api_keys: edit(list) }, { op: 'merge' });
   });
@@ -3423,10 +3412,7 @@ async function addItemNames(entity_id, balances) {
   const ids = Object.keys(balances);
   const named = await withEntity(entity_id, (db) => db.query(require('../lib/catalogue-read').ITEM_NAMES_SQL, [entity_id, ids]));
   for (const item of named.rows)
-    if (balances[item.id]) {
-      balances[item.id].name = item.name || null;
-      balances[item.id].unit = item.unit || null;
-    }
+    if (balances[item.id]) { balances[item.id].name = item.name || null; balances[item.id].unit = item.unit || null; }
 }
 
 /**
@@ -3647,13 +3633,15 @@ async function periodSummary(entity_id, asked) {
   const { found, live } = await nestedWithEntity(entity_id, async (db) => {
     const filedRows = await db.query(statement.text, statement.params);
     const filedSums = filedRows.rows.map((row) => (row.business_json || {}).summary);
-    return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false } };
+    return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false, claims: [] } };
   });
   const filed = found.rows.map((row) => (row.business_json || {}).summary);
   const rows = rollup.acrossCounters(live.summaries.concat(filed)).slice(0, limit); /* a counter filed mid-day: its filed figure PLUS the later bills (liveToday) comes first and is the one kept */
   markLive(rows, live.summaries);
   const tillIds = filed.concat(live.summaries).map((sum) => ((sum || {}).till || {}).id);
-  return { period, rows, counters: Array.from(new Set(tillIds.filter(Boolean))).sort(), live_capped: live.capped };
+  const answer = { period, rows, counters: Array.from(new Set(tillIds.filter(Boolean))).sort(), live_capped: live.capped };
+  if (live.claims.length) answer.summary_says_more = live.claims; /* AM-F-03: a filed day claiming more than its bills - shown, never believed (only present when there is one) */
+  return answer;
 }
 
 /** a bill row as the rollup engine reads it: a credit note is negative with its refunds, a sale carries its payments (rollup.totals' shape) */
@@ -3663,10 +3651,10 @@ const engineRow = (bill) => ({ kind: bill.kind === 'credit_note' ? 'credit_note'
  * today's LIVE bills, newest first, WITHOUT their lines (a summary needs the money, not the basket - no chit_detail join).
  * Same conditions as BILLS_SQL's live arm (the shop's own counter bills, a bill the books reversed left out) over the last 2 days.
  */
-const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.business_json, h.summary_json
+const LIVE_BILLS_SQL = `SELECT h.chit_id, h.created_at, h.purpose, h.business_json, h.summary_json
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           ${counterBill.NOT_WITHDRAWN_SQL}
         ORDER BY h.created_at DESC LIMIT $3`;
@@ -3706,26 +3694,85 @@ async function liveToday(db, entity_id, filed) {
   const found = await db.query(LIVE_BILLS_SQL, [entity_id, '2', BILLS_MAX]);
   const isToday = (row) => shopClock.bizDay(rungAt(row), zone) === today;
   const oldest = found.rows.length ? found.rows[found.rows.length - 1] : null;
-  return { summaries: liveSummaries(found.rows.filter(isToday), filed, today), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
+  const currency = (filed || []).some((sum) => sum && sum.key === today) ? await require('../lib/regional').currencyFor(entity_id) : null; /* a filed day of today is the only thing a claim can be made against; its gap is a difference in the shop's own minor units */
+  const claims = [];
+  const summaries = liveSummaries(found.rows.filter(isToday), filed, today, found.rows.length < BILLS_MAX ? claims : null, currency); /* a full live arm cannot say a bill is missing */
+  return { summaries, claims: claims.map((claim) => claimWords(claim, currency)), capped: found.rows.length >= BILLS_MAX && !!oldest && isToday(oldest) };
 }
 
-/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at */
-function liveSummaries(todays, filed, today) {
-  const rollup = require('../lib/rollup');
-  const filedBy = new Map(); /* newest filing of today per counter (filed rows arrive newest first) */
+/**
+ * AJ-F-08: is this bill already inside the counter's filed day summary? THE one rule, so a bill is counted once - from the summary or as an uploaded bill, never both.
+ * A summary that lists its bills (bill_nos, written by the till at close) answers by bill number: a bill it lists is inside it, however late its upload arrives (the double the walk found: C2 and C3 one bill too many).
+ * An older summary with no list falls back to the time it was filed: it summarised what had ARRIVED by then.
+ */
+function inFiling(filing, bill, row) {
+  if (Array.isArray(filing.bill_nos)) return filing.bill_nos.indexOf(bill.no) >= 0 || (!bill.no && !(receivedAt(row) > Date.parse(filing.summarised_at)));
+  return !(receivedAt(row) > Date.parse(filing.summarised_at));
+}
+
+/**
+ * AM-F-03: a filed day summary is a CLAIM; the bills received are the evidence. THE one rule: when the summary says more sales or more takings than the bills it holds
+ * (bill_nos, else what arrived before it was filed), the day is read from the bills as they stand and the gap is told - never believed, never dropped.
+ * Money in the summary's own decimals (rollup.totals), so the gap is the difference of two rollup figures. Returns null when the bills back the claim.
+ */
+function claimGap(claimed, backed, currency) {
+  const count = (Number(claimed.count) || 0) - backed.count;
+  /* the money gap is a difference of two figures in the shop's own minor units, through the value type (minusMoney) - never a hand subtraction. A shop that states no currency has no money to compare (N1): the gap is then the bills not received, and the words leave the amount out. */
+  const cash = require('../lib/books-cashflow');
+  const gapMinor = currency ? require('../lib/books-money-ops').diffMinor(cash.toMinor(claimed.gross || 0, currency), cash.toMinor(backed.gross, currency), currency) : 0;
+  return count > 0 || gapMinor > 0 ? { count: Math.max(count, 0), gross: currency ? cash.fromMinor(Math.max(gapMinor, 0), currency) : null } : null;
+}
+
+/** the owner's sentence for a gap: "Summary says more than its bills: AED 100.00 · 5 bills not received" (the claim carries the counter, the day, and the numbers) */
+function claimWords(claim, currency) {
+  const money = require('../lib/money');
+  const minor = currency ? money.toMinor(claim.gross, currency) : null;
+  const amount = currency ? money.formatMoney({ amount_minor: minor, currency }, { display: 'code' }).replace(/ /g, ' ') + ' · ' : '';
+  const bills = claim.count + (claim.count === 1 ? ' bill' : ' bills');
+  return Object.assign({}, claim, { gross_minor: currency ? minor : null, currency: currency || null, words: 'Summary says more than its bills: ' + amount + bills + ' not received' });
+}
+
+/** newest filing of today per counter (filed rows arrive newest first) */
+function newestFilingOfToday(filed, today) {
+  const filedBy = new Map();
   for (const sum of filed) if (sum && sum.key === today && !filedBy.has(tillKeyOf(sum.till))) filedBy.set(tillKeyOf(sum.till), sum);
-  const byTill = new Map();
-  for (const row of distinctBills(todays)) {
-    const bill = billRow(row);
-    const till = tillKeyOf(bill.till);
-    const filing = filedBy.get(till);
-    if (filing && !(receivedAt(row) > Date.parse(filing.summarised_at))) continue; /* already inside the filed figure: the filing summarised what had ARRIVED by then */
+  return filedBy;
+}
+/** today's counter bills split per counter: byTill = the bills not in a filing yet (to be folded), inside = the received bills each filing holds, to test its claim against */
+function splitTodaysBills(todays, filedBy) {
+  const byTill = new Map(), inside = new Map();
+  for (const row of distinctBills(todays.filter(isCounterTakings))) {
+    const bill = billRow(row), till = tillKeyOf(bill.till), filing = filedBy.get(till);
+    if (filing && inFiling(filing, bill, row)) { inside.set(till, (inside.get(till) || []).concat(engineRow(bill))); continue; }
     if (!byTill.has(till)) byTill.set(till, { till: bill.till, rows: [] });
     byTill.get(till).rows.push(engineRow(bill));
   }
-  return Array.from(byTill.entries()).map(([till, group]) => {
-    const filing = filedBy.get(till);
-    const parts = rollup.totals(group.rows);
+  return { byTill, inside };
+}
+/** the counters whose filed summary claims more than its bills: each gets a claim pushed on claims and its bills kept apart; a counter with no new bills still gets a (empty) group so its day reads from the bills received */
+function noteOverClaims(split, filedBy, today, claims, currency) {
+  const rollup = require('../lib/rollup');
+  const overClaimed = new Map();
+  for (const [till, filing] of claims ? filedBy : []) { /* no claims list = the bills could not all be read (live arm full): no judgement */
+    const received = split.inside.get(till) || [];
+    const claimedGap = claimGap(filing.totals || {}, rollup.totals(received), currency);
+    if (!claimedGap) continue;
+    overClaimed.set(till, received);
+    if (!split.byTill.has(till)) split.byTill.set(till, { till: filing.till, rows: [] });
+    const filedTill = filing.till || {};
+    claims.push({ key: today, till: { id: filedTill.id || null, name: filedTill.name || null }, ...claimedGap });
+  }
+  return overClaimed;
+}
+/** today's bills → one day summary per counter; a counter already filed today keeps its figure and adds only the bills rung after its summarised_at, unless the summary claims more than its bills (claims gets the gap) */
+function liveSummaries(todays, filed, today, claims, currency) {
+  const rollup = require('../lib/rollup');
+  const filedBy = newestFilingOfToday(filed, today);
+  const split = splitTodaysBills(todays, filedBy);
+  const overClaimed = noteOverClaims(split, filedBy, today, claims, currency);
+  return Array.from(split.byTill.entries()).map(([till, group]) => {
+    const filing = overClaimed.has(till) ? null : filedBy.get(till); /* a claim beyond its bills is not folded in: the day reads from the bills received */
+    const parts = rollup.totals(overClaimed.has(till) ? overClaimed.get(till).concat(group.rows) : group.rows);
     return rollup.summary('day', today, filing ? rollup.fold([filing.totals, parts]) : parts, { till: group.till, at: filing ? filing.summarised_at : new Date().toISOString() });
   });
 }
@@ -3793,7 +3840,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
         /* ⚠️ AND SENT BY ME (the two-sided counter bill, 2026-10-01): a supplier's counter bill I RECEIVED carries a bill_no
            and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
@@ -3807,7 +3854,7 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
        (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
-          AND h.business_json ? 'bill_no'
+          AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
           AND h.created_at > NOW() - ($2 || ' days')::interval
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
@@ -3844,10 +3891,12 @@ function billRow(row) {
 /** the bill's number, its moment, its customer and the counter and person that billed it */
 function billWho(row, business) {
   const till = business.till || {};
+  const customer = business.customer || {};
   return {
     no: business.bill_no || null,
     at: business.billed_at || row.created_at,
-    customer: (business.customer && business.customer.name) || 'Walk-in',
+    customer: customer.name || 'Walk-in',
+    customer_id: customer.identity_id || null, /* Y-F-01: the party the bill was made out to, so a return can be taken off what they owe */
     by: till.by || null,
     till: { id: till.id || null, name: till.name || null }
   };
@@ -3876,32 +3925,6 @@ function billMoney(row) {
     saved: money.savings != null ? money.savings : null,
     taxable: counterBill.taxableOf(row.summary_json),
     tax: money.tax != null ? money.tax : null
-  };
-}
-
-/** a credit note's money as a SIGN: -abs of a finite number, 0 stays 0 (never -0), anything else null (never 0) */
-function negOf(figure) {
-  if (typeof figure !== 'number' || !Number.isFinite(figure)) return null;
-  return figure === 0 ? 0 : -Math.abs(figure);
-}
-
-/**
- * ACC-255: a counter credit note has no invoice, so summary_json.money is null by design (lib/send-money scope 'none');
- * its money sits in business_json.{taxable, tax, refund} as the counter stored it. The reader only PICKS those (negative,
- * kind credit_note, so a day's net is a plain sum) — no by_rate arithmetic, a missing key answers null.
- * Sale rows get {} so their bytes do not move. counter-bill.paidOf stays untouched (the reward reads it).
- */
-function creditNoteMoney(business) {
-  if (business.slip !== 'credit_note') return {};
-  const refund = business.refund && typeof business.refund === 'object' ? business.refund : {};
-  return {
-    total: negOf(refund.total),
-    saved: null,
-    taxable: negOf(business.taxable),
-    tax: negOf(business.tax),
-    refunds: Array.isArray(refund.parts) ? refund.parts : [],
-    against: business.against && business.against.bill_no ? { bill_no: business.against.bill_no } : null,
-    reason_words: business.reason_words || null
   };
 }
 
@@ -4161,4 +4184,12 @@ router.get('/engine/:name', auth, ...checked('GET /engine/:name'), (req, res) =>
 router.openapi = { paths: pathsOf(), schemas: {} };
 
 module.exports = router;
-module.exports.matchMoney = matchMoney; /* OPS-83: tests/ops83-match-money.test.cjs asks the answer itself (JSON would hide a -0) */
+module.exports.liveSummaries = liveSummaries; /* tests/till-takings-1129.test.cjs reads the live day fold without a database */
+module.exports.matchMoney = matchMoney; /* OPS-83: tests/ops83-match-money.test.cjs asks the answer itself (JSON would hide a -0) *//** who may not pair a screen: a stranger or a non-counter key (sign in first), and  S9, a screen key lasts a year  anyone but the owner or a manager hat (a counter key keeps its own narrow right); null when allowed */
+function pairRefusal(req, holder, viaCounter) {
+  if (!req.identity || (holder && !viaCounter)) return { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to pair a screen.') };
+  const hat = require('../lib/owner');
+  if (!viaCounter && !hat.isOwner(req) && !hat.isManager(req)) return { status: 403, ...said('OWNER_ONLY', 'Forbidden', 'Only the owner or a manager can pair a screen.') };
+  return null;
+}
+

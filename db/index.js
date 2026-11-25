@@ -362,7 +362,7 @@ async function trySavepoint(db, fn, fallback) {
 const { escapeLiteral } = require('pg');
 function inlineLiteral(v) {
   if (v === null || v === undefined) return 'NULL';
-  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('readBatch: non-finite number'); return String(v); }
+  if (typeof v === 'number') { if (!Number.isFinite(v)) throw new Error('readBatch: non-finite number'); return v < 0 || Object.is(v, -0) ? '(' + String(v) + ')' : String(v); } /* LENS-P2 platform-01 N6: a bare negative after a minus (`a -$1`) reads `a --5`, an SQL comment; a negative goes in parentheses, at the ONE formatter */
   if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
   if (v instanceof Date) return escapeLiteral(v.toISOString()) + '::timestamptz';
   if (typeof v === 'string') return escapeLiteral(v);
@@ -391,7 +391,10 @@ const readBatch = async (entityId, actorId, statements) => {
   if (!pool) await ensurePool();
   /* ⭐ ONE trip, and lib/trips is told so — it was not, so X-DB-Trips left every readBatch out of the count (2026-09-29) */
   try { require('../lib/trips').tick('batch'); } catch (_) {}
-  const head = "BEGIN; SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true);";
+  /* review EL-platform-01 F7: the batch runs under the same transaction settings as beginSql - READ ONLY for an auditor's request, UTC, the statement deadline - as
+     set_config(..., true) columns of the ONE select, so the result positions below do not move. A transaction pooler does not carry a session SET. */
+  const ms = require('../lib/limits').statementTimeoutMs();
+  const head = (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; ' : 'BEGIN; ') + "SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true), set_config('TimeZone', 'UTC', true)" + (ms ? ", set_config('statement_timeout', '" + Math.floor(ms) + "', true)" : '') + ';';
   const texts = [], at = [];
   let bound = entityId;   /* the shop each statement really runs under: the batch's, until a statement switches it (the switch stays for the next ones) */
   statements.forEach((s) => {

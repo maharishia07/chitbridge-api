@@ -1196,7 +1196,10 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
 router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
     const me = req.identity.identity_id;
-    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 30, 1), 365);
+    /* BB-F-09: days is a whole number 1..365 or absent (30); abc, -1 and 999999 were answered 200 with a silently changed window */
+    const asked = req.query.days;
+    if (asked !== undefined && !(/^[0-9]+$/.test(String(asked)) && Number(asked) >= 1 && Number(asked) <= 365)) { const refusalWords = 'Days must be a whole number from 1 to 365.'; return problem(req, res, { status: 400, code: 'INVALID_INPUT', detail: refusalWords, legacy: { error: refusalWords, message: refusalWords } }); }
+    const days = asked === undefined ? 30 : Number(asked);
 
     const out = await withEntity(me, async (c) => {
       /* Per day — the accumulation Athi asked about: "it is nothing but accumulation per day". */

@@ -35,7 +35,8 @@ const t = async (name, fn) => {
 const storePath = require.resolve(path.join(API, 'lib', 'books-grant.js'));
 const real = require(storePath);
 let nextLook = null;
-const stub = Object.assign({}, real, { liveRoleOf: async () => undefined, look: async (...args) => (typeof nextLook === 'function' ? nextLook(...args) : nextLook) });
+let otherLive = false;
+const stub = Object.assign({}, real, { liveRoleOf: async () => undefined, liveInOtherRole: async () => otherLive, look: async (...args) => (typeof nextLook === 'function' ? nextLook(...args) : nextLook) });
 require.cache[storePath].exports = stub;
 const A = require(path.join(API, 'middleware', 'books-grant.js'));
 const books = require(path.join(API, 'routes', 'books.js'));
@@ -134,8 +135,23 @@ function drive(identity, headers, method, routePath) {
   });
   await t('a refused look answers its code and its words, and runs nothing', async () => {
     nextLook = refused;
-    const out = await drive(owner, { 'x-books-for': MEMBER });
+    const out = await drive(owner, { 'x-books-for': MEMBER, 'x-books-role': 'auditor' });
     assert.ok(!out.nexted && out.status === 403 && out.body.code === 'BOOKS_GRANT_NONE' && /No access/.test(out.body.detail || out.body.message));
+    /* S2-F-09: no role named at all is not "no access": the other view may hold it, so the same code says what to do */
+    const unnamed = await drive(owner, { 'x-books-for': MEMBER });
+    assert.ok(!unnamed.nexted && unnamed.status === 403 && unnamed.body.code === 'BOOKS_GRANT_NONE' && /Choose the adviser or auditor view/.test(unnamed.body.detail || unnamed.body.message));
+  });
+  await t('AT-F-05: an ended auditor look beside a LIVE adviser grant, no role named: "choose a view", never "ended"; with no live grant in the other role it still says ended', async () => {
+    const ended = { allowed: false, grant: null, outcome: 'revoked', status: 403, code: 'BOOKS_GRANT_ENDED', words: 'This access was ended by the owner of the books.' };
+    nextLook = ended;
+    otherLive = true;
+    const choose = await drive(owner, { 'x-books-for': MEMBER });
+    assert.ok(!choose.nexted && choose.status === 403 && choose.body.code === 'BOOKS_GRANT_NONE' && /Choose the adviser or auditor view/.test(choose.body.detail || choose.body.message), JSON.stringify(choose.body));
+    otherLive = false;
+    const stays = await drive(owner, { 'x-books-for': MEMBER });
+    assert.ok(stays.status === 403 && stays.body.code === 'BOOKS_GRANT_ENDED', JSON.stringify(stays.body));
+    const named = await drive(owner, { 'x-books-for': MEMBER, 'x-books-role': 'auditor' });
+    assert.ok(named.body.code === 'BOOKS_GRANT_ENDED', 'a NAMED role keeps its own ended words');
   });
   await t('a header that is no id names no member: refused, no look', async () => {
     nextLook = () => { throw new Error('the look must not run'); };

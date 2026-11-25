@@ -149,6 +149,13 @@
   409,
   500
  ],
+ "DELETE /api/signin/provider/links/:link_id": [
+  401,
+  403,
+  404,
+  409,
+  503
+ ],
  "GET /.well-known/ctp.json": [
   200,
   500
@@ -281,6 +288,12 @@
   500
  ],
  "GET /api/books/attention": [
+  401,
+  403,
+  404,
+  500
+ ],
+ "GET /api/books/backfill": [
   401,
   403,
   404,
@@ -1246,12 +1259,14 @@
  "GET /api/network-design/availability": [
   400,
   401,
+  403,
   404,
   500,
   503
  ],
  "GET /api/network-design/stores": [
   401,
+  403,
   404,
   500,
   503
@@ -1435,6 +1450,11 @@
  ],
  "GET /api/signin/provider/:key/start": [
   404
+ ],
+ "GET /api/signin/provider/links": [
+  401,
+  403,
+  503
  ],
  "GET /api/signin/sessions": [
   401,
@@ -2040,6 +2060,13 @@
   404,
   500
  ],
+ "POST /api/books/backfill": [
+  401,
+  403,
+  404,
+  422,
+  500
+ ],
  "POST /api/books/bank/marks": [
   401,
   403,
@@ -2142,6 +2169,13 @@
   500
  ],
  "POST /api/books/events": [
+  400,
+  401,
+  403,
+  404,
+  500
+ ],
+ "POST /api/books/events/batch": [
   400,
   401,
   403,
@@ -3769,6 +3803,29 @@
   409,
   500
  ],
+ "POST /api/signin/provider/handoff": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500,
+  503
+ ],
+ "POST /api/signin/provider/link/finish": [
+  400,
+  401,
+  403,
+  409,
+  503
+ ],
+ "POST /api/signin/provider/link/start": [
+  400,
+  401,
+  403,
+  404,
+  503
+ ],
  "POST /api/signin/renew": [
   400,
   401,
@@ -4241,6 +4298,7 @@
  "PUT /api/connections/:id/respond": [
   400,
   401,
+  403,
   404,
   500
  ],

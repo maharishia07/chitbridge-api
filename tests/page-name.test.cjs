@@ -55,8 +55,8 @@ ok('the grammar refuses a page with no version, a one-part version, or capitals'
 /* ── 2 · mint.page() ──────────────────────────────────────────────────────────────────────────────────────── */
 const SHOP = '11111111-1111-4111-8111-111111111111', CUST = '22222222-2222-4222-8222-222222222222';
 const ROWS = {
-  [SHOP]: { identity_id: SHOP, bridge_id: 'CB-SHOP', display_name: 'Mayur Traders', country: 'IN', status: 'active' },
-  [CUST]: { identity_id: CUST, bridge_id: 'CB-CUST', display_name: 'Chola Auto Care', country: 'IN', status: 'active' },
+  [SHOP]: { identity_id: SHOP, bridge_id: 'CB-SHOP', display_name: 'Mayur Traders', country: 'IN', gstn: '33AAAAA0000A1Z5', status: 'active' },
+  [CUST]: { identity_id: CUST, bridge_id: 'CB-CUST', display_name: 'Chola Auto Care', country: 'IN', gstn: '29BBBBB0000B1Z5', status: 'active' },
 };
 let SQL = [], DRAFT = null;
 function rowsFor(sql, p) {
@@ -127,7 +127,7 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     return { status: r.status, body: await r.json().catch(() => ({})) };
   };
   const order = (bj, extra) => Object.assign({ purpose: 'order', manual_subject: 'Brake pads', recipients: [{ entity_id: CUST, name: 'Chola Auto Care', role: 'to' }],
-    line_items: [{ particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59, total: 118 }] }, bj === undefined ? {} : { business_json: bj }, extra || {});
+    line_items: [{ particulars: 'Brake pad', quantity: 2, unit: 'piece', price: 59, total: 118, gst_rate: 18 }] }, bj === undefined ? {} : { business_json: bj }, extra || {});
   const pages = () => (COPIES || []).map((c) => c.business_json && c.business_json.page);
   const wrote = () => SQL.some((s) => /INSERT INTO chit_header|chit_deliver\(/i.test(s)) || COPIES !== null;
   try {

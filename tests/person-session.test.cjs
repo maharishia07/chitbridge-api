@@ -291,7 +291,7 @@ const dec = (tok) => jwt.decode(tok);
     t('auth builds the session holder in lib/holder.js (one builder)', auth.holderOf === require(path.join(API, 'lib', 'holder')).holderOf);
     const srv = fs.readFileSync(path.join(API, 'server.js'), 'utf8');
     t('server.js mounts /api/signin, allows the X-Device-Id header, logs kind',
-      /app\.use\('\/api\/signin',\s+require\('\.\/routes\/signin'\)\)/.test(srv) && /'X-Device-Id'/.test(srv) && /kind: \(res\.locals && res\.locals\.kind\)/.test(srv));
+      /app\.use\('\/api\/signin',\s+require\('\.\/routes\/signin'\)\)/.test(srv) && /'X-Device-Id'/.test(srv) && /kind: localOf\(res, 'kind'\)/.test(fs.readFileSync(path.join(API, 'lib', 'request-log.js'), 'utf8'))); /* ERR-14: the request line moved into lib/request-log.js */
     const fields = fs.readFileSync(path.join(API, 'docs', 'FIELDS.md'), 'utf8');
     t('docs/FIELDS.md has policy_flags.devices and the token claims', /policy_flags\.devices/.test(fields) && /`jti`/.test(fields) && /`device_id`/.test(fields));
   } catch (e) {

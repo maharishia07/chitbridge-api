@@ -1,0 +1,167 @@
+{
+ "_about": "TAX-EXPLICIT (1129): the SAFE sites the guard tests/tax-zero-guard.test.cjs lets through. An entry matches a site by file + kind + the first 70 characters of its text. Every entry carries its reason; a new site is a REAL bug until a reviewer writes its reason here. Classified in C:/dev/walks/TAX-ZERO-SWEEP-2026-11-21.md.",
+ "allow": [
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (e) { return dayFailed(entity, waitingJob, e, options, 'walkin:' + counter + ':' + shopDay",
+   "reason": "SAFE: the walk-in day's failure is handed to dayFailed, which parks it on the Waiting list with the words (or rethrows on a retry) and answers queued; moved out of the catch body, behaviour unchanged"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "zero",
+   "text": "const cess = roundMoney((row.cess || 0) + (line.CesAmt || 0), currency",
+   "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "zero",
+   "text": "row.cgst = roundMoney(row.cgst + (line.CgstAmt || 0), currency);",
+   "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "zero",
+   "text": "row.sgst = roundMoney(row.sgst + (line.SgstAmt || 0), currency);",
+   "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "zero",
+   "text": "row.igst = roundMoney(row.igst + (line.IgstAmt || 0), currency);",
+   "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "zero",
+   "text": "return line.TaxAmt || 0;",
+   "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "zero",
+   "text": "const total = roundMoney(rows.reduce((sum, item) => sum + item.taxable",
+   "reason": "SAFE: sums an absent head (cess/cgst/sgst/igst/tax) of an engine line whose rate is known into its rate row; the status of that line is known (tax-lines.lineTaxStatusOf)"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (_) { formatter = new Intl.DateTimeFormat('en-US', Object.assign",
+   "reason": "SAFE: a date formatter fallback, not a tax figure"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (_) { grain = party || credit > 0 || gstin ? 'bill' : setting.wa",
+   "reason": "SAFE: the posting grain (bill/day) fallback, not a tax figure"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (e) { const reason = e && e.message ? e.message : String(e); con",
+   "reason": "SAFE: the failure is recorded in words and the chit waits / retries (parked), it is not read as 0"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (e) { if (!options.retry) await park(entity, { job: 'chit', chit",
+   "reason": "SAFE: the failure is recorded in words and the chit waits / retries (parked), it is not read as 0"
+  },
+  {
+   "file": "lib/books-hooks.js",
+   "kind": "catch",
+   "text": "catch (e) { failureWords = String((e && e.message) || e); rowEvent = {",
+   "reason": "SAFE: the failure is recorded in words and the chit waits / retries (parked), it is not read as 0"
+  },
+  {
+   "file": "lib/books-return-split.js",
+   "kind": "zero",
+   "text": "const sizeOf = (item) => Math.abs(Number(item.amount_minor != null ? i",
+   "reason": "SAFE: orders the ledgers of a return box by size for display; an absent amount sorts last, no figure is filed from it"
+  },
+  {
+   "file": "lib/catalogue-view.js",
+   "kind": "zero",
+   "text": "return resolved && resolved.rate != null && !resolved.cess_unreadable ? { rate: resolved.rate, cess:",
+   "reason": "SAFE: the storefront cess of a slab with a known rate; an unreadable declared cess returns null (cess_unreadable), an absent cess is no cess"
+  },
+  {
+   "file": "lib/services.js",
+   "kind": "zero",
+   "text": "cess_rate: num(item.cess_rate) || 0",
+   "reason": "SAFE: an absent cess on a line whose rate is known is no cess; an unreadable declared one is refused at the door (ACC-221 unreadFieldsOf) or flagged cess_unreadable (TAX-EXPLICIT)"
+  },
+  {
+   "file": "lib/services.js",
+   "kind": "zero",
+   "text": "cess_rate: num(decorated.cess_rate) || item.cess_rate || 0,",
+   "reason": "SAFE: an absent cess on a line whose rate is known is no cess; an unreadable declared one is refused at the door (ACC-221 unreadFieldsOf) or flagged cess_unreadable (TAX-EXPLICIT)"
+  },
+  {
+   "file": "lib/services.js",
+   "kind": "zero",
+   "text": "cess_rate: item.cess_rate || 0,",
+   "reason": "SAFE: an absent cess on a line whose rate is known is no cess; an unreadable declared one is refused at the door (ACC-221 unreadFieldsOf) or flagged cess_unreadable (TAX-EXPLICIT)"
+  },
+  {
+   "file": "lib/tax-copy.js",
+   "kind": "catch",
+   "text": "catch (e) { return { ok: false, differences: [{ what: 'server check', issued: null,",
+   "reason": "SAFE: a failing server tax check answers { ok:false, differences } in words, it is not a pass"
+  },
+  {
+   "file": "lib/tax-lines.js",
+   "kind": "zero",
+   "text": "cess_rate: resolved.cess || 0 /* a cess the slab declares but could no",
+   "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
+  },
+  {
+   "file": "lib/tax-engine-line.js",
+   "kind": "zero",
+   "text": "cess_rate: num(item.cess_rate) || 0,",
+   "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
+  },
+  {
+   "file": "lib/tax-line-status.js",
+   "kind": "zero",
+   "text": "const rate = num(item.GstRt) || 0;",
+   "reason": "SAFE: lineTaxStatusOf reads the engine's line (GstRt is always a number there; an unrated line is marked _unrated and is UNAVAILABLE first); an absent head on a known rate sums as 0"
+  },
+  {
+   "file": "lib/tax-lines.js",
+   "kind": "zero",
+   "text": "tax: round2((values.CgstVal || 0) + (values.SgstVal || 0) + (values.Ig",
+   "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
+  },
+  {
+   "file": "lib/tax-lines.js",
+   "kind": "zero",
+   "text": "netTax.vat = round2((output.vat || 0) - (credit.vat || 0));",
+   "reason": "SAFE: sums head figures of a document whose lines each carry their status; an absent head/cess component on a known rate is no component"
+  },
+  {
+   "file": "lib/tax-lines.js",
+   "kind": "catch",
+   "text": "catch (_) { return 'OTH'; }",
+   "reason": "SAFE: an unknown unit word maps to the portal's own code OTH, which the GSTR accepts (uqcFor)"
+  },
+  {
+   "file": "lib/till-match.js",
+   "kind": "zero",
+   "text": "const totalOf = (lines, key, currency) => { const factor = minorFactor",
+   "reason": "SAFE: item.rate here is the purchase line's unit rate (price), not a tax rate"
+  },
+  {
+   "file": "lib/catalogue-view.js",
+   "kind": "catch",
+   "text": "catch (e) { dropCostRegardless(items, e); }",
+   "reason": "SAFE: not a tax figure; a failed read answers by dropping every cost key from the items before they leave (dropCostRegardless: fail closed), never by showing them"
+  },
+  {
+   "file": "lib/tax-shelf.js",
+   "kind": "catch",
+   "text": "catch (e) { return nothingUnlessRefused(e); }",
+   "reason": "SAFE: nothingUnlessRefused rethrows the refusal of the tax id read (TAX01-1, fail closed) and logs every other failed shelf read (log.fellBack) before answering nothing; no tax figure is made up"
+  }
+ ]
+}

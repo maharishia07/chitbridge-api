@@ -220,22 +220,7 @@ app.use((req, res, next) => {
      taken and any refusal code (res.locals.code) — a 401/403/409 is now visible in the log, not guessed at. */
   const t0 = Date.now();
   res.on('finish', () => {
-    log.info('request', {
-      id: req.id,
-      method: req.method,
-      /* the FULL path, not the part a mounted router leaves, and no query string (the Servers heat map
-         counts by path: PM/SERVERS-STATUS.md, Athi 31 Oct) */
-      path: (req.originalUrl || req.url).split('?')[0],
-      status: res.statusCode,
-      ms: Date.now() - t0,
-      code: (res.locals && res.locals.code) || null,
-      kind: (res.locals && res.locals.kind) || null /* M05: 'person' (listed session) · 'legacy' (no jti) */,
-      origin: req.headers.origin || null,
-      /* E07: whose request — the business (entity) and who acted (person); the body's size, for E01's budgets */
-      entity: (req.identity && (req.identity.parent_entity_id || req.identity.identity_id)) || null,
-      person: (req.identity && req.identity.identity_id) || null,
-      bytes: Number(req.headers['content-length']) || 0
-    });
+    log.info('request', require('./lib/request-log').requestLine(req, res, t0));
   });
   next();
 });
@@ -251,14 +236,36 @@ app.use(require('./lib/limits').admit);
 // E07 · the request in scope for the database layer (slow-query lines carry its id) — after the parsers, whose stream callbacks drop the context
 app.use((req, res, next) => require('./lib/reqctx').runWithRequest(req.id, res.locals, next, require('./lib/client-ip').clientIp(req)));
 
-// Rate limiting — higher limit in dev/testing
-const limiter = rateLimit({
-  name: 'api-global', windowMs: 15 * 60 * 1000,
-  max: intFromEnv('RATE_LIMIT_MAX', 500),
+/* Rate limiting — T-F-02 (OWASP API4:2023; Stripe, Shopify and GitHub key the budget on the signed-in identity and keep a lower per-address one for strangers).
+   One Home load is ~30-40 calls (round-trips.budget.json: the home reads), so the old 500 per 15 min per ADDRESS refused an owner after ~15 loads and every
+   staff member of a shop behind one NAT address together. Now, all per 15 min and each set from the environment (SIT sets its own):
+     RATE_LIMIT_USER_MAX  3000  a SIGNED-IN person, own bucket   = ~60 screen loads x ~40 calls = 2400, plus headroom
+     RATE_LIMIT_MAX        500  an UNSIGNED caller, per address  = unchanged; the signed-in budget never applies to a stranger
+     RATE_LIMIT_IP_MAX   10000  ceiling per ADDRESS for everyone together = ~3 busy people on a shared shop address; it only stops a flood from one address
+   The sign-in, check-login, public, catalogue and assistant limiters below are NOT touched: they stay exactly as strict as before. */
+const generalBucket = require('./lib/limiter-key').generalBucket;
+const GENERAL_WINDOW_MS = 15 * 60 * 1000;
+const USER_MAX = intFromEnv('RATE_LIMIT_USER_MAX', 3000);
+const STRANGER_MAX = intFromEnv('RATE_LIMIT_MAX', 500);
+/* the per-address ceiling is mounted FIRST: the person's budget then writes the RateLimit-* headers a client reads; the ceiling's own show only when it refuses */
+const ipCeiling = rateLimit({
+  name: 'api-ip-ceiling', windowMs: GENERAL_WINDOW_MS,
+  max: intFromEnv('RATE_LIMIT_IP_MAX', 10000),
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests', message: 'Please try again in 15 minutes' }
+  keyGenerator: (req) => 'ip:' + String(req.ip || (req.socket && req.socket.remoteAddress) || 'unknown'),
+  message: { error: 'Too many requests', message: 'Too many requests from this network — please try again in a few minutes' }
 });
+const limiter = rateLimit({
+  name: 'api-global', windowMs: GENERAL_WINDOW_MS,
+  max: USER_MAX /* the budget the register reads */,
+  limit: (req) => (generalBucket(req).signedIn ? USER_MAX : STRANGER_MAX),
+  keyGenerator: (req) => generalBucket(req).key,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests', message: 'You have asked for a lot in a short time — please try again in a few minutes' }
+});
+app.use('/api/', ipCeiling);
 app.use('/api/', limiter);
 
 // Stricter limit on auth endpoints — blunts OTP / PIN brute force (override via AUTH_RATE_LIMIT_MAX).
@@ -279,7 +286,7 @@ app.use(
     '/api/actors/set-pin',
     '/api/signin/ask',
     '/api/signin/verify',
-    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
+    '/api/signin/pin', '/api/signin/provider/:key/start', '/api/signin/provider/:key/callback', '/api/signin/provider/handoff', '/api/signin/provider/link/start', '/api/signin/provider/links/:link_id' /* SEC-112: the provider doors share the sign-in budget (a visit that cannot show JSON still guesses nothing, but starts a row each time) */,
     /* M07: the three doors the note above promised — each takes a code or a name from a caller who holds no credential yet,
             so each guesses against the same strict budget: a counter claiming its pairing code, the key@Name lookup that precedes a
             sign-in, and a storefront customer proving a phone number (the catalogue's 60 per 15 min still applies on top). */
@@ -476,7 +483,7 @@ app.use('/api/tax', require('./routes/tax'));
 /* ⭐ THE LEDGER (SPEC-books-v2, b272–b274) — a record kept by double-entry principle; every route 404s until a shop's
    switch is on. ⚠️ Never called "accounting" on a screen (Athi). */
 app.use('/api/books', require('./routes/books'));
-app.use('/api/books', require('./routes/books-opening')); // l16: the opening balances page (preview · replace · the saved view · the year strip), beside routes/books.js
+app.use('/api/books', require('./routes/books-opening')); app.use('/api/books', require('./routes/books-events-batch')); // l16: the opening balances page (preview · replace · the saved view · the year strip), beside routes/books.js
 app.use('/api/books', require('./routes/books-money')); // ACC-206 B: closing an overridden sale's open item (the ledger's own gates, its own file)
 app.use('/api/flags', require('./routes/flags')); app.use('/api/marks', require('./routes/marks')); /* flags: PRIVATE BOOKMARKS AND NOTES, the callers own organisation only, never the books-grant front, never X-Books-For (b876) · marks: MARK & QUERY, a reviewer's marks and queries on a record (the auditor's marks on journal entries first); the books-grant front, two write doors */
 app.use('/api/books-grants', require('./routes/books-grants')); app.use('/api/books-actions', require('./routes/books-actions')); // ACC-176: the member side of read-only access for its network parent (the auditor reads through /api/books with X-Books-For) · ACC-176b: maker-checker for an adviser firm in a store's books (the firm prepares and reviews, the owner accepts; the existing writers post)

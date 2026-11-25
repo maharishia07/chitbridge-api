@@ -109,6 +109,7 @@ const BUDGET = {
    */
   'lib/api-keys.js': 2,        // 1d41bbf6: the counted query is RELEASE SAVEPOINT, bookkeeping beside the one read per tenant (RLS: one tenant per statement)
   'lib/books-hooks.js': 3,     // c054fdae/6249278a: per-event asset register, per-counter posted-day check, per-parked-row outbox mark: each runs its own job and must land or fail alone; counters per shop-day are few
+  'lib/books-backfill.js': 2,  // walks P-F-02 / S2-F-07 (1129): the ONE-OFF owner press that posts the bills from the chosen start day: each closed counter day goes through postDay and each page of 200 unposted bills through postChit, the poster the nightly sweep uses, each in its own transaction so one bad bill lands in the To-do and never stops the rest; a bill with its entry is not read again; stopped at 25 pages (5,000 bills) and said in the answer. Not a screen read
   'lib/books-nightly.js': 1,   // c054fdae: one read per CLOSED DAY (three days), not per item
   'lib/books-store.js': 2,     // c054fdae: REAL, DEFERRED to cb-accounting: addBalances (ON CONFLICT accumulation per balance key) and insertItems (20 columns) are ledger writes, a few per entry; batching changes money-posting SQL, so it is Athi/cb-accounting's call
   'lib/chit-proposal.js': 1,   // cd4e0d9d: a guard read per LOCAL COPY, each under that copy's own RLS context

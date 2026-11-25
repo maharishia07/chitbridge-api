@@ -77,7 +77,7 @@ async function creditHalf() {
   ok('ledger off: no check, as before', (await T.creditSaleCheck('E1', bill(2000))).over === false);
   await overrideHalf(T);
   const route = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')) /* the ONE list of chits files */;
-  ok('/send stamps the client_ref BEFORE the check', route.indexOf('stampBillFacts(business_json, client_ref, number_check);') > 0 && route.indexOf('stampBillFacts(business_json, client_ref, number_check);') < route.indexOf("if (!req.body.is_draft && purpose === 'order'"));
+  ok('/send stamps the client_ref BEFORE the check', route.indexOf('stampBillFacts(business_json, client_ref, number_check);') > 0 && route.indexOf('stampBillFacts(business_json, client_ref, number_check);') < route.indexOf("if (!isTrue(req.body.is_draft) && purpose === 'order'"));
 }
 
 /** the /send credit gate with a currency mismatch: 409 CURRENCY_MISMATCH without the owner's override, accepted with it (as OVER_LIMIT) */

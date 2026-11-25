@@ -160,13 +160,15 @@ async function stateOf(shop, pg, made) {
 const excessOf = (body) => ((body && body.warnings) || []).find((warning) => warning && warning.code === 'excess') || null;
 
 /** press Mark paid (and maybe again — or, above the bill, confirm the ask), then read what the copy and the books hold */
+/** the wire form of a press: the api takes a whole number of the smallest unit (amount_minor), never a decimal amount (money value type); a word or a missing amount stays as drawn */
+const wire = (body) => { if (body && typeof body.amount === 'number') { const out = Object.assign({}, body, { amount_minor: Math.round(body.amount * 100) }); delete out.amount; return out; } return body; };
 function presser(shop, pg) {
   return async (record, index, made) => {
     const url = '/api/chits/' + encodeURIComponent(made.chit_id) + '/payment';
-    const first = await j(url, { method: 'POST', token: shop.token, body: record.press });
+    const first = await j(url, { method: 'POST', token: shop.token, body: wire(record.press) });
     const seen = { status: first.status, said: textOf(first.b), body: first.b, chit_id: made.chit_id, tender: made.tender, billRef: made.billRef || null };
     if (record.second) {
-      const again = await j(url, { method: 'POST', token: shop.token, body: record.second });
+      const again = await j(url, { method: 'POST', token: shop.token, body: wire(record.second) });
       Object.assign(seen, { againStatus: again.status, againSaid: textOf(again.b), againBody: again.b });
     }
     if (record.target === 'badId' || record.target === 'unknownId') return Object.assign(seen, { mark: null, payments: [], settledMinor: 0 });
@@ -175,10 +177,10 @@ function presser(shop, pg) {
       /* GP-3 reads what the ask left behind; GP-10 confirms it — first with a STALE figure on a ½%-over press, then with the one it was asked */
       seen.afterAsk = await stateOf(shop, pg, made);
       if (record.kind === 'within') {
-        const stale = await j(url, { method: 'POST', token: shop.token, body: Object.assign({}, record.press, { acknowledge: [{ code: 'excess', over_minor: asked.over_minor + 1 }] }) });
+        const stale = await j(url, { method: 'POST', token: shop.token, body: wire(Object.assign({}, record.press, { acknowledge: [{ code: 'excess', over_minor: asked.over_minor + 1 }] })) });
         Object.assign(seen, { staleStatus: stale.status, staleBody: stale.b, afterStale: await stateOf(shop, pg, made) });
       }
-      const confirm = await j(url, { method: 'POST', token: shop.token, body: Object.assign({}, record.press, { acknowledge: [{ code: 'excess', over_minor: asked.over_minor }] }) });
+      const confirm = await j(url, { method: 'POST', token: shop.token, body: wire(Object.assign({}, record.press, { acknowledge: [{ code: 'excess', over_minor: asked.over_minor }] })) });
       Object.assign(seen, { confirmStatus: confirm.status, confirmSaid: textOf(confirm.b), confirmBody: confirm.b });
     }
     return Object.assign(seen, await stateOf(shop, pg, made));

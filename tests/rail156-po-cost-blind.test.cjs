@@ -20,7 +20,7 @@ const API = G.API;
 const SHOP = '11111111-1111-4111-8111-111111111111', SUPPLIER = '22222222-2222-4222-8222-222222222222', CUSTOMER = '33333333-3333-4333-8333-333333333333';
 const BOTH = '77777777-7777-4777-8777-777777777777', STRANGER = '44444444-4444-4444-8444-444444444444', BLIND_ID = '55555555-5555-4555-8555-555555555555', GRANTED_ID = '66666666-6666-4666-8666-666666666666';
 const TRIED = 9797.25;
-const row = (id, name, bridge) => ({ identity_id: id, bridge_id: bridge, display_name: name, country: 'IN', currency_code: 'INR', policy_flags: {}, status: 'active', user_id: name });
+const row = (id, name, bridge) => ({ identity_id: id, bridge_id: bridge, display_name: name, country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', policy_flags: {}, status: 'active', user_id: name });
 const ROWS = { [SHOP]: row(SHOP, 'Mayur Traders', 'CBSHOP0001'), [SUPPLIER]: row(SUPPLIER, 'Rice Mill', 'CBMILL0001'), [CUSTOMER]: row(CUSTOMER, 'Venkat', 'CBCUST0001'), [STRANGER]: row(STRANGER, 'Nobody', 'CBNONE0001'), [BOTH]: row(BOTH, 'Partner', 'CBBOTH0001') };
 const OWNER = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders' };
 const BLIND = { identity_id: BLIND_ID, identity_type: 'actor', access_level: 'editor', parent_entity_id: SHOP, hat: 'manager', bridge_id: 'CBSHOP0001', display_name: 'Blind' };
@@ -49,10 +49,12 @@ require(path.join(API, 'lib', 'meter')).meter = async () => {};
 require(path.join(API, 'lib', 'tax-shelf')).readShelf = async () => null;
 require(path.join(API, 'lib', 'stock-from-chit')).postFor = async () => ({ failed: [], skipped: [] });
 require(path.join(API, 'lib', 'events')).notifyAfter = () => {};
+/* AI-F-02 (1129): a rail credit note must name one of the sender's bills (422 CREDIT_NOTE_NEEDS_BILL, tests/ai-rail-credit-note-bill.test.cjs proves that door); this file proves the COST door, so the bill door is stood in as open */
+require(path.join(API, 'lib', 'credit-cap')).holdUnderLock = async () => {};
 const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 
 /** the line the till sends once the rate is hidden: no price, total 0 */
-const quiet = (over) => Object.assign({ particulars: 'Basmati rice 1kg', quantity: 8, unit: 'kg', price: null, total: 0, item_data: { item_id: 'I1', unit_cost: 0 } }, over);
+const quiet = (over) => Object.assign({ particulars: 'Basmati rice 1kg', quantity: 8, unit: 'kg', price: null, total: 0, gst_rate: 5, item_data: { item_id: 'I1', unit_cost: 0 } }, over);
 const to = (id) => [{ kind: 'to', entity_id: id, display_name: ROWS[id].display_name }];
 const chit = (purpose, who, lines, bj) => ({ purpose, manual_subject: purpose + ' to ' + ROWS[who].display_name, recipients: to(who), business_json: bj || {}, line_items: lines });
 const selfChit = (purpose, lines, bj) => ({ purpose, manual_subject: purpose + ' R/1', recipients: [{ self: true, name: 'self' }], business_json: bj || {}, line_items: lines });

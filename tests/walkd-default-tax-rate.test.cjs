@@ -22,10 +22,11 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
 (async () => {
   console.log('\n== WALK-D D-F-08 · a registered shop\'s new product carries the country rate ==\n');
   let shop = {};
-  let registration = 'regular';
-  countrySetup.registrationOfShop = async () => registration;
+  /* the shop row carries the owner's registration answer (entity_governance joined in the one read): regular = said registered, unregistered = said not, unknown = nothing said */
+  countrySetup.migrated = async () => true;
+  const said = { regular: { registered: true }, unregistered: { registered: false }, unknown: null };
   const query = async () => ({ rows: [shop] });
-  const stamp = async (items, s, reg) => { shop = s; registration = reg || 'regular'; return dflt.stampDefault('e1', items, query); };
+  const stamp = async (items, s, reg) => { shop = Object.assign({}, s, { tax_registration: said[reg || 'regular'] }); return dflt.stampDefault('e1', items, query); };
   const yoghurt = () => ({ name: 'WKD Yoghurt', price: 5 });
 
   let out = await stamp([yoghurt()], { country: 'AU', gstn: '12345678901', policy_flags: {} });
@@ -33,7 +34,9 @@ const ok = (name, cond, why) => { if (cond) { pass++; console.log('   ok   ' + n
   out = await stamp([yoghurt()], { country: 'AE', gstn: '100123456700003', policy_flags: {} });
   ok('AE registered (TRN): gets 5', out[0].gst_rate === 5, JSON.stringify(out));
   out = await stamp([yoghurt()], { country: 'AU', gstn: null, policy_flags: {} }, 'unregistered');
-  ok('AU unregistered: no rate is handed over', out[0].gst_rate === undefined, JSON.stringify(out));
+  ok('AU unregistered (said so): the item gets gst_rate 0 (bill word unregistered_seller), never no answer', out[0].gst_rate === 0, JSON.stringify(out));
+  const unreg = services.computeTax({ seller: { Country: 'AU', RegType: 'unregistered', Name: 'S' }, buyer: { Country: 'AU', Name: 'B' }, lines: [{ id: 'a', name: 'WKD Yoghurt', qty: 1, unit_price: 11, discount: 0, gst_rate: out[0].gst_rate, cess_rate: 0 }], priceIncludesTax: true });
+  ok('hand case: A$11.00 (1100 cents) sold by an unregistered seller: GST 0, total 1100 cents', unreg.ItemList[0].TaxAmt === 0 && unreg.ValDtls.TotInvVal === 11, JSON.stringify(unreg.ItemList[0]));
   out = await stamp([yoghurt()], { country: 'AU', gstn: null, policy_flags: {} }, 'unknown');
   ok('AU registration nobody said: no rate is handed over', out[0].gst_rate === undefined, JSON.stringify(out));
   out = await stamp([yoghurt()], { country: 'IN', gstn: '27AAPFU0939F1ZV', policy_flags: {} });

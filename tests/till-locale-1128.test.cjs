@@ -33,7 +33,7 @@ test('the service worker shelf, the kit list and the kit server carry the door a
     assert.ok(tillJs.includes("'" + f + "'") && integrations.includes("'" + f + "'"), f + ' is not in the kit update lists');
     assert.ok(fs.existsSync(path.join(KIT, f)), f + ' has no kit copy');
   }
-  assert.ok(/const SHELF = 'cb-till-v9'/.test(vendor), 'the shelf was not bumped');
+  assert.ok(/const SHELF = 'cb-till-v11'/.test(vendor), 'the shelf was not bumped');
 });
 
 /** every tx('…') / txf('…') / txn('…','…') English key the till page now uses */

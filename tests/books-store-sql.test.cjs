@@ -48,8 +48,8 @@ const CALLS = {
   periodSums: [E, '2026-27', 0, 5, true], lineSums: [E, '2026-04-01', '2026-04-30', true], firstYear: [E], soldByDay: [E, { from: '2026-04-01', to: '2026-04-30' }], soldFrom: [E], soldTotals: [E, [{ from: '2026-04-01', to: '2026-04-30' }]], soldEntriesSql: [E], balanceDrift: [E], unbalancedEntries: [E],
   items: [E, U, U], itemOwners: [E, U, ['r1', 'r2']], billParties: [E, U, 'r1'], itemTotals: [E, U], accountNet: [E, U], lockLoan: [E, 'L-1'], loanOutstanding: [E, 'L-1', ['secured_loan', 'unsecured_loan', 'bank_od']], loanBalances: [E, ['secured_loan', 'unsecured_loan', 'bank_od'], { page: { limit: 10, offset: 0 } }], taxClosesOf: [E, ['gstclose:BAS:2026-Q1']],
   insertPayment: [E, { party_id: U, direction: 'in', amount_minor: 1, currency: 'INR', mode: 'cash', received_at: '2026-04-01', client_ref: 'c1' }], payment: [E, U], paymentByRef: [E, 'c1'], paymentsOfChit: [E, U], lockParty: [E, U, U], lockTaxHeads: [E, ['cgst']], lockOpening: [E, '2026-04-01'], paymentsSince: [E, U, 'in', '2026-04-01T00:00:00Z'], cheques: [E, false, 200],
-  queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], outboxClose: [E, [U], 'Rejected — not posted'], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'], lockTrail: [E, '2026-27'],
-  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], chitForFlip: [E, U], stampConfirmed: [E, U, 0, '2026-11-07T00:00:00Z'], partiesOn: [E, [U]], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
+  movedByLock: [E], queue: [E, { event: {}, why: 'x' }], waiting: [E, 10], waitingCount: [E], backfillTodo: [E], outboxDone: [E, 1, false, 'why', { todo: 'accept', candidates: [] }], outboxClose: [E, [U], 'Rejected — not posted'], waitOfChitSql: [], logChange: [E, { table_name: 't', field: 'f' }], changes: [E, '2026-04-01', '2026-04-30'], lockTrail: [E, '2026-27'],
+  terms: [E, U, 'customer'], parties: [E], partyOn: [E, U], chitExists: [E, U], chitForFlip: [E, U], stampConfirmed: [E, U, 0, '2026-11-07T00:00:00Z'], partiesOn: [E, [U]], supplierByName: [E, { name: 'Sri 50%_Ganesh' }], partyNoOf: [E, U], setPartyNo: [E, U, 'P-00001'], billNos: [E, [U]],
   lastPack: [E], insertPack: [E, { pack_id: U, kind: 'month', sha256: 'x', manifest: {} }], packs: [E], pack: [E, U], ackPack: [E, U, U],
   counterBills: [E, 'C1', '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'], countersBilling: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z'],
   unpostedChits: [E, '2026-04-01T00:00:00Z', '2026-04-02T00:00:00Z', 200],
@@ -60,6 +60,7 @@ const CALLS = {
   taxRegistration: [E], unratedSaleBills: [E, '2025-04-01', '2026-10-24', 50],
   /* l16-accfix ACC-new-1: the lines of entries that carried the tax role (VAT201 box 9) */
   taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
+  taxOfEntriesWith: [E, '2026-04-01', '2026-04-30', 'gst_paid', ['ppe_plant']],
   /* ACC-290 A · the 0% lines on the plain sales ledger (no supply kind named) */
   zeroRateSales: [E, '2026-07-01', '2026-09-30', 'sales', 'AUD'],
   /* SUPPLY KIND: the catalogue's 0% slabs and items with no kind, one trip */
@@ -72,6 +73,8 @@ const CALLS = {
   yearLastEvent: [E, '2026'],
   /* YE-F-06 · who closed the year and when, from the change log */
   yearCloseEvent: [E, '2026'],
+  /* late switch-on (P-F-02) · the ledger's start moment moved earlier */
+  lowerStart: [E, '2026-04-01T00:00:00Z'],
 };
 const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /.test(fn('a')) && fn('a').indexOf('regexp_replace(substr(a.source_ref, 5)') > 0 };   /* functions that only build SQL text: asserted on their text, not run against the stub db */
 

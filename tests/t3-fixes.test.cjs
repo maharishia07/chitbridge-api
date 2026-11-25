@@ -89,7 +89,7 @@ require.cache[require.resolve(path.join(API, 'db'))] = { id: 'db', loaded: true,
   t('a barcode failing its GTIN check digit is warned, naming the right digit', gt.length === 1 && gt[0].row === 3 && gt[0].severity === 'warn' && /should be 1/.test(gt[0].message), JSON.stringify(rep.issues));
   t('…a good GTIN and an internal SKU are not', !rep.issues.some((i) => i.row === 2 || i.row === 4));
   t('workbookCut reads xlsx-read\'s truncated flag, both routes call it', (products.match(/= workbookCut\(parsed\)/g) || []).length === 2 && /WORKBOOK_CUT/.test(products));
-  const imp = products.slice(routeAt(products, 'post', '/import'));
+  const imp = products.slice(products.indexOf('function uploadTooBig')); /* read1129routes: the cut-workbook refusal moved into uploadTooBig, which the import's importPlan calls before anything is written */
   t('the commit refuses a cut workbook before it writes', imp.indexOf('workbookCut') > 0 && imp.indexOf('workbookCut') < imp.indexOf('commitFields'));
 
   console.log('\n-- SIGNIN-CONST --');

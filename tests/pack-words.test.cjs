@@ -84,5 +84,8 @@ t('AU: regular is allowed; IN: composition is allowed; no country: unregistered 
 t('no country: sez is refused in neutral words', policy.kindRefusal(null, 'sez') !== null && !INDIA.test(policy.kindRefusal(null, 'sez')));
 t('the refusal code is exported for the route', policy.REG_KIND_NOT_OFFERED === 'REG_KIND_NOT_OFFERED');
 
+/* ── AA-F-04: who a shop asks about its tax is the pack's word — CA is India's only ── */
+t('the adviser word: IN CA, AE and AU accountant or tax agent, no pack accountant', words.wordsFor('IN').adviser === 'CA' && words.wordsFor('AE').adviser === 'accountant or tax agent' && words.wordsFor('AU').adviser === 'accountant or tax agent' && words.wordsFor(null).adviser === 'accountant');
+
 console.log(`\n  ${pass} checks · ${fail} failed\n`);
 process.exitCode = fail ? 1 : 0;

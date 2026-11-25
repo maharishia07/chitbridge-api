@@ -189,6 +189,17 @@ const byId = (list, id) => list.parties.filter((p) => p.party_id === id);
     } finally { WR.unbilledByParty = was; }
   });
 
+  await ita('LV-17: the record carries the bill count of the whole history (150 chit bills, not the 100 of a timeline page); last bill = the later of chit and ledger bills', async () => {
+    const at = (n) => new Date(Date.UTC(2026, 0, 1) + n * 3600000).toISOString();
+    D.chits = []; for (let i = 0; i < 150; i++) D.chits.push({ counterparty_id: P(2), direction: 'sent', current_status: 'completed', created_at: at(i), purpose: 'sale', doc_kind: 'bill' });
+    D.chits.push({ counterparty_id: P(2), direction: 'sent', current_status: 'completed', created_at: at(200), purpose: 'order', doc_kind: 'order' });
+    D.ledger = [{ entity: 'E1', party_id: P(2), item_id: 1, ref: 'B-1', ref_kind: 'bill', kind: 'sale', amount_minor: '100', currency: 'INR', created_at: at(300) }, { entity: 'E1', party_id: P(2), item_id: 2, ref: 'R-1', ref_kind: 'allocation', kind: 'receipt', amount_minor: '100', currency: 'INR', created_at: at(400) }];
+    const r = await t.get('/parties/' + P(2)); assert.strictEqual(r.status, 200, JSON.stringify(r.body));
+    assert.strictEqual(r.body.bills.n, 150, 'every bill counted, none cut at 100'); assert.strictEqual(r.body.bills.last_at, at(300), 'last bill = the later of chit and ledger bills, a non-bill is not one');
+    D.chits = []; D.ledger = [];
+    assert.deepStrictEqual((await t.get('/parties/' + P(2))).body.bills, { n: 0, last_at: null }, 'no bills: 0 and no date');
+  });
+
   t.close();
   console.log('  ' + pass + ' checks'); if (process.exitCode) console.log('FAILED');
 })();

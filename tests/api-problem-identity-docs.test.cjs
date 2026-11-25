@@ -251,7 +251,7 @@ async function checkCodeFlow(port) {
   const ref = saved && saved.params[2];
   const parts = verifyLib.unpack(ref);
   check('a code is issued: 200 delivery sent, sent_to masked, expires_in 10 minutes', issued.status === 200 && issued.json && issued.json.delivery === 'sent' && issued.json.sent_to === '*****0000' && issued.json.expires_in === '10 minutes' && !issued.text.includes(S.VALUES.PHONE), issued.json);
-  check('what is kept is otp:<sha256>:<expiry>:0, and the code itself is nowhere in it', !!parts && parts.tries === 0 && parts.hash === sha(S.SHOP + ':PHONE:' + issued.json.dev_otp), ref);
+  check('what is kept is otp:<sha256>:<expiry>:0, and the code itself is nowhere in it', !!parts && parts.tries === 0 && parts.hash === (require('../lib/vaultcrypto').isConfigured() ? require('../lib/vaultcrypto').keyedCodeHash(S.SHOP + ':PHONE', String(issued.json.dev_otp)) : sha(S.SHOP + ':PHONE:' + issued.json.dev_otp)), ref);
   check('the expiry is ten minutes ahead', !!parts && Math.abs(parts.exp - (Date.now() + verifyLib.TTL_MS)) < 60000, parts);
   const type = async (code, tries, expiresIn) => {
     const pendingRef = verifyLib.pack(issued.json.dev_otp, S.SHOP + ':PHONE', Date.now() + (expiresIn === undefined ? verifyLib.TTL_MS : expiresIn), tries);
@@ -265,8 +265,8 @@ async function checkCodeFlow(port) {
   const stamped = right.writes.find((one) => /SET status = 'verified'/.test(one.sql));
   check('the right code verifies: 200 verified true with the stamp, the row is marked verified by otp:phone and the pending code is cleared', right.answer.status === 200 && right.answer.json.verified === true && right.answer.json.verified_at === S.STAMP && !!stamped && stamped.params[2] === 'otp:phone' && /verification_ref = NULL/.test(stamped.sql), right.answer.json);
   const wrong = await type('000000', 0);
-  const counted = wrong.writes.find((one) => /SET verification_ref = \$3/.test(one.sql));
-  check('a wrong code is 400 OTP_WRONG, says 4 left, and the count of wrong tries goes up by one', wrong.answer.status === 400 && wrong.answer.json.code === 'OTP_WRONG' && /4 attempts left/.test(wrong.answer.json.message) && verifyLib.unpack(counted && counted.params[2]).tries === 1, wrong.answer.json);
+  const counted = wrong.writes.find((one) => /SET verification_ref = \$4/.test(one.sql));
+  check('a wrong code is 400 OTP_WRONG, says 4 left, and the count of wrong tries goes up by one', wrong.answer.status === 400 && wrong.answer.json.code === 'OTP_WRONG' && /4 attempts left/.test(wrong.answer.json.message) && verifyLib.unpack(counted && counted.params[3]).tries === 1, wrong.answer.json);
   const last = await type('000000', 4);
   check('the fifth wrong code locks: 429 OTP_LOCKED', last.answer.status === 429 && last.answer.json.code === 'OTP_LOCKED', last.answer.json);
   const locked = await type(String(issued.json.dev_otp), 5);

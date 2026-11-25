@@ -1,5 +1,5 @@
 /* app/till-dayrep.js — THE DAY REPORT'S AGGREGATION AND TABLES, a part of the till page (till.html) kept in its own file to hold the page's size row (2026-11-28; no behaviour changed).
- * Classic script, shared global scope with till.html: it reads the page's own money(), rmoney(), r2(), esc(), hhmm(), bohniOf(), schemeWord() and CBTax at call time.
+ * Classic script, shared global scope with till.html: it reads the page's own money(), rmoney(), r2(), esc(), hhmm(), bohniOf(), schemeWord(), isReturnRow() and CBTax at call time.
  *
  * OWNER     cb-counter (the till)
  * RISK      money (the day's takings as the owner reads them)
@@ -13,24 +13,49 @@
  */
 /** ⚠️ "1 bills" reads as a machine talking. One helper, so no table here ever has to remember. */
 function dayRepCount(n, one, many){ return n + ' ' + (n === 1 ? one : many); }
+/** U-F-02 · the rate-wise figures a bill counts in the day, with a RETURN's taken back: a credit note's by_rate is negative whatever shape it
+    arrived in (the server's read may drop the sign or carry the original's), so the day nets it against the sales' rows and equals the books. Answers { rate: { taxable, tax } } or null. */
+function dayRateFigures(bill, issuedRates){
+  var src = (isReturnRow(bill) ? null : issuedRates) || (bill && bill.by_rate) || null;
+  if (!src || !Object.keys(src).length) return null;
+  var sign = isReturnRow(bill) ? -1 : 1, out = {};
+  Object.keys(src).forEach(function(rate){
+    var v = src[rate] || {}, taxable = Number(v.taxable != null ? v.taxable : v.base) || 0, tax = Number(v.tax) || 0;
+    out[rate] = sign < 0 ? { taxable: -Math.abs(taxable), tax: -Math.abs(tax) } : { taxable: taxable, tax: tax };
+  });
+  return out;
+}
 function dayRepRows(bills){
   var sums = { items: {}, byRate: {}, byPay: {}, payBills: {}, byKind: {}, namedKind: false };
   bills.forEach(function(b){
-    dayRepAddKinds(sums, b);
+    var issuedRates = dayRepAddKinds(sums, b);   /* Q-F-07 · the per-rate figures the BOOKS read: the invoice's own, not the bill header's second rounding */
     dayRepAddLines(sums.items, b);
-    dayRepAddRates(sums.byRate, b);
+    dayRepAddRates(sums.byRate, b, issuedRates);
     dayRepAddPays(sums, b);
   });
   return { items: sums.items, byRate: sums.byRate, byPay: sums.byPay, payBills: sums.payBills, byKind: sums.namedKind ? sums.byKind : null };
 }
+/** the rate-wise figures the invoice was issued with (its by_rate), or null when it carries none */
+function dayRepIssuedRates(figures){
+  return figures && figures.by_rate && Object.keys(figures.by_rate).length ? figures.by_rate : null;
+}
+/** the invoice's own by_kind rows, else its by_rate read as standard-kind rows, else none */
+function dayRepKindRows(figures){
+  if (figures && figures.by_kind) return figures.by_kind;
+  if (!(figures && figures.by_rate)) return [];
+  return Object.keys(figures.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: figures.by_rate[rt].taxable, tax: figures.by_rate[rt].tax }; });
+}
 /** SUPPLY KIND: the day by kind, from each bill's own invoice (the engine's by_kind), as issued; shown only when some bill named a kind */
 function dayRepAddKinds(sums, bill){
+  var issuedRates = null;
   try { var invoice = bill.invoice, named = !!(invoice && invoice._cb && invoice._cb.kinds && invoice._cb.kinds.length), figures = (invoice && window.CBTax && CBTax.moneyOf) ? CBTax.moneyOf(invoice) : null;
     if (named) sums.namedKind = true;
-    ((figures && figures.by_kind) || (figures && figures.by_rate ? Object.keys(figures.by_rate).map(function(rt){ return { kind: 'standard', rate: Number(rt), taxable: figures.by_rate[rt].taxable, tax: figures.by_rate[rt].tax }; }) : [])).forEach(function(w){
+    issuedRates = dayRepIssuedRates(figures);
+    dayRepKindRows(figures).forEach(function(w){
       var key = w.kind + '|' + w.rate, row = sums.byKind[key] || (sums.byKind[key] = { kind: w.kind, rate: w.rate, taxable: 0, tax: 0 });
       row.taxable = rmoney(row.taxable + (Number(w.taxable) || 0)); row.tax = rmoney(row.tax + (Number(w.tax) || 0)); });
   } catch (e) { cbQuiet('dayRepAddKinds:1', e); /* an old bill with no readable invoice is left out of this table only */ }
+  return issuedRates;
 }
 /** each line of the bill added into the day's item rows: quantity, gross, offers, the line's own tax, net */
 function dayRepAddLines(items, bill){
@@ -49,9 +74,10 @@ function dayRepAddLines(items, bill){
   });
 }
 /** ⭐ the rate-wise summary the bill was ISSUED with, not one recomputed from today's slabs */
-function dayRepAddRates(byRate, bill){
-  Object.keys(bill.by_rate || {}).forEach(function(rate){
-    var v = bill.by_rate[rate] || {};
+function dayRepAddRates(byRate, bill, issuedRates){
+  var rateSrc = (typeof dayRateFigures === 'function' ? dayRateFigures(bill, issuedRates) : (issuedRates || bill.by_rate)) || {};   /* typeof: a harness that lifts functions by name still runs */
+  Object.keys(rateSrc).forEach(function(rate){
+    var v = rateSrc[rate] || {};
     var r = byRate[rate] || (byRate[rate] = { rate: rate, taxable: 0, tax: 0 });
     r.taxable = rmoney(r.taxable + (Number(v.taxable) || 0));
     r.tax = rmoney(r.tax + (Number(v.tax) || 0));
@@ -88,6 +114,10 @@ function dayRepSummary(figures){
   var rounded = figures.bills.reduce(function(sum, bill){ return rmoney(sum + (Number(bill.cash_round) || 0)); }, 0);
   var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(rmoney(figures.total / figures.count)) : '\u2014'],
     ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Sales before tax', money(figures.taxable)], ['Tax', money(figures.tax)]];
+  /* U-F-02 · the returns line: sales before tax and Tax above are NET of these, so the sheet says what came off */
+  var backs = figures.bills.filter(isReturnRow), backTaxable = backs.reduce(function(a, x){ return rmoney(a + Math.abs(Number(x.taxable) || 0)); }, 0),
+      backTax = backs.reduce(function(a, x){ return rmoney(a + Math.abs(Number(x.tax) || 0)); }, 0);
+  if (backs.length) rows.push(['Returns (' + dayRepCount(backs.length, 'credit note', 'credit notes') + '), before tax and tax', '−' + money(backTaxable) + ' · −' + money(backTax)]);
   if (rounded) rows.push(['Cash rounding', (rounded > 0 ? '+' : '') + money(rounded)]);
   return dayRepTable('The day', [{ label: 'What' }, { label: 'Figure', num: true }], rows,
     ['<b>Net sales</b>', '<b data-testid="till-dayrep-netsales">' + money(figures.total) + '</b>']);
@@ -126,7 +156,8 @@ function dayRepRateTable(dayFigures, taxable, taxTotal){
     var r = dayFigures.byRate[k];
     /* ⚠️ HALVED FOR THE TWO HEADS, NOT RECOMPUTED — the bill recorded the total tax at this rate.
        CX0: only under a state-split pack (India); a one-head scheme (GST in Australia, VAT in the UAE) has one Tax column, never two invented halves */
-    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(rmoney(r.tax / 2)), money(rmoney(r.tax / 2)), money(r.tax)]
+    var cg = rmoney(r.tax / 2);   /* Q-F-07 · the second head is the remainder, so an odd paisa never makes the two halves overshoot the row */
+    return packSplitsByState() ? [esc(k) + '%', money(r.taxable), money(cg), money(rmoney(r.tax - cg)), money(r.tax)]
                                : [esc(k) + '%', money(r.taxable), money(r.tax)];
   });
   return packSplitsByState()

@@ -5,7 +5,7 @@
 // CARD      09-counter/billing-and-the-bill
 'use strict';
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
-const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8').replace(/\r\n/g, '\n');
+const h = (fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8') + '\n' + fs.readFileSync(__dirname + '/../tools/tally-connector/till-slip.js', 'utf8')).replace(/\r\n/g, '\n');
 /** a function's source by brace count */
 function grab(n) {
   const at = h.indexOf('function ' + n + '(');

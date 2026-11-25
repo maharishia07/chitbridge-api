@@ -156,19 +156,19 @@ const srv = app.listen(0, '127.0.0.1', async () => {
     ok('…the SHOP sells it: only the shop\'s shelf is read for rates, never the customer\'s', SHELVES.length >= 1 && SHELVES.every((e) => e === SHOP), JSON.stringify(SHELVES));
     ok('…and the shop is never written into the CUSTOMER\'s customer list (that is what an order to a seller does)', !LISTED.some((x) => x[0] === CUST), JSON.stringify(LISTED));
 
-    /* ⭐ ACC-252: bill_received.total is WHAT THE BILL COMES TO (the engine's figure, picked by counter-bill.pickOf), never what was paid.
+    /* (P-F-01, 1129: the tenders add up to the bill + its cash_round, so the part-paid rest is On credit and the rounding is stated) ⭐ ACC-252: bill_received.total is WHAT THE BILL COMES TO (the engine's figure, picked by counter-bill.pickOf), never what was paid.
        Old code summed the payment parts, so a part-paid bill (₹50 of ₹118) and a cash-rounded one read wrong on the buyer's list row. */
     const owedOn = async (no, payment, invoice) => {
       const r = await send(bill(no, chola, { recipients: [SELF, toCust], business_json: Object.assign({}, bill(no, chola).business_json, { payment }, invoice ? { invoice } : invoice === false ? { invoice: undefined } : {}) }));
       const tcopy = (COPIES || []).find((c) => c.entity_id === CUST) || {};
       return { status: r.status, total: ((tcopy.summary_json || {}).bill_received || {}).total, theirs: tcopy };
     };
-    const part = await owedOn('C1/26-27/0060', { mode: 'Cash', paid: 50, parts: [{ how: 'Cash', amount: 50 }] });
+    const part = await owedOn('C1/26-27/0060', { mode: 'Cash', paid: 50, parts: [{ how: 'Cash', amount: 50 }, { how: 'On credit', amount: 68 }] });
     ok('ACC-252 · IN · a part-paid bill (₹50 of ₹118): the buyer\'s row says the BILL (118), not what was paid (50)', part.status === 200 && part.total === 118, part.status + ' ' + part.total);
-    const carriedIN = await owedOn('C1/26-27/0061', { mode: 'Cash', paid: 1118, parts: [{ how: 'Cash', amount: 1118 }] }, { ValDtls: { TotInvVal: 1118.16 } });
+    const carriedIN = await owedOn('C1/26-27/0061', { mode: 'Cash', paid: 1118, cash_round: -0.16, parts: [{ how: 'Cash', amount: 1118 }] }, { ValDtls: { TotInvVal: 1118.16 } });
     ok('ACC-252 · IN · a carried invoice of ₹1,118.16 paid ₹1,118 in cash: the row says the invoice\'s 1118.16', carriedIN.status === 200 && carriedIN.total === 1118.16, carriedIN.status + ' ' + carriedIN.total);
     ROWS[SHOP].country = 'AU';
-    const au = await owedOn('C1/26-27/0062', { mode: 'Cash', paid: 105, parts: [{ how: 'Cash', amount: 105 }] }, { ValDtls: { TotInvVal: 105.05 } });
+    const au = await owedOn('C1/26-27/0062', { mode: 'Cash', paid: 105, cash_round: -0.05, parts: [{ how: 'Cash', amount: 105 }] }, { ValDtls: { TotInvVal: 105.05 } });
     ROWS[SHOP].country = 'IN';
     ok('ACC-252 · AU · a carried invoice of $105.05 paid $105.00 (5c cash rounding): the row says the invoice\'s 105.05', au.status === 200 && au.total === 105.05, au.status + ' ' + au.total);
     const none = await owedOn('C1/26-27/0064', { mode: 'On credit', paid: 0, parts: [{ how: 'On credit', amount: 118 }] }, false);

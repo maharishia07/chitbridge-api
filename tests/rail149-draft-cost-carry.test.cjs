@@ -21,7 +21,7 @@ const SHOP = '11111111-1111-4111-8111-111111111111', SUPPLIER = '22222222-2222-4
 const STRANGER = '44444444-4444-4444-8444-444444444444', BLIND_ID = '55555555-5555-4555-8555-555555555555', GRANTED_ID = '66666666-6666-4666-8666-666666666666';
 const DRAFT = '77777777-7777-4777-8777-777777777777', L1 = '88888888-8888-4888-8888-888888888881', L2 = '88888888-8888-4888-8888-888888888882';
 const STORED = 4242.5, STORED_TOTAL = 42425, STORED_COST = 3131.25, TRIED = 9797.25;
-const row = (id, name, bridge) => ({ identity_id: id, bridge_id: bridge, display_name: name, country: 'IN', currency_code: 'INR', policy_flags: {}, status: 'active', user_id: name });
+const row = (id, name, bridge) => ({ identity_id: id, bridge_id: bridge, display_name: name, country: 'IN', currency_code: 'INR', gstn: '33AAAAA0000A1Z5', policy_flags: {}, status: 'active', user_id: name });
 const ROWS = { [SHOP]: row(SHOP, 'Mayur Traders', 'CBSHOP0001'), [SUPPLIER]: row(SUPPLIER, 'Rice Mill', 'CBMILL0001'), [CUSTOMER]: row(CUSTOMER, 'Ravi Stores', 'CBRAVI0001'), [STRANGER]: row(STRANGER, 'Who Ltd', 'CBWHO00001') };
 const OWNER = { identity_id: SHOP, identity_type: 'entity', bridge_id: 'CBSHOP0001', display_name: 'Mayur Traders' };
 const BLIND = { identity_id: BLIND_ID, identity_type: 'actor', access_level: 'editor', parent_entity_id: SHOP, hat: 'manager', bridge_id: 'CBSHOP0001', display_name: 'Blind' };
@@ -65,7 +65,7 @@ require(path.join(API, 'lib', 'events')).notifyAfter = () => {};
 const app = h.app('/api/chits', require(path.join(API, 'routes', 'chits')));
 
 /** what a blind resume really sends: the web's compose turns the hidden price into 0 (price: +item.price || 0, total: 0), or a client may send null */
-const resent = (over) => Object.assign({ particulars: 'Basmati rice 1kg', unit: 'kg', quantity: 10, price: null }, over);
+const resent = (over) => Object.assign({ particulars: 'Basmati rice 1kg', unit: 'kg', quantity: 10, price: null, gst_rate: 5 }, over);
 const body = (lines, extra) => Object.assign({ purpose: 'order', manual_subject: 'PO', recipients: [{ entity_id: SUPPLIER, role: 'to' }], line_items: lines, promote_draft_id: DRAFT }, extra || {});
 const send = async (who, payload, scene) => {
   Object.assign(SCENE, { header: headerFor(SUPPLIER), payload: PAYLOAD, roleOf: { [SUPPLIER]: 'supplier', [CUSTOMER]: 'customer' }, locked: 0, moved: null, definers: true }, scene || {});

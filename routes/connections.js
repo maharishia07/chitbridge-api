@@ -13,6 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const { query, withEntity } = require('../db');
 const { schemaValidate, sanitise } = require('../middleware/validate'); // S9: the request is checked against the route's own schema
 const auth = require('../middleware/auth');
+const { isOwner } = require('../lib/owner'); // reviews4 M17: the ONE owner test
 const { assignAtAccept } = require('../lib/network-accept-assign'); // L10: who looks after the client just accepted
 const { UUID_RE } = require('../lib/trace'); // NET-48: an id that is not a uuid names no one
 
@@ -103,11 +104,22 @@ router.post('/request', auth, checked('POST /request'), async (req, res) => {
 /* K-1 (API-10) — a request id that is not a uuid names no request: 404 before the database answers with its own words in a 500 */
 router.param('id', uuidParam(contract.words.requestUnknown));
 
+/**
+ * who may answer a connection request: the business owner itself (reviews4 M17), never a staff seat under it (LENS-SEC 1129 network-01 F5, parent_entity_id; 403 in words, as the build and re-issue)
+ * -> the problem to send, or null when this caller may answer
+ */
+function respondRefusal(req) {
+  if (!isOwner(req)) return { status: 403, code: 'OWNER_ONLY', detail: 'Only the business owner can answer a connection request. Sign in as the business itself.' };
+  return req.identity.parent_entity_id ? { status: 403, ...contract.words.respondOwnerOnly() } : null;
+}
+
 // ─── PUT /connections/:id/respond ────────────────────────────
 // Entity B accepts or rejects connection request
 // @does A connection id and accept or reject in -> the shop asked answers that pending request -> the updated connection.
 router.put('/:id/respond', auth, checked('PUT /:id/respond'), async (req, res) => {
   try {
+    const notAllowed = respondRefusal(req);
+    if (notAllowed) return problem(req, res, notAllowed);
     const connection_id = req.params.id;
     const action = req.body.action;
     const entity_id = req.identity.identity_id;

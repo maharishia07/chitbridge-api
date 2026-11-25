@@ -1,4 +1,4 @@
-/* ADOPTED from chitbridge-engines v1.96.0 · rollup · sha256 3cf37376bcc687cfffda634eb25b055204ca844e507f3d4a3c7cf8c34a445a58 — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
+/* ADOPTED from chitbridge-engines v1.110.0 · rollup · sha256 ad1213d25683e82aa5e80b04da188e60a85e4f2ebd044eb14e6b9057abe7a8fb — DO NOT EDIT HERE. Change it in chitbridge-engines, release a version, then run tools/adopt.cjs. */
 /* chitbridge-engines · rollup. Edited ONLY in chitbridge-engines/src/rollup.js; every platform adopts a released version of it. */
 (function (root) {
   'use strict';
@@ -74,6 +74,16 @@
     return x < 0 && c !== 0 ? -c : c;
   }
   const r2 = (n) => roundMoney_(Number(n) || 0);
+  /* reviews1 EL counter M2: with a currency stated, sums round to THAT currency's minor unit (OMR/KWD 3, JPY 0); with none they keep the 2-decimal rule every existing caller relies on */
+  function rounderOf_(currency) {
+    if (!currency) return r2;
+    const scale = Math.pow(10, decimalsOf_(currency));
+    return (n) => {
+      const x = Number(n) || 0;
+      const c = Math.round(Number((Math.abs(x) * scale).toPrecision(15))) / scale;
+      return x < 0 && c !== 0 ? -c : c;
+    };
+  }
 
   /**
    * CTR-196 — ONE PLACE that splits a credit note into money handed back and money only taken off what is owed.
@@ -81,7 +91,8 @@
    * is a note that only reduces — nothing left the drawer, CTR-187). A note with NO `refunds` field at all is an
    * old row: it keeps counting wholly as a refund, because guessing at old data would move old figures.
    */
-  function splitNote(b) {
+  function splitNote(b, r2) {
+    r2 = r2 || rounderOf_();
     const whole = Math.abs(Number(b.total) || 0);
     if (!Array.isArray(b.refunds)) return { refunded: whole, reduced: 0 };
     const paid = b.refunds.reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
@@ -111,7 +122,8 @@
    * ⚠️⚠️ A CREDIT NOTE IS STORED NEGATIVE, deliberately, so `total` nets by itself. An expense is stored
    * negative for the identical reason — every other column has to be told. [[feedback-silence-is-the-bug]]
    */
-  function totals(rows) {
+  function totals(rows, currency) {
+    const r2 = rounderOf_(currency);
     const by = {};
     let count = 0,
       returns = 0,
@@ -124,7 +136,7 @@
       if (isStockNote(b)) continue;
       if (isReturn(b)) {
         returns++;
-        const split = splitNote(b);
+        const split = splitNote(b, r2);
         refunds = r2(refunds + split.refunded);
         reduced = r2(reduced + split.reduced);
         /* ⚠️ money OUT — `refunds` on the row, never `payments`, because every reader of payments assumes taken */
@@ -154,7 +166,8 @@
    * summarise(a ++ b), or the month stops agreeing with the days it was built from and nobody can say which is
    * right. tests/rollup.test.js holds those two equal; it is the only reason this is safe to purge behind.
    */
-  function fold(parts) {
+  function fold(parts, currency) {
+    const r2 = rounderOf_(currency);
     const by = {};
     let count = 0,
       returns = 0,

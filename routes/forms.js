@@ -85,7 +85,7 @@ router.get('/instances/:id', auth, ...contract.checked('GET /instances/:id'), as
 // @does An issued form id and signer details (signed-in, not view-only) -> we stamp who signed and when onto the frozen form -> the signed instance.
 router.post('/instances/:id/sign', auth, access.writeGate, ...contract.checked('POST /instances/:id/sign'), async (req, res) => {
   try {
-    res.json(await forms.signForm(entityId(req), req.params.id, req.body || {}));
+    res.json(await forms.signForm(entityId(req), req.params.id, req.body || {}, { identity_id: req.identity && req.identity.identity_id, display_name: req.identity && req.identity.display_name, owner: require('../lib/owner').isOwner(req) }));
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Sign form failed'));
   }

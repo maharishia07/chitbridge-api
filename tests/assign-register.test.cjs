@@ -181,7 +181,7 @@ scanDirs.filter((dir) => fs.existsSync(path.join(ROOT, dir))).forEach((dir) => w
 check('GUARD: no door calls verdictOf directly; they call finalOutcome (lib/books-grant; the opener, which opens no books, is the one reader excepted by name)', offenders.length === 0, offenders.join(', '));
 const grantText = fs.readFileSync(path.join(ROOT, 'lib', 'books-grant.js'), 'utf8');
 const directCalls = (grantText.match(/[^.\w]verdictOf\(/g) || []).length;
-check('GUARD: inside lib/books-grant.js verdictOf has its definition and four callers only: bankPostingOutcome, finalOutcome, liveAmong and liveRoleOf (00390da05: the role read for the grant seat, a GET that opens no books)', directCalls === 5, 'found ' + directCalls);
+check('GUARD: inside lib/books-grant.js verdictOf has its definition and five callers only: bankPostingOutcome, finalOutcome, liveAmong, liveInOtherRole and liveRoleOf (00390da05: the role read for the grant seat, a GET that opens no books; 7061ed75d AT-F-05: liveInOtherRole)', directCalls === 6, 'found ' + directCalls);
 check('GUARD: look() and the marks write door call finalOutcome', /answerNamed\(transaction, await finalOutcome\(transaction, row, request\), row\)/.test(grantText) && /grants\.finalOutcome\(transaction, row, request\)/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
 check('GUARD: both doors say who the caller is (owner flag from the real identity, never a header)', /owner: !req\.api_key && !req\.identity\.parent_entity_id/.test(fs.readFileSync(path.join(ROOT, 'middleware', 'books-grant.js'), 'utf8')) && /owner: !real\.parent_entity_id/.test(fs.readFileSync(path.join(ROOT, 'lib', 'mark-door.js'), 'utf8')));
 

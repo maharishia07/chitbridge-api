@@ -1173,12 +1173,12 @@ document.addEventListener('fullscreenchange', function(){
   document.body.classList.toggle('show', !!document.fullscreenElement);
   setTimeout(function(){ paint(false); }, 60);
 });
+function typingInBox(e){ return !!(e.target && (/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName || '') || e.target.isContentEditable)); }   /* EL-20 M1: true while the person types in a box (caption, pairing code) - that is never a show shortcut */
 document.addEventListener('keydown', function(e){
+  if (typingInBox(e)) return;
   if (e.key === ' ') { setPlaying(!PLAYING); e.preventDefault(); }
-  if (e.key === 'ArrowRight') step(1);
-  if (e.key === 'ArrowLeft') step(-1);
-  if (e.key === 'f' || e.key === 'F') document.getElementById('full').click();
-  if (e.key === 'd' || e.key === 'D') save();
+  if (e.key === 'ArrowRight') step(1); if (e.key === 'ArrowLeft') step(-1);
+  var letter = String(e.key).toLowerCase(); if (letter === 'f') document.getElementById('full').click(); if (letter === 'd') save();
   if (e.key === 'Escape' && document.body.classList.contains('show')) document.body.classList.remove('show');
 });
 /* a mouse that has not moved for a while on a shop television should not leave a cursor on the sign */

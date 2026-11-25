@@ -100,11 +100,10 @@ function rowsFor(sql, p) {
     w.props.filter((r) => r.entity_id === p[0] && r.chit_id === p[1] && r.proposal_id !== p[2] && r.status === 'proposed').forEach((r) => (r.status = 'superseded'));
     return [];
   }
-  if (/^UPDATE chit_header SET business_json = COALESCE\(business_json, '\{\}'::jsonb\) - 'invoice'/.test(s)) {
+  if (/^UPDATE chit_header SET business_json = CASE WHEN \$3::jsonb IS NULL THEN COALESCE\(business_json/.test(s)) {
     const h = w.header[p[1]];
     const bj = Object.assign({}, h.business_json);
-    if (p[2] == null) delete bj.invoice;
-    else bj.invoice = JSON.parse(p[2]);
+    if (p[2] != null) bj.invoice = JSON.parse(p[2]);
     h.business_json = bj;
     h.summary_json = Object.assign({}, h.summary_json, p[3] ? JSON.parse(p[3]) : {});
     return [];
@@ -142,7 +141,7 @@ function rowsFor(sql, p) {
   if (/^SELECT 1 FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2$/.test(s)) return w.header[p[1]] ? [{ held: 1 }] : [];
   if (/^SELECT bridge_id, display_name FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [w.ident[p[0]]] : [];
   if (/^SELECT country, gstn FROM identities WHERE identity_id = \$1/.test(s)) return w.ident[p[0]] ? [{ country: w.ident[p[0]].country || null, gstn: null }] : [];
-  if (/^SELECT identity_id, gstn, display_name, policy_flags, country FROM identities WHERE identity_id = ANY/.test(s)) return p[0][0] ? p[0].map((id) => w.ident[id]).filter(Boolean) : [];
+  if (/^SELECT identity_id, gstn, display_name, policy_flags, country, address, timezone FROM identities WHERE identity_id = ANY/.test(s)) return p[0][0] ? p[0].map((id) => w.ident[id]).filter(Boolean) : [];
   /* the return path */
   if (/^SELECT sender_entity_bridge_id, all_recipients FROM chit_header WHERE chit_id = \$1 AND entity_id = \$2 LIMIT 1/.test(s)) return w.header[p[1]] ? [clone(w.header[p[1]])] : [];
   if (/FROM identities WHERE bridge_id = ANY/.test(s)) return Object.values(w.ident).filter((i) => p[0].includes(i.bridge_id));
@@ -601,6 +600,14 @@ const call = (method, url, id, body) =>
     const list = await call('POST', '/api/chits/' + CH + '/proposals', SELL, price([{ line_id: L1, price: 95 }]));
     assert.strictEqual(list.status, 409);
     assert.strictEqual(list.body.code, 'PROPOSAL_DOMESTIC');
+  });
+  await t('reviews1 F3: a party whose place could not be read ({local:true, resolved:false}) is not a local copy — the round is refused 503 CTP_UNRESOLVABLE and nothing is written', async () => {
+    const w = oneInstallation(undefined, { dealType: 'rfq' });
+    w.place[CC_STUB] = { entity_id: CC_STUB, local: true, resolved: false, installation_key: null, endpoint: null };
+    const r = await call('POST', '/api/chits/' + CH + '/proposals', SELL, price([{ line_id: L1, price: 95 }]));
+    assert.strictEqual(r.status, 503, JSON.stringify(r.body));
+    assert.strictEqual(r.body.code, 'CTP_UNRESOLVABLE');
+    assert.strictEqual(w.props.length, 0, 'no round written on any copy');
   });
   await t('a domestic chit composed as an RFQ (business_json.deal_type rfq, "Ask for a quote") uses rounds like an international one: the amend door proposes, both local copies hold the round, accept switches both', async () => {
     const w = oneInstallation(undefined, { domestic: true, dealType: 'rfq' });
@@ -1171,6 +1178,41 @@ const call = (method, url, id, body) =>
     A2.out.forEach((x) => (x.status = 'pending'));
     const again = await ship(A2, B2);
     assert.ok(again[0].ok && again[0].applied === false, 'older or repeated: acknowledged, nothing applied: ' + JSON.stringify(again));
+  });
+
+  /* LV-02 / LV-03 / LV-04 (lens verify 22 Nov) */
+  await t('LV-02: a round that prices or counts below zero, or past the widest the chit columns hold, is refused in words before anything is kept', async () => {
+    const { B } = twoInstallations();
+    for (const [what, lines] of [['negative price', [{ line_id: L1, price: -5 }]], ['negative quantity', [{ line_id: L1, quantity: -1 }]], ['price past the column', [{ line_id: L1, price: 1e16 }]], ['quantity past the column', [{ line_id: L1, quantity: 1e15 }]]]) {
+      let refusal = null;
+      await as(B, () => proposals.propose(SELL, CH, price(lines), SELLER)).catch((e) => (refusal = e));
+      assert.ok(refusal && refusal.status === 400, what + ' is refused 400: ' + (refusal && refusal.message));
+      assert.ok(/zero|too large/.test(refusal.message), what + ' says why in words: ' + refusal.message);
+    }
+    assert.strictEqual(B.props.length, 0, 'nothing was kept');
+  });
+  await t('LV-03: a peer round whose total is negative, past the column, or whose invoice is not an object is refused and not kept', async () => {
+    const { A } = twoInstallations();
+    const round = (id, extra) => Object.assign({ kind: 'proposal', seq: 70, proposal_id: id, round: 2, version: 'pro_forma', edits: null, request: null, terms: null, invoice: { ValDtls: { TotInvVal: 1 } }, summary: { total_value: 1 }, by_name: 'Sydney Spice' }, extra);
+    const bad = [['negative total', { summary: { total_value: -1 } }], ['total past the column', { summary: { total_value: 1e13 } }], ['invoice an array', { invoice: [1] }], ['invoice a string', { invoice: 'x' }]];
+    for (const [what, extra] of bad) {
+      const answer = await arrive(A, BUY, 'inst-B', B_SELL, round('f3333333-3333-4333-8333-33333333333' + bad.findIndex((x) => x[0] === what), extra));
+      assert.ok(refusedAs(answer), what + ' is refused: ' + JSON.stringify(answer));
+    }
+    assert.strictEqual(A.props.length, 0, 'none of them was kept');
+  });
+  await t('LV-04: accepting a round joins the amendments, the agreed money, the closing of rounds and the timeline row in ONE transaction (the callers db is handed to amend.record)', async () => {
+    const { A, B } = twoInstallations();
+    const amend = require(root('lib/amend')), real = amend.record;
+    const seen = [];
+    amend.record = (...args) => { seen.push(args[5]); return real.apply(amend, args); };
+    try {
+      const r2 = await as(B, () => proposals.propose(SELL, CH, price([{ line_id: L1, price: 95 }]), SELLER));
+      await ship(B, A);
+      await as(A, () => proposals.decide(BUY, CH, r2.proposal_id, 'accept', BUYER));
+      await ship(A, B);
+    } finally { amend.record = real; }
+    assert.ok(seen.length >= 1 && seen.every((db) => db && typeof db.query === 'function'), 'amend.record ran on the accepts own transaction: ' + seen.length + ' call(s)');
   });
 
   console.error = origErr;

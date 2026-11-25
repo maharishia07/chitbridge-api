@@ -55,6 +55,7 @@ const INFRA = [
   'books-daybook.js',
   'books-dues-rows.js',
   'books-movein.js',
+  'books-store-gstclass.js',
   'books-store-packs.js',
   'books-store-parties.js',
   'catalogue-order-checks.js',
@@ -97,6 +98,7 @@ const INFRA = [
   'signin-provider-contract.js', // SEC-112: the OpenAPI operations of routes/signin-provider.js — a contract, no rule
   'signin-provider-store.js', // SEC-112: the pre-binding read of provider links (ops.signin_provider_links, b878) — database plumbing
   'policy-signin.js', /* SEC-112: the three sign-in rule rows split out of lib/policy.js (FLAGS, CARD, a text coercer): rule data of the policy, the parent's class (infra) */
+  'pay-out-gate.js', // AK-F-02: who may pay a supplier (seat gate) split out of routes/books.js — an Express gate, no rule of the engines
   'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
   'policy-books.js', /* SHOPBK-B: the books_owner_approves rule row split out of lib/policy.js (FLAGS row, CARD row): rule data of the policy, the parent's class (infra) */
   'books-approval.js', /* SHOPBK-B: who presses post for the shop's own Bookkeeper: reads the one flag and hands the entry to the ONE queue (books-action); no posting rule of its own */
@@ -123,4 +125,5 @@ const PENDING = [
 ];
 /* ENGINE: adopted from chitbridge-engines, written only by tools/adopt.cjs; reg-timing (the filing dates of a country's returns) arrives with the engines release that carries engines #150, as a need of tax-packs */
 const ENGINE = ['reg-timing.js', 'books-carry-help.js', 'books-month-advice.js', 'books-payment-advice.js'];   /* the three books parts: split out of books.js (ENGINE_OTHER), the parent's class, behaviour unchanged */
+const L1129 = require('./engine-manifest-1129'); INFRA.push(...L1129.INFRA); PENDING.push(...L1129.PENDING); /* batch 1129's lib files */
 module.exports = { INFRA, PENDING, ENGINE };

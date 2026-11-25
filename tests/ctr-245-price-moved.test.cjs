@@ -1,7 +1,7 @@
 /**
  * tests/ctr-245-price-moved.test.cjs - CTR-245 (CTR-212 S4): a draft promoted long after it was priced. The server names the lines whose catalogue row moved after the draft was made
  * (equality of two carried figures, lib/price-moved over lib/price-drift); a PERSON waiting gets 409 PRICE_MOVED; the shop's own loopback (auto) and a till body are never refused.
- * Hand computation (engine, 2 x 100.00 excl @18% intra-state): 200.00 + 18.00 + 18.00 = 236.00; at 120.00: 240.00 + 21.60 + 21.60 = 283.20; at 12%, 100.00: 200.00 + 12.00 + 12.00 = 224.00.
+ * Hand computation (engine, 2 x 100.00 excl @18% intra-state): 200.00 + 18.00 + 18.00 = 236.00; at 120.00: 240.00 + 21.60 + 21.60 = 283.20; at 5%, 100.00: 200.00 + 5.00 + 5.00 = 210.00 (12% left the India menu in Feb 2026, AP-F-08 refuses it).
  * The draft was made 40 days before T0 = 2026-11-13T10:00Z; the row moved at T0. The server sends no total; the figures here are typed by hand and the engine run is only for the actual.
  * The 409 also carries the total before (the send's own engine run, 236.00) and after (the same engine door at 120.00, 283.20) and who gets the bill; the ack is a signed token bound to draft and person.
  * Run: node tests/ctr-245-price-moved.test.cjs
@@ -237,14 +237,14 @@ const mintAck = (claims, opts) => jsonWebToken.sign(Object.assign({ kind: 'price
     ok('6 WHO IS A TILL is the KEY, never the body: a PERSON whose body claims price_basis and a till build still gets the 409', claim.status === 409 && claim.answer.code === 'PRICE_MOVED', J([claim.status, claim.answer.code]));
     ok('6 unit: whoAsks reads the key scope only (till scope, not connector), a key without it is unattended, no key is a person', moved.whoAsks({ till: { key: { scopes: ['till'] } } }) === 'till' && moved.whoAsks({ till: { key: { scopes: ['till', 'connector'] } }, api_key: {} }) === 'unattended' && moved.whoAsks({ api_key: {} }) === 'unattended' && moved.whoAsks({}) === 'person', '');
 
-    /* row 7: a rate that moved: 18 -> 12 at T0, price unchanged */
-    ROWS = [row(100, 12, T0)];
+    /* row 7: a rate that moved: 18 -> 5 at T0, price unchanged */
+    ROWS = [row(100, 5, T0)];
     const r7 = await send(promote());
-    ok('7 rate 18 -> 12: 409, kind rate_moved, 18 vs 12, not sendable as drafted', r7.status === 409 && r7.answer.lines[0].kind === 'rate_moved' && r7.answer.lines[0].was_rate === 18 && r7.answer.lines[0].now_rate === 12 && r7.answer.can_send_as_drafted === false, J(r7.answer));
+    ok('7 rate 18 -> 5: 409, kind rate_moved, 18 vs 5, not sendable as drafted', r7.status === 409 && r7.answer.lines[0].kind === 'rate_moved' && r7.answer.lines[0].was_rate === 18 && r7.answer.lines[0].now_rate === 5 && r7.answer.can_send_as_drafted === false, J(r7.answer));
     const r7b = await send(promote({ ack: ackFrom(r7) }));
     ok('7 an ack is REFUSED for a rate move: 409 again', r7b.status === 409, J(r7b.status));
-    const r7c = await send(promote({ lines: [mkLine({ gst_rate: 12 })] }));
-    ok('7 re-priced at 12 (the web ran its engine): sent; the engine total at 12% is 224.00', r7c.status === 200 && (storedTotal(r7c.copies) === null || storedTotal(r7c.copies) === 224), J([r7c.status, storedTotal(r7c.copies)]));
+    const r7c = await send(promote({ lines: [mkLine({ gst_rate: 5 })] }));
+    ok('7 re-priced at 5 (the web ran its engine): sent; the engine total at 5% is 210.00', r7c.status === 200 && (storedTotal(r7c.copies) === null || storedTotal(r7c.copies) === 210), J([r7c.status, storedTotal(r7c.copies)]));
 
     /* row 8: withdrawn */
     ROWS = [row(100, 18, T0, { is_active: false })];

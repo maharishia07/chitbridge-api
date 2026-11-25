@@ -176,6 +176,14 @@ it('⭐⭐⭐ every onclick in a capability calls a function that exists', () =>
     while ((m = win.exec(s))) defined.add(m[1]);
   });
 
+  /* a lab page's own inline functions are defined for the page's modules (websplit D: app/product-lab-steps.js draws the step strip whose buttons call the page's goStep) */
+  ['product-lab.html'].forEach((page) => {
+    const file = path.join(WEB, page);
+    if (!fs.existsSync(file)) return;
+    const text = blankComments(fs.readFileSync(file, 'utf8'), false); let m; const decl = /(?:^|\n)\s*(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g;
+    while ((m = decl.exec(text))) defined.add(m[1]);
+  });
+
   const KEYWORD = new Set(['if','for','while','switch','return','typeof','delete','void','catch','function','new']);
   const missing = [];
   files.forEach((f) => {

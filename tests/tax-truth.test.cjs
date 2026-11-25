@@ -96,7 +96,7 @@ const MONEY = require(path.join(API, 'lib', 'money'));
 const r2 = (n) => MONEY.round(Number(n) || 0);
 
 /* ── the counter page, its own functions in a sandbox ─────────────────────────────────────────────────────────────── */
-const PAGE = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8').replace(/\r\n/g, '\n');
+const PAGE = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8')).replace(/\r\n/g, '\n');
 const PROG = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8').replace(/\r\n/g, '\n');
 function fnText(src, sig) {
   const at = src.indexOf(sig);
@@ -105,9 +105,9 @@ function fnText(src, sig) {
   return src.slice(at, end + 2);
 }
 /* STD-CATCH (14 Oct): the lifted functions' best-effort catches record through cbQuiet — lift the ring and the recorder with them */
-const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads the catalogue again before the number; not due on these bills, the recheck helpers it reaches are lifted with it */ 'function stateOfTaxId(', 'function packKinds(', 'function cbQuiet(', 'function lineKindOf(', 'function billLineOf(', 'function billLineFigures(', 'function billCustomerOf(', 'async function recheckBeforeBill(', 'function recheckBasis(', 'function recheckKeptList(', 'function recheckDue(', 'function recheckSetting(', 'function parkedTooLong(', 'function parkHoursOf(', 'function cartParkedAt(', 'function billMoney(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'async function moneyStopAsk(', 'function notInvoiceWhy(', 'function slipCheckedHTML(', 'function walkInNote(', 'function saleStopWords(', 'async function finish(', 'async function billPartsOf(', 'function resetAfterBill(', 'async function deliverAsk(', 'function deliverTo(', 'function paintDeliver(', 'async function postRewardBehindBill(', 'function chitOf(',
+const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads the catalogue again before the number; not due on these bills, the recheck helpers it reaches are lifted with it */ 'function stateOfTaxId(', 'function packKinds(', 'function cbQuiet(', 'function lineKindOf(', 'function billLineOf(', 'function billLineFigures(', 'function billCustomerOf(', 'async function recheckBeforeBill(', 'function recheckBasis(', 'function recheckKeptList(', 'function recheckDue(', 'function recheckSetting(', 'function parkedTooLong(', 'function parkHoursOf(', 'function cartParkedAt(', 'function billMoney(', 'function moneyOf(', 'function noCountryMoney(', 'function moneyStop(', 'async function moneyStopAsk(', 'function notInvoiceWhy(', 'function slipCheckedHTML(', 'function walkInNote(', 'function saleStopWords(', 'async function finish(', 'function saveFailedWords(', 'async function afterBillSaved(', 'async function billPartsOf(', 'function resetAfterBill(', 'async function deliverAsk(', 'function deliverTo(', 'function paintDeliver(', 'async function postRewardBehindBill(', 'function chitOf(',
   'function billRecipients(', 'function billSendTo(', 'function isReturnRow(', 'function isExpenseRow(', 'function slipOfRow(',
-  'function reprintOld(', 'function slipHTML(', 'function slipLineHTML(', 'function slipCountRowsHTML(', 'function slipRule46(', 'function slipStampOf(', 'function slipHsnOf(', 'function slipSignatureHTML(', 'function slipBuyerAddressHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
+  'function reprintOld(', 'var SLIP_DASH', 'var SLIP_SOLID', 'function slipRowHTML(', 'function slipHTML(', 'function slipWhoRowsHTML(', 'function slipCountBlockHTML(', 'function slipTenderHTML(', 'function slipOffersOf(', 'function slipIndentedRowHTML(', 'function slipLineHTML(', 'function slipOfferRowsHTML(', 'function slipLinesHTML(', 'function slipSavedRowsHTML(', 'function slipPlaceOfSupplyHTML(', 'function isReducedRate(', 'function slipTaxBlockHTML(', 'function slipCountRows(', 'function slipRule46(', 'function slipStampOf(', 'function slipHsnOf(', 'function slipSignatureHTML(', 'function slipBuyerAddressHTML(', 'function taxSummaryHTML(', 'function cartCount(', 'function taxIncluded(',
   'function tillStamp(', 'function tillHostWord(', 'function unratedOnBill(', 'function billOrderRow(', 'function posWords(',
   /* round T1 (2026-10-10): the slip's head is one function for the bill and the credit note (M45), its time is shop time (M43) */
   'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function shopDayOf(', 'function bandWordsOf(', 'function pinBillMoment(', 'function rateNoteOf(', 'function slipRateOf(', 'function slipHeadHTML(', 'function atShop(', 'function tzOpt(', 'function shopTz(', 'function shopOwnTz(',
@@ -120,7 +120,7 @@ const PAGE_FNS = ['var QUIET_MAX = 200, QUIET = [];', /* CTR-212: finish() reads
   /* counter batch 1 + 2 (2026-10-17): the registry's words, the slip's title per language, the one-head word, the per-rate foot, cash rounding */
   'function countryWords(', 'function registryTaxId(', 'var SLIP_TITLE_EN', 'function slipTitleKey(', 'function slipTitleHTML(', 'function slipTitleOf(', 'function slipTaxed(',
   'function reducedNoteHTML(', 'function slipCashRoundHTML(', 'function taxHeadWord(', 'function domesticFootHTML(', 'function perRateFootHTML(',
-  'function cashRule(', 'function cashDue(', 'function cashRoundWords(', 'function restBeforeLast(', 'function changeOf(', 'function cashRoundOf(', 'function tenderParts('];
+  'function tillViewOnly(', 'function tillViewOnlyWhy(', 'function cashRule(', 'function cashDue(', 'function cashRoundWords(', 'function restBeforeLast(', 'function changeOf(', 'function cashRoundOf(', 'function tenderParts('];
 
 /* R6-03 (Fable country review): the dated rate menu is asked at send. This fixture's lines carry 12%, a rate no schedule has had since 22 Sep 2025, so the counter's
    clock is FROZEN at a day when 12% was on the menu (the bill is stamped `billed_at` from it): the hand-computed figures below stay lawful and unchanged. */
@@ -392,6 +392,8 @@ const srv = app.listen(0, '127.0.0.1', async () => {
       /* CTR-214: and the engine's heads rows carry the same two heads, in total and in the 12% slab, or the send refuses the bill as a head mismatch */
       const hs = iv._cb.bridge.heads, hSlab = hs.find((x) => x.level === 'slab' && x.rate === 12);
       [hs.find((x) => x.level === 'total'), hSlab].forEach((row) => { row.minor.CgstVal += 1; row.minor.SgstVal += 1; });
+      /* P-F-01 (1129): the tenders must add up to the invoice total, so the tampered total (+0.02) is tendered too */
+      const pp = c.business_json.payment.parts; pp[pp.length - 1].amount = r2(pp[pp.length - 1].amount + 0.02);
       return c; } });
     const zf = figOfInv(Z.sEntry.invoice);
     ok('a stored figure the server\'s recompute DISAGREES with: the stored one is kept (tax 119.96, total 1118.17) on both copies, the money and the reprint',

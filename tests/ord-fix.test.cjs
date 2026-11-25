@@ -103,7 +103,7 @@ const one = (s) => String(s).replace(/\s+/g, ' ').trim();
     t('O1 a bill of MORE than the order asked never delivers more than ordered', rowsOf(bo, { lines: [{ item_id: 'A', qty: 9 }, { item_id: 'B', qty: 2 }] }).map((r) => r.quantity).join() === '5,2');
   }
   t('O1 the order lines remember their item_id for that match', /got\.push\(\{ line_id: l\.line_id \|\| null, item_id:/.test(till));
-  t('O5 finish() answers { ok, bill }', /return \{ ok: false \}/.test(till) && /return \{ ok: true, bill: r\.bill \}/.test(till));
+  t('O5 finish() answers { ok, bill }', /return \{ ok: false \}/.test(till) && /return \{ ok: true, bill: (?:r|result)\.bill \}/.test(till));
   t('O5 orderSettle sends settled only on ok, else reopen', /var done = await finish\(\);[\s\S]{0,300}done && done\.ok[\s\S]{0,200}do: 'settled'[\s\S]{0,200}do: 'reopen'/.test(till));
 
   console.log('\n' + pass + ' passed, ' + fail + ' failed · ' + (pass + fail) + ' checks');

@@ -8,12 +8,14 @@
  *
  *   node tools/error-codes.cjs --check     the table parses, no duplicate, no empty cell, the json equals it, every code in the code is a row
  *   node tools/error-codes.cjs --write     rewrite docs/error-codes.json from the table
+ *   node tools/error-codes.cjs --unknown   the codes no route reaches, grouped by reason (raised_by stays [])
  *   node tools/error-codes.cjs --seed      add a PENDING row for every code literal not yet in the table, then rewrite the json
  * raised_by (json only, generated): the routes that raise the code, read by routesOf(); [] = unknown. The ERR-14 "error capture" metric reads it (toolset/coverage/error-capture.cjs).
  * API-STANDARD S14: header `| code | status | title | shopkeeper | hint | owner_area | since |`, no pipe inside a cell.
  */
 const fs = require('fs');
 const path = require('path');
+const { buildGraph } = require('./error-trace.cjs');
 
 const ROOT = path.resolve(__dirname, '..');
 const MD_FILE = path.join(ROOT, 'docs', 'ERROR-CODES.md');
@@ -117,10 +119,35 @@ function seedRow(code, found, today) {
 const readRows = () => (fs.existsSync(MD_FILE) ? parseTable(fs.readFileSync(MD_FILE, 'utf8')) : { rows: [], problems: ['docs/ERROR-CODES.md is missing'] });
 
 /**
+ * the scan plus every REGISTERED code written as a quoted word in a line of code (refusal('X', 409, ...) · bad(msg, 409, 'X') · a table of words): a reading for the call graph only,
+ * so the register check (scanCodes) is not widened. A line that only compares a code (=== 'X', case 'X') or is a comment does not raise it and is skipped.
+ */
+function withQuotedCodes(base, scanned) {
+  const mdFile = path.join(base, 'docs', 'ERROR-CODES.md');
+  const known = new Set(fs.existsSync(mdFile) ? parseTable(fs.readFileSync(mdFile, 'utf8')).rows.map((row) => row.code) : []);
+  const out = {};
+  Object.keys(scanned).forEach((code) => (out[code] = { at: scanned[code].at.slice() }));
+  sourceFiles(base).forEach((file) => {
+    const relPath = path.relative(base, file).split(path.sep).join('/');
+    fs.readFileSync(file, 'utf8').split('\n').forEach((line, index) => {
+      if (/^\s*(\/\/|\*|\/\*)/.test(line)) return;
+      for (const hit of line.matchAll(/(['"])([A-Z][A-Z0-9]*_[A-Z0-9_]+)\1/g)) {
+        if (!known.has(hit[2])) continue;
+        if (/(?:[=!]==?|\bcase|\.includes\(|\.has\(|indexOf\()\s*$/.test(line.slice(0, hit.index))) continue;
+        const entry = (out[hit[2]] = out[hit[2]] || { at: [] });
+        if (!entry.at.some(([name, number]) => name === relPath && number === index + 1)) entry.at.push([relPath, index + 1]);
+      }
+    });
+  });
+  return out;
+}
+
+/**
  * routesOf(root) → { CODE: ['METHOD /path', …] } read from the code, never typed (ERR-14 part 1, "trigger known").
  * Two readings, joined: (a) the route whose own body holds the code literal (docs/api-register.json gives each route its file and first line; the literal counts
  * only while no column-0 line has closed the route, so a code in a helper between two routes is NOT given to the route above it) and
- * (b) the codes the register already follows into helpers two levels deep (errors.codes). A code raised only in lib/ or middleware stays [] (unknown, never guessed).
+ * (b) the codes the register already follows into helpers two levels deep (errors.codes) and (c) the call graph of tools/error-trace.cjs: every function the route reaches in its file or a require()d module.
+ * A code raised only where no route's calls reach (a call that does not resolve) stays [] (unknown, never guessed).
  */
 function routesOf(root) {
   const base = root || ROOT;
@@ -143,7 +170,35 @@ function routesOf(root) {
     for (let at = route.line; at < line; at++) if (/^\S/.test(lines[at] || '')) return;
     addRoute(code, route.key);
   }));
+  /* (c) the call graph: the codes of every function the route's body reaches through the same file or a require()d module (tools/error-trace.cjs) */
+  const graph = buildGraph(base, withQuotedCodes(base, scanned), sourceFiles(base));
+  routes.forEach((route) => {
+    const file = path.join(base, route.file);
+    if (!fs.existsSync(file)) return;
+    const lines = (linesOf[route.file] = linesOf[route.file] || fs.readFileSync(file, 'utf8').split('\n'));
+    let end = route.line;
+    while (end < lines.length && !/^\S/.test(lines[end] || '')) end++;
+    graph.reach(file, route.line, end + 1).forEach((code) => addRoute(code, route.key));
+  });
   return Object.fromEntries(Object.keys(found).map((code) => [code, [...found[code]].sort()]));
+}
+
+/** unknownsOf(root) → { reason: [CODE…] } the registered codes no route reaches, grouped by why (--unknown prints it) */
+function unknownsOf(root) {
+  const base = root || ROOT;
+  const mdFile = path.join(base, 'docs', 'ERROR-CODES.md');
+  const rows = fs.existsSync(mdFile) ? parseTable(fs.readFileSync(mdFile, 'utf8')).rows : [];
+  const routes = routesOf(base);
+  const seen = withQuotedCodes(base, scanCodes(base));
+  const groups = {};
+  rows.filter((row) => !(routes[row.code] || []).length).forEach((row) => {
+    const places = ((seen[row.code] && seen[row.code].at) || []).map(([rel]) => rel.split('/')[0]);
+    const reason = !places.length ? 'written nowhere as a quoted word (built from a variable or prefix, or retired)'
+      : places.includes('middleware') || places.includes('server.js') ? 'raised in middleware or server.js, mounted for many routes (no one route owns it)'
+        : 'written in ' + [...new Set(places)].sort().join('+') + ' but no route calls or names the function or table that holds it';
+    (groups[reason] = groups[reason] || []).push(row.code);
+  });
+  return groups;
 }
 
 /** the json that the table implies (stable text so the check is byte equality); raised_by is GENERATED from the code, never in the table */
@@ -188,6 +243,10 @@ function seedAndWrite(today) {
 /** command line: --check, --seed, or write the json from the table */
 function main(argv) {
   if (argv.includes('--seed')) return console.log('seeded ' + seedAndWrite(new Date().toISOString().slice(0, 10)) + ' new rows');
+  if (argv.includes('--unknown')) {
+    const groups = unknownsOf();
+    return Object.keys(groups).forEach((reason) => console.log(groups[reason].length + '  ' + reason + '\n    ' + groups[reason].join(' ')));
+  }
   if (argv.includes('--write')) {
     const { rows } = readRows();
     fs.writeFileSync(JSON_FILE, jsonOf(rows));
@@ -200,4 +259,4 @@ function main(argv) {
 }
 
 if (require.main === module) main(process.argv.slice(2));
-module.exports = { routesOf, scanCodes, parseTable, renderTable, readRows, jsonOf, unregistered, pendingCount, check, COLUMNS, PENDING };
+module.exports = { routesOf, unknownsOf, scanCodes, parseTable, renderTable, readRows, jsonOf, unregistered, pendingCount, check, COLUMNS, PENDING };

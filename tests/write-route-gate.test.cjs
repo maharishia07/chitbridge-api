@@ -30,6 +30,7 @@ const WRITE_ALLOW = {
   'POST /api/entities/verify': 'sign-in code check (signin.door + verifyChecks)',
   'POST /api/signin/ask': 'sign-in code request (signin.door)',
   'POST /api/signin/verify': 'sign-in code check (signin.door + verifyChecks)',
+  'POST /api/signin/provider/handoff': 'sign-in by the provider hand-off code (one-time, device-bound, per-account budget; the session door like verify)',
   'POST /api/csp-report': 'a browser posts its CSP report with no credential; own limiter, 8 KB cap, logs shaped fields only (K-SEC PR A)',
   'POST /api/capture/webhook/whatsapp': 'provider webhook, verified by its signature inside the handler',
   'POST /api/capture/webhook/email': 'provider webhook, verified by its signature inside the handler',
@@ -86,6 +87,9 @@ const WRITE_ALLOW = {
   'POST /api/signin/logout': 'the caller\'s own session (personOnly)',
   'POST /api/signin/sessions/revoke': 'the caller\'s own sessions; ending someone else\'s is refused inside (owner-only)',
   'POST /api/signin/pin': 'the caller\'s own PIN',
+  'POST /api/signin/provider/link/start': 'the caller\'s own sign-in methods: re-proof (PIN or code) in the request, subject binding by a one-use lt, the shop\'s signin_providers switch (SEC-112 connect)',
+  'POST /api/signin/provider/link/finish': 'the signed-in person own link only: the one-time confirm code from the callback must be spent by the session, device and account that started it (SEC-112 N2)',
+  'DELETE /api/signin/provider/links/:link_id': 'the caller\'s own connected provider only (a foreign id is a 404); re-proof in the request, last way in kept (SEC-112 connect)',
 };
 
 /** file → mount prefix, read from server.js (const xRouter = require('./routes/f') + app.use('/p', …xRouter | require('./routes/f'))) */

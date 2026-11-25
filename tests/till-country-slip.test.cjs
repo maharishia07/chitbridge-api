@@ -11,7 +11,7 @@
  */
 'use strict';
 const fs = require('fs'), vm = require('vm'), path = require('path'), assert = require('assert');
-const HTML = fs.readFileSync(path.join(__dirname, '../tools/tally-connector/till.html'), 'utf8').replace(/\r\n/g, '\n');
+const HTML = (fs.readFileSync(path.join(__dirname, '../tools/tally-connector/till.html'), 'utf8') + '\n' + fs.readFileSync(path.join(__dirname, '../tools/tally-connector/till-slip.js'), 'utf8')).replace(/\r\n/g, '\n');
 const GOLDEN = path.join(__dirname, 'fixtures/till-slip-in.golden.json');
 const WRITE = process.env.CB_WRITE_GOLDEN === '1';
 
@@ -27,8 +27,8 @@ function grab(name, optional) {
   return HTML.slice(at, i + 1);
 }
 const PAGE_FNS = ['esc', 'r2', 'rmoney', 'money', 'shopCur', 'docCountry', 'shopPack', 'registryTaxId', 'taxIdLabel', 'countryWords', 'schemeWord', 'invoiceRule',
-  'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'slipBuyerKind', 'slipFooterHTML', 'slipNoBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'slipLineHTML', 'slipCountRowsHTML', 'shopTax'];
-const NEW_FNS = ['slipRule46', 'slipStampOf', 'slipHsnOf', 'slipSignatureHTML', 'slipBuyerAddressHTML', 'bandWordsOf', 'packKinds', 'kindWord', 'kindRowsOf', 'slipRateOf', 'SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
+  'NOT_DECIDED', 'taxFigure', 'shopMinor', 'booksMajor', 'buyerFromMajor', 'slipHeadHTML', 'slipBuyerHTML', 'slipBuyerKind', 'slipFooterHTML', 'slipNoBuyerHTML', 'unratedOnBill', 'taxSummaryHTML', 'rewardOnSlip', 'slipCheckedHTML', 'slipHTML', 'shopTax'];
+const NEW_FNS = ['slipRowHTML', 'SLIP_DASH', 'SLIP_SOLID', 'slipWhoRowsHTML', 'slipCountBlockHTML', 'slipTenderHTML', 'slipOffersOf', 'slipIndentedRowHTML', 'slipLineHTML', 'slipOfferRowsHTML', 'slipSavedRowsHTML', 'slipPlaceOfSupplyHTML', 'isReducedRate', 'slipTaxBlockHTML', 'slipLinesHTML', 'slipCountRows', 'slipRule46', 'slipStampOf', 'slipHsnOf', 'slipSignatureHTML', 'slipBuyerAddressHTML', 'bandWordsOf', 'packKinds', 'kindWord', 'kindRowsOf', 'slipRateOf', 'SLIP_TITLE_EN', 'slipTitleKey', 'slipTitleLines', 'slipTitleHTML', 'slipTitleOf', 'taxHeadWord', 'domesticFootHTML', 'perRateFootHTML', 'reducedMark', 'reducedNoteHTML', 'slipTaxed',
   'packCollectsWithoutId', 'cashRule', 'payWayId', 'cashDue', 'cashRoundWords', 'slipCashRoundHTML', 'restBeforeLast', 'changeOf', 'cashRoundOf'];
 
 /** a till page for one shop: the real packs and money engine, the page's own slip functions, plain stand-ins for the rest */

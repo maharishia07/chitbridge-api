@@ -53,8 +53,7 @@ const http = require('http');
 const STAGED = ['till.js', 'core.js', 'printer.js', 'rollup.js', 'orders.js', 'orderhub.js', 'signin.js', 'money.js'];
 (function applyStagedUpdate() {
   if (process.env.CB_TILL_UPDATED) return;
-  const here = __dirname;
-  const names = STAGED.filter((n) => fs.existsSync(path.join(here, n + '.new')));
+  const here = __dirname, names = STAGED.filter((n) => fs.existsSync(path.join(here, n + '.new')));
   if (!names.length) return;
   const vm = require('vm');
   for (const n of names) {
@@ -146,8 +145,7 @@ function keyShop(key) {
 function shopFolder(key) {
   if (!key) return '_unpaired';   /* a counter with no key still boots, and still has somewhere to write */
   {
-    const pay = keyShop(key);
-    const id = pay && (pay.bridge_id || pay.entity_id);
+    const pay = keyShop(key), id = pay && (pay.bridge_id || pay.entity_id);
     /* ⚠️ A FOLDER NAME IS NOT FREE TEXT. Whatever the payload says, only these characters reach the disk. */
     const safe = String(id || '').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 64);
     if (safe) return safe;
@@ -170,8 +168,7 @@ function serverFolder(api) {
   const safe = h.replace(/[^A-Za-z0-9._-]/g, '-').replace(/^-+|-+$/g, '').slice(0, 64);
   return safe || 'no-server';
 }
-const SHOP_DIR = path.join(serverFolder(cfg.api), shopFolder(cfg.key));
-const DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
+const SHOP_DIR = path.join(serverFolder(cfg.api), shopFolder(cfg.key)), DIR = path.join(path.dirname(cfgFile), 'till-data', SHOP_DIR);
 /**
  * ⭐ EVERY ENGINE THE COUNTER PAGE LOADS, in its order (till.html <script src="/engine/…">). The program fetches each from
  * GET /api/till/engine/:name and serves it at /engine/<name>.js; tests/till-vendor.test.js holds the three lists equal.
@@ -193,8 +190,7 @@ const ENGINE_RE = new RegExp('^/engine/(' + ENGINE_NAMES.join('|') + ')\\.js$');
  */
 const ENGINE_V_CACHE = new Map();
 function engineVersion(n) {
-  const kit = path.join(__dirname, n + '.js');
-  const file = fs.existsSync(F.engine(n)) ? F.engine(n) : (fs.existsSync(kit) ? kit : null);
+  const kit = path.join(__dirname, n + '.js'), file = fs.existsSync(F.engine(n)) ? F.engine(n) : (fs.existsSync(kit) ? kit : null);
   if (!file) return false;
   try {
     const t = fs.statSync(file).mtimeMs, hit = ENGINE_V_CACHE.get(file);
@@ -205,8 +201,7 @@ function engineVersion(n) {
     const got = fs.readSync(fd, buf, 0, 2048, 0); fs.closeSync(fd);
     const head = buf.slice(0, got).toString('utf8'), line = head.split('\n')[0];
     const part = /ADOPTED BUNDLE/.test(line) && line.match(new RegExp('(?:^|[\\s+·])' + n + ' v(\\d+\\.\\d+\\.\\d+)'));
-    const m = part || head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/);
-    const v = m ? m[1] : 'unversioned';
+    const m = part || head.match(/ADOPTED from chitbridge-engines v(\d+\.\d+\.\d+)/), v = m ? m[1] : 'unversioned';
     ENGINE_V_CACHE.set(file, { t: t, v: v });
     return v;
   } catch (_) { return false; }
@@ -214,8 +209,7 @@ function engineVersion(n) {
 function engineVersions() { return Object.fromEntries(ENGINE_NAMES.map((n) => [n, engineVersion(n)])); }
 /** the same, as the snapshot call carries it to the server: eng=money:1.0.0,signin:1.6.0,… */
 function engineQuery() {
-  const v = engineVersions();
-  const s = Object.keys(v).filter((n) => v[n]).map((n) => n + ':' + v[n]).join(',');
+  const v = engineVersions(), s = Object.keys(v).filter((n) => v[n]).map((n) => n + ':' + v[n]).join(',');
   return s ? 'eng=' + encodeURIComponent(s) : '';
 }
 const F = {
@@ -342,8 +336,7 @@ function nextNumberOf(kind){
   /* ⭐ CN and EXP (2026-09-28): a credit note and a counter expense each keep their OWN run — never the sales series */
   /* ⭐ R (BOOKS v2, 2026-09-29): money received from a customer — its own run, tag first, never shaped like a sale number */
   const tag = (kind === 'GRN' || kind === 'DC' || kind === 'CN' || kind === 'EXP' || kind === 'R') ? kind : '';
-  const file = tag ? path.join(DIR, 'series-' + tag + '.json') : F.series;
-  const fy = fyOf(new Date());
+  const file = tag ? path.join(DIR, 'series-' + tag + '.json') : F.series, fy = fyOf(new Date());
   const s = readJSON(file, { prefix: tillCfg.id, fy, next: 1 });
   if (s.fy !== fy) { s.fy = fy; s.next = 1; }
   s.prefix = tillCfg.id || s.prefix;
@@ -415,8 +408,7 @@ function healthNote() {
  * it is named with the thing to do, not merely reported.
  */
 function whyNot(e) {
-  const msg = (e && e.message) || 'it did not work';
-  const st = e && e.status;
+  const msg = (e && e.message) || 'it did not work', st = e && e.status;
   if (st === 401 || st === 403) {
     /**
      * ⚠️⚠️⚠️ A 401 IS NOT ONE THING, AND GUESSING COSTS A DAY ([TILL-131]). This used to answer "wrong
@@ -477,7 +469,7 @@ async function refresh() {
     /* ⭐ and the kit itself: the page is written now (nothing is running it), the program waits for the next start */
     try {
       /* live: files only SERVED, written at once — the page and the sign-in window it mounts (a byte copy of the web's); cb-words.js and strings-hi/ar.js are the web-mastered string door and packs (tillLocale 1128: the page asks with onerror, so a kit without them speaks English) */
-      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js', 'till-dayrep.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js'], staged: STAGED });
+      const up = await core.kitUpdate({ cb, dir: __dirname, log, live: ['till.html', 'signin-more-ways.js', 'signin-session.js', 'signin-ui.js', 'their-bill.js', 'counter-bill.js', 'tax-slab-ui.js', 'till-dayrep.js', 'till-slip.js', 'cb-words.js', 'strings-hi.js', 'strings-ar.js'], staged: STAGED });
       if (up) {
         UPDATE.version = up.version;
         if (up.updated.length) { UPDATE.page_at = new Date().toISOString(); log('the counter screen was updated — reload the page in the browser (F5) when you are between customers'); }
@@ -538,6 +530,97 @@ async function postPointsFor(bill) {
     logPointsAnswer(rewardAnswer);
   } catch (e3) { log('  the points for ' + bill.no + ' are not recorded yet (' + e3.message + ')'); }
 }
+/**
+ * ⭐⭐ A REFUSAL OF THE CONTENT IS PARKED, NOT RETRIED FOR EVER (till-park, batch 1129). A 4xx that says "this entry is wrong" (400, 422, a 409 that is not
+ * a duplicate) cannot come right by trying again, and the old drain kept every 4xx and sent it round on each tick: the screen said only "ChitBridge refused
+ * it". Now the entry is PARKED once — stamped on its own line in queue.jsonl with the server's own words — and waits for the owner (Retry / Discard in the
+ * 🩺 panel, POST /api/queue/retry · /api/queue/discard). ⚠️ NOTHING IS DROPPED: a parked entry stays in the file, counts as outstanding for the day close
+ * and is kept by the purge; Discard writes the row to discarded.jsonl first.
+ * ⚠️ NOT PARKED: 401 / 403 (the key — whyNot, the re-sign-in path), 408 · 425 · 429 and 5xx (transient — the ladder), and the codes whose cause can change
+ * by itself (the shelf gets the price; the bill the movement belongs to arrives).
+ */
+const RETRY_CODES = new Set(['NO_PRICE', 'ITEM_NOT_FOUND', 'BILL_NOT_RECORDED']);
+const DUPLICATE_CODES = new Set(['DUPLICATE', 'CHIT_DUPLICATE', 'ALREADY_RECEIVED']);
+/** a 409 that says the shop HAS this entry already: it counts as sent (the server's own answer to a replay is 200 duplicate:true; this covers a 409 spelling of it) */
+function receivedAlready(e) {
+  const b = (e && e.body) || {};
+  return !!e && e.status === 409 && (b.duplicate === true || DUPLICATE_CODES.has(String(b.code || '')));
+}
+/** does the shop's answer park the entry? only a refusal of the content, and never a duplicate */
+function refusalParks(e) {
+  const st = e && e.status, code = String((e && e.body && e.body.code) || '');
+  return (st === 400 || st === 409 || st === 422) && !receivedAlready(e) && !RETRY_CODES.has(code);
+}
+/** the server's own words: the problem detail's title and detail (or the older message) */
+function refusalWords(e) {
+  const body = (e && e.body) || {};
+  const said = titleAndDetail(String(body.title || body.error || '').trim(), String(body.detail || body.message || '').trim());
+  return said || (e && e.message) || 'ChitBridge refused it';
+}
+/** both words when the detail does not already say the title, else the detail, else the title */
+function titleAndDetail(title, detail) {
+  return title && detail && detail.indexOf(title) < 0 ? title + ' — ' + detail : detail || title;
+}
+/** swap one queue line for another (same temp file and rename as removeSentFromQueue); false when the line is no longer there */
+function replaceQueueLine(rawLine, row) {
+  const entries = readQueueEntries();
+  const at = entries.findIndex((x) => x.raw === rawLine);
+  if (at < 0) return false;
+  entries[at] = { raw: row ? JSON.stringify(row) : null, row: row };
+  const kept = entries.filter((x) => x.raw !== null);
+  const tmp = F.queue + '.tmp';
+  fs.writeFileSync(tmp, kept.map((x) => x.raw).join('\n') + (kept.length ? '\n' : ''));
+  fs.renameSync(tmp, F.queue);
+  return true;
+}
+/** park the entry once, with the words; a re-read of the file finds it by its text */
+function parkEntry(entry, e) {
+  const parked = Object.assign({}, entry.row, { _parked: { at: new Date().toISOString(), status: e.status,
+    code: (e.body && e.body.code) || null, why: refusalWords(e) } });
+  return replaceQueueLine(entry.raw, parked) ? parked : null;
+}
+/** the parked entries, for /api/state and the 🩺 panel */
+function parkedList() {
+  return readLines(F.queue).filter((r) => r && r._parked).map((r) => ({
+    no: r.no, kind: r.summary ? 'summary' : r.doc ? 'document' : r.shift ? 'shift' : r.chitBody ? (r.kind || 'note') : 'bill',
+    at: r.at || null, status: r._parked.status, code: r._parked.code, why: r._parked.why, parked_at: r._parked.at }));
+}
+/** the owner's two answers: Retry (take the stamp off so the next send tries it) · Discard (kept in discarded.jsonl, then out of the queue) */
+function parkedAnswer(no, action) {
+  const entry = readQueueEntries().find((x) => x.row && x.row._parked && String(x.row.no) === String(no));
+  if (!entry) return false;
+  if (action === 'retry') { const row = Object.assign({}, entry.row); delete row._parked; return replaceQueueLine(entry.raw, row); }
+  try { appendLine(path.join(DIR, 'discarded.jsonl'), Object.assign({ discarded_at: new Date().toISOString() }, entry.row)); } catch (e) { log('queue: entry ' + no + ' was not discarded, the copy in discarded.jsonl could not be written (' + e.message + ')'); return false; }
+  return replaceQueueLine(entry.raw, null);
+}
+/** POST /api/send: try the queue now and say how many went, so the page can report what happened instead of guessing */
+async function sendNowRoute(req, res) {
+  const before = readLines(F.queue).length; await drain(); const after = readLines(F.queue).length;
+  return json(res, 200, { ok: true, before: before, sent: before - after, queued: after, online: online });
+}
+const QUEUE_ROUTES = new Map([['/api/send', sendNowRoute], ['/api/queue/retry', queueAnswerRoute], ['/api/queue/discard', queueAnswerRoute]]);
+/** the owner's answer to a parked entry: POST /api/queue/retry · /api/queue/discard (the page asks the owner first; see parkedDrop); an unreadable body names no entry, so the answer is 404 */
+async function queueAnswerRoute(req, res, url) {
+  let bodyText = ''; for await (const chunk of req) bodyText += chunk;
+  let named = {}; try { named = JSON.parse(bodyText || '{}'); } catch (e) { log('queue answer: the body was not readable (' + e.message + '), so it names no entry'); }
+  const retrying = url.pathname.endsWith('retry'), done = parkedAnswer(named && named.no, retrying ? 'retry' : 'discard');
+  if (done && retrying) { try { await drain(); } catch (e) { log('queue: ' + e.message); } }
+  return json(res, done ? 200 : 404, { ok: done, parked: parkedList() });
+}
+/** the shop's answer to one entry, when it is final: 'received' (the shop already has it, counted as sent) · 'parked' (it refused the content: parked once with its words, kept) · null (not final: whyNot decides) */
+function settleRefusal(entry, bill, e) {
+  if (receivedAlready(e)) { log('entry ' + bill.no + ' → already received'); return 'received'; }
+  if (!refusalParks(e)) return null;
+  if (parkEntry(entry, e)) log('entry ' + bill.no + ' was refused and is parked for you: ' + refusalWords(e));
+  return 'parked';
+}
+/** why this send failed, remembered for the SCREEN and logged once for whoever is reading the window; answers whether the line is still up */
+function noteWhyNot(e) {
+  const w = whyNot(e);
+  QUEUE_WHY = { say: w.say, fatal: !!w.fatal, online: !!w.online, code: (e && e.body && e.body.code) || null, at: new Date().toISOString() };
+  if (w.fatal && !QUEUE_SAID) { QUEUE_SAID = true; log('the queue cannot be sent: ' + w.say); }
+  return w.online;
+}
 let draining = false, drainAt = 0;
 async function drain() {
   if (draining) {
@@ -547,7 +630,7 @@ async function drain() {
   }
   draining = true; drainAt = Date.now();
   try {
-    const entries = readQueueEntries().filter((e) => e.row);
+    const entries = readQueueEntries().filter((e) => e.row && !e.row._parked);   /* a parked entry waits for the owner, never retried here */
     /* ⭐ M16: the health note is taken on BOTH ways out of a drain — never inside the finally, which must stay
        a single line that clears the busy flag and nothing else (tests/snapshot-wire.test.js) */
     if (!entries.length) { try { healthNote(); } catch (_) {} return; }
@@ -614,12 +697,9 @@ async function drain() {
          * ⚠⚠ AND A WRONG KEY NEVER COMES RIGHT BY WAITING, so it is said out loud once rather than retried in
          * silence for ever. The bill is still kept — nothing is ever dropped.
          */
-        const w = whyNot(e);
-        online = w.online;
-        /* ⭐ remembered for the SCREEN, and logged once for whoever is reading the window */
-        QUEUE_WHY = { say: w.say, fatal: !!w.fatal, online: !!w.online,
-                      code: (e && e.body && e.body.code) || null, at: new Date().toISOString() };
-        if (w.fatal && !QUEUE_SAID) { QUEUE_SAID = true; log('the queue cannot be sent: ' + w.say); }
+        const settled = settleRefusal(entry, bill, e);   /* ⭐ till-park: already there → sent; refused content → parked once, kept, not retried */
+        if (settled) { online = true; if (settled === 'parked') failed.push(entry); continue; }
+        online = noteWhyNot(e);
         failed.push(entry);                                 /* keep it; the next tick tries again */
       }
     }
@@ -874,10 +954,10 @@ function rollUp(now) {
   for (const d of days) {
     if (!rollup.isClosed('day', d, now)) continue;          /* today is still being billed */
     if (readSummary('day', d)) continue;                     /* already done — and it is never redone */
-    const rows = readLines(F.bills(d));
-    const nos = rows.map((b) => b.no).filter(Boolean);
+    const rows = readLines(F.bills(d)); const nos = rows.map((b) => b.no).filter(Boolean);
     const sum = rollup.summary('day', d, rollup.totals(rows), {
       till, bills_from: nos[0] || null, bills_to: nos[nos.length - 1] || null });
+    sum.bill_nos = nos; /* AJ-F-08: the bills this summary holds, so the live day counts each once (routes/till.js inFiling) */
     writeSummary(sum); queueSummary(sum); made.push('day ' + d);
   }
 
@@ -1113,9 +1193,10 @@ function foreignRequest(req) {
 
 /* ⭐ the files the kit carries a byte copy of and serves at the web's own path: [file, what it is called when it is missing]. The sign-in window; FX-F10W2 the ONE comparison of their bill total (api lib/their-bill.js); CTR-161 the ask-once rate menu (web public/app/tax-slab-ui.js), so the page's onerror hook never fires offline */
 const KIT_SERVED = {
+  '/app/signin-more-ways.js': ['signin-more-ways.js', 'the provider sign-in'], '/app/signin-session.js': ['signin-session.js', 'the sign-in session'],
   '/app/signin-ui.js': ['signin-ui.js', 'the sign-in window'],
   '/app/their-bill.js': ['their-bill.js', 'the bill check'],
-  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu'], '/app/till-dayrep.js': ['till-dayrep.js', 'the day report'], '/app/cb-words.js': ['cb-words.js', 'the string door'], '/app/strings-hi.js': ['strings-hi.js', 'the Hindi pack'], '/app/strings-ar.js': ['strings-ar.js', 'the Arabic pack']
+  '/app/tax-slab-ui.js': ['tax-slab-ui.js', 'the rate menu'], '/app/till-dayrep.js': ['till-dayrep.js', 'the day report'], '/app/till-slip.js': ['till-slip.js', 'the bill slip'], '/app/cb-words.js': ['cb-words.js', 'the string door'], '/app/strings-hi.js': ['strings-hi.js', 'the Hindi pack'], '/app/strings-ar.js': ['strings-ar.js', 'the Arabic pack']
 };
 function serveKitFile(res, served) {
   const file = path.join(__dirname, served[0]);
@@ -1507,7 +1588,7 @@ const server = http.createServer(async (req, res) => {
                                * "10 waiting" — a number that looks like patience. With it the counter can say
                                * what happened and offer the one control that fixes it.
                                */
-                              queue_why: QUEUE_WHY,
+                              queue_why: QUEUE_WHY, parked: parkedList(),
                               /* ⭐ M16: the counter's health as it last CHANGED, and the recent record of changes */
                               health: HEALTH ? { at: HEALTH.at, online: HEALTH.online, queued: readLines(F.queue).length, why: HEALTH.why, fatal: HEALTH.fatal } : null,
                               health_log: (function(){ try { return readLines(path.join(DIR, 'health.jsonl')).slice(-20); } catch (_) { return []; } })(),
@@ -1537,12 +1618,8 @@ const server = http.createServer(async (req, res) => {
      * on this host, in a file, and only this process can send it; the page can only ask.
      * ⚠️ It reports the queue length after trying, so the page can say what happened instead of guessing.
      */
-    if (req.method === 'POST' && url.pathname === '/api/send') {
-      const before = readLines(F.queue).length;
-      await drain();
-      const after = readLines(F.queue).length;
-      return json(res, 200, { ok: true, before: before, sent: before - after, queued: after, online: online });
-    }
+    const queueRoute = req.method === 'POST' ? QUEUE_ROUTES.get(url.pathname) : null;
+    if (queueRoute) return queueRoute(req, res, url);
 
     /* ⭐ THE SMALL WRITES a counter makes on its feet — stock out, price change. Forwarded, so the page never cares which
        host it is on; the agent already holds the key and already knows how to reach the server. */

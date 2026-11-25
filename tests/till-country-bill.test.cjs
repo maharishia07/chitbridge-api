@@ -5,7 +5,7 @@
 // CARD      09-counter/billing-and-the-bill
 'use strict';
 const fs = require('fs'), vm = require('vm'), assert = require('assert');
-const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8').replace(/\r\n/g, '\n');
+const h = (fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8') + '\n' + fs.readFileSync(__dirname + '/../tools/tally-connector/till-slip.js', 'utf8')).replace(/\r\n/g, '\n');
 /** a function's source by brace count — one-liners and long bodies alike */
 function grab(n) {
   let at = h.indexOf('function ' + n + '(');
@@ -105,7 +105,7 @@ ok('no country, no money stated → docCountry null, no pack, English voice, no 
   assert.deepStrictEqual(Array.from(p.voiceLangs()), ['en']);
   assert.strictEqual(p.shopMinor(12.5), 1250);
   assert.strictEqual(p.booksMajor(1250), 12.5);
-  const h = fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8');
+  const h = (fs.readFileSync(__dirname + '/../tools/tally-connector/till.html', 'utf8') + '\n' + fs.readFileSync(__dirname + '/../tools/tally-connector/till-slip.js', 'utf8'));
   assert.strictEqual((h.match(/(\|\||\?\?)\s*['"](INR|IN)['"]/g) || []).length, 0, 'no `|| \'INR\'` / `|| \'IN\'` left in the till master');
 });
 

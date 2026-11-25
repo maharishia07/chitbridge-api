@@ -74,7 +74,7 @@ function counter(o) {
   };
   const ctx = {
     window: { CBRegulation: REGULATION }, CBRegulation: REGULATION, console, Object, Array, String, Number, JSON, Math, Date: FakeDate, Promise, isNaN, Error,
-    CBTax: CBTAX, CBUnits: require('../lib/units'), r2, esc: (v) => String(v == null ? '' : v), money: (v) => (Number(v) || 0).toFixed(2), schemeWord: () => 'GST',
+    CBTax: CBTAX, CBUnits: require('../lib/units'), r2, esc: (v) => String(v == null ? '' : v), escJs: (v) => String(v == null ? '' : v), money: (v) => (Number(v) || 0).toFixed(2), schemeWord: () => 'GST',
     modAdd: () => 0, QUIET_MAX: 200, QUIET: [],
     S: { slabs: [SLAB18], categories: [], face: {}, at: H('08:00'), policy: {} },
     DB, WHO: { id: 'cashier-1', name: 'Asha' }, CART: world.cart, LOCK: world.lock, _askResolve: world.askOpen,

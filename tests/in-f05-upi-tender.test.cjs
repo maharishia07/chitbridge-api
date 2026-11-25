@@ -12,7 +12,7 @@ function run(country, pay, picked) {
     document: { getElementById: () => out },
     S: { shop: { country, pay } }, PARTS: [], CART: [{ name: 'x' }], PICKED: picked, LASTNO: '', CREDIT_SINCE: {}, PAY_ASKED: false,
     docCountry: () => country, cbQuiet: () => {}, billMoney: () => ({ net: 632.33 }), rmoney: (v) => Math.round(v * 100) / 100, money: (v) => '₹' + Number(v).toFixed(2),
-    tillOpt: () => ({}), upiShapeOk: () => true, creditCust: () => null, esc: String, payLink: () => '', payQr: () => '', cashSaysHTML: () => '', cashRoundWords: () => '', Math, Number, String, Object, Array
+    tillOpt: () => ({}), upiShapeOk: () => true, creditCust: () => null, esc: String, escJs: String, payLink: () => '', payQr: () => '', cashSaysHTML: () => '', cashRoundWords: () => '', Math, Number, String, Object, Array
   };
   vm.createContext(ctx);
   vm.runInContext(['shopPack', 'packHasUpi', 'paintPays', 'payWaysOf', 'addOwnUpiWay', 'addIndiaUpiWay', 'paySinceBackground', 'payButtonsHTML', 'payQrHTML', 'paySaysHTML'].map(grab).join('\n') + '\nthis.__p = paintPays;', ctx);

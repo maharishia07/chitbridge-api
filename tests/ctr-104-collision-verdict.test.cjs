@@ -3,7 +3,7 @@
  * ctr-104-collision-verdict.test.cjs — CTR-104 (proof 2026-11-14): the duplicate-bill tie-break is ONE function and both call sites give the same verdict.
  * @type regression
  * OWNS      on the real routes/chits.js code (tillCollisionVerdict + answerReplay lifted into a vm sandbox): same till and same billed_at = a retry (no collision); a different till = a collision
- *           naming both counters; the same till name at another moment = a collision with the "ALSO called" wording (the branch the race-catch once lacked); a missing moment on either side = no collision;
+ *           naming both counters; the same till name at another moment = a collision that names the same-counter replay and the twin-counter causes (the branch the race-catch once lacked); a missing moment on either side = no collision;
  *           call site 1 (answerReplay) answers 409 with exactly the verdict body and 200 duplicate for a retry; call site 2 (the race-catch in POST /chits/send) reaches the SAME function through replayRefusal,
  *           which reads the same four inputs (till id, stored till_id, both billed_at) the same way; and no second copy of the verdict (TILL_SERIES_COLLISION is written once in the route).
  * CALLED BY scripts/guards.cjs · CI. No database, no network.
@@ -34,7 +34,7 @@ const other = sandbox.verdict('T1', 'T2', T1, T1, 'B-1');
 ok('a different till on the same number: collision naming both (till T1, taken_by T2), code TILL_SERIES_COLLISION',
   other.collision && !other.sameName && other.body.till === 'T1' && other.body.taken_by === 'T2' && other.body.code === 'TILL_SERIES_COLLISION' && /counter T2, and this is counter T1/.test(other.body.message), JSON.stringify(other));
 const same = sandbox.verdict('Counter', 'Counter', T1, T2, 'B-2');
-ok('the same till name at another moment: collision with the "ALSO called Counter" wording', same.collision && same.sameName && /ALSO called Counter/.test(same.body.message), JSON.stringify(same));
+ok('the same till name at another moment: collision with the "ALSO called Counter" wording', same.collision && same.sameName && /recorded under counter Counter at a different bill time.*also called Counter/.test(same.body.message), JSON.stringify(same));
 ok('no billed_at on either side and no till pair: not a collision (an old client is a retry)', sandbox.verdict(null, null, null, T1, 'B-3').collision === false && sandbox.verdict('T1', null, T1, null, 'B-3').collision === false, '');
 
 const site1 = async (mine, theirs, myAt, theirAt) => {
@@ -54,6 +54,6 @@ const callers = src.match(/tillCollisionVerdict\(/g) || [];
 ok('tillCollisionVerdict( appears 2 times: its definition and its ONE caller, replayRefusal (CTR-204 folded the race-catch onto it)', callers.length === 2 && /const verdict = tillCollisionVerdict\(mine, seen\.till_id \|\| null, myAt, seen\.billed_at \? String\(seen\.billed_at\) : null, client_ref\)/.test(src), String(callers.length));
 ok('the race-catch (call site 2) and the replay check (call site 1) both ask replayRefusal, so both read the same four things: till id, stored till_id, both billed_at',
   /const mine = \(businessJson && businessJson\.till && businessJson\.till\.id\) \|\| null;\s+const myAt = businessJson && businessJson\.billed_at \? String\(businessJson\.billed_at\) : null;/.test(src)
-  && /await replayRefusal\(req, sender_id, seen, client_ref\)/.test(src) && /await replayRefusal\(req, who, seen, raceRef\)/.test(src), '');
+  && /await replayRefusal\(req, sender_id, seen, client_ref\)/.test(src) && /await replayRefusal\(req, (?:who|shopId), seen, raceRef\)/.test(src), '');
 ok('the verdict body is written once: TILL_SERIES_COLLISION appears one time in the route', (src.match(/TILL_SERIES_COLLISION/g) || []).length === 1, String((src.match(/TILL_SERIES_COLLISION/g) || []).length));
 })().then(done);

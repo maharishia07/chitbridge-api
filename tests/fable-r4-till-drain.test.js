@@ -37,7 +37,9 @@ function program(send) {
     /* an old copy of till.js has no helpers: it is run as it is, so its failure is the real one */
     SRC.includes('function readQueueEntries(') ? liftLine(/const TORN_SAID = [^\n]*;/) + lift('parseQueueLine') + lift('readQueueEntries') + lift('removeSentFromQueue') : '',
     SRC.includes('function pointsBody(') ? lift('pointsBody') + lift('logPointsAnswer') : '', /* the points post's two helpers (readability split) */
-    SRC.includes('function postPointsFor(') ? lift('postPointsFor') : '', lift('drain'),
+    SRC.includes('function postPointsFor(') ? lift('postPointsFor') : '',
+    SRC.includes('function parkEntry(') ? [liftLine(/const RETRY_CODES = [^\n]*;/), liftLine(/const DUPLICATE_CODES = [^\n]*;/), lift('receivedAlready'), lift('refusalParks'), lift('refusalWords'), lift('titleAndDetail'), lift('replaceQueueLine'), lift('parkEntry'), lift('settleRefusal'), lift('noteWhyNot')].join(String.fromCharCode(10)) : '', /* till-park (1129): the drain parks a content refusal and keeps what the shop already has: its helpers */
+    lift('drain'),
     'return { drain, appendLine, readLines };',
   ].join('\n');
   const ctx = {

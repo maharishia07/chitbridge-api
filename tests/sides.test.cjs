@@ -6,6 +6,7 @@
  *  - lib/sides.build: the constitution row drifts -> "Update" + Review; a brand source drifts the same way; boilerplate / blueprint /
  *    jurisdiction / standards / filings / inherit are "not yet" rows (s:'later'), never a number; trade proof is the header's 3 of 4 + Finish
  *  - the route: one readBatch, 1 warm trip of its own (the two reuses are stubbed), a failed reuse -> rows say "not yet", not a 500
+ * MIN (lib/impact) unit-per-rule · refusal-path · fail-closed (a cycle is cut by its raida_id, never looped; nothing that can say a filing leaves filings null, never 0)
  * Run: node tests/sides.test.cjs   · no DB, no network.   (NODE_PATH must reach the api's node_modules)
  */
 const path = require('path');

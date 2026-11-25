@@ -34,8 +34,8 @@ process.env.NODE_ENV = 'test';
 
 /* N5 */
 const sim = fs.readFileSync(path.join(ROOT, 'routes', 'simulator.js'), 'utf8');
-t('N5: the constant tour secret is reachable only in a test run or a local stack', /isTestRun\(\) \|\| devOtp\.isLocalStack\(\)\) \? 'sim-lead-dev-only' : ''/.test(sim) && /if \(!SIM_SECRET\) throw/.test(sim));
+t('N5: the constant tour secret is reachable only in a test run or a local stack', /isTestRun\(\) \|\| devOtp\.isLocalStack\(\)\) \? 'sim-lead-dev-only' : ''/.test(sim) && /if \(!secret\) throw/.test(sim));
 const insert = sim.indexOf("INSERT INTO sim_leads");
-t('N5: a missing secret refuses BEFORE the lead row is written', sim.indexOf('if (!SIM_SECRET) throw') > 0 && sim.indexOf('if (!SIM_SECRET) throw') < insert);
+t('N5: a missing secret refuses BEFORE the lead row is written', sim.indexOf('if (!secret) throw') > 0 && sim.indexOf('if (!secret) throw') < insert);
 say(bad ? bad + ' failed' : 'all passed');
 process.exit(bad ? 1 : 0);

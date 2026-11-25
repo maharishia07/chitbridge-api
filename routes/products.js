@@ -6,6 +6,8 @@ const express = require('express');
 const log = require('../lib/logger');
 const router = express.Router();
 
+const { MEDIA_MIME_OK, mimeKey, MID_SHAPE, likeEscape, signedInAs, servedHeaders } = require('../lib/products-media-guard'); /* S12: the picture types and who may read a private one */
+const { importAnswer, zeroWithoutReason, dropRejected } = require('../lib/products-import-rows'); /* the import's answer and its row filters */
 const { shopCountryOf } = require('../lib/shop-country'); /* one read of the shop's country (fix-till2 1128: shared with the till's starter mint) */
 const { safeErr } = require('../lib/respond');
 const { query, queryFor, withEntity, readBatch } = require('../db');
@@ -23,6 +25,8 @@ const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — the clamp an
 const SHELF_CAP = 2000; /* the list's default AND its max: a cap, not a page size (see GET / below) */
 const { shopChanged } = require('../lib/shopchanged'); /* ⭐ every counter and screen holding a copy is told, at once */
 const regional = require('../lib/regional'); // the currency comes from the ENTITY, never from the request
+const defaultTax = require('../lib/default-tax-rate'); // S2-F-04: the one default-rate read the item form and the starter catalogue use
+const importRejects = require('../lib/import-rejects'); // S2-F-02: the bad rows of an import, listed and downloadable
 const csv = require('../lib/csv'); // catalogue export — a merchant can leave the way they arrived
 /* ⭐ THE ONE WRITER + THE ONE RESOLVER. The declaration and the store were never bound; this binds them. */
 const catcols = require('../lib/catalogue-columns');
@@ -618,16 +622,44 @@ router.post('/categories/bulk', auth, ...checked('POST /categories/bulk'), async
  * one did not.
  */
 const UUID = require('../lib/namedentity').UUID; /* only a real id is asked of the uuid column; any other id has no stored row */
-/** the import's 200: what was added, updated and failed, in a sentence and in numbers, plus the columns it created */
-function importAnswer(outcome, created) {
-  const count = (action) => outcome.filter((item) => item.action === action).length;
-  const failedCount = count('failed');
-  return {
-    message: `${count('created')} added, ${count('updated')} updated` + (failedCount ? `, ${failedCount} failed` : '') + (created.length ? ` · added ${created.length} new column(s) to your catalogue` : ''),
-    created_columns: created,
-    outcome,
-    summary: { created: count('created'), updated: count('updated'), failed: failedCount }
-  };
+/** did the request carry a workbook or csv text at all? */
+const hasUpload = (body) => !!(body && ((body.xlsx && String(body.xlsx).trim()) || textOf(body.csv)));
+/** a cut workbook, or a file over IMPORT_MAX_ROWS, as the 413 problem to send; null when the file is whole and small enough */
+function uploadTooBig(parsed) {
+  const cut = workbookCut(parsed);
+  if (cut) return { status: 413, ...words.workbookCut(cut) };
+  return parsed.rows.length > IMPORT_MAX_ROWS ? { status: 413, ...words.tooManyRows(parsed.rows.length, IMPORT_MAX_ROWS) } : null;
+}
+/** the import's file read and approved, before anything is written: the upload parsed the way the preflight read it, the rows that would stop it, the person's own choices applied. Answers { refusal } (the problem to send) or the plan to commit */
+async function importPlan(req, entity_id) {
+  if (!hasUpload(req.body)) return { refusal: { status: 400, ...words.nothingToImport() } };
+  const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
+  /* ⚠️ THE SAME READER THE PREFLIGHT USED. The report a person approved was built from this file read this
+   way; a second way of reading it here would let the commit act on something else. */
+  let parsed;
+  try {
+    parsed = readUpload(req.body);
+  } catch (e) {
+    return { refusal: { status: 400, ...words.unreadable(userSafeMessage(e)) } };
+  }
+  /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
+   working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
+  const tooBig = uploadTooBig(parsed);
+  if (tooBig) return { refusal: tooBig };
+  const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
+  const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
+  const rowErrors = report.issues.filter((item) => item.severity === 'error');
+  /* S2-F-02: only when the person asked (skip_bad_rows) do the good rows go in and the bad ones come back; otherwise the whole file is refused as before */
+  const skipBad = req.body.skip_bad_rows === true;
+  if (rowErrors.length && !skipBad) return { refusal: { status: 409, ...words.fileProblems(report, rowErrors.length) } };
+  const rejects = skipBad ? importRejects.rejectsOf(rowErrors) : [];
+  const applied = dropRejected(
+    applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions }),
+    rejects
+  );
+  if (applied.errors.length) return { refusal: { status: 400, ...words.choicesDoNotHold(applied.errors) } };
+  if (!applied.items.length) return { refusal: { status: 400, ...words.noNameAfterChoices() } };
+  return { refusal: null, parsed, applied, rejects, schema_id, ident, template, labels };
 }
 /** CAT-210: the file lines of an editor's import that set or change a rate, by position (never their values, Q19); [] for an owner or manager. ONE read of the shop's products for the lot. */
 async function editorImportRateRows(req, entity_id, applied, ident) {
@@ -718,6 +750,9 @@ router.post('/bulk-update', auth, ...checked('POST /bulk-update'), async (req, r
   }
 });
 
+/* P-F-04: the categories an item carries are read the way the till reads them (core.js catgIdsOf): the `categories` list, else the legacy single `category` name — so an item the till shows under "Drinks" is counted under it here, never "uncategorised" */
+const carriedCategories = (col) => `(CASE WHEN jsonb_array_length(COALESCE(${col}->'categories','[]'::jsonb)) > 0 THEN ${col}->'categories'
+    WHEN COALESCE(${col}->>'category','') <> '' THEN jsonb_build_array(${col}->>'category') ELSE '[]'::jsonb END)`;
 // READ + SEARCH — list my products, optional ?q=
 // @does Optional search word and page -> we read the shop's active products, applying any parked changes that are now due -> a page of products and what is still parked.
 router.get('/', auth, ...checked('GET /'), async (req, res) => {
@@ -785,7 +820,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     const catSql = {
       text: `SELECT c.cat AS id, count(*)::int AS n
          FROM catalogue_items ci,
-              LATERAL jsonb_array_elements_text(COALESCE(ci.item_data->'categories','[]'::jsonb)) AS c(cat)
+              LATERAL jsonb_array_elements_text(${carriedCategories('ci.item_data')}) AS c(cat)
         WHERE ${base.where
           .replace(/\bentity_id\b/g, 'ci.entity_id')
           .replace(/\bis_active\b/g, 'ci.is_active')
@@ -795,7 +830,7 @@ router.get('/', auth, ...checked('GET /'), async (req, res) => {
     };
     const uncatSql = {
       text: `SELECT count(*)::int AS n FROM catalogue_items
-        WHERE ${base.where} AND jsonb_array_length(COALESCE(item_data->'categories','[]'::jsonb)) = 0`,
+        WHERE ${base.where} AND jsonb_array_length(${carriedCategories('item_data')}) = 0`,
       params: base.params
     };
     /* ⭐⭐ ONE NETWORK ROUND TRIP (db.readBatch): the due-probe, the list and the parked rows go as one message.
@@ -1221,39 +1256,9 @@ router.post(
       if (req.body.confirm !== true) {
         return problem(req, res, { status: 400, ...words.notConfirmed() });
       }
-      const hasFile = req.body && ((req.body.xlsx && String(req.body.xlsx).trim()) || textOf(req.body.csv));
-      if (!hasFile) return problem(req, res, { status: 400, ...words.nothingToImport() });
-
-      const { schema_id, template, labels, required, identity: ident } = await catalogueShape(entity_id);
-      /* ⚠️ THE SAME READER THE PREFLIGHT USED. The report a person approved was built from this file read this
-       way; a second way of reading it here would let the commit act on something else. */
-      let parsed;
-      try {
-        parsed = readUpload(req.body);
-      } catch (e) {
-        return problem(req, res, { status: 400, ...words.unreadable(userSafeMessage(e)) });
-      }
-      /* ⚠️ A CUT WORKBOOK IS REFUSED, like a file over IMPORT_MAX_ROWS: importing the part that was read would leave a person
-       working out which products are missing — the all-or-nothing rule this route keeps everywhere else. */
-      const cut = workbookCut(parsed);
-      if (cut) return problem(req, res, { status: 413, ...words.workbookCut(cut) });
-      if (parsed.rows.length > IMPORT_MAX_ROWS) {
-        return problem(req, res, { status: 413, ...words.tooManyRows(parsed.rows.length, IMPORT_MAX_ROWS) });
-      }
-      const rows = parsed.rows.map((item) => parsed.headers.map((h) => item[h]));
-      const report = preflight.preflight({ headers: parsed.headers, rows, template, labels, required, identity: ident, codeCheck: gtinCheck });
-      const rowErrors = report.issues.filter((item) => item.severity === 'error');
-      if (rowErrors.length) {
-        return problem(req, res, { status: 409, ...words.fileProblems(report, rowErrors.length) });
-      }
-
-      const applied = applyDecisions({ headers: parsed.headers, rows, template, labels, identity: ident, decisions: req.body.decisions });
-      if (applied.errors.length) {
-        return problem(req, res, { status: 400, ...words.choicesDoNotHold(applied.errors) });
-      }
-      if (!applied.items.length) {
-        return problem(req, res, { status: 400, ...words.noNameAfterChoices() });
-      }
+      const plan = await importPlan(req, entity_id);
+      if (plan.refusal) return problem(req, res, plan.refusal);
+      const { parsed, applied, rejects, schema_id, ident, template, labels } = plan;
 
       const refusal = await importRefusal(req, entity_id, applied, ident);
       if (refusal) return problem(req, res, refusal);
@@ -1331,6 +1336,8 @@ router.post(
       }
       const idLabel = ident.key.join(' + ');
 
+      /* S2-F-04: an imported item meets the tax the item form gives a new one (lib/default-tax-rate, ONE read for the file): a registered shop's item with no rate gets the country's, an unregistered shop's gets 0 */
+      const standardRate = await defaultTax.standardRateOf(entity_id, queryFor(entity_id)).catch(log.orElse('products import: the default rate could not be read - items keep the rate they carry', null));
       const outcome = [],
         updates = [],
         inserts = [];
@@ -1363,7 +1370,8 @@ router.post(
             });
             continue;
           }
-          const merged = prior ? Object.assign({}, prior.item_data, item) : item; // an update is a patch, not a wipe
+          const taxed = defaultTax.defaultRateOf(prior ? Object.assign({}, prior.item_data, item) : item, standardRate);
+          const merged = Object.assign(prior ? Object.assign({}, prior.item_data, item) : item, taxed === null ? {} : { gst_rate: taxed }); // an update is a patch, not a wipe
 
           // A UNIT change on an existing product silently rewrites what its price means: 150/litre and 150/tonne are
           // not the same offer. Merchants do repack, so this is not refused — but it is never left unsaid.
@@ -1371,6 +1379,8 @@ router.post(
           if (prior && item.unit && prior.item_data.unit && item.unit !== prior.item_data.unit) {
             warning = `unit changed ${prior.item_data.unit} → ${item.unit}; the price now means something different`;
           }
+          /* S2-F-04: a 0% item that says no reason (no slab, no nil kind) is FLAGGED on its line, as the bill refuses it (ZERO-REASON): the same word the item form gives */
+          if (zeroWithoutReason(merged)) warning = [warning, 'rate is 0% but no reason is given (zero-rated or exempt): say why in Catalogue, or the bill will not take it'].filter(Boolean).join('; ');
           // The SAME validation the single-add form runs. Without this a bulk upload could create products that
           // typing them in one at a time would have refused — the rules would depend on how you arrived, which is
           // not a rule at all.
@@ -1401,8 +1411,14 @@ router.post(
           if (inserts.length) await catwrite.insertStamped(db, entity_id, sid, inserts);
         });
       }
-      const answer = importAnswer(outcome, created);
-      res.json({ message: answer.message, created_columns: answer.created_columns, outcome: answer.outcome, summary: answer.summary });
+      const answer = importAnswer(outcome, created, rejects);
+      res.json({
+        message: answer.message,
+        created_columns: answer.created_columns,
+        outcome: answer.outcome,
+        summary: answer.summary,
+        ...(rejects.length ? { rejects, rejects_csv: importRejects.rejectsCsv(parsed.headers, parsed.rows, rejects) } : {})
+      });
     } catch (e) {
       problem(req, res, faultOf(e, req, 'Import failed'));
     }
@@ -1865,24 +1881,6 @@ router.delete('/:id', auth, ...checked('DELETE /:id'), async (req, res) => {
    Fails honestly when the store is not configured (503) — the rest of the product is unaffected. ── */
 const objStore = require('../lib/storage-object');
 const MEDIA_MAX = 8 * 1024 * 1024;
-/** S12: the file types a catalogue may store and the public read may serve under their own type; anything else is refused on the way in and served as a download of unknown type */
-const MEDIA_MIME_OK = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'video/mp4', 'video/webm', 'application/pdf']);
-const mimeKey = (mime) => String(mime || '').split(';')[0].trim().toLowerCase();
-const MID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-/** S12: LIKE's own characters (! % _) in a typed value, made plain (the query says ESCAPE with the bang) */
-const likeEscape = (v) => String(v).replace(/[!%_]/g, (c) => '!' + c);
-/** S12: is the request signed in as this shop (or a person of it)? A picture of a PRIVATE catalogue is served to nobody else. A bad or missing token is simply "no". */
-function signedInAs(req, entity_id) {
-  try {
-    const bearerToken = String(req.headers.authorization || '').replace(/^Bearer[ ]+/i, '');
-    if (!bearerToken) return false;
-    const { claims } = require('../lib/jwt-verify').verifyJwt(bearerToken); /* the one verifier (rotation-aware, HS256 pinned) */
-    return String(claims.identity_id) === String(entity_id) || String(claims.parent_entity_id || '') === String(entity_id);
-  } catch (e) {
-    log.fellBack('products signedInAs: a bad or missing token is simply no', e, 'debug');
-    return false;
-  }
-}
 /** A video is a LINK, not bytes: YouTube or Vimeo, parsed to {provider, vid} so the page can embed it. */
 function videoLink(url) {
   const text = String(url || '').trim();
@@ -1896,32 +1894,20 @@ function mediaUrl(req, item_id, mid) {
   const base = String(process.env.PUBLIC_API_URL || '').trim().replace(/\/+$/, '') || require('../lib/public-base').apiBase(req); /* SEC-114: config, never the request Host */
   return base + '/api/products/media/' + item_id + '/' + mid;
 }
-/** the picture's item read IN THE OWNER'S context (the owner found by the media id in the blob store): { row, ownerEntity }; a failed read answers none */
-async function mediaViaOwner(req) {
-  try {
-    const own = await query("SELECT entity_id FROM media_blobs WHERE key LIKE $1 ESCAPE '!' LIMIT 1", ['%/' + likeEscape(req.params.mid)]);
-    const ownerEntity = own.rows[0] ? own.rows[0].entity_id : null;
-    const row = ownerEntity ? await withEntity(ownerEntity, async (db) => (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id])).rows[0] || null) : null;
-    return { row, ownerEntity };
-  } catch (e) {
-    log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
-    return { row: null, ownerEntity: null };
-  }
+/** the active item row (its shop and its data) as the connection's own context sees it, or null */
+async function itemRowIn(db, item_id) {
+  return (await db.query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [item_id])).rows[0] || null;
 }
-/** S12: a row found only through the owner's context is a PRIVATE catalogue's: only that shop's own signed-in people may read it → { row (or null), isPublic } */
-async function privateMediaGate(req, row, ownerEntity) {
-  if (!row) return { row, isPublic: true };
+/** the entry of an item's media list with this id, or undefined */
+function mediaEntryOf(row, mediaId) {
+  const list = row.item_data && Array.isArray(row.item_data.media) ? row.item_data.media : [];
+  return list.find((entry) => entry && String(entry.id) === String(mediaId));
+}
+/** S12: found only through the owner's own context = the item is not publicly visible (a private catalogue): 'private' (the shop's own signed-in people, not cached), 'hidden' (anyone else), else 'public' */
+async function mediaReach(req, ownerEntity) {
   const open = await query(`SELECT 1 FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
-  if (open.rows[0]) return { row, isPublic: true };
-  return { row: signedInAs(req, ownerEntity) ? row : null, isPublic: false };
-}
-/** S12: the picture's headers: only an allowed type is named, anything else is a plain download; a private one is never cached for others */
-function setMediaHeaders(res, mime, isPublic) {
-  const served = MEDIA_MIME_OK.has(mimeKey(mime));
-  res.set('Content-Type', served ? mimeKey(mime) : 'application/octet-stream');
-  res.set('X-Content-Type-Options', 'nosniff');
-  if (!served) res.set('Content-Disposition', 'attachment');
-  res.set('Cache-Control', isPublic ? 'public, max-age=86400' : 'private, max-age=0');
+  if (open.rows[0]) return 'public';
+  return signedInAs(req, ownerEntity) ? 'private' : 'hidden';
 }
 /* PUBLIC READ — the storefront shows it to anyone who can see the product; only active items serve, and only ids the
    item lists (the key is never taken from the URL). */
@@ -1934,19 +1920,28 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
        tour's console errors, 2026-09-04). The blob store is WITHOUT RLS and knows the entity: find it by the media id,
        then read the item IN THAT ENTITY'S CONTEXT. The ids stay unguessable, so nothing new is exposed. */
     if (!MID_SHAPE.test(String(req.params.mid))) return problem(req, res, { status: 404, ...words.noSuchPicture() }); /* S12: a media id is a UUID; anything else (a % or _ typed to widen the match) is no picture */
-    const viaOwner = await mediaViaOwner(req);
-    const { row: found, isPublic } = await privateMediaGate(req, viaOwner.row, viaOwner.ownerEntity);
-    let row = found;
+    let row = null;
+    let ownerEntity = null;
+    try {
+      const own = await query("SELECT entity_id FROM media_blobs WHERE key LIKE $1 ESCAPE '!' LIMIT 1", ['%/' + likeEscape(req.params.mid)]);
+      ownerEntity = own.rows[0] ? own.rows[0].entity_id : null;
+      row = ownerEntity ? await withEntity(ownerEntity, (db) => itemRowIn(db, req.params.item_id)) : null;
+    } catch (e) {
+      log.fellBack('products GET /media/:item_id/:mid: the read failed — answered with nothing', e);
+      row = null;
+    }
+    const reach = row ? await mediaReach(req, ownerEntity) : 'public'; /* S12: a picture of a private catalogue reads only for that shop's own signed-in people */
+    if (reach === 'hidden') row = null;
     if (!row) {
       const r = await query(`SELECT entity_id, item_data FROM catalogue_items WHERE item_id = $1 AND is_active = true`, [req.params.item_id]);
       row = r.rows[0];
     }
     if (!row) return problem(req, res, { status: 404, ...words.noSuchPicture() });
-    const m = (Array.isArray(row.item_data && row.item_data.media) ? row.item_data.media : []).find((x) => x && String(x.id) === String(req.params.mid));
+    const m = mediaEntryOf(row, req.params.mid);
     if (!m || !m.key) return problem(req, res, { status: 404, ...words.noSuchPicture() });
     /* ⭐ C4: the bytes are read as the ITEM'S OWNER — a key the item names outside its own prefix is a 404, never served */
     const buf = await objStore.get(m.key, row.entity_id);
-    setMediaHeaders(res, m.mime, isPublic);
+    servedHeaders(res, m.mime, reach === 'private'); /* S12: only an allowed type is named; anything else is a plain download */
     res.send(buf);
   } catch (e) {
     if (e && e.code === objStore.NOT_OWNER) {
@@ -1956,7 +1951,7 @@ router.get('/media/:item_id/:mid', ...checked('GET /media/:item_id/:mid'), async
     problem(req, res, failed(e, req, 'Failed'));
   }
 });
-/** a video LINK on a product: no bytes, no store; the provider's embed is kept on the item's media */
+/** a video LINK: no bytes, no store - YouTube or Vimeo parsed and appended to the item's media list; answers the media added, or the refusal */
 async function addVideoLink(req, res, entity_id, name, url) {
   const v = videoLink(url);
   if (!v) return problem(req, res, { status: 400, ...words.notAVideoLink() });
@@ -1991,8 +1986,7 @@ router.post('/:id/media', auth, ...checked('POST /:id/media'), async (req, res) 
   try {
     const entity_id = ctx(req);
     const { name, mime, data_base64, url } = req.body || {};
-    /* a video LINK: no bytes, no store */
-    if (url) return addVideoLink(req, res, entity_id, name, url);
+    if (url) return await addVideoLink(req, res, entity_id, name, url);
     if (!name || !data_base64) return problem(req, res, { status: 400, ...words.mediaNeedsBytes() });
     if (!(await objStore.available())) return problem(req, res, { status: 503, ...words.mediaNotConfigured() });
     const buffer = Buffer.from(String(data_base64).replace(/^data:[^;]+;base64,/, ''), 'base64');
@@ -2295,10 +2289,9 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
         skipNames = [];
       }
     }
-
     const existing = await catwrite.codesInUse(entity_id);
     const plan = BP.mintPlan(bp.key, existing, {
-      country: await shopCountryOf(entity_id),
+      country: await shopCountryOf(entity_id), /* the pack's own list for this shop */
       categories: Array.isArray(b.categories) ? b.categories : null,
       languages: Array.isArray(b.languages) ? b.languages : [],
       skipNames

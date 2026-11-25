@@ -222,7 +222,7 @@ async function indiaLanes(india) {
     expect(added === 0, 'the long number was planned to land');
     expect(/\b16\b/.test(sentencesOf(reply)), 'no sentence names the 16-character rule: ' + sentencesOf(reply).slice(0, 200));
   }, GAP_CN06);
-  await kase('CN-07', 'India shop: contacts and an untaxed item land, a taxed item is held, bills are refused', async () => {
+  await kase('CN-07', 'India shop: contacts and an untaxed item land, a taxed item is held, open bills are read (reg-in-movein, no longer refused whole)', async () => {
     const people = await moveImport(india, 'contacts', contactsCsv(['India one ' + RUN_ID, 'India two ' + RUN_ID]), { source_country: COUNTRY_INDIA });
     expect(people.added === 2, 'contacts added ' + people.added);
     const csv = itemsCsv([['U-' + RUN_ID, 'Untaxed ' + RUN_ID, '10', ''], ['T-' + RUN_ID, 'Taxed ' + RUN_ID, '20', TAX_INDIA_TAXED]]);
@@ -230,7 +230,8 @@ async function indiaLanes(india) {
     expect(items.added === 1 && items.held === 1 && items.rows.some((row) => row.code === HOLD_TAX_CODE), 'items added ' + items.added + ' held ' + items.held);
     expect((await itemNames(india, 'Untaxed ' + RUN_ID)).length === 1 && (await itemNames(india, 'Taxed ' + RUN_ID)).length === 0, 'the untaxed item did not land, or the taxed one did');
     const bills = await movePreview(india, 'open_bills', billsCsv([['India one ' + RUN_ID, 'IN-1', '10.00', '2026-08-15', '']]), { source_country: COUNTRY_INDIA });
-    expect(bills.status === STATUS_REFUSED && codeOf(bills) === CODE_COUNTRY, 'bills HTTP ' + bills.status + ' code ' + codeOf(bills));
+    /* engines v1.110 (reg-in-movein): India open bills are read now, no longer refused whole by the country gate */
+    expect(bills.status === 200 && codeOf(bills) !== CODE_COUNTRY, 'bills HTTP ' + bills.status + ' code ' + codeOf(bills));
   });
 }
 

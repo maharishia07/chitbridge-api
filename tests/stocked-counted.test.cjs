@@ -19,10 +19,10 @@ const stocked = require(path.join(__dirname, '..', 'lib', 'stocked.js'));
 
 const QUERIES = [];
 const flagRows = [
-  { item_id: 'a1', batch_tracked: true, stocked: null },
-  { item_id: 'a2', batch_tracked: null, stocked: false },
-  { item_id: 'a3', batch_tracked: null, stocked: true },
-  { item_id: 'a5', batch_tracked: 'yes', stocked: 'no' }
+  { item_id: 'a1000000-0000-4000-8000-000000000000', batch_tracked: true, stocked: null },
+  { item_id: 'a2000000-0000-4000-8000-000000000000', batch_tracked: null, stocked: false },
+  { item_id: 'a3000000-0000-4000-8000-000000000000', batch_tracked: null, stocked: true },
+  { item_id: 'a5000000-0000-4000-8000-000000000000', batch_tracked: 'yes', stocked: 'no' }
 ];
 const withEntity = async (entity, fn) => fn({ query: async (sql, params) => { QUERIES.push({ sql, params }); return { rows: flagRows }; } });
 const broken = async () => { throw new Error('connection reset'); };
@@ -59,7 +59,7 @@ async function it(what, fn) { QUERIES.length = 0; await fn(); checks++; console.
   });
 
   await it('flagsFor reads every product flag in ONE query over the ids named, never one per line', async () => {
-    const ids = ['a1', 'a2', 'a3', 'a4', 'a5'];
+    const ids = ['a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000', 'a3000000-0000-4000-8000-000000000000', 'a4000000-0000-4000-8000-000000000000', 'a5000000-0000-4000-8000-000000000000'];
     await stocked.flagsFor('shop-1', ids, withEntity, { trade: RESTAURANT });
     assert.strictEqual(QUERIES.length, 1, 'queries sent: ' + QUERIES.length);
     assert.strictEqual(QUERIES[0].sql, stocked.FLAGS_SQL);
@@ -75,33 +75,33 @@ async function it(what, fn) { QUERIES.length = 0; await fn(); checks++; console.
   });
 
   await it('per item: a1 tracked by batch · a2 flagged not-stocked · a3 flagged stocked · a4 unflagged takes the restaurant default (not counted)', async () => {
-    const r = await stocked.flagsFor('shop-1', ['a1', 'a2', 'a3', 'a4'], withEntity, { trade: RESTAURANT });
-    assert.strictEqual(r.by.get('a1').tracked, true);
-    assert.strictEqual(r.by.get('a2').counted, false);
-    assert.strictEqual(r.by.get('a3').counted, true);
-    assert.strictEqual(r.by.get('a4').counted, false);
+    const r = await stocked.flagsFor('shop-1', ['a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000', 'a3000000-0000-4000-8000-000000000000', 'a4000000-0000-4000-8000-000000000000'], withEntity, { trade: RESTAURANT });
+    assert.strictEqual(r.by.get('a1000000-0000-4000-8000-000000000000').tracked, true);
+    assert.strictEqual(r.by.get('a2000000-0000-4000-8000-000000000000').counted, false);
+    assert.strictEqual(r.by.get('a3000000-0000-4000-8000-000000000000').counted, true);
+    assert.strictEqual(r.by.get('a4000000-0000-4000-8000-000000000000').counted, false);
     assert.strictEqual(r.counted_default, false);
   });
 
   await it('a flag that is not a boolean ("yes" / "no") is unsaid, so it takes the trade\'s answer rather than a string\'s truthiness', async () => {
-    const r = await stocked.flagsFor('shop-1', ['a5'], withEntity, { trade: null });
-    assert.strictEqual(r.by.get('a5').counted, true, '"no" must not count as a false flag');
-    assert.strictEqual(r.by.get('a5').tracked, false, '"yes" must not count as a true flag');
+    const r = await stocked.flagsFor('shop-1', ['a5000000-0000-4000-8000-000000000000'], withEntity, { trade: null });
+    assert.strictEqual(r.by.get('a5000000-0000-4000-8000-000000000000').counted, true, '"no" must not count as a false flag');
+    assert.strictEqual(r.by.get('a5000000-0000-4000-8000-000000000000').tracked, false, '"yes" must not count as a true flag');
   });
 
   await it('notCountedOf returns exactly the ids the shop does not count', async () => {
-    const out = await stocked.notCountedOf('shop-1', ['a1', 'a2', 'a3', 'a4'], withEntity, { trade: RESTAURANT });
-    assert.deepStrictEqual([...out].sort(), ['a1', 'a2', 'a4']);
-    const pharmacy = await stocked.notCountedOf('shop-1', ['a1', 'a2', 'a3', 'a4'], withEntity, { trade: PHARMACY });
-    assert.deepStrictEqual([...pharmacy], ['a2']);
+    const out = await stocked.notCountedOf('shop-1', ['a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000', 'a3000000-0000-4000-8000-000000000000', 'a4000000-0000-4000-8000-000000000000'], withEntity, { trade: RESTAURANT });
+    assert.deepStrictEqual([...out].sort(), ['a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000', 'a4000000-0000-4000-8000-000000000000']);
+    const pharmacy = await stocked.notCountedOf('shop-1', ['a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000', 'a3000000-0000-4000-8000-000000000000', 'a4000000-0000-4000-8000-000000000000'], withEntity, { trade: PHARMACY });
+    assert.deepStrictEqual([...pharmacy], ['a2000000-0000-4000-8000-000000000000']);
   });
 
   await it('fail-safe: an unreadable flag read keeps every item COUNTED (nothing silently drops out of stock), never the reverse', async () => {
-    const out = await stocked.notCountedOf('shop-1', ['a1', 'a2', 'a3'], broken, { trade: RESTAURANT });
+    const out = await stocked.notCountedOf('shop-1', ['a1000000-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000000', 'a3000000-0000-4000-8000-000000000000'], broken, { trade: RESTAURANT });
     assert.strictEqual(out.size, 0, 'a failed read dropped items: ' + [...out]);
-    const r = await stocked.flagsFor('shop-1', ['a1'], broken, { trade: RESTAURANT });
+    const r = await stocked.flagsFor('shop-1', ['a1000000-0000-4000-8000-000000000000'], broken, { trade: RESTAURANT });
     assert.strictEqual(r.counted_default, true);
-    assert.strictEqual(r.by.get('a1').counted, true);
+    assert.strictEqual(r.by.get('a1000000-0000-4000-8000-000000000000').counted, true);
   });
 
   await it('numeric ids are read as text so a Map lookup by the chit\'s id cannot miss', async () => {

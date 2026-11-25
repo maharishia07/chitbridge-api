@@ -97,6 +97,16 @@ async function signIn(who, device, surface) {
     t('SEC-157: another legacy token of the same person is untouched (hash, not identity)', r.status === 200, String(r.status));
     t('SEC-157: only a hash is kept, never the token', !JSON.stringify(FLAGS).includes(legacyOut) && (FLAGS.ended_tokens || []).length === 1 && /^[0-9a-f]{32}$/.test(FLAGS.ended_tokens[0].h), JSON.stringify(FLAGS));
 
+    /* AT-F-02 (walk AT, 22 Nov): two sign-ins of one person on ONE device; the logout of one ends that one only (ASVS 4.0.3 3.3.1) */
+    const two1 = await signIn(OWNER, 'dev-two-0001'), two2 = await signIn(OWNER, 'dev-two-0001');
+    r = await call('POST', '/api/signin/logout', { token: two1.token, device: 'dev-two-0001' });
+    t('AT-F-02: logout of the first of two sessions: 200 removed', r.status === 200 && r.body.removed === true, JSON.stringify(r.body));
+    r = await call('GET', '/api/signin/sessions', { token: two1.token, device: 'dev-two-0001' });
+    t('AT-F-02: the first token is 401 at once', r.status === 401, String(r.status));
+    r = await call('GET', '/api/signin/sessions', { token: two2.token, device: 'dev-two-0001' });
+    t('AT-F-02: the second token of the same person stays alive (200)', r.status === 200 && r.body.sessions.length === 1 && r.body.sessions[0].jti === two2.jti, JSON.stringify(r.body));
+    FLAGS = {}; /* the later sections count this person's sessions: start them clean */
+
     console.log('— renew —');
     a = await signIn(OWNER, 'dev-own-2');
     r = await call('POST', '/api/signin/renew', { token: a.token, device: 'dev-own-2' });

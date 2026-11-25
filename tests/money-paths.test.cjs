@@ -201,7 +201,7 @@ function agreeing(r) {
     /* ═══ 1 · THE B2B INVOICE (C5 sender's copy, C6 buyer's copy) × IN / AU / AE × ex-tax / tax-inclusive ═══ */
     for (const cc of ['IN', 'AU', 'AE']) {
       for (const incl of [false, true]) {
-        ACTIVE = cc;
+        ACTIVE = cc; require('../routes/chits').forgetCountry();
         INCLUSIVE = incl;
         const w = WORLD[cc];
         const r = await send(invoiceBody(BUYER, [line('Item A', 180, 1, w.rate)]));
@@ -220,19 +220,21 @@ function agreeing(r) {
 
     /* ═══ 2 · THE OTHER BILLING DOCUMENTS (C7 order · C8 credit note) × country ═══ */
     for (const cc of ['IN', 'AU', 'AE']) {
-      ACTIVE = cc;
+      ACTIVE = cc; require('../routes/chits').forgetCountry();
       INCLUSIVE = false;
       const w = WORLD[cc];
       const expect = 180 + (180 * w.rate) / 100;
       const order = await send({ purpose: 'order', subject: 'PO', recipients: [{ entity_id: SHOP }], line_items: [line('Item A', 180, 1, w.rate)] }, { as: 'buyer' });
       /* an order: the BUYER sends, the recipient is the SELLER — the seller's flags and the seller's country decide the tax */
       ok(`C7 ${cc}: a buyer's order carries the engine's total ${expect} on both copies`, order.status === 200 && !agreeing(order) && order.sentCopy.summary_json.total_value === expect, J([order.status, order.answer, agreeing(order)]));
-      const note = await send({ purpose: 'credit_note', subject: 'CN', recipients: [{ entity_id: BUYER }], line_items: [line('Item A', 180, 1, w.rate)] });
+      /* AI-F-02: a rail credit note must name a bill (lib/credit-cap, proven by ai-rail-credit-note-bill and acc-286). This test measures the header's money, not the cap, so the cap is stood down for the one send. */
+      const cap = require('../lib/credit-cap'), capWas = cap.holdUnderLock; cap.holdUnderLock = async () => {};
+      let note; try { note = await send({ purpose: 'credit_note', subject: 'CN', business_json: { reason_words: 'goods returned' }, recipients: [{ entity_id: BUYER }], line_items: [line('Item A', 180, 1, w.rate)] }); } finally { cap.holdUnderLock = capWas; }
       ok(`C8 ${cc}: a composed credit note carries the engine's total ${expect}`, note.status === 200 && !agreeing(note) && note.sentCopy.summary_json.total_value === expect, J([note.status, note.answer]));
     }
 
     /* ═══ 3 · WHO IS THE BUYER: nobody named · yourself · several ═══ */
-    ACTIVE = 'IN';
+    ACTIVE = 'IN'; require('../routes/chits').forgetCountry();
     INCLUSIVE = false;
     const self = await send(invoiceBody(null, [line('Item A', 180, 1, 5)]));
     ok('a self chit (no named buyer: the walk-in of the shop country) carries figures too', self.status === 200 && self.sentCopy.summary_json.total_value === 189 && !agreeing(self), J([self.status, self.answer]));
@@ -353,7 +355,7 @@ function agreeing(r) {
     ok('the engine threw: 503 MONEY_NOT_COMPUTED, nothing delivered', threw.status === 503 && threw.answer.code === 'MONEY_NOT_COMPUTED' && threw.copies === null, J(threw.answer));
 
     /* ═══ 9 · THE READERS: the owner sees the figures; a cost-blind co-assist sees none of them ═══ */
-    ACTIVE = 'IN';
+    ACTIVE = 'IN'; require('../routes/chits').forgetCountry();
     INCLUSIVE = false;
     const seen = await send({ ...bad, business_json: { money_override: { by: 'x', why: 'checked' } } });
     const header = { summary_json: seen.sentCopy.summary_json, business_json: seen.sentCopy.business_json, total_value: seen.sentCopy.total_value };

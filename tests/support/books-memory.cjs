@@ -6,12 +6,7 @@
 const ZERO = '00000000-0000-0000-0000-000000000000';
 let uid = 0; const id = () => '00000000-0000-4000-8000-' + String(++uid).padStart(12, '0');
 const clone = (x) => JSON.parse(JSON.stringify(x)), ymd = (v) => (v ? String(v).slice(0, 10) : null);
-/* the real store's TODO_SQL / NAME_SQL, read the same way over one in-memory row */ const todoOf = (o) => { const ev = o.event || {}; if (ev.todo) return ev.todo;
-  return ev.waiting === 'acceptance' ? 'accept' : ev.waiting === 'party' && /^Who is /.test(String(o.why || '')) ? 'add_supplier' : 'record'; };
-const nameOf = (o) => { if (todoOf(o) !== 'add_supplier') return null; const ev = o.event || {}; if (ev.name) return ev.name;
-  const m = /^Who is (.+)\? Add them as a supplier/.exec(String(o.why || '')); return m ? m[1] : null; };
-/* the real store OPEN_ROWS_SQL over the twin: the newest open row of each chit (or of each source_ref with no chit) */
-const openRowsOf = (T, e) => { const kept = new Map(); T.outbox.filter((o) => o.entity_id === e && !o.done_at).forEach((o) => { const k = String(o.source_chit_id || o.source_ref || "id:" + o.id); if (!kept.has(k) || kept.get(k).id < o.id) kept.set(k, o); }); return [...kept.values()]; };
+const { todoOf, nameOf, openRowsOf } = require('./books-memory-outbox.cjs'); /* the outbox reads of the twin: the real store's TODO / NAME / OPEN_ROWS SQL */
 function create() {
   const T = { loanLocks: new Map(), setting: new Map(), accounts: [], periods: [], counters: new Map(), entries: [], lines: [], balances: new Map(), items: [], payments: [],
               outbox: [], changes: [], parties: [], packs: [], chits: [], disputes: [], identities: [], compare: [], fxRates: [], fxReady: true, fxLines: true };
@@ -47,6 +42,7 @@ function create() {
     async saveSetting(db, e, s) { const cur = T.setting.get(String(e)) || {}; T.setting.set(String(e), Object.assign({}, cur, { entity_id: e, enabled: !!s.enabled, walkin_grain: s.walkin_grain || 'day',
       fy_start_month: s.fy_start_month || 4, functional_currency: s.functional_currency || 'INR', country: s.country || 'IN', pack_version: s.pack_version || cur.pack_version || null,
       enabled_at: cur.enabled_at || (s.enabled ? now() : null) /* the FIRST time it was switched on, kept (the real upsert's COALESCE) */ })); },
+    async lowerStart(db, e, ts) { const s = T.setting.get(String(e)); if (!s || !s.enabled_at || new Date(s.enabled_at) <= new Date(ts)) return false; s.enabled_at = new Date(ts).toISOString(); return true; },
     async saveCheck(db, e, r) { const s = T.setting.get(String(e)); if (s) s.last_check = clone(r); },
     async accounts(db, e) { return clone(T.accounts.filter((a) => a.entity_id === e)).sort((a, b) => String(a.code).localeCompare(String(b.code))); },
     async freeRetiredRoles(db, e, codes) { return T.accounts.filter((x) => x.entity_id === e && x.role && codes.indexOf(String(x.code)) >= 0).map((x) => { const r = { account_id: x.account_id, code: x.code, role: x.role }; x.role = null; return r; }); }, async setSourceCode(db, e, id, code) { const a = T.accounts.find((x) => x.entity_id === e && x.account_id === id); if (!a) return false; a.source_code = String(code).trim().slice(0, 20); return true; },
@@ -101,10 +97,11 @@ function create() {
       T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => {
         const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
         if (!ls.some((l) => acct(l).role === taxRole)) return;
-        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+        ls.filter((l) => (roles || []).indexOf(acct(l).role) >= 0 && !/^0+([.]0+)?$/.test(String(l.tax_rate == null ? '' : l.tax_rate))).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
       });
       return Array.from(out.values());
     },
+    async taxOfEntriesWith(db, e, from, to, taxRole, roles) { const day = (x) => String(x.posting_date).slice(0, 10), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; let net = 0; T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => { const ls = T.lines.filter((l) => l.entry_id === h.entry_id); if (ls.some((l) => roles.indexOf(role(l)) >= 0)) ls.filter((l) => role(l) === taxRole).forEach((l) => { net += Number(l.dr_minor || 0) - Number(l.cr_minor || 0); }); }); return { net_minor: net }; },
     async zeroRateSales(db, e, from, to, role, currency) {
       const day = (x) => String(x.posting_date).slice(0, 10);
       const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id);
@@ -300,7 +297,7 @@ function create() {
     async items(db, e, party, account) { const many = Array.isArray(party); return clone(T.items.filter((i) => i.entity_id === e && (many ? party.indexOf(i.party_id) >= 0 : (!party || i.party_id === party)) && (!account || i.account_id === account))); },
     /* the same rule as lib/books-store openItems (= lib/books-open-items.rowsSql, scoped): the rows of a document that does not net to nothing or has a status row, closed over the allocation links both ways */
     async openItems(db, e, account, asOf) {
-      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || String(i.doc_date).slice(0, 10) <= asOf)), sum = {}, status = new Set(), links = new Map();
+      const rows = T.items.filter((i) => i.entity_id === e && i.account_id === account && (!i.doc_date || (!asOf || String(i.doc_date).slice(0, 10) <= asOf))), sum = {}, status = new Set(), links = new Map();
       const link = (a, b) => { if (!links.has(a)) links.set(a, new Set()); links.get(a).add(b); };
       rows.forEach((i) => { sum[i.against_ref] = (sum[i.against_ref] || 0) + i.amount_minor; if (i.ref_kind === 'status') status.add(i.against_ref); if (i.ref !== i.against_ref) { link(i.ref, i.against_ref); link(i.against_ref, i.ref); } });
       const live = new Set(Object.keys(sum).filter((k) => sum[k] !== 0 || status.has(k))), queue = [...live];
@@ -503,6 +500,8 @@ function create() {
       && !T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(c.chit_id)))
       .map((c) => ({ chit_id: c.chit_id, ref: c.business_json.bill_no || null, by: c.business_json.money_override.by, at: c.business_json.money_override.at, why: c.business_json.money_override.why,
         step: c.business_json.money_override.step, unexplained_minor: c.business_json.money_override.unexplained_minor, words: null }))); },
+    async movedByLock() { return []; }, /* AC-F-02: no locked month in memory, so no entry was moved by one */
+    async chitExists(db, e, id) { return T.chits.some((c) => c.entity_id === e && String(c.chit_id) === String(id)); },
     async moneyOverrideState(db, e, chit_id) { return { held: T.chits.some((c) => c.entity_id === e && String(c.chit_id) === String(chit_id) && c.business_json && c.business_json.money_override),
       resolved: T.changes.some((x) => x.entity_id === e && x.table_name === 'money_override' && x.field === 'resolved' && x.row_id === String(chit_id)) }; },
     /* F5 A1 · the sale bills the books hold (an unreversed sale_bill or walk-in day entry) whose chit has a line with no rate — read only, newest first */
@@ -559,8 +558,13 @@ const fakeDb = {
       const live = (h) => (h.event_type === 'sale_bill' || h.event_type === 'purchase_bill') && /^chit:[0-9a-f-]{36}(:asset|:use)?$/.test(String(h.source_ref)) && !(T.entries || []).some((r) => r.reverses_entry_id === h.entry_id);
       return { rows: mine.filter(live).map((h) => ({ entry_id: h.entry_id })) };
     }
+    /* AZ-F-03 (lib/books-bill-ref): the entry numbers of some entries; the rail bills' own numbers (books-store.billNos): no chit is held in memory */
+    if (/^SELECT entry_id, entry_no FROM journal_entry WHERE entity_id = \$1 AND entry_id = ANY/.test(t.trim())) return { rows: (T.entries || []).filter((x) => x.entity_id === v[0] && v[1].indexOf(x.entry_id) >= 0).map((x) => ({ entry_id: x.entry_id, entry_no: x.entry_no })) };
+    if (/^SELECT h\.chit_id, COALESCE\(h\.business_json/.test(t.trim())) return { rows: [] };
     /* F3 (year close asks the asset register): no register is migrated in the memory store — the same answer Postgres gives before b280 (42P01), which books-assets.exists reads as "no assets" */
     if (/FROM fixed_asset WHERE entity_id = \$1 LIMIT 1/.test(t)) throw Object.assign(new Error('relation "fixed_asset" does not exist'), { code: '42P01' });
+    { const off = require('./books-offrail-memory.cjs').answer(fakeDb.T, t, v); if (off) return off; } /* V-F-07: lib/offrail-itc's read */
+    { const chit = require('./books-chit-memory.cjs').answer(t); if (chit) return chit; } /* 1129: no chit is held in memory, so a chit_header read finds no row */
     throw new Error('the in-memory tests ran real SQL: ' + t.slice(0, 80));
   },
 };

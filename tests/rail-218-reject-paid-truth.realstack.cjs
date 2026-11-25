@@ -49,7 +49,7 @@ const reject = (chit) => j('/api/chits/' + chit + '/status', { method: 'PUT', to
     H.ok(await j('/api/relationships/suppliers', { method: 'POST', token: R.token, body: { supplier_bridge_id: S.bridge, supply_kind: 'resale' } }), 'S on the buyer supplier list');
     const chit = await invoice('m');
     H.ok(await j('/api/chits/' + chit + '/status', { method: 'PUT', token: R.token, body: { status: 'accepted' } }), 'accept');
-    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 1000 } });
+    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount_minor: 100000 } });
     expect(pay.status === 200, 'Mark paid: HTTP ' + pay.status + ' ' + JSON.stringify(pay.b).slice(0, 300));
     const booked = (await asOwner(`SELECT count(*)::int AS n FROM books_payment WHERE entity_id = $1 AND client_ref LIKE $2`, [R.entity, 'chitpay:' + chit + '%']))[0].n;
     expect(booked >= 1, 'the buyer books hold no payment for the press (books ' + JSON.stringify(pay.b.books).slice(0, 200) + '): the case cannot arm');
@@ -65,7 +65,7 @@ const reject = (chit) => j('/api/chits/' + chit + '/status', { method: 'PUT', to
     /* a different amount from P-3 (the duplicate rule asks the same AUD today), and not MORE than the bill: the accept answers after the books were read (ACC-377), so the bill is posted when Mark paid is pressed; S is already on the buyer's supplier list (P-3, same shop) */
     const chit = await invoice('v');
     H.ok(await j('/api/chits/' + chit + '/status', { method: 'PUT', token: R.token, body: { status: 'accepted' } }), 'accept');
-    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount: 999.5, acknowledge: ['just_settled'] } }); /* the bill is posted by now: the books ask "already paid?" after P-3's payment, and the press confirms */
+    const pay = await j('/api/chits/' + chit + '/payment', { method: 'POST', token: R.token, body: { method: 'cash', amount_minor: 99950, acknowledge: ['just_settled'] } }); /* the bill is posted by now: the books ask "already paid?" after P-3's payment, and the press confirms */
     expect(pay.status === 200, 'Mark paid: HTTP ' + pay.status + ' ' + JSON.stringify(pay.b).slice(0, 300));
     expect((await j('/api/chits/' + chit + '/payment', { method: 'DELETE', token: R.token })).status === 200, 'Mark unpaid');
     const first = await reject(chit);

@@ -236,6 +236,24 @@ const refOfStored = (copies) => {
       refusedClosed = e.message;
     }
     ok('judge: a database that is down is thrown, never an invented verdict (the route answers as before)', refusedClosed === 'the database is down', refusedClosed);
+    /* AW-F-03: a malformed DAY summary is refused at the send route in words (400), nothing stored; a sound one and a week one still go through */
+    HELD = [];
+    const bad = async (name, edit) => {
+      const body = close(10, 1180, '2026-11-12T18:00:00Z');
+      edit(body);
+      const r = await send(body);
+      ok('AW-F-03 ' + name + ' -> 400 in words, nothing stored', r.status === 400 && r.copies === null && /Close the day again|has not come yet/.test(String(r.answer.message || r.answer.error)), J([r.status, r.answer]));
+    };
+    await bad('a garbage key', (b) => { b.business_json.summary.key = 'garbage'; });
+    await bad('a 30 Feb key', (b) => { b.business_json.summary.key = '2026-02-30'; });
+    await bad('a 2099 key', (b) => { b.business_json.summary.key = '2099-01-01'; });
+    await bad('no counter', (b) => { delete b.business_json.summary.till; delete b.business_json.till; });
+    const week = close(10, 1180, '2026-11-12T18:00:00Z');
+    week.client_ref = 'SUM/W/C1/2026-W46'; week.business_json.summary.period = 'week'; week.business_json.summary.key = '2026-W46';
+    const weekSent = await send(week);
+    ok('AW-F-03 a week summary (no day in its key) is not judged as a day: 200', weekSent.status === 200, J([weekSent.status, weekSent.answer]));
+    const sound = await send(close(10, 1180, '2026-11-12T18:00:00Z'));
+    ok('AW-F-03 a sound day summary still goes through: 200', sound.status === 200, J([sound.status, sound.answer]));
   } finally {
     server.close();
   }

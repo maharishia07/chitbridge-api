@@ -58,7 +58,7 @@ const FLAG = /SELECT can_see_costs FROM identities/, HEADER = /FROM chit_header 
     [1000, 500, [['R-1', 50000, false], ['SB-1', 100000, false]], false, 0]);
   t('owner | the customer-only and supplier-only ledger rows are priced', [ledgerOf(oCus), ledgerOf(oSup)], [[['INV-9', 25000, false]], [['SB-9', 70000, false]]]);
 
-  stub.as('E1', { identity: { identity_id: 'A7', identity_type: 'actor', parent_entity_id: 'E1' } });
+  stub.as('E1', { identity: { identity_id: 'A7', identity_type: 'actor', parent_entity_id: 'E1', access_level: 'editor', hat: 'manager' } });
   flag = true; flagReads = 0;
   const aBoth = await stub.get('/parties/' + BOTH + '/timeline'), aCus = await stub.get('/parties/' + CUS + '/timeline'), aSup = await stub.get('/parties/' + SUP + '/timeline');
   t('cost-allowed actor | byte-identical to the owner on all three timelines', [JSON.stringify(aBoth.body) === JSON.stringify(oBoth.body), JSON.stringify(aCus.body) === JSON.stringify(oCus.body), JSON.stringify(aSup.body) === JSON.stringify(oSup.body)], [true, true, true]);

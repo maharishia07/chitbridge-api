@@ -144,6 +144,9 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   /* =========================== POST /bank/statements =========================== */
   const chart = [{ account_id: ACCOUNT_ID, code: '1510', name: 'Bank', role: 'bank', is_group: false }];
   store.accounts = async () => chart;
+  B.ledgerCtx = async () => ({ pack: B.packOf({ country: 'IN', fy_start_month: 4, functional_currency: 'INR', pack_version: '1' }) }); /* WALK U: the statement is signed only against the books' own figure on the period end (150000 here, the trial balance's debit less credit) */
+  B.ensureYear = async () => []; /* AM-F-05: the lock check reads the real period rows; proved in am-bank-twice.test.cjs */
+  B.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 150000, credit_minor: 0 }] });
   const STATEMENT = { account: '1510', period_from: '2026-10-01', period_to: '2026-10-31', opening_minor: 100000, closing_bank_minor: 150000, closing_books_minor: 150000, difference_minor: 0, currency: 'INR', file_hash: 'abc123' };
   const inserted = () => log.filter((one) => /INSERT INTO bank_rec_log/.test(one.sql));
   const statementRows = (sql, params) => (/INSERT INTO bank_rec_log/.test(sql) ? { rows: [{ id: FILE_ID, seq: 2, account_id: params[1], kind: 'statement', file_hash: params[2], period_from: params[3], period_to: params[4], opening_minor: params[5], closing_bank_minor: params[6], closing_books_minor: params[7], difference_minor: params[8], currency: params[9], tied: params[10], made_by: params[11], made_at: '2026-11-20T10:00:00Z' }], rowCount: 1 } : null);
@@ -154,7 +157,7 @@ const writes = (log) => log.filter((one) => /^\s*(INSERT|UPDATE|DELETE)/i.test(o
   check('the BRS figures are stored as carried: opening 100000, bank 150000, books 150000, difference 0 (whole minor units, nothing recomputed), in INR, hash as given', kept && kept[5] === 100000 && kept[6] === 150000 && kept[7] === 150000 && kept[8] === 0 && kept[9] === 'INR' && kept[2] === 'abc123', kept);
   check('tied is true because the carried difference is nil, and the signer is the owner', kept && kept[10] === true && kept[11] === SHOP, kept);
   check('the answer carries the same figures back (compared with the request, not recomputed)', a.json.statement.closing_bank_minor === STATEMENT.closing_bank_minor && a.json.statement.closing_books_minor === STATEMENT.closing_books_minor && a.json.statement.difference_minor === 0 && a.json.statement.tied === true && a.json.statement.by === SHOP, a.json.statement);
-  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { closing_books_minor: 149500, difference_minor: 500 }), null, statementRows);
+  a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { closing_books_minor: 150000, closing_bank_minor: 149500, difference_minor: 500 }), null, statementRows);
   check('a carried difference of 500 is stored as 500 and the statement is NOT tied (the page\'s figure is kept, never forced to nil)', a.status === 201 && inserted()[0].params[8] === 500 && inserted()[0].params[10] === false && a.json.statement.tied === false, [a.status, inserted().map((one) => one.params)]);
   a = await play('POST', `/api/books/bank/statements`, Object.assign({}, STATEMENT, { currency: 'AUD' }), null, statementRows);
   refused('a statement in AUD for an INR account is 409 CURRENCY_MISMATCH and nothing is stored', a, 409, 'CURRENCY_MISMATCH', () => inserted().length === 0);

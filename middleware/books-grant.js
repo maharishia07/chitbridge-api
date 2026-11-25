@@ -24,18 +24,23 @@ const ROLE_HEADER = 'x-books-role';
 
 /** GET routes of routes/books.js an auditor may read: the books' figures and lists, no party contact data, nothing that stores into the member's books */
 const GRANT_READS = new Set([
-  '/accounts', '/daybook', '/ledger/:account', '/evidence/:id', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
+  '/accounts', '/daybook', '/ledger/:account', '/trial-balance', '/pl', '/bs', '/dues', '/cashflow', '/periods', '/year/:fy/status',
   '/terms', '/fx-rates', '/health', '/cheques', '/returns',
   '/overview' /* DOORS SWEEP: the owner's How we are doing; every figure is the code of a page already listed here (/pl /dues /cashflow), cost-blind and cash by the seat (lib/books-mis.seatOf), so an auditor and an adviser read no more than their own pages show; the web header says owner · adviser · auditor; the classification guard was red on it */,
   '/party/:id/statement' /* PAST-YEARS (Athi 16 Nov): a customer's or supplier's ledger, READ ONLY, for the auditor's debtor and creditor confirmations; the same lines and the same cost-blind cut (forBooksDoor) as GET /ledger/:account?party=, no contact or bank data in it */,
   '/opening', '/opening/years' /* DECISIONS-SLICE1 (g, 18 Nov): the opening balances page and the year strip, READ ONLY: on an initial engagement the auditor must obtain evidence on the opening balances (ASA 510); the lines name a party by id or number only (no contact or bank data, as the party statement), POST /opening/preview and /replace stay owner-only (no other method passes this guard) */,
   '/bank/log' /* l16 audbank (W15-71, cb-finance agrees): the reconciliation record - marks (who matched), signed months, the lines posted - open to the auditor READ ONLY (FIN-70 built it for the auditor to read); the rail stays held back */,
   '/loans', '/gst/lodged' /* 1118v2 loansbas: loan balances (the one S.loanBalances read, figures only) and the GST years declared lodged, READ ONLY: the auditor must obtain evidence on liabilities and on returns lodged (ASA 500; /returns is already here) */,
-  '/bank/statement-files', '/bank/statement-files/:id/file' /* l16 Statements box (b872): the kept bank statements, list and download only; adding is the owner's or the adviser's (ADVISER_DOORS) */
+  '/bank/statement-files' /* l16 Statements box (b872): the LIST of kept bank statements; the file download is FILE_READS (MONEY-01 A6): the adviser's, never the auditor's or the parent's by default */
 ]);
+/** MONEY-01 A6 (Athi, industry practice: an accountant's access is explicit): the two FILE downloads, an adviser grant only (the member chose it to act in the books); an auditor or network-parent read is refused until the member gives a file-read grant (none built). One source: the consent words' cannot-list is written from this set. */
+const FILE_READS = new Set(['/evidence/:id', '/bank/statement-files/:id/file']);
 /** GET routes held back from v1, each with its reason: the classification test needs every books GET in one list or the other */
 const GRANT_HELD_BACK = {
+  '/evidence/:id': 'a file download: the adviser grant only (FILE_READS)',
+  '/bank/statement-files/:id/file': 'a file download: the adviser grant only (FILE_READS)',
   '/bank/rail': 'returns payment_advice and the party list (held until cb-country agrees)',
+  '/backfill': 'owner only: where the books start and how many bills sit before it is the owners call alone (the start day is on /status); walks P-F-02 / S2-F-07',
   '/status': 'owner only today; an auditor reads the ledger switch only after its gate is widened (the register line moves with it)',
   '/payments/:id/advice': 'bank details of a payee (C6)',
   '/compare': 'stores into the member books',
@@ -116,7 +121,7 @@ const EVIDENCE_PATHS = [/^[/]api[/]tax[/]gstr[/]?$/ /* M-F-02 (21 Nov): GSTR-1 /
 const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
 /** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */
-const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
+const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
 const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req));
 
 /**
@@ -151,8 +156,10 @@ function unclassifiedWrites(router) {
 /** each listed pattern as a path test: ':name' is any one segment */
 const LISTED = [...GRANT_READS].map((pattern) => ({ pattern, test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
 const listedPattern = (path) => (LISTED.find((item) => item.test.test(path)) || {}).pattern || null;
+const FILE_LISTED = [...FILE_READS].map((pattern) => ({ pattern, test: new RegExp('^' + pattern.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
+const filePattern = (path) => (FILE_LISTED.find((item) => item.test.test(path)) || {}).pattern || null;
 /** the route as the log says it: the listed pattern, else the path with every id-like segment named :id (no value of the member's data is kept) */
-const routeForLog = (method, path) => method + ' ' + (listedPattern(path) || String(path).replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id').slice(0, 120));
+const routeForLog = (method, path) => method + ' ' + (listedPattern(path) || filePattern(path) || String(path).replace(/\/[0-9a-f-]{8,}(?=\/|$)/gi, '/:id').slice(0, 120));
 
 /** unclassifiedGets(router) → the GET routes of a router in neither GRANT_READS nor GRANT_HELD_BACK (the classification test: a new GET must be classified before it ships; empty = honest) */
 function unclassifiedGets(router) {
@@ -287,6 +294,18 @@ async function resolveRole(req) {
   return grants.liveRoleOf(entityOfReal(req.identity), member);
 }
 
+const CHOOSE_VIEW_WORDS = 'Choose the adviser or auditor view for this client.';
+/**
+ * the answer for a denied verdict → { status, code, words }. S2-F-09: no role named and no grant under the look we gave (SEC-117: a firm owner without X-Books-Role gets the auditor look) is not "no access" — the other view may hold it: same code, words that say what to do.
+ * AT-F-05: the owner revoked the auditor look and gave the adviser one (the default row is ended, the adviser row is live): say "choose a view", never "ended". Otherwise the verdict's own words.
+ */
+async function deniedAs(req, verdict) {
+  const roleUnnamed = !String(req.headers[ROLE_HEADER] || '').trim();
+  if (roleUnnamed && verdict.code === 'BOOKS_GRANT_NONE') return { status: verdict.status, code: verdict.code, words: CHOOSE_VIEW_WORDS };
+  const otherLive = roleUnnamed && verdict.code === 'BOOKS_GRANT_ENDED' && (await grants.liveInOtherRole(entityOfReal(req.identity), String(req.headers[HEADER]).trim().toLowerCase(), grants.roleOf(roleNamed(req))));
+  if (otherLive) return { status: 403, code: 'BOOKS_GRANT_NONE', words: CHOOSE_VIEW_WORDS };
+  return { status: verdict.status, code: verdict.code, words: verdict.words };
+}
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
 async function actOn(req, res, next) {
   if (!mayUseGrant(req)) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', notForYouWords());
@@ -296,7 +315,10 @@ async function actOn(req, res, next) {
   if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
   if (verdict.bad) return refuse(req, res, 403, 'BOOKS_GRANT_NONE', 'No access has been given for these books.');
-  if (!verdict.allowed) return refuse(req, res, verdict.status, verdict.code, verdict.words);
+  if (!verdict.allowed) {
+    const denied = await deniedAs(req, verdict);
+    return refuse(req, res, denied.status, denied.code, denied.words);
+  }
   req.realIdentity = req.identity;
   req.identity = syntheticOf(req.realIdentity, verdict.grant);
   req.acting_for_grant = verdict.grant.grant_id;
@@ -321,7 +343,6 @@ function frontOf(auth) {
 /** a request that names a client's books (X-Books-For) is for the books screens only: anywhere else the header would be ignored and the firm would act as ITSELF under a client banner, so it is refused, nothing done (ACC-176b) */
 
 const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the books screens use. Nothing was done.";
-const BOOKS_FOR_READ_ONLY = "This conversation is open to an auditor to read, not to write in. Nothing was done.";
 /** the grant kind the header names (the auditor's when none); the areas are the same for both today */
 const roleOfHeader = (req) => grants.roleOf(req.headers[ROLE_HEADER]) || grants.AUDITOR;
 /** the grants are the client's own consent: a firm acting for a client (X-Books-For) never creates or changes one, so a write on /api/books-grants that names a client's books is refused, nothing done (A15, 20 Nov) */
@@ -331,9 +352,10 @@ function refuseElsewhere(req, res, next) {
   if (req.headers[HEADER] === undefined || delegation.grantReaches(roleOfHeader(req), delegation.areaOfPath(req.path))) return next(); /* the grant's areas decide: a path outside every area the grant reaches is refused (today the only area is books) */
   if (evidencePath(req.path)) { /* RC-11: the routes themselves put the grant front in (routes/chits GET /:chit_id/messages); only a GET gets this far */
     if (req.method === 'GET') return next();
-    return problem(req, res, { status: 403, code: 'BOOKS_FOR_READ_ONLY', detail: BOOKS_FOR_READ_ONLY, legacy: { error: BOOKS_FOR_READ_ONLY, message: BOOKS_FOR_READ_ONLY } });
+    const said = grants.threadReadOnlyWords(grants.roleOf(roleNamed(req)) || grants.AUDITOR); /* BB-F-04: the seat that asked, from the one role reader (header, else the person's own seat) */
+    return problem(req, res, { status: 403, code: 'BOOKS_FOR_READ_ONLY', detail: said, legacy: { error: said, message: said } });
   }
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { FILE_READS, bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });

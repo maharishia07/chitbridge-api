@@ -25,7 +25,7 @@ function grab(name) {
   /* a one-line function ends on its own line */
   return /\}\s*$/.test(SRC.slice(i + 1, one)) && !/\{\s*$/.test(SRC.slice(i + 1, one)) ? SRC.slice(i + 1, one) : SRC.slice(i + 1, j + 2);
 }
-const BODY = ['retPriorOf', 'retReducedBefore', 'retCustomerOwes', 'retOwedRefusal', 'retOwedFor', 'retHowOptions', 'retPlan', 'retConfirm', 'retCustomerName', 'retPaidBy', 'billHow']
+const BODY = ['retPriorOf', 'retReducedBefore', 'retCustomerOwes', 'retOwedRefusal', 'retOwedFor', 'retHowOptions', 'retPlan', 'retConfirm', 'retCustomerName', 'retPaidBy', 'retPaidSet', 'retIsOther', 'retOtherMay', 'billHow']
   .map(grab).join('\n') + '\nreturn { retOwedFor, retHowOptions, retPlan, retConfirm, billHow, setPrior: function(p){ RET_PRIOR = p; }, setHow: function(h){ RET_HOW = h; }, said: said };';
 
 /** one counter: the customers the snapshot holds, whether the Ledger is on, what the cashier is told and answers */
@@ -33,7 +33,7 @@ function page(opts) {
   const said = [];
   const make = new Function('S', 'booksOn', 'booksMajor', 'CREDIT_SINCE', 'r2', 'rmoney', 'money', 'esc', 'toastLine', 'sure', 'said',
     'var tx = function(e){ return e; }, txf = function(e, v){ return String(e).replace(/\\{(\\w+)\\}/g, function(w, k){ return v && k in v ? v[k] : w; }); };\n' +
-    'var RET_OWED = "owed"; var RET_PRIOR = null; var RET_HOW = "";\n' + BODY);
+    'var RET_OWED = "owed"; var RET_PRIOR = null; var RET_HOW = ""; var RET_FOR = null; var rateMay = function(){ return { ok: true }; };\n' + BODY);
   const api = make({ customers: opts.customers || [] }, () => opts.ledger !== false, (minor) => Number(minor) / 100, opts.since || {},
     (v) => Math.round(v * 100) / 100, (v) => Math.round(v * 100) / 100, (v) => '₹' + v.toFixed(2), (v) => String(v), (m) => said.push(m), async () => opts.confirm !== false, said);
   return api;
@@ -75,16 +75,15 @@ const t = async (name, fn) => {
     assert.ok(!/owed/.test(p.retHowOptions({ Cash: true }, p.retOwedFor(cashBill, 100))));
   });
 
-  await t('a return bigger than what is owing is NOT split: greyed with its sentence, the cash way stays (whole note or nothing)', async () => {
+  await t('a return bigger than what is owing (Y-F-01): all of the balance comes off, the rest stays as credit - one whole note, never half cash', async () => {
     const p = page({ customers: [{ identity_id: KUMAR, balance_minor: 100000 }] });         /* they owe only 1,000 now */
     const owed = p.retOwedFor(bill(), 2360);
-    assert.deepStrictEqual([owed.offered, owed.fits, owed.max], [true, false, 1000]);
-    assert.ok(/They owe ₹1000.00 on this bill, less than this return/.test(owed.sentence), owed.sentence);
-    assert.ok(/ disabled>Reduce what they owe/.test(p.retHowOptions({ Cash: true }, owed)));
+    assert.deepStrictEqual([owed.offered, owed.fits, owed.max, owed.credit], [true, true, 1000, 1360]);
+    assert.ok(/They owe ₹1000.00 on this bill.*other ₹1360.00 stays as credit/.test(owed.sentence), owed.sentence);
+    assert.ok(!/ disabled>Reduce what they owe/.test(p.retHowOptions({ Cash: true }, owed)));
     const plan = p.retPlan(bill(), 2360, 'owed');
-    assert.ok(plan.refusal, 'the till refuses the half-and-half');
-    assert.strictEqual(await p.retConfirm(plan), false);
-    assert.ok(p.said.some((m) => /less than this return/.test(m)));
+    assert.deepStrictEqual([plan.refunds, plan.refusal, plan.kept], [[], '', 1360]);
+    assert.ok(/Take ₹1000.00 off what Kumar owes and keep the other ₹1360.00 as credit/.test(plan.ask), plan.ask);
   });
 
   await t('earlier notes count: 2,000 already taken off a 6,800 bill leaves 4,800', async () => {
@@ -92,7 +91,7 @@ const t = async (name, fn) => {
     p.setPrior({ 'C1/26-27/0001': [{ total: -2000, refunds: [] }, { total: -500, refunds: [{ how: 'Cash', amount: 500 }] }] });
     assert.strictEqual(p.retOwedFor(bill(), 100).max, 4800);       /* the cash note took nothing off the debt */
     assert.strictEqual(p.retOwedFor(bill(), 4800).fits, true);
-    assert.strictEqual(p.retOwedFor(bill(), 4800.5).fits, false);
+    assert.strictEqual(p.retOwedFor(bill(), 4800.5).credit, 0.5);   /* Y-F-01: the half beyond stays as credit */
   });
 
   await t('no customer on the bill, or the Ledger off: offered but greyed, with the sentence', async () => {

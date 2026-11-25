@@ -18,7 +18,6 @@ const log = require('../lib/logger');
 /* SEC-FIX3 S5 — a handle lookup finds a BUSINESS only: not a storefront customer (<phone>@<shop>.cr, identity_type 'customer') and not an
    employee (name@shop.br, an actor) — both carry a parent entity. Otherwise adding one confirmed it and returned their phone/contact. */
 const A_BUSINESS = `identity_type = 'entity' AND parent_entity_id IS NULL`;
-
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
 const { body } = require('express-validator');
@@ -143,15 +142,7 @@ async function addLocalSupplier(db, owner, name, fields) {
 /* listSupplier: lib/supplier-list.js — the one write of a supplier row (a name, a business and a received bill all use it) */
 const { listSupplier } = require('../lib/supplier-list');
 
-/** ⭐ AE-F-19 · ADD THE SELLER OF THIS BILL AND POST IT: the seller's own key (the sender of my received copy), never a minted twin of the same name; then the parked bill posts */
-async function addSellerOfBill(req, res, owner, forBill, fields) {
-  const { kind, category, nickname, notes, preferred } = fields;
-  const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, { kind, category, nickname, notes, preferred });
-  if (!done) return problem(req, res, { status: 404, ...words.noBusiness() });
-  const said = done.listed.dup ? 'Already in your supplier list' : 'Supplier added';
-  return res.json({ message: said, supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: kind, category, nickname, notes, preferred }, books: done.books });
-}
-/** the supplier row's own fields from a request body: kind resale | own_use, category, nickname, notes, preferred */
+/** the list fields of an added supplier, cleaned from the request body: { kind (resale unless own_use), category, nickname, notes (text or null), preferred (true or 'true') } */
 function supplierFieldsOf(body) {
   return {
     kind: body.supply_kind === 'own_use' ? 'own_use' : 'resale',
@@ -161,6 +152,36 @@ function supplierFieldsOf(body) {
     preferred: body.preferred === true || body.preferred === 'true'
   };
 }
+/** the answer of adding the seller of a bill (AE-F-19): the seller as a supplier on the rail, and what posting the parked bill did. `fields` = { kind, category, nickname, notes, preferred } */
+function sellerOfBillAnswer(done, fields) {
+  return { message: done.listed.dup ? 'Already in your supplier list' : 'Supplier added', supplier: { supplier_entity_id: done.seller.identity_id, display_name: done.seller.display_name, on_rail: true, supply_kind: fields.kind, category: fields.category, nickname: fields.nickname, notes: fields.notes, preferred: fields.preferred }, books: done.books };
+}
+/** adds the seller of this bill as a supplier and posts the parked bill; `fields` = { kind, category, nickname, notes, preferred } */
+async function addSellerOfBill(req, res, owner, forBill, fields) {
+  const done = await require('../lib/supplier-list').addSellerAndPost(owner, forBill, fields);
+  return done ? res.json(sellerOfBillAnswer(done, fields)) : problem(req, res, { status: 404, ...words.noBusiness() });
+}
+/** the answer of adding a supplier by name only (off the rail): `added` is addLocalSupplier's result, `localNo` its party number */
+function localSupplierAnswer(added, localNo, fields) {
+  const local = added.local;
+  return {
+    message: 'Supplier added',
+    ...restoredAnswer(added.restored, local.display_name),
+    supplier: {
+      supplier_entity_id: local.identity_id,
+      bridge_id: local.bridge_id,
+      party_no: localNo,
+      display_name: local.display_name,
+      on_rail: false,
+      supply_kind: fields.kind,
+      category: fields.category,
+      nickname: fields.nickname,
+      notes: fields.notes,
+      preferred: fields.preferred
+    }
+  };
+}
+
 /**
  * ⭐⭐ ADD A SUPPLIER — ON THE RAIL, OR JUST A NAME (b218).
  *
@@ -214,14 +235,14 @@ router.post(
       const owner = ctx(req);
       const bridge = textOf(req.body.supplier_bridge_id);
       const localName = sanitise(textOf(req.body.name)) || null;
-      const fields = supplierFieldsOf(req.body);
-      const { kind, category, nickname, notes, preferred } = fields;
+      const { kind, category, nickname, notes, preferred } = supplierFieldsOf(req.body);
+
       const forBill = textOf(req.body.for_bill);
       if (!bridge && !localName && !forBill)
         return problem(req, res, { status: 400, ...words.needSupplierParty() });
 
-      /* ⭐ AE-F-19: add the seller of this bill and post it */
-      if (forBill) return addSellerOfBill(req, res, owner, forBill, fields);
+      /* ⭐ AE-F-19 · ADD THE SELLER OF THIS BILL AND POST IT: the seller's own key (the sender of my received copy), never a minted twin of the same name; then the parked bill posts */
+      if (forBill) return addSellerOfBill(req, res, owner, forBill, { kind, category, nickname, notes, preferred });
 
       /* ⚠️⚠️ ANOTHER SHOP'S MINTED PARTY IS NOT ADDABLE. `~acmetraders.corner-hardware` resolves perfectly well by
          user_id — it is an ordinary entity row — so without this a competitor who guessed the handle could add
@@ -239,18 +260,7 @@ router.post(
         const local = added.local;
         const localNo = await numberParty(owner, local.identity_id);
         require('../lib/books-hooks').afterSupplierAdded(owner); /* J-F-07: their waiting bill posts now, after the commit */
-        return res.json({
-          message: 'Supplier added',
-          ...restoredAnswer(added.restored, local.display_name),
-          supplier: {
-            supplier_entity_id: local.identity_id,
-            bridge_id: local.bridge_id,
-            party_no: localNo,
-            display_name: local.display_name,
-            on_rail: false,
-            supply_kind: kind, category, nickname, notes, preferred
-          }
-        });
+        return res.json(localSupplierAnswer(added, localNo, { kind, category, nickname, notes, preferred }));
       }
       // Resolve by bridge_id OR external user_id OR email — the panel prompts "User ID or email",
       // so bridge-id-only lookup would 404 those. (Matches the ATH-114 user_id resolution.)
@@ -753,6 +763,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
       Object.assign(item, { groups: Array.isArray(item.groups) ? item.groups : [] })
     );
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
+    rows.forEach((item) => { delete item.otp_contact; }); /* lens-sec 1129 (23b4c8830): the login phone is never a party's contact; decorate has used it for a minted party's phone above, the column itself is not sent */
     res.json(Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))));
   } catch (err) {
     problem(req, res, failed(err, req, 'Get customers failed'));

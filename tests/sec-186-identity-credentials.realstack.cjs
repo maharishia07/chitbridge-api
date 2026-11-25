@@ -27,7 +27,7 @@ const REVOKE = 'RUN-2026-11-16-sec-186-revoke-credential-columns.sql';
   const owner = new Pool({ connectionString: ownerUrl, max: 1 });
   const planted = [];
   try {
-    for (const n of ['RUN-2026-11-14-b860-identities-rls.sql', 'RUN-2026-11-16-identities-read-grant-party.sql', REVOKE, REVOKE]) await owner.query(file(n)); // the revoke twice: harmless
+    for (const n of [REVOKE, 'RUN-2026-11-14-b860-identities-rls.sql', 'RUN-2026-11-16-identities-read-grant-party.sql', REVOKE]) await owner.query(file(n)); // the revoke twice: harmless
     const plant = async (type, parent, tag, pin, code, hash) => {
       const r = await owner.query(`INSERT INTO identities (bridge_id, display_name, email, user_id, identity_type, parent_entity_id, status, country, currency_code, pin_hash, otp_code, otp_code_hash, otp_expires_at)
         VALUES ($1, $2, $3, $4, $5, $6, 'active', 'IN', 'INR', $7, $8, $9, now() + interval '1 hour') RETURNING identity_id`, ['B' + RUN + tag, 'Name ' + tag + ' ' + RUN, RUN + tag + '@s186.test', 'u-' + tag + '-' + RUN, type, parent, pin, code, hash]);

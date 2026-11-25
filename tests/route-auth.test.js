@@ -84,6 +84,8 @@ const PUBLIC_PREFIX = {
   'assist POST ': 'the assistant answers without a session by design (softIdentity → anon), rate-limited in server.js',
   'connectors POST ': 'authenticated by the ActorKey in X-Bridge-Key, inside the handler',
   'channels POST ': 'guarded by the `admin` middleware',
+  /* ONE exact route, not the file: the PUBLIC list is held at twenty so a person can read it; cb-security to confirm this home or raise the cap */
+  'signin-provider POST /provider/handoff': 'signing in with a connected provider: the 60-second single-use #h= code IS the credential; spent on the first read, bound to the device that started, answers as POST /verify does, never creates an account (SEC-112 P1)',
 };
 
 function mutatingRoutes() {

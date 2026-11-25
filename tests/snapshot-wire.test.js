@@ -115,7 +115,7 @@ it('⭐⭐ and that SQL agrees with isOfferable for every status a row can hold'
 });
 
 it('⭐ the counter refuses a merge that does not add up', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('snap.items.length !== snap.total') > 0,
     'the counter no longer checks its merged copy against the shop own count');
   const at = page.indexOf('snap.items.length !== snap.total');
@@ -131,7 +131,7 @@ it('⭐ the counter refuses a merge that does not add up', () => {
  * stopped coming off. The badge on the shelf row went on promising it, because that path never consults line_net.
  */
 it('⭐⭐ the cart asks the offer engine under the same key it reads the answer back with', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const fn = page.slice(page.indexOf('function price(){'), page.indexOf('function cartLineNote'));
   assert.ok(fn.indexOf('lineOf(c)') > 0, 'price() must build its lines with lineOf(c) — no index, so the key is the item_id');
   assert.ok(fn.indexOf('lineOf(c, n)') < 0, 'price() passes an index as the key: line_net[c.item_id] will never resolve');
@@ -143,7 +143,7 @@ it('⭐⭐ the cart asks the offer engine under the same key it reads the answer
  * promised an offer it then failed to apply. Both call lineOf(); neither may build its own.
  */
 it('⭐⭐ the shelf badge and the bill are built from the same description of a line', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const off = page.slice(page.indexOf('function offersFor(i){'), page.indexOf('function offerNames'));
   assert.ok(off.indexOf('lineOf(') > 0, 'offersFor() must describe its line with lineOf(), or the badge can promise what the bill refuses');
   const src = page.slice(page.indexOf('function lineOf('), page.indexOf('function price(){'));
@@ -157,7 +157,7 @@ it('⭐⭐ the shelf badge and the bill are built from the same description of a
  * server stamped item_data.status. Marking something off the shelf therefore survived exactly until the next re-read.
  */
 it('⭐⭐ the counter reads the lifecycle from status, never from the quantity feed', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf("i.avail === 'unavailable'") < 0,
     'the counter is comparing the avail QUANTITY feed against a status string — always false');
   assert.ok(page.indexOf('function statusOf(i){') > 0, 'the counter must have one reading of the flag');
@@ -181,7 +181,7 @@ it('⭐ and the snapshot sends that status, or the flag can never travel', () =>
  * use the converted text only where it actually found a quantity.
  */
 it('⭐⭐ a number-word in a product name does not make the product unfindable', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const fn = page.slice(page.indexOf('function typed(){'), page.indexOf('function hits(){'));
   assert.ok(fn.indexOf('var orig =') > 0, 'typed() must keep what was actually typed, not only the numeral-converted copy');
   assert.ok(fn.indexOf('text: orig.trim()') > 0,
@@ -197,7 +197,7 @@ it('⭐⭐ a number-word in a product name does not make the product unfindable'
  * be put back from the counter — but they are not listed until the "Off the shelf" chip asks for them.
  */
 it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you ask for', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const fn = page.slice(page.indexOf('function hits(){'), page.indexOf('function hits(){') + 1200);
   assert.ok(fn.indexOf("statusOf(i) !== 'unavailable'") > 0,
     'hits() does not exclude off-the-shelf rows — they would be listed among the sellable ones');
@@ -225,7 +225,7 @@ it('⭐⭐ the counter lists what it can sell, and off-the-shelf is a view you a
  * The only control allowed to swallow a tap in the selling list is the shelf dot, which opens the product panel.
  */
 it('⭐⭐ the left row is product details only — nothing in it can be tapped but the row', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⚠️ the end anchor must be searched FROM the start of the row, and not on an inner .join either —
      offerNames(...).map(...).join('') sits INSIDE the row. The row's own closing tag is the only honest end. */
   const at = page.indexOf("return '<div class=\"hit'");
@@ -311,7 +311,7 @@ it('⭐⭐ the left row is product details only — nothing in it can be tapped 
  * another menu called maintenance … instead of price change in the menu, it will be maintenance."*
  */
 it('⭐⭐ maintenance is its own operation, and selling has no way into the catalogue', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /**
    * ⭐ AND STOCK OUT GOES TOO. Athi: *"remove the stock out mode, maintenance covers it."* It was a mode that did one thing
    * to a product, and that thing is the first switch in the Maintenance panel. Two ways to mark something off the shelf is
@@ -343,7 +343,7 @@ it('⭐⭐ maintenance is its own operation, and selling has no way into the cat
  * dosa variety."*
  */
 it('⭐⭐ the keys gather under their category, and a category chip can carry a picture', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function byCatOrder(') > 0, 'the keys can no longer be gathered by category');
   const ord = page.slice(page.indexOf('function byCatOrder('), page.indexOf('function catPic('));
   /**
@@ -399,7 +399,7 @@ it('⭐⭐ the keys gather under their category, and a category chip can carry a
  * tile sizes. This guard exists so the third time is caught by a test rather than by Athi.
  */
 it('⚠️⚠️ nothing on the counter forces a pixel photo height — the column width is the lever', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⚠️ COMMENTS STRIPPED FIRST. The historical note that RECORDS this bug quotes '--sk-ph:150px', so a plain
      text search fails on the very comment warning about it — a guard that cannot tell prose from a
      declaration reports the documentation as the fault. */
@@ -436,7 +436,7 @@ it('⚠️⚠️ nothing on the counter forces a pixel photo height — the colu
  * the existing cart."* The first half was already true; the second was not, and his sentence found it.
  */
 it('⭐⭐⭐ the counter asks CBVariant what a combination is — it keeps no copy of the rule', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /**
    * ⚠️⚠️ THE RULE LIVES IN ONE FILE. Athi, 2026-09-19: *"these are all should be as a module and we should be
    * able to re-use."* The counter, the storefront and order capture must all get the same answer to "are these
@@ -464,7 +464,7 @@ it('⭐⭐⭐ the counter asks CBVariant what a combination is — it keeps no c
  * have a way of edit the choice, you have to remove and then add it back."*
  */
 it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows them', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function modEdit(') > 0,
     'the choices on a bill line cannot be changed once it is added');
   /* ⭐ THE SAME CHOOSER, SEEDED — not a second dialog with its own idea of required groups and maximums */
@@ -511,7 +511,7 @@ it('⭐⭐⭐ the choices on a bill line can be changed, and the money follows t
  * menu… Reminder can be added in the to do if possible."*
  */
 it('⭐⭐ the to-do is one list in one place, and it never asks the browser for permission', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⭐ its own operation — one TILL_OPS entry puts it on the strip AND in the hub, with one set of words */
   assert.ok(/id: 'todo',/.test(page), 'To do is no longer its own operation, so the strip and the hub disagree');
   assert.ok(page.indexOf("fn: 'todoOpen'") > 0, 'the To do entry does not open the popup');
@@ -546,7 +546,7 @@ it('⭐⭐ the to-do is one list in one place, and it never asks the browser for
  * panel is at very bottom, so i was searching where it is"*, which I first answered by talking him out of it.
  */
 it('⭐⭐⭐ a touch layout takes payment on a card, and there is still only one way to take money', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⭐ THE PREDICATE IS THE SCREEN LIBRARY'S, not a second one invented here. lib/screen-kit.js has declared
      `pay: 'step'` for tablet/phone/handheld since it was written, and this page never read `slots` at all. */
   assert.ok(page.indexOf('function slotAt(') > 0, 'the page no longer reads the layout\'s slot placement');
@@ -587,7 +587,7 @@ it('⭐⭐⭐ a touch layout takes payment on a card, and there is still only on
  * Every one of these describes something the screenshot caught and the other 781 checks did not.
  */
 it('⭐⭐ the maintenance list wears each row\'s problem, and its chips all fit on the screen', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⚠️⚠️ ELEVEN CHIPS IN A SIDEWAYS-SCROLLING ROW put "No photo" and "No price" off the right-hand edge, where
      nothing said they existed. Maintenance wraps; the selling screen keeps its one line and its four chips. */
   /* tidy 2026-10-09 (TS10): selling wraps too, at most two lines, the rest under More - a chip is whole or it is behind the button */
@@ -615,7 +615,7 @@ it('⭐⭐ the maintenance list wears each row\'s problem, and its chips all fit
 });
 
 it('⭐⭐ the bulk bar can do the two things the screen exists for, and does not shove the list', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   for (const [what, fn] of [['change a price', 'async function pickedPrice('],
                             ['put products on a group', 'async function pickedGroup(']])
     assert.ok(page.indexOf(fn) > 0, 'several products at once cannot ' + what);
@@ -642,7 +642,7 @@ it('⭐⭐ the bulk bar can do the two things the screen exists for, and does no
  * all can be kept in the same place."* Each calls the function that already did that job; none may grow a second write.
  */
 it('⭐⭐ the maintenance panel holds the four decisions and writes each through one path', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* the editor is its builders plus the assembly — see editorRegion() */
   const card = editorRegion(page);
   /**
@@ -693,7 +693,7 @@ it('⭐⭐ the maintenance panel holds the four decisions and writes each throug
  * key."* Repeated adds raise it; the cart's own stepper and Ctrl+arrows change it after the fact.
  */
 it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raises the count', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const rowfn = page.slice(page.indexOf('function cartRowHTML(c, k){'), page.indexOf('function paintCartRow'));
   assert.ok(rowfn.indexOf('till-minus-') > 0 && rowfn.indexOf('till-plus-') > 0, 'the cart line has no + and - buttons');
   assert.ok(rowfn.indexOf('till-qty-') > 0, 'the cart line has no typeable quantity, so 24 would be 23 taps');
@@ -723,7 +723,7 @@ it('⭐⭐ the cart carries the stepper and a shortcut, and a repeated add raise
  * the word "Items" was already taken by a MONEY figure (the total before offers), so somebody looking for a count found rupees.
  */
 it('⭐⭐ the bill says how many products and how many items, on screen and on paper', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function cartCount(lines){') > 0, 'nothing counts what is on the bill');
   /**
    * ⚠️⚠️⚠️ ONE SUM, ONE PLACE. Until [TILL-104] the counter added line quantities in FOUR places —
@@ -737,11 +737,11 @@ it('⭐⭐ the bill says how many products and how many items, on screen and on 
   assert.deepStrictEqual(sums, [],
     'something outside cartCount() is adding line quantities again — that is how "0.25 items" got onto a bill');
   assert.ok(page.indexOf('data-testid="till-count"') > 0, 'the count is not on the screen');
-  const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
-  assert.ok(slip.indexOf("t('Products'") > 0 && slip.indexOf("t('Items'") > 0,
+  const slip = page.slice(page.indexOf('function slipHTML(bill, totals){'), page.indexOf('function showSlip'));
+  assert.ok(slip.indexOf("row('Products'") > 0 && slip.indexOf("row('Items'") > 0,
     'the printed slip does not say how many — the line a customer checks against the bag');
   /* ⚠️ and "Items" must never again label a rupee figure, on any of the three documents */
-  assert.ok(page.indexOf("t('Items', money(") < 0, '"Items" is labelling money again — it is a count word');
+  assert.ok(page.indexOf("row('Items', money(") < 0, '"Items" is labelling money again — it is a count word');
   assert.ok(page.indexOf("<span>Items</span><span>' + money(") < 0, '"Items" labels money in the totals block');
 });
 
@@ -752,7 +752,7 @@ it('⭐⭐ the bill says how many products and how many items, on screen and on 
  * answers 'unknown' and the bill says so rather than inventing a split a return would contradict.
  */
 it('⭐⭐ the GST is split into its heads, by the engine that already decides that', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const bm = page.slice(page.indexOf('function billMoney(){'), page.indexOf('function paintTotals'));
   /* ⭐ 2026-10-02: the decision AND the split are CBTax.determine()'s — billMoney passes the place of supply in (the engine's
      CBTax.placeOfSupply) and reads the heads off the invoice with the engine's own CBTax.moneyOf (CGST and SGST each as the
@@ -763,7 +763,7 @@ it('⭐⭐ the GST is split into its heads, by the engine that already decides t
   assert.ok(bm.indexOf('heads.push(') < 0, 'the counter builds its own heads again — the halves can fail to sum to the tax');
   /* it must reach both the screen and the paper, and be RECORDED on the bill so a reprint shows what was issued */
   assert.ok(page.indexOf("'<div class=\"t head\">'") > 0 || page.indexOf('class="t head"') > 0, 'the screen shows no heads');
-  const slip = page.slice(page.indexOf('function slipHTML(bill, m){'), page.indexOf('function showSlip'));
+  const slip = page.slice(page.indexOf('function slipHTML(bill, totals){'), page.indexOf('function showSlip'));
   assert.ok(slip.indexOf('bill.heads') > 0, 'the printed slip still lumps the GST into one line');
   assert.ok(page.indexOf('heads: m.heads, supply: m.supply,') > 0,
     'the bill does not record its heads — a reprint would recompute them and could restate a filed return');
@@ -774,7 +774,7 @@ it('⭐⭐ the GST is split into its heads, by the engine that already decides t
  * selection in the list AND changed a quantity on the bill. Every branch of searchKey is an unmodified key.
  */
 it('⭐ a modified key is not the search box key', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⚠️ THE WINDOW WAS 900 CHARACTERS AND THE FUNCTION OUTGREW IT (2026-09-10, when Tab-to-the-list was added).
      A fixed slice that no longer reaches the branch it is judging does not fail loudly — indexOf returns −1, and
      "guard < −1" is simply false, so the test reported a broken ordering that was never broken. Read to the end
@@ -810,7 +810,7 @@ it('⭐⭐ the state code comes from the same GSTIN the shop is shown as having'
  * header text a shopkeeper would never come here to read.
  */
 it('⭐⭐⭐ the till shows the shop’s tax facts as ONE LINE, with a link to the rest (00-CORRECTIONS.md §10.7, Phase 4.5)', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* TILL-B2 (2026-10-17): the registration words and the document word moved to shopStatusWords / shopDocWords, just above paintShop */
   const fn = page.slice(page.indexOf('function shopDocWords('), page.indexOf('function paintTotals'));
   /* ⚠️ NOTHING WAS DROPPED, ONLY SAID AS ONE SENTENCE — GSTIN, registration state, document type and the tax
@@ -846,7 +846,7 @@ it('⭐⭐⭐ the till shows the shop’s tax facts as ONE LINE, with a link to 
  * *"if the information is validated and then we can sync to backoffice."*
  */
 it('⭐⭐⭐ a GSTIN typed at the counter is checked there AND refused by the server', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
 
   /* 1 · the page checks with the SAME module, lifted onto it — never a second regex */
@@ -887,7 +887,7 @@ it('⭐⭐⭐ a GSTIN typed at the counter is checked there AND refused by the s
  * to add it threw the mark to the top of the list.
  */
 it('⭐⭐ the marked row is the row that was clicked, in every operation', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /**
    * ── ⭐ THE RULE GOT STRONGER ON 2026-09-10, so this asserts the INTENT and not the old line ────────────────
    *
@@ -925,7 +925,7 @@ it('⭐⭐ the marked row is the row that was clicked, in every operation', () =
  * moves. And no scale transform — scaling a row blurs its text, which is the opposite of easier to read.
  */
 it('⭐ the marked row is lifted off the list, and lifting it costs no layout', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const css = page.slice(page.indexOf('.hit.sel{'), page.indexOf('.hit .n{'));
   assert.ok(css.indexOf('0 0 0 2px var(--ok)') > 0, 'the marked row has no ring');
   assert.ok(css.indexOf('rgba(0,0,0,.20)') > 0, 'the marked row casts no shadow, so it does not project');
@@ -942,7 +942,7 @@ it('⭐ the marked row is lifted off the list, and lifting it costs no layout', 
  * ⚠️ An item_id survives a shop read. An object reference does not. Anything held across one must be addressed by identity.
  */
 it('⭐⭐ nothing holds a product across a shop read — the panel resolves it by id', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function cardItem(){') > 0, 'the panel has no way to resolve its product against the current shop');
   assert.ok(page.indexOf('var CARD = null;') < 0, 'the panel caches the product object again — a shop read orphans it');
   /* every writer must go through the resolver, not a stored reference */
@@ -967,7 +967,7 @@ it('⭐⭐ nothing holds a product across a shop read — the panel resolves it 
  * thousand rows, nobody sees that.
  */
 it('⭐ the row that changed flashes, once the change is confirmed', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function flashItem(id){') > 0, 'nothing shows which row changed');
   assert.ok(page.indexOf('@keyframes cbflash') > 0, 'the flash has no animation');
   /* ⚠️ it fires from cardNote — the CONFIRMATION — never from the click, or it would say "saved" before anything was */
@@ -987,7 +987,7 @@ it('⭐ the row that changed flashes, once the change is confirmed', () => {
  * which a shopkeeper will tick, after which the till silently stops asking anything at all.
  */
 it('⭐⭐ no browser dialog is left in the counter', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   for (const bad of ['alert(', 'confirm(']) {
     const n = page.split(bad).length - 1;
     assert.strictEqual(n, 0, n + ' × ' + bad + ' is back — use say() / sure(), the counter own dialog');
@@ -1018,7 +1018,7 @@ it('⭐⭐ no browser dialog is left in the counter', () => {
  * theme tokens, so the dark theme put near-white text on white paper. Each half was right; only together were they wrong.
  */
 it('⭐ the slip box is paper for a slip and themed for a screen, and never mixed', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('.slipbox.screen{background:var(--card);color:var(--ink)}') > 0,
     'there is no themed variant, so anything not a receipt is unreadable in one theme or the other');
   /**
@@ -1072,7 +1072,7 @@ it('⭐⭐ the till may move one product in or out of one live offer, and may no
  * and neither shows up until a customer is at the counter.
  */
 it('⭐⭐ turning an offer off knows whether to opt the product out or remove the tick', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function offerState(i, o){') > 0, 'nothing works out WHY an offer is on or off');
   const st = page.slice(page.indexOf('function offerState(i, o){'), page.indexOf('function offerShown'));
   assert.ok(st.indexOf('line.excluded = [];') > 0,
@@ -1103,7 +1103,7 @@ it('⭐⭐ turning an offer off knows whether to opt the product out or remove t
  * ⚠️ A tier RE-PRICES the line; it is not a discount. An offer comes off the tiered price, never off the list price.
  */
 it('⭐⭐⭐ the till prices through CBPricing, before offers', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('/engine/pricing.js') > 0, 'the pricing engine is not loaded by the counter');
   /* ⚠️ and BEFORE offers, because the order of evaluation is the whole point */
   assert.ok(page.indexOf('/engine/pricing.js') < page.indexOf('/engine/offers.js'),
@@ -1124,7 +1124,7 @@ it('⭐⭐⭐ the till prices through CBPricing, before offers', () => {
 
 /** ⭐ AND IT SAYS SO ON SCREEN — a tier that changes the figure with nothing to explain it looks like a bug. */
 it('⭐ the price reference is shown, described by the engine that applies it', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('CBPricing.describe(') > 0,
     'the counter phrases the structure itself instead of using the engine one-liner — two descriptions of one thing');
   assert.ok(page.indexOf('till-priceref-') > 0, 'the shelf row never shows what prices the product');
@@ -1143,7 +1143,7 @@ it('⭐ the price reference is shown, described by the engine that applies it', 
  * which once scrambled a price into "10 / ₹ 620.00KG" — were not stripped, though locale.js solves that once.
  */
 it('⭐⭐ the till formats money through CBLocale, in the shop own currency', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('/engine/locale.js') > 0, 'the locale engine is not loaded by the counter');
   assert.ok(page.indexOf('CBLocale.money(n, cur)') > 0, 'money() does not delegate to the one formatter');
   assert.ok(page.indexOf('S.shop.currency') > 0, 'the currency is not taken from the shop');
@@ -1189,7 +1189,7 @@ it('⭐⭐ a GSTR row carries a real unit quantity code, not the shopkeeper own 
  * ⚠️ THE SALE IS NEVER BLOCKED — a counter that refused to finish would cost a customer to protect a number.
  */
 it('⭐⭐ the bill says which way it will be recorded, and the day close counts the ones nobody chose', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* the answer is stated while the bill is open */
   assert.ok(page.indexOf('till-pay-says') > 0, 'nothing says how this bill will be recorded');
   const pp = page.slice(page.indexOf('function paintPays(){'), page.indexOf('function pickPay('));
@@ -1223,7 +1223,7 @@ it('⭐⭐ the bill says which way it will be recorded, and the day close counts
  */
 it('⭐⭐ the payment ways are read from where the snapshot writes them', () => {
   const src = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* the wire puts it inside shop — it is a fact about the shop */
   const shopBlock = src.slice(src.indexOf('function shopBlock('), src.indexOf('function policyBlock('));
   assert.ok(shopBlock.indexOf('pay: cbProfile.payWays(') > 0 || shopBlock.indexOf('pay: require(') > 0,
@@ -1298,7 +1298,7 @@ it('⭐⭐ the shop country is derived once and used by everything that needs it
  * internet going down, and it is exactly the case a server hop would break.
  */
 it('⭐⭐ the counter tells the customer screen, and tells it only what a customer may see', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
   assert.ok(page.indexOf("new BroadcastChannel('cb-counter')") > 0, 'the counter says nothing to a second screen');
   assert.ok(promo.indexOf("new BroadcastChannel('cb-counter')") > 0, 'the screen is not listening');
@@ -1327,7 +1327,7 @@ it('⭐⭐ the counter tells the customer screen, and tells it only what a custo
  * money: ₹10,000 of stock at 18% is ₹1,800 to set against what the shop collects.
  */
 it('⭐⭐⭐ goods-in records the tax paid, per line and per consignment', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('function rcvLineTax(l){') > 0, 'a receive line works out no tax');
   assert.ok(page.indexOf('function rcvTax(){') > 0, 'the consignment works out no tax');
   /* the rate is DEFAULTED from the same engine the sell side asks — never a second opinion about a slab */
@@ -1475,7 +1475,7 @@ it('⚠️ encashing is a TENDER, not a discount — the taxable value must not 
  * line, the printed bill, the customer's screen, and the stored record a reprint reads a year later.
  */
 it('⭐⭐⭐ every place a saving is shown names the offer behind it', () => {
-  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const till = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const promo = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'promo.html'), 'utf8');
 
   /* ⚠️ mine[0] NAMED THE FIRST OFFER OVER THE SUM OF ALL OF THEM — the exact bug. The line must walk them all. */
@@ -1513,7 +1513,7 @@ it('⭐⭐⭐ every place a saving is shown names the offer behind it', () => {
  * fact about the product; a saving is something an offer did to a bill today.
  */
 it('⭐⭐ the shelf row states the MRP as a fact, and never calls the gap a saving', () => {
-  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const till = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const pb = till.slice(till.indexOf('function priceBlock'), till.indexOf('function paintHits'));
   assert.ok(/MRP/.test(pb), 'the struck-through figure is unlabelled again — it reads as a price, not an MRP');
   assert.ok(!/save/.test(pb.replace(/\/\*[\s\S]*?\*\//g, '')),
@@ -1536,7 +1536,7 @@ it('⭐⭐ the shelf row states the MRP as a fact, and never calls the gap a sav
  * books. A deadline is the one thing that turns it back into an ordinary error the existing catch blocks handle.
  */
 it('⭐⭐⭐ the counter never issues a request that can hang for ever', () => {
-  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const till = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const core = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'core.js'), 'utf8');
 
   /* the browser counter: every call to the API goes through the deadline helper, never bare */
@@ -1562,7 +1562,7 @@ it('⭐⭐⭐ the counter never issues a request that can hang for ever', () => 
  * No toast, no error, nothing on screen. It had been dead for as long as it had existed.
  */
 it('⭐⭐ both counter hosts can be told to send now', () => {
-  const till = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const till = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const agent = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.js'), 'utf8');
   const host = till.slice(till.indexOf('var AgentHost = {'), till.indexOf('var CloudHost = {'));
   assert.ok(/drain:/.test(host), 'the desktop host has no drain — Send now throws there');
@@ -1725,7 +1725,7 @@ it('⭐ and the guard can see a field go missing', () => {
  * is about the ELEMENT, not about one class: any selector that can match a .dlg must scope display to [open].
  */
 it('⚠⚠ no dialog rule sets display without [open]', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* the class every dialog on this page carries, and the classes its own children use */
   const dlgClasses = ['dlg', 'studio'];
   /**
@@ -1780,7 +1780,7 @@ it('⚠⚠ no dialog rule sets display without [open]', () => {
 
 it('⚠⚠ the shop form is hidden while it is closed', () => {
   /* the exact regression: `#shopdlg{display:flex}` with no [open] beats dialog:not([open]){display:none} */
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   assert.ok(page.indexOf('#shopdlg[open]{') > 0, 'the shop dialog no longer guards its display on [open]');
   assert.ok(!/#shopdlg\s*\{/.test(page), 'a bare #shopdlg rule is back — the closed form will cover the counter');
 });
@@ -1880,7 +1880,7 @@ function litOnThemed(css) {
 }
 
 it('⚠⚠ nothing puts a literal colour on a themed background', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   /* ⚠️ comments stripped: the note explaining this bug quotes the bug */
   const css = page.slice(page.indexOf('<style>'), page.indexOf('</style>'))
     .split('/*').map((part, n) => (n === 0 ? part : part.slice(part.indexOf('*/') + 2))).join(' ');
@@ -1918,7 +1918,7 @@ it('⭐ the snapshot carries the master under its own key and no key is written 
 });
 
 it('⭐ the counter stamps product names from category_master, and leaves the tax categories alone', () => {
-  const page = fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8');
+  const page = (fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till-slip.js'), 'utf8') + '\n' + fs.readFileSync(path.join(API, 'tools', 'tally-connector', 'till.html'), 'utf8'));
   const from = page.indexOf('function catRestamp(snap){');
   const fn = page.slice(from, page.indexOf('function byCatOf', from));
   const catRestamp = new Function('S', fn + '; return catRestamp;')(null);

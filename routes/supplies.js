@@ -22,10 +22,12 @@
 'use strict';
 const { waiting } = require('../lib/not-migrated');
 const express = require('express');
+const access = require('../lib/access'); // reviews4 GF-orders-stock-01 M10: the ONE write gate (a viewer or commenter records no purchase or issue)
 const { problem } = require('../lib/problem'); // API-STANDARD S1: the one error writer; each answer's old body is frozen in docs/contracts/api-legacy.json
 const { contract, words, notMigrated, faultOf, atTooLate, issueRefOf } = require('../lib/supplies-contract'); // the contract (each route's operation), the words of a refusal and of a fault
 const router = express.Router();
 const auth = require('../middleware/auth');
+const { writeGate } = require('../lib/access'); /* LENS-SEC 1129: a supply write is the owner's or an editor's — a viewer or commenter seat gets the rail's 403 */
 const { withEntity } = require('../db');
 const supplies = require('../lib/supply-store');
 
@@ -60,7 +62,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
  * they are worth; a shop that wants a balance says so. That is materiality, and it is the shop's judgement.
  */
 // @does A supply name, unit and whether to keep stock in -> we add it to the shop's supplies list unless it is already there, not counting stock by default -> the supply.
-router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
+router.post('/', auth, access.writeGate, ...contract.checked('POST /'), async (req, res) => {
   try {
     const b = req.body || {};
     const made = await supplies.ensure(
@@ -85,7 +87,7 @@ router.post('/', auth, ...contract.checked('POST /'), async (req, res) => {
 
 /** rename it, or change whether it is counted — a supply is a DESCRIPTION and may be edited */
 // @does A supply id and a new name or stock setting in -> we change that supply's description -> the saved supply, or not-found.
-router.patch('/:id', auth, ...contract.checked('PATCH /:id'), async (req, res) => {
+router.patch('/:id', auth, access.writeGate, ...contract.checked('PATCH /:id'), async (req, res) => {
   try {
     const row = await supplies.update(ctx(req), String(req.params.id), req.body || {}, withEntity);
     if (!row) return problem(req, res, { status: 404, ...words.notFound() });
@@ -126,7 +128,7 @@ function purchaseSays(out) {
  * expensed on receipt. Nothing is ignored: money left the business, and there may be input credit to claim.
  */
 // @does A purchase of supplies, once only per bill -> we record and cost every line and move stock only for the ones the shop counts -> the purchase result with a plain summary.
-router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), dayNotAhead, async (req, res) => {
+router.post('/purchase', auth, access.writeGate, onceOnly, ...contract.checked('POST /purchase'), dayNotAhead, async (req, res) => {
   try {
     const out = await supplies.purchase(ctx(req), req.body || {}, withEntity, { actor_id: req.identity && req.identity.identity_id });
     if (out.error) return problem(req, res, { status: 400, ...words.refused(out.error) });
@@ -140,7 +142,7 @@ router.post('/purchase', auth, onceOnly, ...contract.checked('POST /purchase'), 
 
 /** ⭐ used some — the movement that turns a purchase into a spend figure somebody can read */
 // @does A supply id and a quantity used -> we record that some was used so spend can be read -> the remaining balance.
-router.post('/:id/issue', auth, ...contract.checked('POST /:id/issue'), async (req, res) => {
+router.post('/:id/issue', auth, access.writeGate, ...contract.checked('POST /:id/issue'), async (req, res) => {
   try {
     const r = await supplies.issue(ctx(req), String(req.params.id), (req.body || {}).qty, withEntity, {
       actor_id: req.identity && req.identity.identity_id,

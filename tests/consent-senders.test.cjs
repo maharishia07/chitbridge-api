@@ -20,6 +20,7 @@ const SEND = /emails\.send\(|GRAPH[^\n]*\/messages['"`]|messages\.create\(|graph
 const WRAP = /\bsend(OtpEmail|OtpSms|Otp|Email)\s*\(/;
 const GATED = { 'lib/whatsapp-out.js': 'notify() asks privacy.gate (by party id, else by the number) before anything is posted' };
 const EXEMPT = {
+  'routes/signin-provider-connect.js': 'the notice that a provider was connected or removed goes to the OWN address of the account (the person who just did it), never a party of the shop',
   'lib/notify.js': 'sign-in codes go to the person who just asked for one; sendEmail is the connector notice to an address the SHOP configured — neither is a party',
   'routes/simulator.js': 'the /tour page mails OUR OWN leads inbox (LEADS_EMAIL), never a shop’s party',
   /* wrapper callers — each sends to the PERSON WHO ASKED (a code), or to the shop's own address */
