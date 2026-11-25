@@ -435,6 +435,7 @@ const GUARDS_PART = [
   'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'practice-sql-inline.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): batch 1128 S41, the practice cash statement inlines clean (no lone apostrophe or ; in a SQL comment); offline
+  'readab-1130-bill-step-units.test.cjs', // READ-GUARD §7: lib/chit-bill-step.js (written, retried, held, lost); offline
   'readab-1128-units.test.cjs', // READ-GUARD §7 unit evidence, batch 1128 (receipt-lines, shop-country, profilemap); offline
   'readab-1128a-units.test.cjs', // READ-GUARD §7: einvoice-note, message-client-id, weak pin refusals; offline
   'readab-1128-g0-units.test.cjs', // READ-GUARD §7: client-ip fail-closed; offline
