@@ -3820,8 +3820,9 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
  * the shop's own counter bills inside the window, newest first (the comments sit inside the statement: they are part of the text the database receives).
  * ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08)
  */
-const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.line_items, page.summary_json, false AS withdrawn, page.total_rows
-         FROM (SELECT h.chit_id, h.created_at, h.business_json, h.summary_json, count(*) OVER () AS total_rows /* CTR-225: the window's count, taken on the header alone (no detail join) before the page cuts it */
+const { POSTED_AT_SQL } = require('../lib/tax-copy'); /* FW-31: the one moment a bill is dated by */
+const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.line_items, page.summary_json, false AS withdrawn, page.total_rows, page.posted_at
+         FROM (SELECT h.chit_id, h.created_at, h.business_json, h.summary_json, ${POSTED_AT_SQL} AS posted_at, count(*) OVER () AS total_rows /* CTR-225: the window's count, taken on the header alone (no detail join) before the page cuts it */
          FROM chit_header h
        /**
         * ⚠️⚠️ NO DIRECTION TEST — AND THAT IS THE WHOLE BUG. A counter bill is a chit the shop sends to ITSELF, and a SELF chit
@@ -3841,26 +3842,26 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
            and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
-          AND h.created_at > NOW() - ($2 || ' days')::interval
+          AND ${POSTED_AT_SQL} > NOW() - ($2 || ' days')::interval /* FW-31: the window is the bill's own moment (the one the books post at), not when the server stored it */
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
           /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out of the list and the day, as the day close leaves it out */
           ${counterBill.NOT_WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3 OFFSET $6) page
+        ORDER BY ${POSTED_AT_SQL} DESC LIMIT $3 OFFSET $6) page
          LEFT JOIN chit_detail d ON d.chit_id = page.chit_id AND d.entity_id = $1 /* the lines are joined for the cut page only */
-        ORDER BY page.created_at DESC)
+        ORDER BY page.posted_at DESC)
       UNION ALL
        /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. CTR-225: NOT paged (no OFFSET) on purpose: this is the list the counter drops its own copies by, not a page of the day, so every page repeats the newest $3 of it. */
-       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
+       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint, ${POSTED_AT_SQL}
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
-          AND h.created_at > NOW() - ($2 || ' days')::interval
+          AND ${POSTED_AT_SQL} > NOW() - ($2 || ' days')::interval /* FW-31: the window is the bill's own moment (the one the books post at), not when the server stored it */
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
           ${counterBill.WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3)
-      ORDER BY created_at DESC`;
+        ORDER BY ${POSTED_AT_SQL} DESC LIMIT $3)
+      ORDER BY posted_at DESC`;
 
 /** CTR-225: the page asked for lies past the last bill, so it carries no row to read the count from: ask for the first row of the window (the one place a second statement is run) */
 async function billsPast(entity_id, [days, limit, till, by, offset]) {
