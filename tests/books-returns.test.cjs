@@ -99,6 +99,11 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('ACC-357: the money at risk - 9 is a refund of 20.00; without the 50.00 claimed it is 30.00 to pay, carried with the claim', [r.body.unsupported_input.net_if_unclaimed_minor, r.body.net_minor], [3000, -2000]);
   ok('the notes say Simpler BAS; the cite is the ATO page', r.body.notes.some((n) => /Simpler BAS/.test(n)) && /ato.gov.au/.test(r.body.cite), JSON.stringify(r.body.notes));
 
+  r = await q('GET', '/returns?on=2027-06-30');
+  ok('AT-03: a day after today (the end of the year under review, 30 Jun 2027) is not a pick: the return opens on 2026-Q1, never the future 2027-Q4', r.status === 200 && r.body.period.period === '2026-Q1' && r.body.period.ended === true, JSON.stringify(r.body.period));
+  r = await q('GET', '/returns?on=2026-08-31');
+  ok('AT-03: a past day still names its quarter (2026-Q1 holds 31 Aug)', r.body.period.period === '2026-Q1');
+
   r = await q('GET', '/returns?simpler=0');
   eq('the full BAS on request: G1 G2 G3 G4 G10 G11 1A 1B 9; G11 = the quarter\'s purchases 500.00, G10 nil', [r.body.boxes.map((b) => b.code), box(r, 'G11').amount_minor, box(r, 'G10').amount_minor, r.body.asked.simpler],
     [['G1', 'G2', 'G3', 'G4', 'G10', 'G11', '1A', '1B', '9'], 50000, 0, false]);
