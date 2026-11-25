@@ -23402,6 +23402,7 @@ function setMode(m){
   var whyNot = modeWhy(m); if (whyNot) { toastLine(whyNot); m = 'sell'; }   /* M127: a saved or typed mode this shop cannot use */
   MODE = OPS.indexOf(m) >= 0 ? m : 'sell';
   ls.set('cb_till_mode', MODE);
+  try { sessionStorage.setItem('cb_till_mode_tab', MODE); } catch (e) { cbQuiet('setMode:2', e); }
   OPS.forEach(function(k){
     var el = document.getElementById('pane_' + k); if (el) el.style.display = (k === MODE) ? 'flex' : 'none';
   });
@@ -29842,7 +29843,13 @@ window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (e)
   try { var _m = document.getElementById('tillmenu'); if (_m && !_m.hidden) paintMenu(); } catch (e) { cbQuiet('top:18', e); } });
 /* ⚠️ NO BUTTON A BROWSER CANNOT HONOUR. Firefox has no Web Speech; a microphone that does nothing is worse than none. */
 ['mic','micphone','micname'].forEach(function(id){ var b = document.getElementById(id); if (b && !speechOK() && !recordOK()) b.style.display = 'none'; });
-setMode(ls.get('cb_till_mode', 'sell'));
+/** FW-40: a counter OPENED (from Home's Sell, a bookmark) starts in SELL; the mode a person picked lasts for this tab (a reload keeps it) and a link may ask for one (?mode=receive). It no longer outlives the tab: "Sell" opened in "What arrived?" was a left-over of last week's receiving. */
+function startMode(){
+  var asked = /[?&]mode=([a-z]+)/.exec(location.search);
+  if (asked && OPS.indexOf(asked[1]) >= 0) return asked[1];
+  try { return sessionStorage.getItem('cb_till_mode_tab') || 'sell'; } catch (e) { return 'sell'; }
+}
+setMode(startMode());
 /* ⭐ the counter opens in the shape and layout this shop chose — before the first paint anybody looks at */
 try { applyTillOptions(); } catch (e) { cbQuiet('top:19', e); }
 /* ⭐ the menu's collapsed strip, drawn once from TILL_OPS (2026-09-18) */
