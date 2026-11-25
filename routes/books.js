@@ -788,7 +788,7 @@ router.get('/overview', auth, moneyReader, on, ...checked('GET /overview'), asyn
   }
 });
 
-/** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
+/** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|no_run|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
