@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 216 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 204 | `rows` | `crm.js` | still in them: |
 | 188 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 179 | `words` | `variant.browser.js` |  |
+| 180 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 146 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 142 | `answer` | `availability.js` | from March; then nearest. |
@@ -45,9 +45,9 @@ of file each thing is; this says what already does the job.
 | 77 | `rows` | `cap-settings.js` |  |
 | 77 | `record` | `access-events.js` |  |
 | 76 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
+| 73 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 73 | `adopt` | `counter-kinds.js` | A line the server names gets the server's row; a line the catalogue took the client's kind off (`changes[].to  |
 | 73 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
-| 72 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
 | 70 | `shape` | `books-practice.js` | a client's practice row: |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 69 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
