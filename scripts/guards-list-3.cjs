@@ -467,6 +467,7 @@ const GUARDS_PART = [
   'retest-1130-catalogue-failclosed.test.js', // retest 1130: EL-catalogue-01#L53/#L62 and GF-catalogue-01#L48 fail closed (gate read, source read, cost strip)
   'retest-1130-supply-kind.test.cjs', // retest 1130: AJ-F-01 supply_kind word reaches the engine, an unknown kind is refused
   'accw2-gst-gap.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'rw2acc-basis.test.cjs', // RW2-04: each BAS box says its basis, one line says why two quarters differ
   'at0204-default-period.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'finw2-earlier-tax.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'policy-words-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
