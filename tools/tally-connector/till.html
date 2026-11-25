@@ -3663,7 +3663,7 @@
   </div>
   <!-- ⭐⭐ FIND BOX FIRST (§4) — filters every row below by its label AND its current value, so "okhdfc" finds the UPI row -->
   <input class="sfind" id="set_find" type="search" data-testid="till-set-find"
-         placeholder='find a setting — try &quot;upi&quot;, &quot;voice&quot;, &quot;bill number&quot;'
+         placeholder='find a setting — try &quot;voice&quot;, &quot;bill number&quot;'
          oninput="settingsFilter(this.value)" data-cbsid="CTR003-I01">
   <div id="set_findempty" class="snote" hidden data-testid="till-set-findempty">Nothing here matches that.</div>
 
@@ -3700,7 +3700,7 @@
     </div>
     <div class="srow" title="A hotel sends the order to the kitchen before it is paid. A shop with no kitchen leaves this off.">
       <span>Kitchen tickets<i class="scope counter">this counter</i></span>
-      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()" data-cbsid="CTR003-I05"> send a KOT (F3), with dine-in · takeaway · delivery</label>
+      <label style="display:flex;gap:6px;align-items:center;margin:0"><input type="checkbox" id="set_kot" data-testid="till-set-kot" onchange="tillOptSet({kot:this.checked});paintOrderBar()" data-cbsid="CTR003-I05"> send a kitchen ticket (F3), with dine-in · takeaway · delivery</label>
     </div>
     <!-- ⭐⭐⭐ A WEIGHING SCALE ([TILL-185]). A vegetable shop weighs the tomatoes and the scale prints a
          label whose barcode carries the ITEM and the WEIGHT. GS1 reserves the prefix and says nothing about
@@ -3786,12 +3786,12 @@
 
   <section class="setsec" data-sec="pay">
     <h4 class="ssechd">Taking money</h4>
-    <div class="srow" title="The UPI address this counter takes money at.">
+    <div class="srow" id="row_upi" title="The UPI address this counter takes money at.">
       <span>UPI payee<i class="scope counter">this counter</i></span>
       <input id="set_upi" data-testid="till-set-upi" placeholder="name@bank" autocomplete="off"
              onchange="tillOptSet({upi:{payee:this.value.trim(),label:(document.getElementById('set_upilabel').value||'UPI').trim()}})" data-cbsid="CTR003-I13">
     </div>
-    <div class="srow" title="The name the pay button carries.">
+    <div class="srow" id="row_upilabel" title="The name the pay button carries.">
       <span>Button<i class="scope counter">this counter</i></span>
       <input id="set_upilabel" data-testid="till-set-upilabel" placeholder="UPI" autocomplete="off"
              onchange="tillOptSet({upi:{payee:(document.getElementById('set_upi').value||'').trim(),label:this.value.trim()||'UPI'}})" data-cbsid="CTR003-I14">
@@ -6116,6 +6116,10 @@ function taxIdLabel(){
   var registry = registryTaxId();   /* the registry's word: UEN · EIN · T-number … */
   return (S && S.shop && S.shop.tax_id_word) || (registry && registry.word) || 'Tax number';
 }
+/** RW1-19: the tax number's word on the till's own screens (menu row, shop rows, hints): the pack's (countryWords().taxId, the server's tax_id_word, the registry's); India's word GSTIN comes from the server's tax_id_word; no country → 'Tax number', never India's */
+function shopTaxWord(){ return countryWords().taxId || taxIdLabel(); }
+/** RW1-19: the smallest money unit in words; the scale presets (the engine's) say 'paise', which means nothing on another country's counter, so the till says the unit in words */
+function minorUnitWord(){ return 'the smallest money unit'; }
 /* no pack → 'Tax', the neutral word beside taxIdLabel's 'Tax number' (W1-TILL) */
 /** the shop's country words from the registry (CBCountries.meta — AU/AE's legacy words included): taxName · taxId · postcode · region; {} when none */
 function countryWords(){ try { var meta = window.CBCountries && docCountry() ? CBCountries.meta(docCountry()) : null; return (meta && meta.words) || {}; } catch (e) { cbQuiet('countryWords:1', e); return {}; } }   /* {} → the form's own words */
@@ -6298,7 +6302,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-28.signoffw';
+var TILL_BUILD = '2026-11-28.rw1ctr';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -7692,7 +7696,7 @@ function rcvPayOpen(){
       '<p class="note"><b>' + esc(c.name) + '</b>' + (c.phone ? ' <span class="u">' + esc(c.phone) + '</span>' : '') + '</p>'
     + '<div class="srow"><span>Amount</span><input id="rp_amt" data-testid="till-rp-amount" type="number" min="0" step="0.01" inputmode="decimal" oninput="rcvPayPropose()" data-cbsid="CTR004-I01"></div>'
     + '<div class="srow"><span>How</span><select id="rp_mode" data-testid="till-rp-mode" onchange="rcvPayPropose()" data-cbsid="CTR004-S01">'
-    + '<option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="cheque">Cheque</option></select></div>'
+    + '<option value="cash">Cash</option>' + (packHasUpi() ? '<option value="upi">UPI</option>' : '') + '<option value="card">Card</option><option value="cheque">Cheque</option></select></div>'
     + '<div id="rp_chq" hidden>'
     + '<div class="srow"><span>Cheque no.</span><input id="rp_chq_no" data-testid="till-rp-chq-no" inputmode="numeric" data-cbsid="CTR004-I02"></div>'
     + '<div class="srow"><span>Bank</span><input id="rp_chq_bank" data-testid="till-rp-chq-bank" data-cbsid="CTR004-I03"></div>'
@@ -9142,7 +9146,7 @@ var SHOP_ROWS = [
   { k: 'legal_name', label: 'Legal name', why: 'the name that prints on a bill' },
   { k: 'address',    label: 'Address',    why: 'prints on every bill' },
   { k: 'phone',      label: 'Phone',      why: 'customers call this number' },
-  { k: 'gstin',      label: 'GSTIN',      why: 'bills show no GST — that is fine if the shop is not registered' },
+  { k: 'gstin',      label: 'Tax number', why: 'bills show no tax — that is fine if the shop is not registered' },
   { k: 'currency',   label: 'Money',      why: '' },
   { k: 'counter',    label: 'Counter',    why: 'this device' },
   /* ⭐ Athi, 2026-09-27: "in the settings, profile, we have to bring the storefront URL." It is the one row
@@ -9237,7 +9241,7 @@ function menuShopBody(){
     /* ⚠️ said ONCE, at the bottom, with the time it was read — not on every row */
     /* ⭐ M35 (walk 2026-10-10): the foot said "changed there, not here" under rows that each had Edit — Edit saves through
        POST /api/till/shop, so it names what Edit changes, and where the rest lives */
-    + '<div class="shoprow foot"><span class="u">' + esc(when) + (when ? ' · ' : '') + '✎ name, address, phone, GSTIN here · the rest in CB</span>'
+    + '<div class="shoprow foot"><span class="u">' + esc(when) + (when ? ' · ' : '') + '✎ name, address, phone, ' + shopTaxWord() + ' here · the rest in CB</span>'
     + '<button class="pill" data-testid="till-shop-profile" onclick="fromMenu(openGst)" data-cbsid="CTR004-B30">Open the shop’s profile ↗</button></div>'
     + '</div>';
 }
@@ -9459,7 +9463,7 @@ function menuIcon(id){
  */
 function menuFig(id){
   try {
-    if (id === 'shopdet') { var g = (S && S.shop && S.shop.gstin) || ''; return g ? 'GSTIN' : 'no GSTIN'; }
+    if (id === 'shopdet') { var g = (S && S.shop && S.shop.gstin) || ''; return g ? shopTaxWord() : 'no ' + shopTaxWord(); }
     if (id === 'day')     { return (typeof WHO !== 'undefined' && WHO && WHO.name) ? 'open' : 'not open'; }
     if (id === 'today')   { var bills = TODAY_BILLS || []; var t = bills.reduce(function(a, b){ return a + (Number(b.total) || 0); }, 0); return money(t); }
     if (id === 'alerts')  { return String(alertCount()); }
@@ -12060,7 +12064,7 @@ function paintWeigh(){
   var now = !cfg.on ? '' : (cfg.preset || (cfg.mask ? 'custom' : (cfg.kind === 'weight' ? 'weight_13' : 'price_13')));
   var REG = SCALE().PRESETS;
   var opts = [['', 'No scale — barcodes are product codes']];
-  Object.keys(REG).forEach(function(k){ opts.push([k, REG[k].label + ' — ' + REG[k].hint]); });
+  Object.keys(REG).forEach(function(k){ opts.push([k, REG[k].label + ' — ' + REG[k].hint.replace(/in paise/, 'in ' + minorUnitWord())]); });
   /* ⭐ and the way out for a scale that matches neither, which is why no vendor is hard-wired */
   opts.push(['custom', 'Something else — I will type the pattern']);
   sel.innerHTML = opts.map(function(o){
@@ -13062,7 +13066,7 @@ function styleScreen(cfg, dev){
     + (shape === 'mobile' ? '' : '<div class="m-line" style="color:var(--dim)"><b>Customer (optional)</b></div>')
     + lines
     + '<div class="m-tot"><span>Saved ' + money(144.75) + '</span><span>Total</span><b>' + money(2750.25) + '</b></div>'
-    + '<div class="m-pays"><i>Cash</i><i>Card</i><i>UPI</i></div>'
+    + '<div class="m-pays"><i>Cash</i><i>Card</i>' + (packHasUpi() ? '<i>UPI</i>' : '') + '</div>'
     + '<div class="m-save">Save &amp; print · F9</div>'
     + '<div class="m-sync">all bills sent · last at 3:41 pm</div>'
     + '</div>';
@@ -16076,7 +16080,7 @@ function paintHits(){
           ? '<button data-cbsid="CTR005-B58" class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
             + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
       + '</div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)">' + (S ? tx('Nothing matches.') : '') + '</div>')
+  }).join('') : '<div style="padding:16px;color:var(--dim)" data-testid="till-list-empty">' + (S ? (catalogueTotal() ? tx('Nothing matches.') : (tx('Nothing to sell yet') + ' · ' + ' <button class="daylink" data-testid="till-empty-start" onclick="startOpen()">' + tx('Start your shop') + '</button>')) : '') + '</div>')
     /* ⚠️ AFTER THE ROWS, not before them. Sticky-to-the-bottom only works for an element the scroll would
        otherwise reach at the end; drawn first it was pushed out of view immediately, so it was stuck to the
        TOP instead and every tick shoved the shelf down by its height. */
@@ -19077,9 +19081,9 @@ function rateMay(){
   if (typeof cbRateMay !== 'function') return { ok: false, why: 'This counter cannot set a rate yet. Set it in the catalogue.' };
   var person = personOn() ? CloudHost.person : null;
   var member = person ? ((S && S.staff) || []).filter(function(staff){ return String(staff.id) === String(person.identity_id || person.by); })[0] : null;
-  /* B-F-22: the owner signed in as "Shop login" (WHO.kind 'entity') holds no person token, so the door was shut on the one who may open it. The shop's own sign-in is the owner; the server still decides on the PATCH and refuses in words */
+  /* B-F-22 (round 3): a person signed in from app.html carries kind 'owner' (the apps' own words: sess.role entity), a till shop login 'entity'; both are the owner. The owner signed in as "Shop login" (WHO.kind 'entity') holds no person token, so the door was shut on the one who may open it. The shop's own sign-in is the owner; the server still decides on the PATCH and refuses in words */
   if (!person && typeof WHO !== 'undefined' && WHO && WHO.kind === 'entity') return cbRateMay({ owner: true });
-  return cbRateMay(person && { owner: person.kind === 'entity', hat: member && member.hat });
+  return cbRateMay(person && { owner: person.kind === 'entity' || person.kind === 'owner', hat: member && member.hat });
 }
 var RATE = { line: null, item: null };
 /** today's slabs as a menu for this line, the pack's suggestion first; null on a kit without the menu. The code only ever SUGGESTS (critic 12): hsn first, else the shop's own code — never stamped */
@@ -20411,7 +20415,7 @@ var WATCH = [
   { id:'print', at:'autoPrint',          bucket:'normal', name:'Printing',
     costs:'The printer is on this counter, not at the shop', fn:function(){ return true; } },
   { id:'money', at:'billMoney',          bucket:'normal', name:'Taking money',
-    costs:'Cash, card and the UPI QR all work', fn:function(){ return true; } },
+    costs:'Cash and card all work', fn:function(){ return true; } },
   { id:'save',  at:'MEM.fail',           bucket:'normal', name:'Saving a bill here',
     costs:'Written to this device the moment you save it',
     /* ⚠️⚠️ THE ONE THAT CAN LOSE WORK. It sits in 'carries on' because that is where it belongs on a good
@@ -28671,7 +28675,7 @@ async function handOver(){
     + ' · ' + SHIFT.bills + ' bill(s)</div>'
     + '<label>Count the cash in the drawer and type the total</label>'
     + '<input id="shift_counted" type="number" min="0" step="1" inputmode="decimal" placeholder="' + esc(curSym()) + '" autofocus data-cbsid="CTR008-I10">'
-    + '<div style="color:var(--dim);font-size:.8em;margin-top:8px">Count first — the expected figure comes after. Cash only: UPI and card are not in the drawer.</div>';
+    + '<div style="color:var(--dim);font-size:.8em;margin-top:8px">Count first — the expected figure comes after. Cash only: card and the like are not in the drawer.</div>';
   document.getElementById('shiftdlg').showModal();
   setTimeout(function(){ var i = document.getElementById('shift_counted'); if (i) i.focus(); }, 50);
 }
@@ -29105,6 +29109,11 @@ function paintSetup(){
   ['add', 'total', 'collect'].forEach(function(k){
     var el = document.getElementById('spk_' + k); if (el) el.checked = !!spkF[k];
   });
+  /* RW1-19: UPI is India's mode (reg-in paymentModes.upi): another country's counter shows neither its row nor its hint */
+  var upiOn = packHasUpi();
+  ['row_upi', 'row_upilabel', 'setupupi'].forEach(function(id){ var el = document.getElementById(id); if (el) el.hidden = !upiOn; });
+  var findBox = document.getElementById('set_find');
+  if (findBox) findBox.placeholder = 'find a setting — try ' + (upiOn ? '"upi", ' : '') + '"voice", "bill number"';
   set('set_upi', (o.upi && o.upi.payee) || '');
   set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
   /* ⚠️ the STORED choice, not the effective one — cartCols() also drops a column on a narrow screen, and a tick
