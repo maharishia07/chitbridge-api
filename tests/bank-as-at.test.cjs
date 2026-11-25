@@ -22,7 +22,7 @@ function runLatest(sql, params, all) {
   all.filter((r) => !asOf || r.period_to <= asOf).sort((x, y) => (x.account_id < y.account_id ? -1 : x.period_to < y.period_to ? 1 : x.period_to > y.period_to ? -1 : y.seq - x.seq)).forEach((r) => { if (!seen.has(r.account_id)) seen.set(r.account_id, r); });
   return [...seen.values()];
 }
-const db = (all) => ({ async query(sql, params) { return { rows: runLatest(sql, params, all) }; } });
+const db = (all) => ({ async query(sql, params) { if (/SELECT DISTINCT account_id FROM bank_rec_log/.test(sql)) return { rows: [...new Set(all.map((r) => r.account_id))].map((account_id) => ({ account_id })) }; return { rows: runLatest(sql, params, all) }; } });
 
 (async () => {
   schema.hasTable = async () => true;
