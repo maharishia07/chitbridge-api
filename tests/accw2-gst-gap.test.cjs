@@ -25,7 +25,7 @@ const oneA = (m) => m.boxes.find((b) => b.code === '1A');
 
 /* the walk's case: 3,895.00 expected, 3,860.00 collected -> 35.00 short, said on 1A and in the notes, no figure moved */
 let m = mark(rows(3895000), boxes(386000));
-assert.ok(/AUD 35\.00 of GST missing on sales/.test(oneA(m).note), oneA(m).note);
+assert.ok(/AUD 35\.00 of tax missing on sales/.test(oneA(m).note), oneA(m).note);
 assert.strictEqual(oneA(m).amount_minor, 386000, 'the box figure is not changed');
 assert.ok(/AUD 38950\.00|AUD 38,950\.00/.test(m.notes[0]) && /3895\.00|3,895\.00/.test(m.notes[0]) && /3860\.00|3,860\.00/.test(m.notes[0]), m.notes[0]);
 assert.strictEqual(m.boxes.find((b) => b.code === 'G1').note, undefined, 'only the tax box carries it');
