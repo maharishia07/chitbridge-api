@@ -61,7 +61,7 @@ test('creditedOf: reads the credited total through the cap\'s own readers; full 
 
 /* w4ctr: the chit read stays inside its round-trip budget (round-trips-chit 15, round-trips-volume 6): the credited figure is read ONLY when the caller says ?with=credit (the chit sheet does) */
 test('GET /chits/:id reads the credited figure only on ?with=credit', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const src = require('../tools/chits-files.cjs').read(path.join(__dirname, '..'));
   const at = src.indexOf('creditCap.creditedOf(db, entity_id, chit_id)');
   assert.ok(at > 0, 'the read is there');
   const line = src.slice(src.lastIndexOf('\n', at) + 1, src.indexOf('\n', at));

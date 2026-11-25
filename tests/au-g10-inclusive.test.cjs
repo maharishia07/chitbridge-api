@@ -58,7 +58,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   ok('Q2 FY27: G10 = 1,100.00 (capital incl. GST)', box(r, 'G10').amount_minor === 110000, JSON.stringify([r.status, box(r, 'G10'), r.body.error]));
   ok('Q2 FY27: G11 = 220.00 (non-capital incl. GST)', box(r, 'G11').amount_minor === 22000, JSON.stringify(box(r, 'G11')));
   ok('Q2 FY27: 1B = 120.00, the GST on both, unchanged', box(r, '1B').amount_minor === 12000, JSON.stringify(box(r, '1B')));
-  ok('Q2 FY27: the answer says GST-inclusive', (r.body.notes || []).some((n) => /GST-inclusive/.test(n)) && !(r.body.notes || []).some((n) => /GST-exclusive/.test(n)), JSON.stringify(r.body.notes));
+  ok('Q2 FY27: the answer says GST-inclusive', (r.body.notes || []).some((n) => /GST-inclusive/.test(n)) && !(r.body.notes || []).some((n) => /^GST-exclusive/.test(n)), JSON.stringify(r.body.notes)); /* wave5: the basis line (RW2-04) may now NAME the earlier, exclusive periods; the answer's own basis must not be exclusive */
   ok('Q2 FY27: the ledgers behind G10 and G11 add to the box (split_ok)', box(r, 'G10').split_ok === true && box(r, 'G11').split_ok === true, JSON.stringify([box(r, 'G10').split_ok, box(r, 'G11').split_ok]));
   r = await q('GET', '/returns?period=2026-Q1&simpler=0');
   ok('Q1 FY27 (Jul-Sep 2026, a return already shown): G10 stays 1,000.00 exclusive, G11 200.00', box(r, 'G10').amount_minor === 100000 && box(r, 'G11').amount_minor === 20000, JSON.stringify([box(r, 'G10'), box(r, 'G11')]));
