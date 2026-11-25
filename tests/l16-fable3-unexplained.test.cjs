@@ -18,7 +18,7 @@ const stub = (rows) => ({ async query(sql, values) { stub.sql = sql; stub.values
     assert.deepStrictEqual([out.currency, out.unexplained_minor, out.to], ['AUD', 35432, '2026-09-30']);
     assert.deepStrictEqual(out.by_currency, [{ currency: 'AUD', unexplained_minor: 35432, to: '2026-09-30' }]);
     assert.strictEqual(out.accounts[0].unexplained_minor, 35432);
-    assert.ok(/DISTINCT ON \(account_id\)/.test(stub.sql) && /kind = 'statement'/.test(stub.sql), 'the newest sign-off per account');
+    assert.ok(/DISTINCT ON \(c\.account_id\)/.test(stub.sql) && /kind = 'statement'/.test(stub.sql), 'the newest sign-off per account');
   });
   await t('R4-1: a pg DATE column arrives as a Date; the day is its calendar day, never "Sat Oct 31" (fixture typed like the driver row)', async () => {
     const out = await LOG.unexplained(stub([row('a1', new Date(2026, 9, 31), 35432, 'AUD')]), E);

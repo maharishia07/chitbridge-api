@@ -14,7 +14,7 @@ const row = (extra) => Object.assign({ account_id: 'a1', period_to: '2026-06-30'
 
 /** a stand-in for the SQL: applies LATEST_SQL's own WHERE and ORDER BY words to rows carrying a seq (so the order the SQL TEXT names is the order tested) */
 function runLatest(sql, params, all) {
-  assert.ok(/ORDER BY account_id, period_to DESC, seq DESC/.test(sql), 'order: the latest period end, a later re-sign of it winning');
+  assert.ok(/ORDER BY c.account_id, c.period_to DESC, c.seq DESC/.test(sql), 'order: the latest period end, a later re-sign of it winning');
   const asOf = /period_to <= \$2::date/.test(sql) ? params[1] : null;
   const seen = new Map();
   all.filter((r) => !asOf || r.period_to <= asOf).sort((x, y) => (x.account_id < y.account_id ? -1 : x.account_id > y.account_id ? 1 : x.period_to < y.period_to ? 1 : x.period_to > y.period_to ? -1 : y.seq - x.seq)).forEach((r) => { if (!seen.has(r.account_id)) seen.set(r.account_id, r); });
