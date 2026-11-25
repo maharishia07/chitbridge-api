@@ -464,6 +464,8 @@ const GUARDS_PART = [
   'walkw-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'walkw-credit-qty-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'books-split-units-1129.test.cjs', // readability 1129 (g1): the units split out of books, books-hooks and catalogue-write keep their rules
+  'retest-1130-catalogue-failclosed.test.js', // retest 1130: EL-catalogue-01#L53/#L62 and GF-catalogue-01#L48 fail closed (gate read, source read, cost strip)
+  'retest-1130-supply-kind.test.cjs', // retest 1130: AJ-F-01 supply_kind word reaches the engine, an unknown kind is refused
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
