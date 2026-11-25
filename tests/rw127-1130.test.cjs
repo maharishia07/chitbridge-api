@@ -52,3 +52,12 @@ test('creditedOf: reads the credited total through the cap\'s own readers; full 
   const all = await cap.creditedOf(rows(1180, [590, 590]), 'e', 'b'); assert.strictEqual(all.full, true); assert.strictEqual(all.left_minor, 0);
   assert.strictEqual(await cap.creditedOf({ query: async () => ({ rows: [] }) }, 'e', 'b'), null);
 });
+
+/* w4ctr: the chit read stays inside its round-trip budget (round-trips-chit 15, round-trips-volume 6): the credited figure is read ONLY when the caller says ?with=credit (the chit sheet does) */
+test('GET /chits/:id reads the credited figure only on ?with=credit', () => {
+  const src = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const at = src.indexOf('creditCap.creditedOf(db, entity_id, chit_id)');
+  assert.ok(at > 0, 'the read is there');
+  const line = src.slice(src.lastIndexOf('\n', at) + 1, src.indexOf('\n', at));
+  assert.ok(/req\.query\.with[^?]*includes\('credit'\)\s*\?/.test(line), 'gated on ?with=credit, a plain read costs no credit queries');
+});

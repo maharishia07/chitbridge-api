@@ -16080,7 +16080,7 @@ function paintHits(){
           ? '<button data-cbsid="CTR005-B58" class="addbtn" data-testid="till-add-' + n + '" title="put this on the bill"'
             + ' aria-label="put this on the bill" onclick="event.stopPropagation();add(' + n + ')">+</button>' : '')
       + '</div>';
-  }).join('') : '<div style="padding:16px;color:var(--dim)" data-testid="till-list-empty">' + (S ? (catalogueTotal() ? tx('Nothing matches.') : (tx('Nothing to sell yet') + ' · ' + ' <button class="daylink" data-testid="till-empty-start" onclick="startOpen()">' + tx('Start your shop') + '</button>')) : '') + '</div>')
+  }).join('') : '<div style="padding:16px;color:var(--dim)" data-testid="till-list-empty">' + (S ? (catalogueTotal() ? tx('Nothing matches.') : (tx('Nothing to sell yet') + ' · ' + ' <button class="daylink" data-testid="till-empty-start" onclick="startOpen()" data-cbsid="CTR005-B61">' + tx('Start your shop') + '</button>')) : '') + '</div>')
     /* ⚠️ AFTER THE ROWS, not before them. Sticky-to-the-bottom only works for an element the scroll would
        otherwise reach at the end; drawn first it was pushed out of view immediately, so it was stuck to the
        TOP instead and every tick shoved the shelf down by its height. */
