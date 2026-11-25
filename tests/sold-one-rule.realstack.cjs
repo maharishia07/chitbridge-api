@@ -51,7 +51,11 @@ const E = require(path.join(API, 'lib', 'books-engines.js'));
     t(id.slice(0, 8) + " Trend's month = the same figure", slot && slot.gross_minor, sum(days));
     const fyStart = (await db.withEntity(id, (h) => h.query(`SELECT min(f.start_date)::text AS d FROM fiscal_period f WHERE f.entity_id = $1 AND f.period >= 1 AND f.fiscal_year = (SELECT fiscal_year FROM fiscal_period WHERE entity_id = $1 AND period >= 1 AND $2::date BETWEEN start_date AND end_date ORDER BY fiscal_year DESC LIMIT 1)`, [id, today]))).rows[0].d;
     const ytd = await db.withEntity(id, (h) => S.soldByDay(h, id, { from: fyStart, to: today }));
-    t(id.slice(0, 8) + ' practice year to date = soldByDay over the same dates', row.health.sales_ytd_minor, sum(ytd));
+    /* (tax in, SOLD: the practice no longer shows it — see below) */
+    /* FW-04: the practice's sales are TAX OUT, the client's P&L Sales + GST-free sales over the same dates (screen = api = hand) */
+    const pl = await db.withEntity(id, (h) => require('../lib/books').profitAndLoss(h, id, fyStart, today));
+    const plSales = pl.income.reduce((n, line) => n + line.accounts.filter((x) => /^sales/.test(String(x.role))).reduce((m, x) => m + Number(x.amount_minor), 0), 0);
+    if (ytd.length) t(id.slice(0, 8) + ' practice sales this year = the P&L sales lines, tax out', row.health.sales_ytd_minor, plSales);
   }
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

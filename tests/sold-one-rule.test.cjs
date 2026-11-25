@@ -77,6 +77,16 @@ const E = '11111111-1111-4111-8111-111111111111';
   t('no page words = the whole list, as before', [P.pageAsked({}), P.pageOf(clients, null).clients.length], [null, 5]);
   t('limit is capped on the server', P.pageAsked({ limit: '9999' }).limit, P.PAGE_MAX);
   t('year on year is a percentage of last year; none when last year sold nothing', [H.changeOf(120, 100), H.changeOf(5, 0)], [20, null]);
+  /* (7) FW-04: the practice year to date is sales TAX OUT, the P&L basis (hand: Westgate Gardens P&L sales A$94,800.00; the old figure was SOLD, tax in, A$104,280.00 = 94,800.00 x 1.1) */
+  const fragSales = S.soldEntriesSql('$1::uuid', { from: '$2', to: '$3' });
+  t('FW-04 the one fragment also reads the sales ledgers, Cr minus Dr, over the SAME entries', [/role LIKE 'sales%'/.test(fragSales), /l\.cr_minor - l\.dr_minor ELSE 0 END\) AS sales_ex/.test(fragSales), /walkin_day/.test(fragSales)], [true, true, true]);
+  t('FW-04 the year-on-year statement sums sales_ex (tax out), not sold, for this year and last', [(S.YOY_STATEMENT.match(/sum\(x\.sales_ex\)/g) || []).length, /sum\(x\.sold\)/.test(S.YOY_STATEMENT)], [2, false]);
+  /* one sale by hand: Dr cash 110.00, Cr sales 100.00, Cr GST 10.00 -> sold 11000 (tax in), sales_ex 10000 (tax out) */
+  const entryLines = [{ role: 'cash', dr: 11000, cr: 0 }, { role: 'sales', dr: 0, cr: 10000 }, { role: 'gst_output', dr: 0, cr: 1000 }];
+  const soldOf = entryLines.filter((l) => ['cash', 'upi', 'card', 'bank', 'debtors'].includes(l.role)).reduce((n, l) => n + l.dr - l.cr, 0);
+  const salesEx = entryLines.filter((l) => /^sales/.test(l.role)).reduce((n, l) => n + l.cr - l.dr, 0);
+  t('FW-04 hand: a 110.00 sale is sold 11000 and sales tax out 10000', [soldOf, salesEx], [11000, 10000]);
+  t('FW-04 hand: Westgate Gardens P&L sales 94,800.00 reaches the practice row as 9480000, not 10428000', P.yoyOf({ sales_ytd_minor: 9480000, sales_prev_ytd_minor: 8000000, sales_through: '2026-11-15', sales_first: '2025-07-02' }, { currencies: 1 }, P.yoyDates('2026-11-16', 7), '2026-11-16').sales_ytd_minor, 9480000);
   console.log('\n  ' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
