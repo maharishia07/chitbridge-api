@@ -6298,7 +6298,7 @@ var ENGINE_V = null;
  * ⭐ M08 — WHICH BUILD OF THIS PAGE IS RUNNING. vendor-till.cjs copies this line's value into engine/versions.json
  * as `page`; pageStale() compares the two once the line is up. Bump it with every change to this file.
  */
-var TILL_BUILD = '2026-11-28.batch1128';
+var TILL_BUILD = '2026-11-28.signoffw';
 /**
  * ⭐⭐ THE PAGE CHECKS ITS OWN VERSION (SPEC-iam-build §10 risk 8). A phone on a stale cached till.html keeps the old
  * loop until it reloads — the service worker is network-first, but an installed app that is never closed never
@@ -7423,7 +7423,9 @@ function paintStatus(){
     }
   }
   var age = document.getElementById('agepill');
-  if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
+  /* FW-40: an empty catalogue has no prices to be old: no red "h old" chip (the shelf already says "Nothing to sell yet") */
+  if (S && S.at && !((S.items || []).length)) { age.textContent = 'no items yet'; age.className = 'pill'; age.hidden = true; }
+  else if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
     age.textContent = 'prices as at ' + clock12(S.at) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
     age.className = 'pill' + (mins > 240 ? ' off' : '');
     age.hidden = mins <= 90; }
@@ -10746,6 +10748,8 @@ function counterName(){
   if (stored && !/^Counter\s*\d*$/i.test(stored)) return stored;
   var id = ''; try { id = String(tillId() || ''); } catch (e) { cbQuiet('counterName:2', e); }
   /* CTR-146: a plain number is a name (C5 = Counter 5); a code such as DQLG is not one, so it is not shown */
+  /* FW-40: the shop's register is the one source of how many counters there are. When its last answer says it holds none (till.counters = 0), a device-wide leftover id (cb_till_id, from another shop) is not a counter of THIS shop and is not named as one */
+  if (!personOn() && TILL_CLAIM && Number(TILL_CLAIM.counters) === 0) return 'Counter';
   return /^C?\d+$/i.test(id) ? ('Counter ' + id.replace(/^C/i, '')) : 'Counter';
 }
 
@@ -18984,7 +18988,8 @@ function billWarnLine(which, words, act, allowed){
 function dayWarnWords(){
   var open = true; try { open = dayStatus().state !== 'new'; } catch (e) { cbQuiet('dayWarnWords:1', e); }
   var h = null; try { h = DAY().priceAge((S && S.at) || null, Date.now()); } catch (e) { cbQuiet('dayWarnWords:2', e); }
-  var old = h != null && h >= 12; if (open && !old) return '';
+  var priced = !!(S && S.items && S.items.length);   /* FW-40: nothing to price = no stale-prices warning */
+  var old = priced && h != null && h >= 12; if (open && !old) return '';
   return (open ? '' : 'Day not opened') + (open || !old ? '' : ' · ') + (old ? 'prices ' + h + ' h old' : '');
 }
 /** does the pack's invoice name the supplier's address among its required lines? */
