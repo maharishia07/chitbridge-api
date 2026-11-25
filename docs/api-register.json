@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 6,
   "not_started": 0,
-  "partial": 87,
-  "meets": 613,
+  "partial": 60,
+  "meets": 640,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -6330,13 +6330,13 @@
     ]
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: NEW route of lateBooks 1129 (850b11bc3, P-F-02/S2-F-07): owner-only read of the start day and the count of bills in the opening balances through lib/books-backfill status; read-only, no input, 401/403/404 declared and registered (LEDGER_OFF, OWNER_ONLY), output shape captured and closed, owner-only in the role matrix (f3d0e736f).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -6724,11 +6724,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7537b0063a54a21f"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: only the ledger chart is handed to signedAsAt (WALK U 1129 d4a9e9039, U-F-01/02/03 bank-write seat); read route, same answer shape, doors and statuses unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -6851,11 +6850,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "794152508f78061e"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: chain and operation text only: the file download is off the default auditor grant, adviser or owner only (MONEY-01 A6, fold 4c6b09db2 + role-matrix f3d0e736f); the 403 was already declared and registered, no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -6975,11 +6973,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "8bcaea2e4297db09"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: MONEY-01 (fold 4c6b09db2): the four reports refuse a cost-blind reader first (costBlindStops, REPORT_COST_BLIND_SAY, the existing 403 OWNER_ONLY path); answer shape unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -7099,11 +7096,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "73c191df2dbabd3b"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: MONEY-01 cost-blind refusal first (fold 4c6b09db2) plus fixAX 10f507acc AX-F-07: a days value off the horizon list is a worded 400 BOOKS_BAD_REQUEST (registered, declared) instead of silently 7, asOf read through agedAt; shape unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-finance-cash.js"
    ],
@@ -7962,11 +7958,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3856300814f38d72"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-07: a side other than customer or supplier is a worded 400 BOOKS_BAD_REQUEST (registered, declared), after the owner door; answer shape unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -9070,11 +9065,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "a5ad99295dd45c5c"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAL 554550fab AL-F-02: the answer gains sources (the country move-in source list, MI.sourcesFor); handler, operation and the output shape in docs/contracts carry the new required key together; additive.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -9540,11 +9534,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3ef3d139919850f8"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: seats 1129 (1d9e1f97b, ed200c389 AK-F-02/03/05, one seat matrix): the in-house accountant (manager hat) joins the owner door via isInHouseAccountant, every other seat still gets 403 OWNER_ONLY; the summary text says so; no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -9662,11 +9655,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6aaaae7ad91870f0"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: seats 1129 (1d9e1f97b, ed200c389 AK-F-02/03/05, one seat matrix): the in-house accountant (manager hat) joins the owner door via isInHouseAccountant, every other seat still gets 403 OWNER_ONLY; the summary text says so; no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -9787,11 +9779,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "cd3c6b998334d456"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: seats 1129 (1d9e1f97b, ed200c389 AK-F-02/03/05, one seat matrix): the in-house accountant (manager hat) joins the owner door via isInHouseAccountant, every other seat still gets 403 OWNER_ONLY; the summary text says so; no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
@@ -10284,11 +10275,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "babb6b922b5aca78"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixGreyAU 2766f3dfd: the lock/reopen advice answers may:false with the seat sentence for a seat that is not the owner (books-month-advice seatAnswer); same keys, no new status.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -10416,11 +10406,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4ecf01321bc26a46"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: MONEY-01 (fold 4c6b09db2): the four reports refuse a cost-blind reader first (costBlindStops, REPORT_COST_BLIND_SAY, the existing 403 OWNER_ONLY path); answer shape unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -10661,11 +10650,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "df27cf1505b65079"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixGreyAU 2766f3dfd (needs registration for a shop with no registration) and walk AC AC-F-02 (movedByLockNotes adds notes for months moved by a lock); the RETURN_FROM_RAIL answer moved verbatim into returnFromRailAnswer (readability 75348b0b6); notes is an existing open key, no new status.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
@@ -11021,11 +11009,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0e61a15919187cd1"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: LV-05/LV-06 (fixLV 1d696599f): an isOwner flag is handed to the todo builder so held entries are told only to the owner; same answer keys, doors and statuses.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts.html",
     "cap-period.js"
@@ -11150,11 +11137,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "44273e8b1b0d47bf"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: MONEY-01 (fold 4c6b09db2): the four reports refuse a cost-blind reader first (costBlindStops, REPORT_COST_BLIND_SAY, the existing 403 OWNER_ONLY path); answer shape unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -44132,11 +44118,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "001ea5835216dea3"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: WALK U 1129 (d4a9e9039, U-F-01/02/03): a bank reconciliation write needs the books seat (owner, in-house accountant, adviser grant, never a Cashier or API key), else the registered 403 OWNER_ONLY in BANK_WRITE_WORDS; the 403 is declared; handler body otherwise unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-store.js"
    ],
@@ -44269,11 +44254,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "808f8ae2108951f4"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: WALK U 1129 (d4a9e9039, U-F-01/02/03): a bank reconciliation write needs the books seat (owner, in-house accountant, adviser grant, never a Cashier or API key), else the registered 403 OWNER_ONLY in BANK_WRITE_WORDS; the 403 is declared; handler body otherwise unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -45386,11 +45370,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e62779b1c892a009"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: lateBooks 1129 (850b11bc3, P-F-02/S2-F-07): an optional start_date posts the earlier bills once through the one backfill (lib/books-backfill) and the answer gains backfill; body key listed (strict_input true), output shape and operation carry it; additive.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "accounts-shell.js"
    ],
@@ -45516,11 +45499,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0783f72bab2aca59"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-02: the posting passes the event-guard (guardOf) so a reused client_ref with a changed body is 409 on every books write door; the 409 is registered and declared; same body and shape.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -46003,11 +45985,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3a5b8e8d5918d844"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: seats 1129 (1d9e1f97b, ed200c389 AK-F-02/03/05, one seat matrix): the in-house accountant (manager hat) joins the owner door via isInHouseAccountant, every other seat still gets 403 OWNER_ONLY; the summary text says so; no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
@@ -46126,11 +46107,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4588489de8ea1c88"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: seats 1129 (1d9e1f97b, ed200c389 AK-F-02/03/05, one seat matrix): the in-house accountant (manager hat) joins the owner door via isInHouseAccountant, every other seat still gets 403 OWNER_ONLY; the summary text says so; no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-fx.js"
    ],
@@ -47100,11 +47080,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "3c2468ca5618df24"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: walk AR 6dd53b65e (AR-F-01..07) and fixAP 4cbec7ddd (AP-F-01..08): the answer gains header_hint and a refusal key from moveInReady (ready is withheld when the source is not built for the country); operation and output shape carry the new keys together; additive.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-move-in.js"
    ],
@@ -47223,11 +47202,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "c071b93cf9ea9cc9"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: WALK AI 1129 (14310db78, AI-F-03): the move-in Suspense sentence is the engine figure (MI.previewSuspense, appended to notes inside the same entity read); same keys, notes is an existing open list.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-move-in.js"
    ],
@@ -47354,11 +47332,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "30efed6fd8f83f0c"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: AS-F-04/07/11 (49fb57a15): opening refuses fractional minor units through lib/books-input openingRows, in the existing worded 400 path; no new status or key.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-opening.js"
    ],
@@ -47722,11 +47699,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "838f3ead600acdb7"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: decLock 1129 (bd4baaadb, AW-F-02 + AM-F-05, Athi decision 4 of 22 Nov): body gains forward (listed, strict_input true); only the owner press forward:true posts a locked-month day close or bank sign-off into the first open month; operation text carries the key; owner door unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -47844,11 +47820,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d708ca553560b710"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: seats 1129 (1d9e1f97b, ed200c389 AK-F-02/03/05, one seat matrix): the in-house accountant (manager hat) joins the owner door via isInHouseAccountant, every other seat still gets 403 OWNER_ONLY; the summary text says so; no shape change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
@@ -49713,11 +49688,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0d97b5dac25475ba"
+    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-02/AX-F-07: a zero or negative write-off is a worded 400 BOOKS_BAD_REQUEST, and the posting passes the event-guard so a reused client_ref with a changed body is 409; both registered and declared; same shape.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
