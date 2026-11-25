@@ -206,9 +206,15 @@ jobs:
       - name: ratchet (a PR labelled hotfix records dated debt instead; counts regenerated from head against the base counts, debt and stage read from head)
         env:
           HOTFIX: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') }}
+          # D3 (1130): a PR into a batch branch (a fix folding in) must have its own changed routes signed at their current hash; a PR into main is judged as before (the batch re-sign)
+          REQUIRE_SIGNED: ${{ github.event_name == 'pull_request' && github.base_ref != 'main' && github.base_ref != 'master' }}
         run: |
           git fetch origin main --depth=1000 || true
+          if [ "$REQUIRE_SIGNED" = "true" ]; then export CB_REQUIRE_SIGNED=1; fi
           if [ "$HOTFIX" = "true" ]; then node tools/api-ratchet.cjs --base origin/main --hotfix; else node tools/api-ratchet.cjs --base origin/main; fi
+      - name: published OpenAPI, breaking changes against main (informational; a finding is read by cb-api, acknowledged in docs/contracts/api-breaking-ok.json; --strict fails)
+        if: ${{ always() }}
+        run: node tools/api-openapi-diff.cjs --base origin/main || true
       - name: the register as an artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

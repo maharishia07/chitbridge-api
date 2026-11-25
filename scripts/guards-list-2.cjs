@@ -465,5 +465,8 @@ const GUARDS_PART = [
   'r58-no-sales-offer-on-receipt.test.js',
   'books-payables.test.cjs', // MNT-47: CB FINANCE payables ageing, MSME day 45, early-pay offer
   'move-in.test.cjs', // MNT-47: move in from Xero / QuickBooks - guessed columns, dry run, write through the doors
+  'move-proof.test.cjs', // D1 (1130): a moved route handler is proven the same code (verbatim, require path, declaration join, local rename) and every other change is refused
+  'api-resign-moves.test.cjs', // D1+D3 (1130): the re-sign judge, the line patch of api-signoffs.json (one line, same key order), and the signed-at-fold check of the ratchet
+  'api-openapi-diff.test.cjs', // D1 (1130): breaking changes in the published operations (answer key lost, request key now required, narrowed type/enum/limit, status removed)
 ];
 module.exports = { GUARDS_PART };
