@@ -1583,6 +1583,7 @@
    "since": "2026-10-22",
    "raised_by": [
     "DELETE /api/chits/:chit_id/payment",
+    "GET /api/chits/:chit_id",
     "PATCH /api/books/payments/:id",
     "POST /api/books-actions/:id/accept",
     "POST /api/books/gst/pay",
@@ -1630,6 +1631,7 @@
    "owner_area": "chits",
    "since": "2026-11-13",
    "raised_by": [
+    "GET /api/chits/:chit_id",
     "POST /api/chits/send"
    ]
   },
@@ -4464,6 +4466,7 @@
    "owner_area": "chits",
    "since": "2026-11-21",
    "raised_by": [
+    "GET /api/chits/:chit_id",
     "POST /api/chits/send"
    ]
   },
