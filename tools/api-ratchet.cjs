@@ -8,6 +8,7 @@
  * CARD      28-platform-and-operations/api-standard
  *
  *   node tools/api-ratchet.cjs --base origin/main     check (CI)
+ *   node tools/api-ratchet.cjs --base origin/main --require-signed   D3 (batch 1130): also fail when a route this head adds or changes is not signed at its current hash (land kit; CI on a PR into a batch branch)
  *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
  *   node tools/api-ratchet.cjs --write --rebaseline   (only in the PR that switches the stage)                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
  * RAW ERROR TEXT (Athi 23 Oct): rawErrorTextWrites() counts response writes (res.json / .send / .end) whose body holds an exception's own text (e.message, err.stack, String(e), `${e}`) outside safeErr()/problem(); logs are not response writes. The count may only go down (docs/api-ratchet.json raw_error_writes); a new one prints file:line.
@@ -212,6 +213,19 @@ function renamedSigned(base, head) {
     .map((gone) => gone.key + ' was signed off and is gone while ' + added.filter((row) => row.file === gone.file && row.method === gone.method).map((row) => row.key).join(', ') + ' is new in ' + gone.file + ': a renamed route keeps its hold, so sign the new key (cb-api, non-builder) before this lands');
 }
 
+/**
+ * D3 (batch 1130, Athi 25 Nov): a fix signs its OWN changed routes before it folds. With --require-signed (or CB_REQUIRE_SIGNED=1: the land kit and CI on a PR into a batch branch)
+ * every route this head adds or whose hash moved must read "meets standard" in the head register (13 columns true AND a sign-off dated at its current hash).
+ * One gate, the ratchet's own: the sentence names the route, why it is partial, and the two commands that fix it (the tool signs the pure moves, cb-api reads the rest).
+ */
+function checkSignedAtFold(base, head, ref) {
+  const before = new Map(base.routes.map((row) => [row.key, row.hash]));
+  const partial = touchedRoutes(base, head).filter((row) => !meets(row));
+  const why = (row) => (row.human && row.human.stale_since ? 'its sign-off no longer matches the code (hash ' + (before.get(row.key) || 'new route') + ' at the base, ' + row.hash + ' now)' : !row.human || !row.human.signed_off_by_date ? 'it has no sign-off' : 'columns not true: ' + Object.keys(row.columns).filter((name) => row.columns[name] !== true).join(', '));
+  console.log('signed at fold: ' + partial.length + ' changed route(s) not signed at their current hash');
+  return partial.map((row) => row.key + ' changed in this head and reads "' + row.status + '": ' + why(row) + '. Run node tools/api-resign-moves.cjs --base ' + ref + ' --write (it signs only a route whose body is identical), then ask cb-api to read and sign the rest in docs/api-signoffs.json, then node tools/api-register.cjs');
+}
+
 /** the touched routes held to the standard at this stage; returns the sentences that fail the PR */
 function checkRoutes(base, head, ratchet, hotfix) {
   const stage = ratchet.stage || '1a';
@@ -371,7 +385,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet), checkTolerant(baseRatchet, head, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(flag('--require-signed') || process.env.CB_REQUIRE_SIGNED === '1' ? checkSignedAtFold(baseRegister, head, ref) : [], checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet), checkTolerant(baseRatchet, head, headRatchet));
   } finally {
     base.remove();
   }
@@ -389,4 +403,4 @@ if (require.main === module) {
   }
   process.exit(process.exitCode || 0);
 }
-module.exports = { checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
+module.exports = { checkoutBase, registerOf, checkSignedAtFold, checkTolerant, checkDoes, stageOfCode, stageSwitch, renamedSigned, checkCounts, rawErrorTextWrites, checkRawErrors, touchedRoutes, checkRoutes, debtProblems, isHeld, passesHold };
