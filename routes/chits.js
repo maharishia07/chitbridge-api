@@ -4379,6 +4379,8 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     }
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
+    /* RW1-27: a bill of mine says how much of it is already credited, so the sheet can grey "Credit note" with the reason (null when not judged: the button stays, the cap judges at send) */
+    const _credit = await withEntity(entity_id, (db) => creditCap.creditedOf(db, entity_id, chit_id)).catch((e) => { cbLog.fellBack('chits GET /:chit_id: credited read failed, carried on without it', e); return null; });
     res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
@@ -4411,6 +4413,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
          never guesses whether it holds a bill; and what the books wait on for it (books_wait: todo · name · why · candidates, or null) */
       doc: _doc,
       books_wait: bundle.books_wait || null,
+      credit: _credit || undefined,
       order_billed: bundle.order_billed /* W36: true · false on an order, null otherwise; absent on the fallback path */,
       /* ⭐ THE LIVE SET — one entry per ORIGINAL line, carrying what it is now and everything it has been.
          Removed lines are PRESENT with live:null: they must stay visible as evidence while counting nowhere.
