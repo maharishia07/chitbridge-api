@@ -449,13 +449,12 @@ const queryAs = async (identityId, text, params) => {
  * For the sign-in read of "the people the lookup named" (they may belong to different shops, so no single binding opens them all) and of their parent shops.
  * An empty list still sends one statement (bound to nothing, so it answers nothing): a hit and a miss cost the same trip.
  */
-const queryAsEach = async (ids, text, paramsOf) => {
+const queryAsEach = async (ids, text, paramsOf, options) => {
   if (!pool) await ensurePool();
   require('../lib/limits').refuseIfReaderGone();
   try { require('../lib/trips').tick('query'); } catch (_) {}
   const list = ids && ids.length ? ids : [null];
-  const parts = [];
-  list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  const { parts, first } = eachMessage(list, text, paramsOf, !!(options && options.planOnce) && list.length > 1);
   rlsGuardCheck(text);
   let res;
   try {
@@ -466,12 +465,35 @@ const queryAsEach = async (ids, text, paramsOf) => {
   }
   const all = Array.isArray(res) ? res : [res];
   const rows = [];
-  list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
+  list.forEach((_, i) => { rows.push(...all[first + 2 * i].rows); });
   return { rows, rowCount: rows.length };
 };
+/**
+ * HOMESPEED (1130) · PLAN ONCE: a firm's read runs the SAME statement for 150 clients and the planner plans the text anew for each (about 22 of the 24 ms of a statement on a small client: the statement is large and row security is expanded on every table it names).
+ * queryAsEach(ids, text, paramsOf, { planOnce: true }) PREPAREs the statement once in the message and EXECUTEs it per id (same binding, same values, same rows, same order). Postgres plans the first executions per client
+ * and keeps a generic plan only when its own estimate is not costlier (plan_cache_mode auto), so a plan is never chosen that it thinks worse. The name is dropped at the end of the message; DEALLOCATE ALL opens it, so a name left by a
+ * message that failed half way (PREPARE is not rolled back) never blocks the next (nothing else here names a prepared statement).
+ */
+const PLAN_ONCE = '_cb_plan_once';
+const planOncePrefix = (text) => ['DEALLOCATE ALL', 'PREPARE ' + PLAN_ONCE + ' AS ' + text];
+/** the message of queryAsEach: the texts that ride in it, and the position of the FIRST id's rows in the answer (a planned message opens with DEALLOCATE ALL and PREPARE, two results, then a binding + statement pair per id) */
+function eachMessage(list, text, paramsOf, planned) {
+  const parts = [];
+  if (planned) {
+    boundParts(list[0], text, paramsOf(list[0])); /* the one-statement and inlining checks of the unplanned path, run on the first id (a text with a ; is refused here, as there) */
+    parts.push(...planOncePrefix(text));
+    list.forEach((id) => parts.push(...planOnceParts(id, paramsOf(id))));
+    parts.push('DEALLOCATE ' + PLAN_ONCE);
+  } else list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  return { parts, first: planned ? 3 : 1 };
+}
+function planOnceParts(identityId, params) {
+  const values = (params || []).map(asLiteral).map((v) => inlineLiteral(v));
+  return ["SELECT set_config('app.current_entity', " + inlineLiteral(identityId == null ? '' : String(identityId)) + ', true)', 'EXECUTE ' + PLAN_ONCE + (values.length ? '(' + values.join(', ') + ')' : '')];
+}
 query.as = queryAs;
 /** SEC-75: a `query` bound to ONE shop, for libs that take their reader injected (lib/catalogue-columns): queryFor(shop)(text, params) is queryAs(shop, text, params) */
 const queryFor = (shopId) => (text, params) => queryAs(shopId, text, params);
 query.for = queryFor;
 query.asEach = queryAsEach;
-module.exports = { bootWaitMs, query, queryAs, queryFor, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { eachMessage, bootWaitMs, query, queryAs, queryFor, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };
