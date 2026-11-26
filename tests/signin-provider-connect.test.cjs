@@ -17,6 +17,8 @@ const events = require('../lib/signin-events');
 const policy = require('../lib/policy');
 const provider = require('../lib/signin-provider');
 const log = require('../lib/logger');
+const iddoc = require('../lib/iddoc-verify');
+const schema = require('../lib/schema');
 const route = require('../routes/signin-provider-connect');
 
 const SHOP = 'aaaaaaaa-0000-4000-8000-0000000000a1';
@@ -94,6 +96,28 @@ const ok = (name, got, want) => { assert.deepStrictEqual(got, want, name); check
   r = res();
   await route.unlink(req({ pin: '4827' }, { link_id: LINK }), r);
   ok('replay: the same unlink a second time is 404 LINK_NOT_FOUND, never a second removal', [r.code, r.body.code], [404, 'LINK_NOT_FOUND']);
+  /* N6 (SSO 1130): the last-way-in check counts a phone document proved by a code, the same reader sign-in by mobile uses (lib/iddoc-verify.js) */
+  schema.hasTable = () => true;
+  const docsRun = (rows) => async () => ({ rows });
+  ok('N6 reader: a PHONE document with status verified and a stamp counts', await iddoc.hasVerifiedPhone(docsRun([{ scheme: 'PHONE', status: 'verified', verified_at: '2026-11-20' }]), SHOP), true);
+  ok('N6 reader: a PHONE document typed but not proved does not count', await iddoc.hasVerifiedPhone(docsRun([{ scheme: 'PHONE', status: 'pending', verified_at: null }]), SHOP), false);
+  ok('N6 reader: a verified EMAIL document is not a phone', await iddoc.hasVerifiedPhone(docsRun([{ scheme: 'EMAIL', status: 'verified', verified_at: '2026-11-20' }]), SHOP), false);
+  ok('N6 reader: a fault answers false, never open', await iddoc.hasVerifiedPhone(async () => { throw new Error('down'); }, SHOP), false);
+  const realHas = iddoc.hasVerifiedPhone;
+  const phoneCase = async (name, person, rows, want) => {
+    stored = [{ link_id: LINK, provider: 'google', email: 'm@gmail.test', email_verified: true, linked_at: '2026-11-20T10:00:00Z', last_used_at: null, issuer: 'https://accounts.test', subject: 'sub-123', subject_hash: 'h' }];
+    identityAuth.rowsOfCandidates = async () => [Object.assign({}, PERSON, person)];
+    identityAuth.verifyCredential = async (q, p, creds) => (creds && creds.otp === '123456' ? { ok: true } : { ok: false });
+    iddoc.hasVerifiedPhone = (run, id) => realHas(docsRun(rows), id);
+    const rr = res();
+    await route.unlink(req({ otp: '123456' }, { link_id: LINK }), rr);
+    ok(name, [rr.code, rr.body.code || rr.body.removed], want);
+  };
+  const noWay = { pin_hash: null, email: null };
+  await phoneCase('N6: a code-by-phone account with a VERIFIED phone can unlink (the phone is a way in)', noWay, [{ scheme: 'PHONE', status: 'verified', verified_at: 'x' }], [200, true]);
+  await phoneCase('N6: the same account with an UNVERIFIED phone is refused 409 LAST_WAY_IN', noWay, [{ scheme: 'PHONE', status: 'pending', verified_at: null }], [409, 'LAST_WAY_IN']);
+  await phoneCase('N6: an e-mail-only account (active, no PIN, no phone) can still unlink', { pin_hash: null, email: 'meena@shop.test' }, [], [200, true]);
+  await phoneCase('N6: no PIN, no e-mail, no phone document is refused 409 LAST_WAY_IN', noWay, [], [409, 'LAST_WAY_IN']);
   console.log('\n' + checks + ' checks');
   process.exit(0);
 })().catch((e) => { console.log('   FAIL ' + e.message); process.exit(1); });
