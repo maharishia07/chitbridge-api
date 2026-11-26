@@ -15,12 +15,14 @@ assert.strictEqual((sql.match(/\$7::text IS NOT NULL OR \$\{POSTED_AT_SQL\} > NO
 assert.strictEqual((sql.match(/\$7::text IS NULL OR h\.chit_id::text = \$7::text/g) || []).length, 2, 'RW2-05: both arms filter on the chit id');
 assert(/BILLS_SQL, \[entity_id, String\(days\), page\.limit[^\]]*page\.offset, chit\]/.test(route), 'the page read passes the 7th parameter');
 assert(/BILLS_SQL, \[entity_id, String\(days\), limit, till, by, offset, chit \|\| null\]/.test(route), 'the past-the-end read passes it too');
-assert(/req\.query\.chit === 'string' && \/\^\[0-9a-f-\]\{36\}\$\/i\.test/.test(route), 'only a uuid is taken');
+/* cireds-1130: the three query filters of GET /bills read through queryText (a string of the shape asked, else null); the uuid shape is the one this pin held before the split */
+assert(/queryText\(req\.query\.chit, \/\^\[0-9a-f-\]\{36\}\$\/i\)/.test(route) && /const queryText = \(value, shape\) => \(typeof value === 'string' && shape\.test\(value\)/.test(route), 'only a uuid is taken');
 assert(/'chit'\]/.test(fs.readFileSync(path.join(__dirname, '..', 'lib', 'till-contract.js'), 'utf8')), 'the route contract names the query');
 assert(/async history\(days, till, chit\)/.test(till) && /'&chit=' \+ encodeURIComponent\(chit\)/.test(till), 'the till host can ask by chit id');
 assert(/HOST\.history\(365, null, id\)/.test(till), 'returnFindBill reads the bill by its id, not the 30-day page');
 assert(!/not among the shop’s counter bills of the last/.test(till), 'the 30-day refusal is gone');
 assert(/retOpen\(found\.bill\.no, found\.bill\)/.test(till) && /async function retOpen\(no, given\)/.test(till), 'an old bill opens the one return sheet from memory');
 assert(/No bills rung on a counter in the last/.test(till), 'RW2-07: Earlier says it lists counter bills only');
-assert(/RW2-09/.test(till) && /if \(!given\) return 'Counter'/.test(till), 'RW2-09: no shop-given number, no numbered name');
+/* cireds-1130: the two leftover tests moved out of counterName into leftoverCounter() (readability split); counterName returns 'Counter' when it says true, and it says true when the shop gave this counter no number */
+assert(/RW2-09/.test(till) && /function leftoverCounter\(\)/.test(till) && /if \(leftoverCounter\(\)\) return 'Counter';/.test(till) && /given = String\(ls\.get\(tillGivenKey\(\), ''\) \|\| ''\)[^\n]*\n  return !given;/.test(till), 'RW2-09: no shop-given number, no numbered name');
 console.log('ok rw2ctr-1130');
