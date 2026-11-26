@@ -241,6 +241,22 @@ function dupes() {
   t('a KEY\'s bill (shop PC) is not checked and not stamped — bills exactly as before', k1.ok && !k1.stamp);
   t('a bill with no till (not a counter bill) is untouched', tillClaimOf(phoneH, { schema_values: {} }).ok && !tillClaimOf(phoneH, {}).stamp);
 
+  /* ── RW3-18 · the claim that hands out a NEW prefix REGISTERS that counter (Settings, Till header, Day book name one set) ── */
+  ROW = { policy_flags: { api_keys: [], counters: { C2: { id: 'C2', name: 'Counter 2', held_by: null }, C3: { id: 'C3', name: 'Counter 3', held_by: null } },
+    devices: { 'dev-rr-1': device('r1'), 'dev-rr-2': device('r2') } } };
+  BOOKED = [];
+  const listIds = () => { const r = ROW.policy_flags; return Object.values(r.counters).map((c) => counters.view(c, r.api_keys || [], r.devices)); };
+  const r1 = await keys.claimSeries(SHOP, dev('dev-rr-1', 'r1'), {});
+  const row1 = listIds().find((c) => c.id === r1.id);
+  t('RW3-18 · a new device claim → the counter appears in the counters list, named as the till names it', r1.id === 'C1' && !!row1 && row1.name === 'Counter 1', JSON.stringify(row1));
+  t('  held by that phone, shown open, one counters record (not a second list)', row1 && row1.state === 'open' && Object.keys(ROW.policy_flags.counters).length === 3);
+  const r1b = await keys.claimSeries(SHOP, dev('dev-rr-1', 'r1'), { id: 'C1', issued: true });
+  t('  a second claim by the same device → same counter, no new row', r1b.id === 'C1' && !r1b.moved_from && Object.keys(ROW.policy_flags.counters).length === 3 && !r1b.counter, JSON.stringify(r1b));
+  const r2 = await keys.claimSeries(SHOP, dev('dev-rr-2', 'r2'), {});
+  t('  a second device → the next free prefix, its own row (4 counters)', r2.id === 'C4' && Object.keys(ROW.policy_flags.counters).length === 4, JSON.stringify(r2));
+  t('  the claim answer keeps its shape (no counter field for an auto-registered one)', !('counter' in r1) && r1.said === 'This phone bills as C1.');
+  t('  no prefix held by two holders', dupes().length === 0, dupes().join('; '));
+
   /* ── the wiring: one code path for both holders ─────────────────────────────────────────────────────────────── */
   const TILL = fs.readFileSync(path.join(API, 'routes', 'till.js'), 'utf8');
   const CHITS = CF.read(API);
