@@ -73,6 +73,8 @@ const call = (port, p, method) => new Promise((done) => {
 
   const per = await get('/periods');
   eq('GET /periods names the year under review: 2025-26, 1 Jul 2025 to 30 Jun 2026 (the latest year that has ended)', per.body.under_review, { fy: '2025-26', from: '2025-07-01', to: '2026-06-30' });
+  const over = (per.body.periods || []).filter((p) => Number(p.period) >= 1 && !p.before_books && String(p.end_date).slice(0, 10) < '2026-11-16' && p.status !== 'soft_locked' && p.status !== 'hard_locked').length;
+  ok('W4-13: GET /periods says months_to_lock, the one count of months that are over and not locked (= the rows, = the year lines)', Number.isInteger(per.body.months_to_lock) && per.body.months_to_lock === over && per.body.months_to_lock === per.body.years.reduce((n, y) => n + (y.months - y.locked), 0), JSON.stringify([per.body.months_to_lock, over]));
   const aug = (per.body.periods || []).find((p) => p.fiscal_year === '2025-26' && String(p.start_date).startsWith('2025-08'));
   const sep = (per.body.periods || []).find((p) => p.fiscal_year === '2025-26' && String(p.start_date).startsWith('2025-09'));
   ok('each month carries its entries: Aug 2025 has the sale, Sep 2025 a sale and a purchase', aug && sep && aug.entries === 1 && sep.entries === 2, JSON.stringify([aug && aug.entries, sep && sep.entries]));
