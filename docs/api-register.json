@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 2,
-  "meets": 698,
+  "partial": 4,
+  "meets": 696,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -13121,7 +13121,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3952,
-   "hash": "2818d0b2dffa97d7",
+   "hash": "db1399a8bbaf335a",
    "does": "A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.",
    "errors": {
     "count": 0,
@@ -13223,7 +13223,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2818d0b2dffa97d7"
+    "stale_since": "db1399a8bbaf335a"
    },
    "status": "partial",
    "callers": [
@@ -37643,7 +37643,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 530,
-   "hash": "0186a2e0e741c426",
+   "hash": "692dba974a5c7cd3",
    "does": "Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).",
    "errors": {
     "count": 0,
@@ -37736,10 +37736,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1167 stage2: handler diff read, 13 columns pass; owner e-mail write cap answers the one 429 RATE_LIMITED (gate, only on calls carrying an e-mail); EMAIL_UNAVAILABLE 409 registered with its plain sentence and names nobody, EMAIL_TAKEN kept for the owner's own list; /entities/register: same 200 words for held and new address, per-address cap one 429; old keys and statuses kept",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "692dba974a5c7cd3"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -42245,7 +42246,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
    "line": 95,
-   "hash": "66478c5b452034ec",
+   "hash": "5f840165102ab753",
    "does": "A chit id, file name and base64 data in -> we store a copy for each participant of that chit -> the attachment record.",
    "errors": {
     "count": 0,
@@ -42345,10 +42346,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 ce52591f1: a VIEWER seat attaches nothing (viewerGate hands on to access.writeGate: the rail's read_only 403, the owner passes); 403 was already declared and tested; chain, operation and answer unchanged.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "5f840165102ab753"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "attach-ui.js"
