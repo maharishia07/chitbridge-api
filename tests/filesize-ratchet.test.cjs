@@ -46,9 +46,8 @@ if (!fs.existsSync(WEB_TOOL) && process.env.CI) {
   const out = (run.stdout || '') + (run.stderr || '');
   console.log(out.split('\n').map((line) => '        ' + line).join('\n'));
   /* the red lines that are NOT a waived growth; a waiver covers only "FAIL grew: <file> a -> b" with b <= max (growth beyond it is red again) */
-  const red = out.split('
-').filter((l) => /^s*FAIL /.test(l)).filter((l) => {
-    const m = /FAIL grew: (S+) d+ -> (d+)/.exec(l);
+  const red = out.split('\n').filter((l) => /^\s*FAIL /.test(l)).filter((l) => {
+    const m = /FAIL grew: (\S+) \d+ -> (\d+)/.exec(l);
     const w = m && STAMP_WAIVERS.find((x) => x.file === m[1]);
     if (w && Number(m[2]) <= w.max) { console.log('        WAIVED (' + w.added + ', until ' + w.until + '): ' + m[1] + ' ' + m[2] + ' <= ' + w.max + ' · ' + w.reason); return false; }
     return true;

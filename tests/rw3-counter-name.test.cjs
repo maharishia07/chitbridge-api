@@ -4,4 +4,4 @@ const { counterName } = require('../lib/counters-store');
 assert.strictEqual(counterName('C2'), 'Counter 2');
 assert.strictEqual(counterName('c10'), 'Counter 10');
 assert.strictEqual(counterName('DQLG'), 'Counter DQLG');
-console.log('rw3-counter-name: ok');
+console.log('  ok   3 checks'); /* the guards runner reads the last "<n> checks" line */
