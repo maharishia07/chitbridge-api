@@ -491,6 +491,9 @@ const GUARDS_PART = [
   'homespeed-plan-once.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'w4acc-bas-wages-boxes.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'w4bank-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'rw3-counter-name.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'rw3firm-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'rw3home-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
