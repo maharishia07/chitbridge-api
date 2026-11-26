@@ -96,7 +96,7 @@ const ASOF = '2026-10-12';
     gst: Object.assign({ payable_minor: 6500000 }, dueOf('AU', '2026-09-30'), { why: null }), asOf: '2026-10-12' }));
   const dAU = rAU.series.find((d) => d.date === '2026-10-28');
   ok('AU: the BAS is counted on ITS 28th, named by the pack’s word — the shortfall sentence says BAS, not GST', rAU.gst.form === 'BAS' && rAU.gst.counted === true && dAU.items[0].name === 'BAS' && dAU.items[0].kind === 'gst'
-    && rAU.words === 'On 28 Oct 2026 you will be AUD 2,000 short — BAS of AUD 65,000 is due that day.', rAU.words + ' ' + JSON.stringify(rAU.gst));
+    && rAU.words === 'On 28 Oct 2026 you will be A$2,000 short — BAS of A$65,000 is due that day.', rAU.words + ' ' + JSON.stringify(rAU.gst));
   const rAE = CF.project(Object.assign({}, base, { days: 30, currency: 'AED', receivable_items: [], payable_items: [], gst: Object.assign({ payable_minor: 500000 }, dueOf('AE', '2026-10-12')) }));
   ok('AE: payable known, date unknown → not counted, no series item, the sentence carried in why', rAE.gst.payable_minor === 500000 && rAE.gst.due_date === null && rAE.gst.counted === false && !rAE.series.some((d) => d.items.some((i) => i.kind === 'gst')) && /picked under Returns/.test(rAE.gst.why), JSON.stringify(rAE.gst));
 
