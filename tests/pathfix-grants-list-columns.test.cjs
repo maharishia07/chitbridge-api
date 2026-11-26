@@ -22,5 +22,6 @@ stub('lib/bound-read', { boundRead: async (_q, _e, sql) => { seen = sql; return 
   assert.ok(seen.includes('grantor_is_test'), 'the list still carries grantor_is_test');
   assert.ok(!/to_jsonb\(\s*i\s*\)/.test(seen), 'no whole-row read of identities (to_jsonb(i)): the credential columns are revoked (SEC-186)');
   assert.ok(/SELECT is_test::text FROM identities WHERE identity_id = g\.grantor_entity/.test(seen), 'is_test is read BY NAME in the same statement, with no schema probe (one trip)');
-  console.log('pathfix-grants-list-columns: all ok');
+  console.log('   ok   the books-grants list names its identities columns (3 asserts)');
+  console.log('3 checks');
 })().catch((e) => { console.error(e); process.exit(1); });
