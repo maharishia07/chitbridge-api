@@ -3,7 +3,7 @@
  * ID        SCR045
  * RISK      plain
  * OWNER     cb-ux-locale
- * OWNS      cbLang · CBSTR · tx · txf · txn · bidiWrap · cbIsRawId · rewordPlain · friendlyErr · failWords · bodyWords · cbApiParam · toast · toastHost · toastLevel · CBConfirm
+ * OWNS      cbStampRefusal (the one stamp of data-cb-error-code, ERR-14) · cbLang · CBSTR · tx · txf · txn · bidiWrap · cbIsRawId · rewordPlain · friendlyErr · failWords · bodyWords · cbApiParam · toast · toastHost · toastLevel · CBConfirm
  * CALLED BY every page that speaks through tx() or toast(): the back-office pages (before app/accounts-shell.js) and the customer pages
  *           (shop · store · network-shop · embed), which load THIS and never accounts-shell.js (CUSTOMER-DELINK, 21 Nov 2026: a customer page loads no back-office code)
  * FLOW      loaded after helpers.js (esc) → the page's own script calls tx / toast / CBConfirm
@@ -234,11 +234,45 @@ function toastHost(isError) {
   node.setAttribute('aria-atomic', 'true');
   return node;
 }
+/** how long after an api refusal a screen's own line about it still counts as that refusal's words (milliseconds) */
+var REFUSAL_FRESH_MS = 3000;
+/**
+ * cbStampRefusal(root) — ERR-14 part 2 for EVERY place that paints an api refusal, not only scrErr and toast: a node under root that holds the
+ * last refusal's words (innermost one) or is a role="alert" line, painted within REFUSAL_FRESH_MS of the refusal, gets data-cb-error-code.
+ * One shared control (cb-ux-locale); the ~100 screens that put e.message into their own line are covered here and need no edit. Never overwrites a code.
+ */
+function cbStampRefusal(root) {
+  var last = typeof window !== 'undefined' ? window.CB_LAST_REFUSAL : null;
+  if (!last || !last.code || !root || root.nodeType !== 1 || Date.now() - (last.at || 0) > REFUSAL_FRESH_MS) return 0;
+  var words = String(last.message || ''), stamped = 0;
+  var put = function (node) { if (!node.hasAttribute('data-cb-error-code')) { node.setAttribute('data-cb-error-code', last.code); stamped++; } };
+  var inner = function (node) { return !Array.prototype.some.call(node.children || [], function (kid) { return (kid.textContent || '').indexOf(words) >= 0; }); };
+  var nodes = [root].concat(Array.prototype.slice.call(root.querySelectorAll ? root.querySelectorAll('*') : []));
+  nodes.forEach(function (node) {
+    if (node.closest && node.closest('[data-cb-error-code]')) return; /* a card or toast already carries its code */
+    if (node.getAttribute('role') === 'alert' || (words.length > 3 && (node.textContent || '').indexOf(words) >= 0 && inner(node))) put(node);
+  });
+  return stamped;
+}
+if (typeof MutationObserver !== 'undefined' && typeof document !== 'undefined') {
+  var _refusalWatch = new MutationObserver(function (list) {
+    list.forEach(function (m) {
+      if (m.type === 'characterData') { if (m.target.parentElement) cbStampRefusal(m.target.parentElement); return; }
+      Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.nodeType === 1) cbStampRefusal(n); else if (n.parentElement) cbStampRefusal(n.parentElement); });
+    });
+  });
+  var _refusalStart = function () { if (document.body) _refusalWatch.observe(document.body, { childList: true, subtree: true, characterData: true }); };
+  if (document.body) _refusalStart(); else document.addEventListener('DOMContentLoaded', _refusalStart);
+}
 /** toastRefusal(msg) → { attr, hint } html bits when msg is the api's last refusal (B7): the error code attribute and the next-step line; empty otherwise */
 function toastRefusal(msg) {
   const last = window.CB_LAST_REFUSAL;
-  if (!last || last.message !== msg) return { attr: '', hint: '' };
-  return { attr: last.code ? ' data-cb-error-code="' + esc(last.code) + '"' : '', hint: last.hint ? ' <span class="toast-hint">' + esc(last.hint) + '</span>' : '' };
+  if (!last) return { attr: '', hint: '' };
+  const same = last.message === msg;
+  /* ERR-14: a toast painted right after a refusal carries its code even when the screen re-worded it; the hint only when it is the api's own words */
+  const fresh = !same && Date.now() - (last.at || 0) <= REFUSAL_FRESH_MS && toastLevel(msg) === 'error';
+  if (!same && !fresh) return { attr: '', hint: '' };
+  return { attr: last.code ? ' data-cb-error-code="' + esc(last.code) + '"' : '', hint: same && last.hint ? ' <span class="toast-hint">' + esc(last.hint) + '</span>' : '' };
 }
 function toast(msg, undo) {
   const _lvl = toastLevel(msg);
