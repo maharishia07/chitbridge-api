@@ -862,7 +862,10 @@
     "gst.earlier",
     "gst.earlier.before",
     "gst.earlier.counted",
-    "gst.earlier.payable_minor"
+    "gst.earlier.other_minor",
+    "gst.earlier.overdue_minor",
+    "gst.earlier.payable_minor",
+    "gst.earlier.returns"
    ]
   },
   "GET /api/books/cheques": {
@@ -1157,6 +1160,7 @@
    "example": {
     "currency": "INR",
     "country": "IN",
+    "timezone": "Asia/Kolkata",
     "from": "2026-09-01",
     "to": "2026-10-31",
     "entries": [
@@ -2121,6 +2125,7 @@
   "GET /api/books/periods": {
    "status": 200,
    "example": {
+    "return_name": "GSTR-3B",
     "under_review": {
      "fy": "2026-27",
      "from": "2026-04-01",
@@ -2138,6 +2143,7 @@
       "of": 0
      }
     ],
+    "months_to_lock": 0,
     "periods": [
      {
       "entity_id": "11111111-1111-4111-8111-111111111111",
@@ -2590,6 +2596,7 @@
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "group": "sundry_debtors",
+      "group_label": "Trade receivables",
       "dr_minor": 118000,
       "cr_minor": 0,
       "net_minor": 118000,

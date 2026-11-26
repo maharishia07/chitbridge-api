@@ -467,6 +467,13 @@ function machineColumns({ source, helperText, helperStatusText, declared, facts,
 /** the operation as the hash sees it: its declared role matrix (x-seats, column 14) is a claim about who may call, not part of the route's behaviour, so declaring it must not move a hash and stale a sign-off */
 const withoutSeats = (operation) => (operation ? Object.fromEntries(Object.entries(operation).filter(([name]) => name !== 'x-seats')) : null);
 
+/** the three things a route's hash is made of, kept apart so tools/api-resign-moves.cjs can compare them between two checkouts: `own` (the handlers the route file holds, as the hash reads them), `all` (every non-shared handler wherever it is defined: a handler moved out of the route file is in `all` but no longer in `own`), `chain` (validation rules), `op` (the operation text) */
+const HASH_PARTS = new Map();
+function hashPartsOf(leaf, ownHandlers, shared, operation, file) {
+  const everyHandler = leaf.fns.filter((fn) => typeof fn === 'function' && !shared.has(fn) && !isValidationChain(fn));
+  return { file, own: ownHandlers.map(normalise), all: everyHandler.map(normalise), raw: everyHandler.map((fn) => fn.toString()), chain: leaf.fns.filter(isValidationChain).map(chainRules), op: JSON.stringify(withoutSeats(operation)) };
+}
+
 /** one row of the register, machine columns only; the human columns are merged in by the caller */
 function rowOf(leaf, context) {
   const info = context.routerFiles.get(leaf.router) || { file: leaf.router === context.app ? 'server.js' : 'unknown' };
@@ -485,6 +492,7 @@ function rowOf(leaf, context) {
   const legacyEntry = context.legacy[key];
   const columns = machineColumns({ source, helperText, helperStatusText, declared, facts, legacyEntry, leaf, tested: testedStatuses(context, key), registered: context.registered, operation, result: context.contract[key], scope: context.scope, evidence: context.evidence[key], budget: context.budget });
   const hashSource = ownHandlers.map(normalise).join('|') + '#' + leaf.fns.filter(isValidationChain).map(chainRules).join('|') + '#' + JSON.stringify(withoutSeats(operation));
+  HASH_PARTS.set(key, hashPartsOf(leaf, ownHandlers, context.shared, operation, info.file)); /* for tools/api-resign-moves.cjs (--parts F): what the hash is made of, never written to the register */
   const line = lineOf(fileText, leaf);
   const area = areaOfFile(info.file);
   const facts4card = card.cardOf({ root: ROOT, area, source, fileText, fileAbs: info.file === 'unknown' ? '' : path.join(ROOT, info.file), line, declared, codes: codesWritten(source + '\n' + helperText), registeredCodes: context.registered, curatedMoney: context.scope.money.has(key), known: context.tables });
@@ -701,7 +709,7 @@ function check(register) {
   return problems.concat(codes.problems, unsaid, scopeFound, signoffProblems(readSignoffs(), register.routes));
 }
 
-/** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet */
+/** command line: no flag writes both files; --check compares; --json writes one json file for the ratchet; --parts F (with --json) also writes each route's hash parts for the move proof */
 function main(argv) {
   const register = buildRegister();
   if (argv.includes('--callers')) {
@@ -709,6 +717,7 @@ function main(argv) {
     console.log('wrote docs/contracts/api-callers.json: ' + card.writeCallers(ROOT, register.routes, webRoot) + ' routes with a calling screen');
     return;
   }
+  if (argv.includes('--parts')) fs.writeFileSync(argv[argv.indexOf('--parts') + 1], JSON.stringify(Object.fromEntries(HASH_PARTS)));
   if (argv.includes('--json')) return fs.writeFileSync(argv[argv.indexOf('--json') + 1], jsonText(register)); /* to a file: process.exit below can cut a piped stdout short */
   if (argv.includes('--check')) {
     const problems = check(register);

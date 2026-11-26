@@ -84,7 +84,7 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('the period table is the pack\'s: two financial years of quarters, due the 28th (Q4 due 28 July next year)', r.body.periods.map((p) => p.period + '→' + p.due),
     ['2025-Q1→2025-10-28', '2025-Q2→2026-02-28', '2026-Q3→2026-04-28', '2026-Q4→2026-07-28', '2026-Q1→2026-10-28', '2026-Q2→2027-02-28', '2027-Q3→2027-04-28', '2027-Q4→2027-07-28']);
   ok('the chosen period defaults to the latest that has ended: 2026-Q1 (Jul–Sep 2026), ended; Q2 is not', r.body.period.period === '2026-Q1' && r.body.period.ended === true && r.body.periods.find((p) => p.period === '2026-Q2').ended === false, JSON.stringify(r.body.period));
-  eq('Simpler BAS by default: G1 · 1A · 1B · 9', r.body.boxes.map((b) => b.code), ['G1', '1A', '1B', '9']);
+  eq('Simpler BAS by default: G1 · 1A · 1B · 9, then W1 and W2 greyed (W4-09)', r.body.boxes.map((b) => b.code), ['G1', '1A', '1B', '9', 'W1', 'W2']);
   eq('1A = GST on the quarter\'s sales (10 + 20 = 30.00) · 1B = GST on its purchases (50.00) · 9 = −20.00 → a refund; October is not in it', [box(r, '1A').amount_minor, box(r, '1B').amount_minor, box(r, '9').amount_minor, r.body.payable_minor, r.body.refund_minor, r.body.net_minor], [3000, 5000, -2000, 0, 2000, -2000]);
   eq('G1 is GST inclusive: sales 300.00 + 1A 30.00', box(r, 'G1').amount_minor, 33000);
   const net = moved(AU, 'gst_collected', '2026-07-01', '2026-09-30', 'cr') - moved(AU, 'gst_paid', '2026-07-01', '2026-09-30', 'dr');
@@ -99,9 +99,14 @@ const call = (port, method, p, body) => new Promise((done) => {
   eq('ACC-357: the money at risk - 9 is a refund of 20.00; without the 50.00 claimed it is 30.00 to pay, carried with the claim', [r.body.unsupported_input.net_if_unclaimed_minor, r.body.net_minor], [3000, -2000]);
   ok('the notes say Simpler BAS; the cite is the ATO page', r.body.notes.some((n) => /Simpler BAS/.test(n)) && /ato.gov.au/.test(r.body.cite), JSON.stringify(r.body.notes));
 
+  r = await q('GET', '/returns?on=2027-06-30');
+  ok('AT-03: a day after today (the end of the year under review, 30 Jun 2027) is not a pick: the return opens on 2026-Q1, never the future 2027-Q4', r.status === 200 && r.body.period.period === '2026-Q1' && r.body.period.ended === true, JSON.stringify(r.body.period));
+  r = await q('GET', '/returns?on=2026-08-31');
+  ok('AT-03: a past day still names its quarter (2026-Q1 holds 31 Aug)', r.body.period.period === '2026-Q1');
+
   r = await q('GET', '/returns?simpler=0');
   eq('the full BAS on request: G1 G2 G3 G4 G10 G11 1A 1B 9; G11 = the quarter\'s purchases 500.00, G10 nil', [r.body.boxes.map((b) => b.code), box(r, 'G11').amount_minor, box(r, 'G10').amount_minor, r.body.asked.simpler],
-    [['G1', 'G2', 'G3', 'G4', 'G10', 'G11', '1A', '1B', '9'], 50000, 0, false]);
+    [['G1', 'G2', 'G3', 'G4', 'G10', 'G11', '1A', '1B', '9', 'W1', 'W2'], 50000, 0, false]);
   ok('G10 / G11 carry their basis (GST-exclusive) as the note', /GST-exclusive/.test(box(r, 'G11').note));
   r = await q('GET', '/returns?period=2026-Q2');
   eq('a period asked by name: Q2 holds the October day only (1A 40.00), not yet ended', [r.body.period.period, r.body.period.ended, box(r, '1A').amount_minor, box(r, '1B').amount_minor], ['2026-Q2', false, 4000, 0]);

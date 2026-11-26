@@ -4,7 +4,7 @@
  * signin-compare-race-m2.test.cjs — M2 (VERIFY-GF-MONEY-SECURITY): the lock was checked against a STALE row; a right secret that arrives after parallel wrong ones locked the account got in.
  * ATTACK    N parallel guesses are all read before the lock; the counting is atomic (5 count, the rest are refused) but the COMPARE ran on the stale row, so the one that matched still signed in.
  * RULE      the spend of a right PIN / a right code is a CONDITIONAL UPDATE (... AND pin_locked_at IS NULL / AND otp_attempts < max ... RETURNING): zero rows = refused. A lift of an expired
- *           lock only lifts the lock the request read (AND pin_locked_at = $2), so a relock made meanwhile stays.
+ *           lock only lifts the lock the request read (AND pin_locked_at <= NOW() - the window, in SQL), so a relock made meanwhile stays.
  * RUN       node tests/signin-compare-race-m2.test.cjs
  * CARD      18-identity-sign-in-and-access/sign-in
  */
@@ -30,8 +30,8 @@ async function db(sql, args) {
     if (row.pin_locked_at) return { rows: [], rowCount: 0 };
     row.pin_attempts = 0; return { rows: [{ identity_id: ID }], rowCount: 1 };
   }
-  if (/^UPDATE identities SET pin_locked_at = NULL WHERE identity_id = \$1 AND pin_locked_at = \$2$/.test(s)) {
-    if (row.pin_locked_at && new Date(row.pin_locked_at).getTime() === new Date(args[1]).getTime()) row.pin_locked_at = null;
+  if (/^UPDATE identities SET pin_locked_at = NULL WHERE identity_id = \$1 AND pin_locked_at IS NOT NULL AND pin_locked_at <= NOW\(\) - \(\$2::float8 \* interval '1 millisecond'\)$/.test(s)) {
+    if (row.pin_locked_at && new Date(row.pin_locked_at).getTime() <= Date.now() - args[1]) row.pin_locked_at = null;
     return { rows: [], rowCount: 1 };
   }
   if (/^UPDATE identities SET otp_attempts = COALESCE\(otp_attempts, 0\) \+ 1 WHERE identity_id = \$1$/.test(s)) { row.otp_attempts = (row.otp_attempts || 0) + 1; return { rows: [], rowCount: 1 }; }

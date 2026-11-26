@@ -144,6 +144,11 @@
   }
 
   /* ── small helpers ──────────────────────────────────────────────────────────────────────────────────────────────── */
+  /** P2WAVE-SEC L-ux-web-screens-27#L55: what a host's own PIN book threw (a storage or browser error: its text names internals) is logged for the developer; the person reads our sentence */
+  function hostFailed(failure, words) {
+    console.error('signin-ui: the host PIN book failed', (failure && failure.message) || failure);
+    return words;
+  }
   /** the {ok,data,error} envelope, when a host wraps it (core.js unwrap) — the sign-in routes answer bare JSON */
   function unwrap(j) {
     return j && typeof j === 'object' && 'ok' in j && ('data' in j || 'error' in j)
@@ -401,7 +406,7 @@
               return signedIn(localSession(reply.person), null);
             },
             function (x) {
-              return set({ busy: false, why: (x && x.message) || 'The PIN could not be checked.' });
+              return set({ busy: false, why: hostFailed(x, 'The PIN could not be checked.') });
             }
           );
       }
@@ -447,7 +452,7 @@
               return set({ busy: false, at: 'in', localPin: false, said: W.signedIn(S.session.name || S.session.person.id || '') });
             },
             function (x) {
-              return set({ busy: false, why: (x && x.message) || 'The PIN could not be kept.' });
+              return set({ busy: false, why: hostFailed(x, 'The PIN could not be kept.') });
             }
           );
       }

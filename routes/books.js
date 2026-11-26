@@ -455,7 +455,7 @@ router.get('/daybook', auth, moneyReader, on, ...checked('GET /daybook'), async 
     /* PERF1: a page says its place — total entries in [from, to] · page · limit · `next` (the ?after= of the next page, null on the last) · the range's Σ Dr / Σ Cr, from the server */
     const page = Daybook.pagePlace(since, read, sincePage, pg);
     /* S34: every key a page can add is named (an unpaged answer leaves them undefined, which JSON leaves out) */
-    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), country: countryOf(req) /* the AUDITED shop's own country: the Day book's weekend test uses its calendar, never the viewer's */, from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? read.changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
+    res.json(await forBooksDoor(req, e, 'daybook', { currency: curOf(req), country: countryOf(req) /* the AUDITED shop's own country: the Day book's weekend test uses its calendar, never the viewer's */, timezone: require('../lib/books-hooks').zoneOf(req.books) /* RW3-11: and its own zone: an adviser reading a client's books sees the CLIENT's clock, never the firm's or the device's */, from, to, entries: out, count: out.length, total: page.total, page: page.page, limit: page.limit, next: page.next, totals: page.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined, seen_to: since ? read.changed.seen_to : undefined, since: since ? { at: since.at, never: since.never } : undefined }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -788,7 +788,7 @@ router.get('/overview', auth, moneyReader, on, ...checked('GET /overview'), asyn
   }
 });
 
-/** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
+/** GET /trial-balance?asOf → { currency, asOf, rows: [{ code, name, dr_minor, cr_minor }], total_dr_minor, total_cr_minor, balanced, bank?: [{ account_id, code, name, currency, state: reconciled|unexplained|earlier|none_by_date|no_run|never|not_shared, period_to, statement_minor, books_signed_minor, unexplained_minor (absolute), books_now_minor, moved_minor, signed_at }] (rank 9: one line per bank account, the Bank page's own newest-sign-off rule; absent before b864) } */
 // @does An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.
 router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balance'), async (req, res) => {
   try {
@@ -797,13 +797,15 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
       asOf = dateQ(req.query.asOf, today(req));
     const reportPeriod = require('../lib/books-report-period'),
       earlier = reportPeriod.yearBefore(asOf);
-    const tb = await withEntity(e, async (h) => {
-      const shared = await B.ledgerCtx(h, e); /* one context for both days: the chart, settings and carried years are read once */
-      const out = await B.trialBalance(h, e, asOf, shared);
+    const tb = await withEntity(e, async (handle) => {
+      const shared = await B.ledgerCtx(handle, e); /* one context for both days: the chart, settings and carried years are read once */
+      const out = await B.trialBalance(handle, e, asOf, shared);
+      out.rows = reportPeriod.withGroupLabels(out.rows, shared.pack); /* RW3-22: the statements' own line per account */
       /* leader-compare #2: the SAME as-at day one year earlier, one extra read; a day before the books began (or one that cannot be read) is no comparison, said: the page then draws no Last year column */
-      const lastYear = await B.trialBalance(h, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
+      const lastYear = await B.trialBalance(handle, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
+      if (lastYear) lastYear.rows = reportPeriod.withGroupLabels(lastYear.rows, shared.pack);
       out.was = lastYear && (Number(lastYear.total_dr_minor) || Number(lastYear.total_cr_minor)) ? lastYear : null;
-      const bank = await require('../lib/bank-rec-log').onTrialBalance(h, e, asOf, out.rows, await S.accounts(h, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
+      const bank = await require('../lib/bank-rec-log').onTrialBalance(handle, e, asOf, out.rows, await S.accounts(handle, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
       return Object.assign(out, { bank });
     });
     res.json(await forBooksDoor(req, e, 'trial_balance', {
@@ -811,7 +813,7 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
       asOf,
       shown_as_at: agedAt(req) /* F5 (17 Nov): the day a heading may say: the earlier of the day asked and the shop's today, the E1 rule (agedAt); the figures still read what was asked */,
       fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
-      rows: reportPeriod.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
+      rows: reportPeriod.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, group_label: item.group_label, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
       over_rule: reportPeriod.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, as the P&L states it */,
       compare: tb.was ? { how: 'year', as_at: earlier } : null /* the day last year's figures are read at; null = no earlier figures (the first year of the books) */,
       total_dr_minor: tb.total_dr_minor,
@@ -2263,7 +2265,7 @@ router.get('/periods', auth, periodsReader, on, ...checked('GET /periods'), asyn
       advised = require('../lib/books-month-advice').seatAnswer(B.periodAdvice(dated, figures, shopDay, taxPeriods, trail), { owner: isOwner(req), why: require('../lib/access').canEdit(req.identity) ? SAID.ownerOnly : 'View-only: you can read the books, not change them.' }); /* GREY-AU: Lock / Open again are the owner's: any other seat is told so, in its words */
     /* the year under review ({ fy, from, to }) is the server's, from the months as stored: every view of a firm opens on it (W15 / W17) */
     const shown = stripFigures(req, req.query.marks ? periodChoices.withChecked(advised, marks) : advised); /* STAFF-BOOKS: the months without their figures for a seat that may not read them */
-    res.json(Object.assign({ under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown, shopDay), periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
+    res.json(Object.assign({ return_name: require('../lib/pack-words').wordsFor(B.packOf(setting)).returnShort /* RW3-16: the client's own return word (BAS · VAT return), so a page with no pack registry names its tab; null = no word */, under_review: periodChoices.underReview(B.markBeforeBooks(dated, lockLine.books_start), shopDay), years: periodChoices.yearsOf(shown, shopDay), months_to_lock: B.monthsNotLocked(B.markBeforeBooks(shown, lockLine.books_start), shopDay) /* W4-13: the ONE count of months to lock (the practice read's own function), so Months and Month lock say what the year box says */, periods: shown.filter((item) => !fy || item.fiscal_year === fy) }, lockLine)); /* W22: books_start · lock_date · gaps, the one lock line */
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

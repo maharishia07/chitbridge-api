@@ -60,6 +60,7 @@ const CALLS = {
   taxRegistration: [E], unratedSaleBills: [E, '2025-04-01', '2026-10-24', 50],
   /* l16-accfix ACC-new-1: the lines of entries that carried the tax role (VAT201 box 9) */
   taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
+  statedExportLines: [E, '2026-07-01', '2026-09-30', ['gst_collected'], 'sales'],
   taxOfEntriesWith: [E, '2026-04-01', '2026-04-30', 'gst_paid', ['ppe_plant']],
   /* ACC-290 A · the 0% lines on the plain sales ledger (no supply kind named) */
   zeroRateSales: [E, '2026-07-01', '2026-09-30', 'sales', 'AUD'],

@@ -21,10 +21,10 @@ const it = (what, fn) => { queue = queue.then(async () => { try { await fn(); pa
 
 const KEY_A = crypto.randomBytes(32).toString('base64'), KEY_B = crypto.randomBytes(32).toString('base64');
 const setKey = (k) => { if (k) process.env.VAULT_ENC_KEY = k; else delete process.env.VAULT_ENC_KEY; };
-const events = [], warns = [], errors = [];
+const events = [], savepoints = [], warns = [], errors = [];
 let hasHash = true;
 const stub = (rel, exports) => { const id = path.join(API, rel); require.cache[require.resolve(id)] = { id, filename: id, loaded: true, exports }; };
-stub('db', { query: async () => ({ rows: [] }), withEntity: async (entity, fn) => fn({ query: async (sql, args) => { if (/idempotency_key/.test(sql)) throw Object.assign(new Error('no table'), { code: '42P01' }); /* the durable store is off: the memory store answers */ events.push({ entity, sql, args }); return { rows: [] }; } }), withTransaction: async (fn) => fn({ query: async () => ({ rows: [] }) }) });
+stub('db', { query: async () => ({ rows: [] }), withEntity: async (entity, fn) => fn({ query: async (sql, args) => { if (/idempotency_key/.test(sql)) throw Object.assign(new Error('no table'), { code: '42P01' }); /* the durable store is off: the memory store answers */ /* lib/access-events.js wraps its insert in SAVEPOINT / RELEASE inside a caller's transaction (P2WAVE-SEC: a failed audit insert must not abort the manager's transaction, 25P02). The test counts the BUSINESS statement; the savepoint pair is noted apart and asserted below. */ if (/^(SAVEPOINT|RELEASE SAVEPOINT|ROLLBACK TO SAVEPOINT) /.test(sql)) { savepoints.push(sql); return { rows: [] }; } events.push({ entity, sql, args }); return { rows: [] }; } }), withTransaction: async (fn) => fn({ query: async () => ({ rows: [] }) }) });
 stub('lib/schema', { hasColumn: async () => hasHash });
 stub('lib/logger', { warn: (m) => warns.push(String(m)), info() {}, debug() {}, error: (m) => errors.push(String(m)), critical() {}, fellBack() {} });
 const empCode = require(path.join(API, 'lib', 'employee-code'));
@@ -97,11 +97,12 @@ it('every issue zeroes the attempts and the PIN reset / reactivate fragments rid
 it("the owner's issue puts a code_issued row on the trail: channel and expiry, never the code; a sign-in ask writes none", async () => {
   setKey(KEY_A); hasHash = true; events.length = 0;
   const { otp: code } = await empCode.issue(recorder(), ID, { entity_id: SHOP, by: OWNER, channel: 'screen' });
-  assert.strictEqual(events.length, 1); const e = events[0];
+  assert.strictEqual(events.length, 1, 'one business statement (the savepoint pair is counted apart)'); const e = events[0];
   assert.strictEqual(e.entity, SHOP); assert(/INSERT INTO access_events/.test(e.sql));
   assert.strictEqual(e.args[2], 'code_issued'); assert.strictEqual(e.args[5], OWNER);
   assert.strictEqual(JSON.parse(e.args[4]).channel, 'screen'); assert(JSON.parse(e.args[4]).expires_at);
   assert(!JSON.stringify(e.args).includes(code));
+  assert(savepoints.length === 0 || (/^SAVEPOINT /.test(savepoints[0]) && /^RELEASE SAVEPOINT /.test(savepoints[1])), 'a savepoint, when taken, is released');
   events.length = 0; await empCode.issue(recorder(), ID, { ttlMs: 3600000 }); assert.strictEqual(events.length, 0);
 });
 it('sealed + column + NO key: mayIssue goes ahead, issue writes the plain column (and clears a stale hash), logs an ERROR without the code; before the column: plain, said as a warning', async () => {

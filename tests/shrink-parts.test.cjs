@@ -138,7 +138,7 @@ const throws = (fn) => { try { fn(); return null; } catch (e) { return e; } };
   const owing = financeCard.chequeLines({ toCollect: 500, toPay: 200, remind: { on: false } }, { dueList: [{ amount: 100, state: 'due' }], late: [], next: null, held: [] }, 'INR', helpers);
   t('finance card: cheque first, then what is owed to the shop and by it, then the switch off', owing.length === 4 && /to deposit/.test(owing[0].text) && owing[1].text === 'To pay {money}' && owing[3].text === 'Cheque reminders off');
   const matches = bankCard.statementLines({ account_id: 'a', difference_minor: 0, currency: 'INR', period_to: '2026-04-30' }, [{ account_id: 'a', name: 'HDFC' }], null);
-  t('bank card: a statement that agrees says it matches the books', matches.lines[1].text === 'Matches the books' && matches.figures.statement.account === 'HDFC');
+  t('bank card: a statement that agrees says nothing is unexplained', matches.lines[1].text === 'Nothing unexplained' && matches.figures.statement.account === 'HDFC');
   const differs = bankCard.statementLines({ account_id: 'a', difference_minor: 1250, currency: 'INR', period_to: '2026-04-30' }, [], null);
   t('bank card: a difference carries its money in its own currency', differs.lines[1].money.currency === 'INR' && differs.lines[1].tone === 'dn');
 

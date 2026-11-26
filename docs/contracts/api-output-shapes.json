@@ -3487,6 +3487,15 @@
               },
               "count": {
                 "type": "integer"
+              },
+              "no_run": {
+                "type": "boolean"
+              },
+              "words": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
@@ -4179,6 +4188,12 @@
             "type": "string"
           },
           "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
             "type": [
               "string",
               "null"
@@ -5161,7 +5176,9 @@
           "years": {},
           "books_start": {},
           "lock_date": {},
-          "gaps": {}
+          "gaps": {},
+          "return_name": {},
+          "months_to_lock": {}
         },
         "additionalProperties": false
       },
@@ -6041,6 +6058,9 @@
           },
           "order_billed": {
             "type": "boolean"
+          },
+          "credit": {
+            "type": "object"
           },
           "live_set": {
             "type": "array",

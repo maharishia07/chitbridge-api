@@ -69,7 +69,7 @@ function create() {
     async setPeriodStatus(db, e, fy, p, status, by, reason) { const r = T.periods.find((x) => x.entity_id === e && x.fiscal_year === fy && Number(x.period) === Number(p)); if (!r) return null; Object.assign(r, { status, locked_by: by, reason }); return { status }; },
     async giveBackNo(db, e, series, fy, n) { const k = e + '|' + series + '|' + (fy || '-'); if (T.counters.get(k) === n + 1) T.counters.set(k, n); },
     async nextNo(db, e, series, fy) { const k = e + '|' + series + '|' + (fy || '-'); const n = (T.counters.get(k) || 1); T.counters.set(k, n + 1); return n; },
-    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':') || x.source_ref === 'walkin-late:' + chit_id || (Array.isArray(x.source_chit_ids) && x.source_chit_ids.map(String).indexOf(String(chit_id)) >= 0))); },
+    async chitPosted(db, e, chit_id) { const ref = 'chit:' + chit_id; return T.entries.some((x) => x.entity_id === e && (x.source_ref === ref || String(x.source_ref).startsWith(ref + ':') || x.source_ref === 'walkin-late:' + chit_id || x.source_ref === 'bill:' + chit_id || (Array.isArray(x.source_chit_ids) && x.source_chit_ids.map(String).indexOf(String(chit_id)) >= 0))); },
     async entriesBySourceBase(db, e, base) {
       return T.entries.filter((x) => x.entity_id === e && (x.source_ref === base || String(x.source_ref || '').indexOf(base + ':r') === 0))
         .map((x) => Object.assign(clone(x), { reversed: T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id) }));
@@ -89,6 +89,16 @@ function create() {
         const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
         if (!ls.some((l) => acct(l).role === outputRole)) return;
         ls.filter((l) => !l.party_id && acct(l).nature === 'income' && (skipRoles || []).indexOf(acct(l).role) < 0).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor || 0); r.cr_minor += Number(l.cr_minor || 0); out.set(r.code, r); });
+      });
+      return Array.from(out.values());
+    },
+    async statedExportLines(db, e, from, to, taxRoles, salesRole) {
+      const day = (x) => String(x.posting_date).slice(0, 10), acct = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {}, out = new Map();
+      const stated = (h) => T.chits.some((c) => c.entity_id === e && c.chit_id === h.source_chit_id && c.business_json && c.business_json.invoice && c.business_json.invoice._cb && c.business_json.invoice._cb.export === 'stated');
+      T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening && stated(x)).forEach((h) => {
+        const ls = T.lines.filter((l) => l.entry_id === h.entry_id);
+        if (ls.some((l) => (taxRoles || []).indexOf(acct(l).role) >= 0)) return;
+        ls.filter((l) => acct(l).role === salesRole).forEach((l) => { const r = out.get(acct(l).code) || { code: acct(l).code, dr_minor: 0, cr_minor: 0 }; r.dr_minor += Number(l.dr_minor); r.cr_minor += Number(l.cr_minor); out.set(acct(l).code, r); });
       });
       return Array.from(out.values());
     },

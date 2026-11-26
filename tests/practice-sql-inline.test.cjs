@@ -14,5 +14,11 @@ for (const bankLog of [true, false]) {
     console.log('  ok   practice statement inlines clean (bank log ' + bankLog + ')');
   } catch (e) { fail++; console.log('  FAIL practice statement (bank log ' + bankLog + '): ' + e.message); }
 }
-console.log(fail ? fail + ' failed' : '2 passed, 0 failed');
+/* FW-04 (practice500): the year-on-year statement goes through the same inliner (queryAsEach) and a ';' in its comment made GET /practice answer 500 for every firm; its marks statements go through readBatch */
+try {
+  const body = db.inlineSql(require('../lib/books-store').YOY_STATEMENT, ['3165cee7-927c-433f-8bff-eb2374a48430', '2026-01-01', '2026-11-21', '2025-01-01', '2025-11-21']);
+  assert.strictEqual((body.match(/$d+/g) || []).length, 0, 'a $n left after inlining');
+  console.log('  ok   year-on-year statement inlines clean');
+} catch (e) { fail++; console.log('  FAIL year-on-year statement: ' + e.message); }
+console.log(fail ? fail + ' failed' : '3 passed, 0 failed');
 process.exit(fail ? 1 : 0);

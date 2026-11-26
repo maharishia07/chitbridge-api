@@ -3791,24 +3791,28 @@ function markLive(rows, liveSummaries) {
 
 const BILLS_PAGE = 100,
   BILLS_MAX = 500; /* the day report's bills: the statement always cuts at the page */
+/** a query value that is a string of the shape asked, else null (a list, an object or a stray shape is no filter) */
+const queryText = (value, shape) => (typeof value === 'string' && shape.test(value) ? value : null);
 // @does Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.
 router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
     const page = pageLimit.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX); /* CTR-225: the page asked for is read, so a window past the cap is reachable */
-    const by = typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by) ? req.query.by : null;
+    const by = queryText(req.query.by, /^[0-9a-f-]{36}$/);
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
-    const till = typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till) ? req.query.till : null;
+    const till = queryText(req.query.till, /^[A-Za-z0-9_.:-]{1,64}$/);
+    /* RW2-05: ONE bill by its chit id (a uuid), of any age - how a credit note reaches a sale older than the window */
+    const chit = queryText(req.query.chit, /^[0-9a-f-]{36}$/i);
     const { withEntity: nestedWithEntity } = require('../db');
     const found = await nestedWithEntity(entity_id, (db) =>
-      db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till, by, page.offset])
+      db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till, by, page.offset, chit])
     );
     const live = found.rows.filter((row) => !row.withdrawn);
     const rows = live.map(billRow).filter((bill) => bill.no);
     const withdrawn = found.rows.filter((row) => row.withdrawn).map(withdrawnRow).filter((bill) => bill.no);
-    const total = await pageLimit.totalOf(live, page, (limit, offset) => billsPast(entity_id, [days, limit, till, by, offset])); /* CTR-225: the whole window's count, not the page's */
+    const total = await pageLimit.totalOf(live, page, (limit, offset) => billsPast(entity_id, [days, limit, till, by, offset, chit])); /* CTR-225: the whole window's count, not the page's */
     const paged = pageLimit.pageOut('bills', rows, page, total);
     res.json({ days, count: rows.length, bills: paged.bills, withdrawn, total: paged.total, page: paged.page, limit: paged.limit, capped: paged.capped, cap_note: paged.cap_note }); /* S34: every key the pager can add is named (capped, cap_note) */
   } catch (e) {
@@ -3820,8 +3824,9 @@ router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
  * the shop's own counter bills inside the window, newest first (the comments sit inside the statement: they are part of the text the database receives).
  * ⚠️ line_items is on chit_detail — chit_header has never had it (2026-09-08)
  */
-const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.line_items, page.summary_json, false AS withdrawn, page.total_rows
-         FROM (SELECT h.chit_id, h.created_at, h.business_json, h.summary_json, count(*) OVER () AS total_rows /* CTR-225: the window's count, taken on the header alone (no detail join) before the page cuts it */
+const { POSTED_AT_SQL } = require('../lib/tax-copy'); /* FW-31: the one moment a bill is dated by */
+const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.line_items, page.summary_json, false AS withdrawn, page.total_rows, page.posted_at
+         FROM (SELECT h.chit_id, h.created_at, h.business_json, h.summary_json, ${POSTED_AT_SQL} AS posted_at, count(*) OVER () AS total_rows /* CTR-225: the window's count, taken on the header alone (no detail join) before the page cuts it */
          FROM chit_header h
        /**
         * ⚠️⚠️ NO DIRECTION TEST — AND THAT IS THE WHOLE BUG. A counter bill is a chit the shop sends to ITSELF, and a SELF chit
@@ -3841,30 +3846,32 @@ const BILLS_SQL = `(SELECT page.chit_id, page.created_at, page.business_json, d.
            and a till too — it is my purchase, never one of "my earlier bills" (lib/books-store counterBills asks the same) */
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
-          AND h.created_at > NOW() - ($2 || ' days')::interval
+          AND ($7::text IS NOT NULL OR ${POSTED_AT_SQL} > NOW() - ($2 || ' days')::interval) /* RW2-05: asked for by id, a bill of any age is read; FW-31: the window is the bill's own moment (the one the books post at), not when the server stored it */
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
+          AND ($7::text IS NULL OR h.chit_id::text = $7::text) /* RW2-05: ONE bill by its chit id - a credit note on a sale older than the window */
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
           /* CTR-197: a bill the books reversed (cancelled or rejected) is not a live sale - left out of the list and the day, as the day close leaves it out */
           ${counterBill.NOT_WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3 OFFSET $6) page
+        ORDER BY ${POSTED_AT_SQL} DESC LIMIT $3 OFFSET $6) page
          LEFT JOIN chit_detail d ON d.chit_id = page.chit_id AND d.entity_id = $1 /* the lines are joined for the cut page only */
-        ORDER BY page.created_at DESC)
+        ORDER BY page.posted_at DESC)
       UNION ALL
        /* CTR-197: ... and NAMED, so a counter that still holds one locally drops it from its day instead of calling it unsent. Same window, same counter, no lines. CTR-225: NOT paged (no OFFSET) on purpose: this is the list the counter drops its own copies by, not a page of the day, so every page repeats the newest $3 of it. */
-       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint
+       (SELECT h.chit_id, h.created_at, h.business_json, NULL::jsonb, NULL::jsonb, true, NULL::bigint, ${POSTED_AT_SQL}
          FROM chit_header h
         WHERE h.entity_id = $1 AND h.sender_entity_id = $1 AND h.purpose IN ('order','offer','credit_note')
           AND h.business_json ? 'bill_no' ${COUNTER_ROW_SQL} /* AJ-F-08: a rail credit note (no till) is no till sale */
-          AND h.created_at > NOW() - ($2 || ' days')::interval
+          AND ($7::text IS NOT NULL OR ${POSTED_AT_SQL} > NOW() - ($2 || ' days')::interval) /* RW2-05: asked for by id, a bill of any age is read; FW-31: the window is the bill's own moment (the one the books post at), not when the server stored it */
           AND ($4::text IS NULL OR upper(h.business_json -> 'till' ->> 'id') = upper($4::text))
+          AND ($7::text IS NULL OR h.chit_id::text = $7::text) /* RW2-05: ONE bill by its chit id - a credit note on a sale older than the window */
           AND ($5::text IS NULL OR h.business_json -> 'till' -> 'by' ->> 'id' = $5::text) /* CTR-205: WHO rang it, in SQL - before the LIMIT, so one person's bills are never crowded out */
           ${counterBill.WITHDRAWN_SQL}
-        ORDER BY h.created_at DESC LIMIT $3)
-      ORDER BY created_at DESC`;
+        ORDER BY ${POSTED_AT_SQL} DESC LIMIT $3)
+      ORDER BY posted_at DESC`;
 
 /** CTR-225: the page asked for lies past the last bill, so it carries no row to read the count from: ask for the first row of the window (the one place a second statement is run) */
-async function billsPast(entity_id, [days, limit, till, by, offset]) {
-  const found = await require('../db').withEntity(entity_id, (db) => db.query(BILLS_SQL, [entity_id, String(days), limit, till, by, offset]));
+async function billsPast(entity_id, [days, limit, till, by, offset, chit]) {
+  const found = await require('../db').withEntity(entity_id, (db) => db.query(BILLS_SQL, [entity_id, String(days), limit, till, by, offset, chit || null]));
   return found.rows.filter((row) => !row.withdrawn);
 }
 

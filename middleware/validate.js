@@ -100,6 +100,9 @@ const sentenceOf = (failure, field) => {
 
 const KIND_CODES = { required: 'MISSING_FIELD', additionalProperties: 'UNKNOWN_FIELD' };
 
+/* EPRRED (26 Nov): a list of 10 000 wrong items made an 840 KB refusal (one entry per item): the answer lists the first 100, which is every field of any real form */
+const MAX_LISTED_FAILURES = 100;
+
 /** errorsOf(validator, value) → [] when the value fits the schema, else one {field, code, detail} per field at fault (every one, not the first) */
 function errorsOf(validator, value) {
   if (validator(value)) return [];
@@ -151,7 +154,7 @@ function schemaValidate(operation, options) {
       code: choice.code || DEFAULT_REFUSAL.code,
       detail: failures.length === 1 ? failures[0].detail : BODY_SENTENCE,
       field: failures[0].field,
-      errors: failures,
+      errors: failures.slice(0, MAX_LISTED_FAILURES),
       legacy: choice.legacy ? choice.legacy(failures, req) : undefined
     });
   };

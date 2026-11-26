@@ -108,7 +108,7 @@ function answer(text, params) {
     { payment_id: 'p3', party_id: 'c3', direction: 'in', amount_minor: 90000, currency: 'INR', cheque_no: '000779', cheque_bank: 'HDFC', cheque_date: d(-9), received_at: d(-9), status: 'deposited' },
     { payment_id: 'p4', party_id: 's1', direction: 'out', amount_minor: 70000, currency: 'INR', cheque_no: '110', cheque_bank: 'SBI', cheque_date: d(0), received_at: d(0), status: 'received' }] }; }
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
-  if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
+  if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: F.quietOutbox ? [] : [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
@@ -185,11 +185,11 @@ const get = (port, p) => new Promise((ok) => {
   /* till */
   let r = await g('till');
   t('till: 200', r.status, 200);
-  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold today {money} · 12 bills', { amount: 4320.5, currency: 'INR' }]);
+  t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold today {money} · 12 bills in the books', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
-  t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'C1 open', value: 1 });
+  t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'Counter 1 open', value: 1 });
   F.allShut = true; r = await g('till');
-  t('till: every counter closed today -> "Counter C1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter C1 closed {time}', SHUT_AT]);
+  t('till: every counter closed today -> "Counter 1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter 1 closed {time}', SHUT_AT]);
   F.allShut = false; r = await g('till');
   t('till: figures carry the raw numbers; no books day -> takings is omitted (the summary cannot split tenders), never 0', r.json.figures, { day: todayKey, bills: 12, sales: 4320.5, currency: 'INR', counters_open: 1 });
   t('till: at most 2 trips', r.trips <= 2, true);
@@ -204,15 +204,15 @@ const get = (port, p) => new Promise((ok) => {
   F.booksBills = false;
   F.booksDay = false;
   F.allShut = true; F.c2open = true; r = await g('till');
-  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold today {money} · 12 bills', 'Counter C1 closed {time}', 'C2 open']);
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold today {money} · 12 bills in the books', 'Counter 1 closed {time}', 'Counter 2 open']);
   F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
-  t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, 'Sold {money} · 12 bills on {date}');
+  t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, 'Sold {money} · 12 bills in the books on {date}');
   /* BD-F-01: the counters' newest closing is old; the books hold a newer day (bills sent by the api): the card reads the books' day and names it */
   F.booksPast = true; F.shopYear = { country: 'IN', currency_code: 'INR', books: { enabled: true }, gov: null }; r = await g('till');
-  t('till (BD-F-01): the books newer day wins over the old counter closing: Sold 2,71,971.43 (27197143 paise) · 8 bills on that date', [r.json.lines[0].text, r.json.lines[0].money, r.json.figures.bills, r.json.figures.day], ['Sold {money} · 8 bills on {date}', { amount: 271971.43, currency: 'INR' }, 8, '2026-11-20']);
+  t('till (BD-F-01): the books newer day wins over the old counter closing: Sold 2,71,971.43 (27197143 paise) · 8 bills on that date', [r.json.lines[0].text, r.json.lines[0].money, r.json.figures.bills, r.json.figures.day], ['Sold {money} · 8 bills in the books on {date}', { amount: 271971.43, currency: 'INR' }, 8, '2026-11-20']);
   F.booksPast = false; F.shopYear = null; F.stale = false; F.summary = false; r = await g('till');
-  t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['C1 open']);
+  t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['Counter 1 open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
   F.summary = true;
   /* RPT2 · the teaser: 8 ISO weeks of sales + the newest closed week against the same week last year — rollup.series, in the same trip */
@@ -280,7 +280,7 @@ const get = (port, p) => new Promise((ok) => {
   t('bank: last statement + the carried difference, in its own currency', [r.json.lines[0].text, r.json.lines[1].money, r.json.state], ['Last statement {when} · ANZ Business', { amount: 123.45, currency: 'AUD' }, 'needs_you']);
   t('bank: figures carry minor units and the currency; nothing about lines to add', JSON.stringify(r.json.figures), JSON.stringify({ statement: { date: '2026-10-31', account: 'ANZ Business', difference_minor: 12345, currency: 'AUD' } }));
   BL.latest = async () => ({ account_id: 7, period_to: '2026-10-31', difference_minor: 0, currency: 'AUD' }); r = await g('bank');
-  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Matches the books', 'in_use']);
+  t('bank: nil difference reads as matching', [r.json.lines[1].text, r.json.state], ['Nothing unexplained', 'in_use']);
   BL.latest = async () => null; BL.unsigned = async () => ({ at: new Date('2026-11-14T03:00:00Z') }); r = await g('bank');
   t('bank: loaded and worked on but not signed says so with its day, in_use, never Not started', [r.json.lines, r.json.state], [[{ text: 'Worked on {when} · not signed off yet', at: '2026-11-14' }], 'in_use']);
   BL.latest = async () => null; BL.unsigned = async () => null; F.bankPosted = 6; r = await g('bank');
@@ -306,6 +306,13 @@ const get = (port, p) => new Promise((ok) => {
   t('accounts: the figures carry each count (books-store waitingCount — the one count, > 200 rows)', [r.json.figures.waiting, r.json.figures.accept, r.json.figures.add_supplier, r.json.figures.record], [211, 120, 90, 1]);
   t('accounts: STD1 — counted by ONE GROUP BY over every open row (no LIMIT, no sentence read)', [/GROUP BY 1/.test(F.outboxSql || ''), /LIMIT/.test(F.outboxSql || ''), /SELECT why FROM/.test(F.outboxSql || '')], [true, false, false]);
   t('accounts: at most 2 trips', r.trips <= 2, true);
+  /* RW3-07: nothing in the outbox but 6 entries with no tax invoice + 17 with no file (hand: 6 + 17 = 23) -> the card says '23 entries to fix' and NEVER 'Nothing waiting' beside it */
+  { const TD = require(API + '/lib/books-todo'), wasEv = TD.evidenceCounts; TD.evidenceCounts = async () => ({ no_tax_invoice: 6, no_file: 17, no_source: 0, open_queries: 0 }); F.quietOutbox = true;
+    r = await g('accounts');
+    t('accounts: 23 entries to fix and no "Nothing waiting" line', [r.json.lines.map((l) => l.text).filter((x) => x !== 'Checked {when}'), r.json.figures.entries_to_fix], [['23 entries to fix'], 23]);
+    TD.evidenceCounts = async () => ({ no_tax_invoice: 0, no_file: 0, no_source: 0, open_queries: 0 }); r = await g('accounts');
+    t('accounts: all quiet -> the one "Nothing waiting" line', r.json.lines.map((l) => l.text).filter((x) => x !== 'Checked {when}'), ['Nothing waiting']);
+    TD.evidenceCounts = wasEv; F.quietOutbox = false; }
   F.booksOn = false; r = await g('accounts');
   t('accounts: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
   F.booksOn = true;

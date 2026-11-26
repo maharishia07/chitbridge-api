@@ -359,6 +359,8 @@ const INFRA_LIBS = [
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
   'books-cashflow.js', 'books-side-items.js', /* SPEED 1129: which party items a control account's reader loads (open documents from today, every row for a past day): a choice of rows, no figure */
   'repeat-supply.js',   /* RI1: the repeat-supply agreement beside the chit — bound to the table (b303), the chit's own send path and the status writer */
+  /* RW2-04 / FW-32 (zeroreds 26 Nov): the return's basis note reads the pack's own words and rows, no figure of their own; called by books-period.taxReturn like it. Owner cb-accounting. */
+  'books-return-basis.js',
   'books-payables.js',   // F4: CB Finance · Payables — F3's datedSide('out') per bill + msmeFlags + earlyDiscount (reads only)
   'books-replay.js',   // FIN-63 step 2: is this confirm the payment's latest live batch pressed again (fingerprint = lib/canon.hash, window 2 min)? rows in, answer out; no figure of its own, the engine's confirmItems still judges a further one
   /* [N18] what each Home card says (SQL over the libs the old reads used; no rule of its own) and the summary-chit read it shares with GET /api/till/summary (2026-10-08) */

@@ -311,6 +311,7 @@ const GUARDS_PART = [
   'change-pin-lock-mutation.test.cjs', // U1 (8 Nov, in no GUARDS array): PPL-30: with the count-and-lock removed the test above goes red (was named only in NEEDS_ENGINES)
   'signin-otp-budget-m1.test.cjs', // M1 (batch 1128): asking for a code again keeps the wrong-guess count while the old code is live
   'pin-timed-lock-m3.test.cjs', // M3 (batch 1128): the PIN lock is timed with a doubling back-off, never permanent
+  'pin-lock-lift-micro.test.cjs', // GF-SECURITY#L73 (secreopen 1130): the lift is decided in SQL, a microsecond lock time lifts after its window
   'sec3-s1-tester-secret.test.cjs', // S1 (batch 1128): the tester code needs 8 secret characters outside the public date; misses counted per caller address too
   'sec3-s2-no-live-otp-in-log.test.cjs', // S2 (batch 1128): notify.js never prints a live OTP to a log off a developer's own stack (+ S14 name escaped)
   'sec3-s7-weak-pin.test.cjs', // S7 (batch 1128): 0000, 1234, repeated and counting PINs refused when set
@@ -434,6 +435,7 @@ const GUARDS_PART = [
   'products-bulk-twice.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'vol-2026-11-20-books-doors.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'practice-sql-inline.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): batch 1128 S41, the practice cash statement inlines clean (no lone apostrophe or ; in a SQL comment); offline
+  'readab-1130-bill-step-units.test.cjs', // READ-GUARD §7: lib/chit-bill-step.js (written, retried, held, lost); offline
   'readab-1128-units.test.cjs', // READ-GUARD §7 unit evidence, batch 1128 (receipt-lines, shop-country, profilemap); offline
   'readab-1128a-units.test.cjs', // READ-GUARD §7: einvoice-note, message-client-id, weak pin refusals; offline
   'readab-1128-g0-units.test.cjs', // READ-GUARD §7: client-ip fail-closed; offline
@@ -463,6 +465,35 @@ const GUARDS_PART = [
   'walkw-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'walkw-credit-qty-1129.test.cjs', // enrolled 2026-11-21 (every-test-is-enrolled): passes offline
   'books-split-units-1129.test.cjs', // readability 1129 (g1): the units split out of books, books-hooks and catalogue-write keep their rules
+  'retest-1130-catalogue-failclosed.test.js', // retest 1130: EL-catalogue-01#L53/#L62 and GF-catalogue-01#L48 fail closed (gate read, source read, cost strip)
+  'retest-1130-supply-kind.test.cjs', // retest 1130: AJ-F-01 supply_kind word reaches the engine, an unknown kind is refused
+  'accw2-gst-gap.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'rw2acc-basis.test.cjs', // RW2-04: each BAS box says its basis, one line says why two quarters differ
+  'at0204-default-period.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'finw2-earlier-tax.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'policy-words-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'signoffw-till-chips.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'signoffw-unbroken-run.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'till-earlier-window-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'till-start-mode-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'ufo2-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'eprred-thrown-refusal.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'home-bank-signed-to.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'open-items-timed.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw127-1130.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw1acc-1130.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw1ctr-1130.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw1fin-needs.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
+  'rw2ctr-1130.test.cjs', // wave5 1130: enrolled (every-test-is-enrolled)
+  'rw2fin-1130.test.cjs', // wave5 1130: enrolled (every-test-is-enrolled)
+  'p2wave-sec-1130.test.cjs', // wave5b 1130: enrolled (every-test-is-enrolled)
+  'pathreds-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'homespeed-plan-once.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'w4acc-bas-wages-boxes.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'w4bank-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'rw3-counter-name.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'rw3firm-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'rw3home-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };

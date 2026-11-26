@@ -24,6 +24,8 @@ const naiveAsUtc = (() => {
 pg.types.setTypeParser(1114, naiveAsUtc);                                          /* timestamp without time zone */
 pg.defaults.parseInputDatesAsUTC = true;
 const SESSION_TZ = "SET TimeZone = 'UTC'";
+/* P1 speed money-01 F1 (1130): JIT OFF. The open-items statement (a recursive CTE) is costed at ~26M rows, which crosses jit_above_cost, and Postgres then spends 2.4-13.6 s COMPILING a query that runs in 30-120 ms (sit-ae2, 5,000 to 10,000 rows). This is an OLTP api: no statement here is long enough to repay a compile. Rides the same trips as the zone pin. */
+const JIT_OFF = 'SET jit = off';
 
 async function tryConnect(config) {
   return new Promise((resolve, reject) => {
@@ -49,10 +51,10 @@ function armPool(p) {
   const ms = require('../lib/limits').statementTimeoutMs();
   p.on('connect', (c) => require('../lib/dbwatch').watch(c));   /* E07: every statement timed; slow ones logged by fingerprint */
   /* one trip per NEW connection, not per request: the zone pin (M210) rides with the statement deadline */
-  p.on('connect', (c) => { c.query(SESSION_TZ + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
+  p.on('connect', (c) => { c.query(SESSION_TZ + '; ' + JIT_OFF + (ms ? '; SET statement_timeout = ' + Math.floor(ms) : '')).catch((e) => console.warn('session settings not set:', e.message)); });
   return p;
 }
-const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
+const beginSql = () => { const ms = require('../lib/limits').statementTimeoutMs(); return (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; SET LOCAL ' : 'BEGIN; SET LOCAL ') + SESSION_TZ.slice(4) + '; SET LOCAL ' + JIT_OFF.slice(4) + (ms ? '; SET LOCAL statement_timeout = ' + Math.floor(ms) : ''); };
 
 /**
  * ⭐ HX1 · THE ATTEMPTS COME FROM CONFIG, NOTHING ELSE (db/connect-config.js): DATABASE_URL, then DB_POOLER_URL when it is set.
@@ -394,7 +396,7 @@ const readBatch = async (entityId, actorId, statements) => {
   /* review EL-platform-01 F7: the batch runs under the same transaction settings as beginSql - READ ONLY for an auditor's request, UTC, the statement deadline - as
      set_config(..., true) columns of the ONE select, so the result positions below do not move. A transaction pooler does not carry a session SET. */
   const ms = require('../lib/limits').statementTimeoutMs();
-  const head = (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; ' : 'BEGIN; ') + "SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true), set_config('TimeZone', 'UTC', true)" + (ms ? ", set_config('statement_timeout', '" + Math.floor(ms) + "', true)" : '') + ';';
+  const head = (require('../lib/reqctx').isReadOnly() ? 'BEGIN READ ONLY; ' : 'BEGIN; ') + "SELECT set_config('app.current_entity', " + inlineLiteral(entityId == null ? '' : String(entityId)) + ", true), set_config('app.current_actor', " + inlineLiteral(actorId == null ? '' : String(actorId)) + ", true), set_config('TimeZone', 'UTC', true), set_config('jit', 'off', true)" + (ms ? ", set_config('statement_timeout', '" + Math.floor(ms) + "', true)" : '') + ';';
   const texts = [], at = [];
   let bound = entityId;   /* the shop each statement really runs under: the batch's, until a statement switches it (the switch stays for the next ones) */
   statements.forEach((s) => {
@@ -447,13 +449,12 @@ const queryAs = async (identityId, text, params) => {
  * For the sign-in read of "the people the lookup named" (they may belong to different shops, so no single binding opens them all) and of their parent shops.
  * An empty list still sends one statement (bound to nothing, so it answers nothing): a hit and a miss cost the same trip.
  */
-const queryAsEach = async (ids, text, paramsOf) => {
+const queryAsEach = async (ids, text, paramsOf, options) => {
   if (!pool) await ensurePool();
   require('../lib/limits').refuseIfReaderGone();
   try { require('../lib/trips').tick('query'); } catch (_) {}
   const list = ids && ids.length ? ids : [null];
-  const parts = [];
-  list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  const { parts, first } = eachMessage(list, text, paramsOf, !!(options && options.planOnce) && list.length > 1);
   rlsGuardCheck(text);
   let res;
   try {
@@ -464,12 +465,31 @@ const queryAsEach = async (ids, text, paramsOf) => {
   }
   const all = Array.isArray(res) ? res : [res];
   const rows = [];
-  list.forEach((_, i) => { rows.push(...all[2 * i + 1].rows); });
+  list.forEach((_, i) => { rows.push(...all[first + 2 * i].rows); });
   return { rows, rowCount: rows.length };
 };
+/* HOMESPEED (1130) · PLAN ONCE: a firm's read runs the SAME large statement for 150 clients and the planner plans the text anew for each (about 22 of 24 ms on a small client). { planOnce: true } PREPAREs it once in the message and EXECUTEs it per id
+ * (same binding, values, rows, order); plan_cache_mode stays auto, so a generic plan is kept only when its own estimate is not costlier. DEALLOCATE ALL opens the message so a name left by a failed one (PREPARE is not rolled back) never blocks the next. */
+const PLAN_ONCE = '_cb_plan_once';
+const planOncePrefix = (text) => ['DEALLOCATE ALL', 'PREPARE ' + PLAN_ONCE + ' AS ' + text];
+/** the message of queryAsEach: the texts that ride in it, and the position of the FIRST id's rows in the answer (a planned message opens with DEALLOCATE ALL and PREPARE, two results, then a binding + statement pair per id) */
+function eachMessage(list, text, paramsOf, planned) {
+  const parts = [];
+  if (planned) {
+    boundParts(list[0], text, paramsOf(list[0])); /* the one-statement and inlining checks of the unplanned path, run on the first id (a text with a ; is refused here, as there) */
+    parts.push(...planOncePrefix(text));
+    list.forEach((id) => parts.push(...planOnceParts(id, paramsOf(id))));
+    parts.push('DEALLOCATE ' + PLAN_ONCE);
+  } else list.forEach((id) => parts.push(...boundParts(id, text, paramsOf(id))));
+  return { parts, first: planned ? 3 : 1 };
+}
+function planOnceParts(identityId, params) {
+  const values = (params || []).map(asLiteral).map((v) => inlineLiteral(v));
+  return ["SELECT set_config('app.current_entity', " + inlineLiteral(identityId == null ? '' : String(identityId)) + ', true)', 'EXECUTE ' + PLAN_ONCE + (values.length ? '(' + values.join(', ') + ')' : '')];
+}
 query.as = queryAs;
 /** SEC-75: a `query` bound to ONE shop, for libs that take their reader injected (lib/catalogue-columns): queryFor(shop)(text, params) is queryAs(shop, text, params) */
 const queryFor = (shopId) => (text, params) => queryAs(shopId, text, params);
 query.for = queryFor;
 query.asEach = queryAsEach;
-module.exports = { bootWaitMs, query, queryAs, queryFor, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };
+module.exports = { eachMessage, bootWaitMs, query, queryAs, queryFor, queryAsEach, withTransaction, withEntity, onEntity, trySavepoint, RLS_TENANT_TABLES, rlsGuardCheck, readBatch, inlineSql, get pool() { return pool; } };

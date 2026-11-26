@@ -13,7 +13,7 @@ let entries = 1;
 const handle = { query: async (sql) => (/FROM journal_entry/.test(sql) ? { rows: entries ? [{ '?column?': 1 }] : [] } : { rows: [] }) };
 stub('db', { query: async () => ({ rows: [] }), withEntity: async (o, fn) => fn(handle), readBatch: async () => [] });
 const real = require('../lib/books.js');
-stub('lib/books', Object.assign({}, real, { settingOf: async () => ({ enabled: true, last_check: null }) }));
+stub('lib/books', Object.assign({}, real, { settingOf: async () => ({ enabled: true, last_check: null, country: 'IN' }) }));
 stub('lib/home-waiting', Object.assign({}, require('../lib/home-waiting.js'), { waitingWithHeld: async () => ({ total: 0, accept: 0, add_supplier: 0, record: 0, held: 0 }) }));
 const Home = require('../lib/home-facts.js');
 (async () => {
