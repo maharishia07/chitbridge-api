@@ -29462,9 +29462,9 @@ async function returnFindBill(id){
   if (!served || served.offline || !Array.isArray(served.bills)) return { why: 'The line is down, so this bill cannot be read from the shop. Try again when it is back.' };
   var found = served.bills.filter(byId)[0];
   if (!found || !found.no) return { why: 'The shop holds no counter bill with that address, so it cannot be returned here. A sale made another way is returned from its own page.' };
-  var same = rows.filter(function(b){ return String(b.no) === String(got.no) && b.kind !== 'credit_note'; })[0];
+  var same = rows.filter(function(b){ return String(b.no) === String(found.no) && b.kind !== 'credit_note'; })[0];
   if (same) return { bill: same };
-  var row = Object.assign({}, got, { customer: serverBillCustomer(got), _sent: { chit_id: got.chit_id }, _verified: Date.now(), _from_server: true });
+  var row = Object.assign({}, found, { customer: serverBillCustomer(found), _sent: { chit_id: found.chit_id }, _verified: Date.now(), _from_server: true });
   /* a bill older than the window is not kept on the device (the Earlier list would never show it): it is returned from memory */
   if (retInWindow(row)) {
     try { await DB.put('bills', row); TODAY_BILLS = null; } catch (e) { cbQuiet('returnFindBill:3', e); return { why: 'This device could not keep the bill to return it.' }; }
