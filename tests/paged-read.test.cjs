@@ -2,6 +2,7 @@
 /**
  * tests/paged-read.test.cjs — column 21 of the API register, paged_read (PERF1): the static facts of a list read, and the one request-log count it is settled by.
  * Run: node tests/paged-read.test.cjs
+ * MIN refusal-path
  * MIN fail-closed: a NEW list route with no server maximum fails; a list that answers every row when nothing is asked fails the column (the ratchet holds the count down).
  */
 const assert = require('assert');
@@ -80,6 +81,10 @@ check('the report lists a route over the line, worst first, and counts a line wi
   const r = reportOf([line('/api/a', 50), line('/api/b', 900, 900), line('/api/b', 20), line('/api/a', 150, 400), JSON.stringify({ msg: 'request', method: 'GET', status: 200, route: '/api/c' }), 'not json'], 100);
   assert.deepStrictEqual(r.routes.map((x) => [x.route, x.max_rows]), [['GET /api/b', 900], ['GET /api/a', 150]]);
   assert.strictEqual(r.unmeasured, 1);
+});
+check('a write is never a list: a non-GET is refused the column (n/a), and nothing is thrown for an empty read', () => {
+  assert.strictEqual(facts('res.json({ items: [] })', { method: 'POST' }).kind, 'n/a');
+  assert.deepStrictEqual(causesOf(null), []);
 });
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

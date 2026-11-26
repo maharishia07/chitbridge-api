@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 /*
+ * tools/paged-reads-routes.cjs — the register's list routes with their paged-read facts, as the one file the web scan reads
+ * OWNER     cb-speed
  * OWNS      docs/contracts/paged-read-routes.json: the GET list routes of the API register with their paged-read facts, as the one file the WEB scan reads (web e2e/fixtures/paged-read-routes.json is a byte copy, as web-api.contract.json is).
  * CALLED BY by hand after `node tools/api-register.cjs` · tests/paged-read.test.cjs (the file equals what the register says) · the web's tools/paged-reads-web.cjs
  * FLOW      docs/api-register.json (reported_facts.paged_read, kind 'list') ──▶ { key, path, mode, default, max, unasked } per list route ──▶ docs/contracts/paged-read-routes.json

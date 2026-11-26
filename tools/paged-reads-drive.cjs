@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 'use strict';
 /*
+ * tools/paged-reads-drive.cjs — drive every parameter-free GET with nothing asked and let the request lines say how many rows came back
+ * OWNER     cb-speed
+ * CARD      28-platform-and-operations/api-standard
  * OWNS      driving every parameter-free GET route of the register ONCE per sign-in with NOTHING asked (no ?limit, no ?page), so the api's request lines (lib/request-log.js: rows, total) show what each route really answers on a box's real data.
  * CALLED BY by hand on a SIT box, after which `docker logs <container> | node tools/paged-reads-report.cjs` lists the routes over 100 rows. Never a deploy: it talks to an api container the lane started itself.
  * FLOW      docs/api-register.json (GET rows with no :param) ──▶ GET base+path with each Bearer token ──▶ one line per call: status · ms · rows · total · key
@@ -35,8 +38,8 @@ const rowsOf = (body) => (Array.isArray(body) ? body.length : body && typeof bod
         status = res.status;
         const text = await res.text();
         bytes = text.length;
-        try { const body = JSON.parse(text); rows = rowsOf(body); total = body && typeof body.total === 'number' ? body.total : null; } catch (failure) { /* not JSON */ }
-      } catch (failure) { status = -1; }
+        try { const body = JSON.parse(text); rows = rowsOf(body); total = body && typeof body.total === 'number' ? body.total : null; } catch (failure) { rows = null; /* not JSON: the answer carries no rows count */ }
+      } catch (failure) { status = -1; /* the box did not answer: recorded as status -1 in the line */ }
       lines.push({ seat, key: row.key, status, ms: Date.now() - started, rows, total, bytes });
     }
   }

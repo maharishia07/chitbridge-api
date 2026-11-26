@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 /*
+ * tools/paged-reads-report.cjs — which list routes really answered more rows than a line, read from the request log
+ * OWNER     cb-speed
  * OWNS      the runtime half of the paged-read check (PERF1, Athi 26 Nov 2026: "if it is read, how many records it fetches, is lazy loading enabled or not"): which list routes really answered more than N rows.
  * CALLED BY by hand on a SIT box's request log; the register's static column paged_read (lib/paged-read.js) is the other half and the two are joined here (route -> its static facts).
  * FLOW      JSON log lines (the one "request" line, lib/request-log.js: route, status, rows, total, entity, seat) ──▶ per route: calls, max rows, p95 rows, max total ──▶ the routes over the line, worst first
@@ -19,15 +21,15 @@ const flag = (name) => process.argv.includes(name);
 const valueOf = (name, fallback) => { const at = process.argv.indexOf(name); return at > 0 ? process.argv[at + 1] : fallback; };
 
 /** one request line out of a raw log line (a docker line may carry a prefix before the JSON), or null */
-function requestOf(raw) {
-  const start = raw.indexOf('{');
+function requestOf(logLine) {
+  const start = logLine.indexOf('{');
   if (start < 0) return null;
   try {
-    const record = JSON.parse(raw.slice(start));
+    const record = JSON.parse(logLine.slice(start));
     const body = record.ctx && typeof record.ctx === 'object' ? Object.assign({}, record, record.ctx) : record;
     return body.msg === 'request' || body.message === 'request' || body.route !== undefined ? body : null;
   } catch (failure) {
-    return null;
+    return null; /* a line that is not JSON is not a request line: it is skipped and counted nowhere */
   }
 }
 
@@ -38,8 +40,8 @@ function reportOf(lines, min) {
   const by = new Map();
   let unmeasured = 0;
   let seen = 0;
-  for (const raw of lines) {
-    const record = requestOf(raw);
+  for (const logLine of lines) {
+    const record = requestOf(logLine);
     if (!record || record.method !== 'GET' || !(record.status >= 200 && record.status < 300) || !record.route) continue;
     seen++;
     if (typeof record.rows !== 'number') { unmeasured++; continue; }
