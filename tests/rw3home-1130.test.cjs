@@ -8,4 +8,4 @@ const route = fs.readFileSync(path.join(__dirname, '..', 'routes', 'books.js'), 
 assert(/timezone: require\('\.\.\/lib\/books-hooks'\)\.zoneOf\(req\.books\)/.test(route), 'GET /daybook answers the audited shop\'s zone');
 const cash = require('../lib/books-cashflow');
 assert.strictEqual(cash.shortWords({ date: '2026-12-01', short_minor: 2851105, driver: null }, '2026-11-26', 'AUD'), 'On 1 Dec 2026 you will be A$28,511.05 short.', 'A$ with its cents, never "AUD 28,511.05"');
-console.log('rw3home-1130 api: ok');
+console.log('  ok   3 checks'); /* the guards runner reads the last "<n> checks" line */

@@ -3948,6 +3948,33 @@ const whenFilled = (map, make) => (map && map.size ? make(map) : undefined);
 async function withFreshWait(bundle, entity_id, chit_id) {
   if (bundle && bundle.books_wait && bundle.books_wait.wait === 'supplier') bundle.books_wait = await require('../lib/supplier-list').freshWait(entity_id, chit_id, bundle.books_wait);
 }
+/** the priced facts the line table lacks, merged onto the live set by position (the comment below says why); a failure is logged and the set stays as it was */
+function carryPricedFacts(_lines, _live) {
+  /**
+   * ⭐⭐ THE PRICED FACTS RIDE THE LIVE LINE ([PAR-03], 2026-09-06). The live set is read from the line TABLE, which has columns for
+   * particulars · quantity · unit · price · total and none for what the send wrote onto the line JSON — discount · offer · gst_rate ·
+   * tax name · sku · item_id · hsn. The header knew ₹360 (total_value) while every row said ₹200 × 2 = ₹400 and no GST. Merged by
+   * position while the two still line up one-to-one (the same rule the client already used for the stock stamp), and only where
+   * the table row is silent — an amendment that changed a price keeps its own value.
+   */
+  try {
+    const KEEP = ['discount', 'offer', 'gst_rate', 'cess_rate', 'tax_name', 'tax_scheme', 'tax_slab_name', 'tax_source', 'hsn', 'sku', 'item_id', 'code'];
+    if (Array.isArray(_lines) && Array.isArray(_live) && _lines.length === _live.length) {
+      _live.forEach((e, index) => {
+        const j = _lines[index];
+        if (!j || !e) return;
+        [e.live, e.original].forEach((item) => {
+          if (!item || typeof item !== 'object') return;
+          KEEP.forEach((k) => {
+            if ((item[k] === undefined || item[k] === null) && j[k] !== undefined && j[k] !== null) item[k] = j[k];
+          });
+        });
+      });
+    }
+  } catch (e) {
+    cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
+  }
+}
 router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
 // @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
 router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
@@ -4354,30 +4381,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
           };
         })
       : amend.liveSet(_lines, amd.amendments);
-    /**
-     * ⭐⭐ THE PRICED FACTS RIDE THE LIVE LINE ([PAR-03], 2026-09-06). The live set is read from the line TABLE, which has columns for
-     * particulars · quantity · unit · price · total and none for what the send wrote onto the line JSON — discount · offer · gst_rate ·
-     * tax name · sku · item_id · hsn. The header knew ₹360 (total_value) while every row said ₹200 × 2 = ₹400 and no GST. Merged by
-     * position while the two still line up one-to-one (the same rule the client already used for the stock stamp), and only where
-     * the table row is silent — an amendment that changed a price keeps its own value.
-     */
-    try {
-      const KEEP = ['discount', 'offer', 'gst_rate', 'cess_rate', 'tax_name', 'tax_scheme', 'tax_slab_name', 'tax_source', 'hsn', 'sku', 'item_id', 'code'];
-      if (Array.isArray(_lines) && Array.isArray(_live) && _lines.length === _live.length) {
-        _live.forEach((e, index) => {
-          const j = _lines[index];
-          if (!j || !e) return;
-          [e.live, e.original].forEach((item) => {
-            if (!item || typeof item !== 'object') return;
-            KEEP.forEach((k) => {
-              if ((item[k] === undefined || item[k] === null) && j[k] !== undefined && j[k] !== null) item[k] = j[k];
-            });
-          });
-        });
-      }
-    } catch (e) {
-      cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
-    }
+    carryPricedFacts(_lines, _live);
     _mark('assemble');
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     /* RW1-27: a bill of mine says how much of it is already credited, so the sheet can grey "Credit note" with the reason (null when not judged: the button stays, the cap judges at send) */

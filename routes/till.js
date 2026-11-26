@@ -3792,18 +3792,20 @@ function markLive(rows, liveSummaries) {
 
 const BILLS_PAGE = 100,
   BILLS_MAX = 500; /* the day report's bills: the statement always cuts at the page */
+/** a query value that is a string of the shape asked, else null (a list, an object or a stray shape is no filter) */
+const queryText = (value, shape) => (typeof value === 'string' && shape.test(value) ? value : null);
 // @does Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.
 router.get('/bills', auth, ...checked('GET /bills'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
     const days = Math.min(Math.max(parseInt(req.query.days || '30', 10) || 30, 1), 365);
     const page = pageLimit.pageArgs({ page: req.query.page, limit: req.query.limit != null ? req.query.limit : BILLS_PAGE }, BILLS_PAGE, BILLS_MAX); /* CTR-225: the page asked for is read, so a window past the cap is reachable */
-    const by = typeof req.query.by === 'string' && /^[0-9a-f-]{36}$/.test(req.query.by) ? req.query.by : null;
+    const by = queryText(req.query.by, /^[0-9a-f-]{36}$/);
     /* ⭐ FX-CT1: ONE COUNTER'S BILLS — the day report asks what the server holds for THIS counter. Filtered in SQL, because the
        LIMIT runs first: on a busy shop the other counters' bills would crowd this one's out of a JS filter. */
-    const till = typeof req.query.till === 'string' && /^[A-Za-z0-9_.:-]{1,64}$/.test(req.query.till) ? req.query.till : null;
+    const till = queryText(req.query.till, /^[A-Za-z0-9_.:-]{1,64}$/);
     /* RW2-05: ONE bill by its chit id (a uuid), of any age - how a credit note reaches a sale older than the window */
-    const chit = typeof req.query.chit === 'string' && /^[0-9a-f-]{36}$/i.test(req.query.chit) ? req.query.chit : null;
+    const chit = queryText(req.query.chit, /^[0-9a-f-]{36}$/i);
     const { withEntity: nestedWithEntity } = require('../db');
     const found = await nestedWithEntity(entity_id, (db) =>
       db.query(BILLS_SQL, [entity_id, String(days), page.limit /* always a page: the statement cuts */, till, by, page.offset, chit])

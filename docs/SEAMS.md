@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 216 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 206 | `rows` | `crm.js` | still in them: |
-| 189 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 190 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 183 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 146 | `problem` | `problem.js` | problem(req, res, spec) — |
@@ -40,9 +40,9 @@ of file each thing is; this says what already does the job.
 | 81 | `read` | `books-grant-drill.js` |  |
 | 81 | `rows` | `cap-settings.js` |  |
 | 80 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
-| 80 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 80 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 79 | `items` | `books-store.js` | PERF1: |
+| 79 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 78 | `toast` | `cb-words.js` |  |
 | 78 | `failed` | `service.js` | what every catch answers: |
 | 77 | `record` | `access-events.js` |  |
