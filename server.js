@@ -219,6 +219,7 @@ app.use((req, res, next) => {
   /* ⭐ 2026-10-06 (MASTER-BUILD M03): the line is written when the answer LEAVES, so it carries the status, the time
      taken and any refusal code (res.locals.code) — a 401/403/409 is now visible in the log, not guessed at. */
   const t0 = Date.now();
+  require('./lib/request-log').noteRefusalCode(res); /* ERR-14: an answer's own code reaches the line even when the route did not use lib/problem.js */
   res.on('finish', () => {
     log.info('request', require('./lib/request-log').requestLine(req, res, t0));
   });
