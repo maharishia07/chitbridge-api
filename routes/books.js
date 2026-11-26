@@ -797,15 +797,15 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
       asOf = dateQ(req.query.asOf, today(req));
     const reportPeriod = require('../lib/books-report-period'),
       earlier = reportPeriod.yearBefore(asOf);
-    const tb = await withEntity(e, async (h) => {
-      const shared = await B.ledgerCtx(h, e); /* one context for both days: the chart, settings and carried years are read once */
-      const out = await B.trialBalance(h, e, asOf, shared);
+    const tb = await withEntity(e, async (handle) => {
+      const shared = await B.ledgerCtx(handle, e); /* one context for both days: the chart, settings and carried years are read once */
+      const out = await B.trialBalance(handle, e, asOf, shared);
       out.rows = reportPeriod.withGroupLabels(out.rows, shared.pack); /* RW3-22: the statements' own line per account */
       /* leader-compare #2: the SAME as-at day one year earlier, one extra read; a day before the books began (or one that cannot be read) is no comparison, said: the page then draws no Last year column */
-      const lastYear = await B.trialBalance(h, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
+      const lastYear = await B.trialBalance(handle, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
       if (lastYear) lastYear.rows = reportPeriod.withGroupLabels(lastYear.rows, shared.pack);
       out.was = lastYear && (Number(lastYear.total_dr_minor) || Number(lastYear.total_cr_minor)) ? lastYear : null;
-      const bank = await require('../lib/bank-rec-log').onTrialBalance(h, e, asOf, out.rows, await S.accounts(h, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
+      const bank = await require('../lib/bank-rec-log').onTrialBalance(handle, e, asOf, out.rows, await S.accounts(handle, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
       return Object.assign(out, { bank });
     });
     res.json(await forBooksDoor(req, e, 'trial_balance', {
