@@ -31,6 +31,7 @@ const catalogueView = require('../lib/catalogue-view'); // ONE visibility rule â
 const membership = require('../lib/network-membership'); // who is in the network â€” one reader, fails loudly (T2-HONEST)
 const { MAX_STORES, visibleStores, addStoreHolders } = require('../lib/network-design-stores'); // the visible stores, resolved once
 const { textOf } = require('../lib/input-hygiene');
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 const ent = (req) => auth.entityOf(req);
 /** the schema check of one route (its own operation in lib/network-contract.js) */
@@ -61,7 +62,7 @@ async function placeInTree(me) {
 const SINGLE_LIMIT = 200;
 
 /** the asking business's own row as the two network reads need it (its bridge id, its name and where it sits), or undefined when the account cannot be read */
-const placeOf = async (identityId) => (await query('SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [identityId])).rows[0];
+const placeOf = async (identityId) => (await boundRead(query, identityId, 'SELECT identity_id, bridge_id, display_name, lat, lng FROM identities WHERE identity_id = $1', [identityId])).rows[0];
 /** K-1: a NUL byte cannot be searched for (Postgres refuses it, and the fast path would be marked degraded for it). A character no product holds stands in, so the answer is the unknown product's, as for any text that finds nothing. */
 const searchable = (text) => text.replace(/\u0000/g, '\uFFFD');
 
@@ -185,7 +186,7 @@ router.post('/validate', auth, checked('POST /validate'), async (req, res) => {
     const nodes = draft && Array.isArray(draft.nodes) ? draft.nodes : [];
     let rootHandle = String(body.root_handle || '').trim().toLowerCase();
     if (!rootHandle && !sample) {
-      const r = await query('SELECT user_id FROM identities WHERE identity_id = $1', [me]);
+      const r = await boundRead(query, me, 'SELECT user_id FROM identities WHERE identity_id = $1', [me]);
       rootHandle = String((r.rows[0] && r.rows[0].user_id) || '').trim().toLowerCase();
     }
     if (!rootHandle) rootHandle = 'sample';

@@ -44,6 +44,7 @@ const { zip } = require('../lib/zip-store');
 const { v4: uuidv4 } = require('uuid');
 const { generateBridgeId } = require('../lib/bridgeid');
 const { textOf } = require('../lib/input-hygiene');
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 const KIT = path.join(__dirname, '..', 'tools', 'tally-connector');
 const CATALOGUE = [
@@ -434,7 +435,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
         String(g || '')
           .replace(/\s/g, '')
           .toUpperCase();
-      const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(
+      const me = await boundRead(query, entity_id, 'SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(
         logger.orElse('integrations POST /heartbeat: the read failed — answered with none', { rows: [] })
       );
       const myG = norm(me.rows[0] && me.rows[0].gstn),
@@ -496,7 +497,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
       enrol
     };
     if (src) patchCfg.source = src;
-    const have = await query(
+    const have = await boundRead(query, entity_id,
       `SELECT identity_id FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND connector_config->>'kit_id' = $2`,
       [entity_id, kit_id]
     );
@@ -527,7 +528,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
       overdue_hours = 12;
     let owner = {};
     try {
-      const pf = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+      const pf = await boundRead(query, entity_id, 'SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
       const f = (pf.rows[0] && pf.rows[0].policy_flags) || {};
       if (/^(received|accepted|completed|manual)$/.test(String(f.books_at || ''))) books_at = String(f.books_at);
       if (Number(f.books_overdue_hours) > 0) overdue_hours = Number(f.books_overdue_hours);
@@ -831,7 +832,7 @@ router.get('/reconcile', auth, schemaValidate(RECONCILE_OPERATION), ...filterFor
     /* ⭐ when did a connector first arrive? Nothing released before that could have been booked, so it is not late (2026-09-07). */
     let since = null;
     try {
-      const c = await query(
+      const c = await boundRead(query, entity_id,
         "SELECT MIN(created_at) AS t FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL",
         [entity_id]
       );

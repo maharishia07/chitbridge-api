@@ -281,7 +281,7 @@ const EXTRAS = faultExtras.concat(readyExtras).concat(writeExtras).concat([
   X('entity-without-constitution', 'GET /api/governance/entities/:id', 503, { setup: { sqlRows: ANSWERS(ENTITY) } }),
   X('governed-entity-unnamed', 'POST /api/governance/entities', 400, { setup: { who: PLATFORM }, body: {} }),
   X('no-constitution-to-create-under', 'POST /api/governance/entities', 503, { setup: { who: PLATFORM }, body: { display_name: 'A', email: 'a@b.c' } }),
-  X('entity-quota-reached', 'POST /api/governance/entities', 409, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/count\(\*\)/, [{ n: 5 }]]) }, body: { display_name: 'A', email: 'a@b.c' } }),
+  X('entity-quota-reached', 'POST /api/governance/entities', 409, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/count\(\*\)|identities_governed_count/, [{ n: 5 }]]) }, body: { display_name: 'A', email: 'a@b.c' } }),
   X('override-widens-the-constitution', 'POST /api/governance/entities', 422, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/count\(\*\)/, [{ n: 0 }]]) }, body: { display_name: 'A', email: 'a@b.c', params_override: WIDENS } }),
   X('email-already-governed', 'POST /api/governance/entities', 409, { setup: { who: PLATFORM, sqlRows: ANSWERS(ACTIVE, [/count\(\*\)/, [{ n: 0 }]], [/INSERT INTO identities/, Object.assign(new Error('duplicate key'), { code: '23505' })]) }, body: { display_name: 'A', email: 'a@b.c' } }),
   X('governed-create-fault', 'POST /api/governance/entities', 500, { setup: { who: PLATFORM, db: 'fail' }, body: { display_name: 'A', email: 'a@b.c' } }),

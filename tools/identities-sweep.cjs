@@ -15,6 +15,7 @@
  *   signin        the pre-binding lookup (lib/signin-lookup.js → ops.signin_candidates, SECURITY DEFINER): works under the policy
  *   in-tx         inside a handle the caller owns (db.query, client.query, h.query ...): works when that handle came from withEntity / onEntity / readBatch for the right shop; the sweep cannot see that, a human reads it
  *   open          the module-level query() with no binding: returns NO row once b860 runs. Each one moves to queryAs (by id), withEntity (a shop's own work) or a named platform path
+ *   platform      lib/platform-count.js: a count across shops through a named SECURITY DEFINER function (migrations/RUN-2026-11-26-identity-platform-counts.sql); works under the policy once that file has run
  *   public        (entity_schemas, schema_fields only) an unbound read that the public-read policy serves on purpose, marked in the source with `sweep:public` within 14 lines above it
  *   injected      (entity_schemas, schema_fields only) lib/catalogue-columns.js takes its reader as a parameter; tests/sec-75-entity-schemas.test.cjs fails when any caller passes it unbound
  *   job           scripts/ and tools/: run as the owner role (postgres), which bypasses row security; not the api's runtime
@@ -67,6 +68,7 @@ function classify(relPath, lines, at, table) {
     if (markedPublic(lines, at)) return { cls: 'public', callee: 'sweep:public' };
   }
   if (relPath === 'lib/signin-lookup.js') return { cls: 'signin', callee: 'ops.signin_candidates' };
+  if (relPath === 'lib/platform-count.js') return { cls: 'platform', callee: 'ops.identities_*_count' }; /* SEC-198: the named definer door; its fallback read is for a database that has not run the file yet */
   const callee = calleeOf(lines, at);
   const siteClass = classOfCallee(callee);
   if (siteClass !== 'bound' && JOBS.some((jobDir) => relPath.startsWith(jobDir + '/'))) return { cls: 'job', callee };

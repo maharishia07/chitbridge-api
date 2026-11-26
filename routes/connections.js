@@ -16,6 +16,7 @@ const auth = require('../middleware/auth');
 const { isOwner } = require('../lib/owner'); // reviews4 M17: the ONE owner test
 const { assignAtAccept } = require('../lib/network-accept-assign'); // L10: who looks after the client just accepted
 const { UUID_RE } = require('../lib/trace'); // NET-48: an id that is not a uuid names no one
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 /** the checks of one route, in front of its handler: the words the old validator chain trim()med, then the schema of lib/network-contract.js (answering in the chain's own 400 body) */
 const checked = (route) => [contract.trimmedFor(route), schemaValidate(contract.connections.operationFor(route), contract.schemaOptions.connections(route))];
@@ -63,7 +64,7 @@ router.post('/request', auth, checked('POST /request'), async (req, res) => {
     }
 
     // Get sender snapshot
-    const sender = await query('SELECT bridge_id, display_name FROM identities WHERE identity_id = $1', [from_id]);
+    const sender = await boundRead(query, from_id, 'SELECT bridge_id, display_name FROM identities WHERE identity_id = $1', [from_id]);
 
     // Create connection request
     const connection_id = uuidv4();

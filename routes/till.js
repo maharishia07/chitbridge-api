@@ -73,6 +73,7 @@ const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
 const { shopChanged } = require('../lib/shopchanged');
 const { rateLimit } = require('../lib/rate-limit');
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 /**
  * ⚠️⚠️ STARTING A SHOP IS A ONCE-PER-SHOP ACT ([TILL-112]). The route already refuses a shop that has
  * products, so the honest limit is low: a handful of attempts covers choosing the wrong trade and saying so.
@@ -203,7 +204,7 @@ async function takeSnapshot(req) {
 /** section 1 — the shop as its own books know it (the slip's header, and what decides tax invoice vs cash memo), its policy flags, the counter series this key holds, and the shared reads */
 async function readShopSection(snap) {
   const { entity_id, since } = snap.asked;
-  snap.row = (await query(`SELECT display_name, gstn, country, timezone, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
+  snap.row = (await boundRead(query, entity_id, `SELECT display_name, gstn, country, timezone, policy_flags, user_id FROM identities WHERE identity_id = $1`, [entity_id])).rows[0] || {};
   snap.flags = await policy.get(entity_id).catch(log.orElse('till GET /snapshot: failed — answered with an empty set', {}));
   /* CTR-170: a shop with a tax number is registered (its scheme flag says how); only a shop that IS there and has none asks the ONE reader (ACC-198, as
      books-hooks does, a minute cached) — 'unknown' when nobody said, never a guess. No row (a key whose shop is gone) asks nothing: there is nobody to ask. */
@@ -2294,7 +2295,7 @@ async function recheckReads(entity_id, ids, catNames, req) {
 }
 /** does this shop hold a tax number? (a null tax shelf is by design only when it does not) */
 async function shopHasTaxNumber(entity_id) {
-  const found = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]);
+  const found = await boundRead(query, entity_id, 'SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]);
   return !!String((found.rows[0] || {}).gstn || '').trim();
 }
 /** the network lines among the asked ids, as the snapshot would send them now → Map(item_id → counter row), or null when none was asked (no adoption read then) */
@@ -2349,7 +2350,7 @@ function recheckAnswer(item_id, row, catNames, network) {
  * A shop nobody gave money is REFUSED with the one sentence (NO_MONEY) — never INR written into a price by name. One identities read, as before.
  */
 async function shopCurrency(entity_id) {
-  const found = await query('SELECT currency_code, country FROM identities WHERE identity_id = $1', [entity_id]);
+  const found = await boundRead(query, entity_id, 'SELECT currency_code, country FROM identities WHERE identity_id = $1', [entity_id]);
   const shop = found.rows[0] || {};
   return countrySetup.shopMoney(shop.currency_code, shop.country);
 }
@@ -2769,7 +2770,7 @@ router.post('/pair', auth, ...checked('POST /pair'), async (req, res) => {
     const refusal = pairRefusal(req, holder, viaCounter);
     if (refusal) return problem(req, res, refusal);
     const entity_id = auth.entityOf(req);
-    const shop = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
+    const shop = await boundRead(query, entity_id, 'SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const code = pairCode();
     const expires = Date.now() + PAIR_TTL_MS;
     PAIR.set(code, { entity_id, name: (shop.rows[0] && shop.rows[0].display_name) || null, expires, parent: viaCounter ? holder.jti : null });
@@ -2820,7 +2821,7 @@ router.post('/enrol', auth, ownerOnly('Only the owner can connect a counter.'), 
   try {
     if (!req.identity || req.api_key) return problem(req, res, { status: 403, ...said('TILL_SIGN_IN_FIRST', 'Forbidden', 'Sign in to connect a counter.') });
     const entity_id = auth.entityOf(req);
-    const shop = await query('SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
+    const shop = await boundRead(query, entity_id, 'SELECT display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
     const owner = shop.rows[0] || {};
     const claimed = await require('../lib/counters-store').claim(enrolClaim(entity_id, owner, req.body));
     if (claimed.status !== 200) return problem(req, res, { status: claimed.status, ...relayed(claimed.body) });
@@ -3101,7 +3102,7 @@ function reconcileVerdict(item, found) {
 router.get('/verify', auth, auth.requireScope('till'), ...checked('GET /verify'), async (req, res) => {
   try {
     const entity_id = auth.entityOf(req);
-    const shop = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
+    const shop = await boundRead(query, entity_id, 'SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]);
     const total = await sellableCount(entity_id);
     const sample = await spreadSample(entity_id, total);
     res.json({ total, at: new Date().toISOString(), shop: { entity_id, name: (shop.rows[0] && shop.rows[0].display_name) || null }, sample });
