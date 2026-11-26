@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 5,
-  "meets": 695,
+  "partial": 0,
+  "meets": 700,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -7714,11 +7714,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "92012ff5c88a132d"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW3-11 (0713fcf3a): one additive key, timezone (the audited shop zone via books-hooks.zoneOf), already declared nullable in the closed output schema (api-output-shapes.json); no key, status or code removed; same chain, same gates (moneyReader, books on)",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -11137,11 +11136,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "b066c6dd77fd29be"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW2-03 (026806076) + RW3-22 (868291604): rows gain group_label (the statements own line, withGroupLabels) and the unbroken-run sentence is one answer; additive, same chain, same gates and statuses, money untouched; doc comment gains the no_run state",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -13223,11 +13221,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "db1399a8bbaf335a"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW1-27 (da35e2c15), W4CTR (3376ac6be), wave5 (b1edc5fda): additive key credit, read only on ?with=credit through textOf (a non-text value is refused 400 INVALID_INPUT, the one reader), scoped withEntity(entity_id), a failed read carried on as null; credit is declared in the closed output schema; an unknown or foreign chit is still the one 404",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -35060,11 +35057,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0905362493dba680"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: FW-31 (91051ebef) window cut on the bill moment (POSTED_AT_SQL) and RW2-05 (463d91192): new optional query chit (uuid, else ignored) bound as $7 inside the entity-scoped statement, one bill of any age; answer keys unchanged; contract query list updated in the same commit",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -57910,11 +57906,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7ca9bfdb36046f16"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW3-18 (b2f6ebeb3): the default name of a new counter is counterName(id) (C2 gives Counter 2, any other code kept whole) instead of Counter + id; a given name still wins and the COUNTER_BAD_REQUEST text check is untouched; same keys, statuses and codes; test rw3-counter-name",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
