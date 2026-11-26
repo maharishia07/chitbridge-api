@@ -800,8 +800,10 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
     const tb = await withEntity(e, async (h) => {
       const shared = await B.ledgerCtx(h, e); /* one context for both days: the chart, settings and carried years are read once */
       const out = await B.trialBalance(h, e, asOf, shared);
+      out.rows = reportPeriod.withGroupLabels(out.rows, shared.pack); /* RW3-22: the statements' own line per account */
       /* leader-compare #2: the SAME as-at day one year earlier, one extra read; a day before the books began (or one that cannot be read) is no comparison, said: the page then draws no Last year column */
       const lastYear = await B.trialBalance(h, e, earlier, shared).catch(logger.orElse('Trial balance: the same day last year could not be read — the page shows no comparison', null));
+      if (lastYear) lastYear.rows = reportPeriod.withGroupLabels(lastYear.rows, shared.pack);
       out.was = lastYear && (Number(lastYear.total_dr_minor) || Number(lastYear.total_cr_minor)) ? lastYear : null;
       const bank = await require('../lib/bank-rec-log').onTrialBalance(h, e, asOf, out.rows, await S.accounts(h, e), curOf(req)); /* RANK 9: the bank agreement, the Bank page's own rule (null before b864) */
       return Object.assign(out, { bank });
@@ -811,7 +813,7 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
       asOf,
       shown_as_at: agedAt(req) /* F5 (17 Nov): the day a heading may say: the earlier of the day asked and the shop's today, the E1 rule (agedAt); the figures still read what was asked */,
       fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
-      rows: reportPeriod.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
+      rows: reportPeriod.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, group_label: item.group_label, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
       over_rule: reportPeriod.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, as the P&L states it */,
       compare: tb.was ? { how: 'year', as_at: earlier } : null /* the day last year's figures are read at; null = no earlier figures (the first year of the books) */,
       total_dr_minor: tb.total_dr_minor,
