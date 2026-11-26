@@ -486,6 +486,7 @@ const GUARDS_PART = [
   'rw1fin-needs.test.cjs', // wave4 1130: enrolled (every-test-is-enrolled)
   'rw2ctr-1130.test.cjs', // wave5 1130: enrolled (every-test-is-enrolled)
   'rw2fin-1130.test.cjs', // wave5 1130: enrolled (every-test-is-enrolled)
+  'p2wave-sec-1130.test.cjs', // wave5b 1130: enrolled (every-test-is-enrolled)
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
