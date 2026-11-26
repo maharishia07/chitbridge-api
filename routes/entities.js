@@ -67,6 +67,7 @@ const devOtp = require('../lib/dev-otp');
  * already existed in lib/resolveuserid.js; this is the login half that did not, until now).
  */
 const identityAuth = require('../lib/identity-auth');
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 // (F2) The OTP email sender now lives in lib/notify.js (`sendOtpEmail`), shared with the customer order flow.
 
@@ -573,7 +574,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
        * capability list instead of their employer's, silently removing every capability-gated nav item. A round
        * trip saved by answering the wrong question is not a saving.
        */
-      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await query('SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
+      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await boundRead(query, eid, 'SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
       capabilities_debug =
         (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8) + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
@@ -830,7 +831,7 @@ async function visibilityCapFor(entityId) {
   let plan = null,
     paramsOverride = {};
   try {
-    const r = await query('SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
+    const r = await boundRead(query, entityId, 'SELECT plan, params_override FROM identities WHERE identity_id = $1', [entityId]);
     if (r.rows[0]) {
       plan = r.rows[0].plan;
       paramsOverride = r.rows[0].params_override || {};
@@ -967,7 +968,7 @@ router.patch(
 
       let userId = null;
       if (req.body.user_id !== undefined && String(req.body.user_id).trim() !== '') {
-        const cur = await query('SELECT user_id FROM identities WHERE identity_id = $1', [id]);
+        const cur = await boundRead(query, id, 'SELECT user_id FROM identities WHERE identity_id = $1', [id]);
         const existing = cur.rows[0] && cur.rows[0].user_id;
         const verdict = handleLib.checkRoot(req.body.user_id);
         if (existing) {
@@ -1026,7 +1027,7 @@ router.patch(
       const P = require('../lib/profile');
       const idFields = {};
       if (req.body.gstn) {
-        const c = await query('SELECT country, gstn FROM identities WHERE identity_id = $1', [id]);
+        const c = await boundRead(query, id, 'SELECT country, gstn FROM identities WHERE identity_id = $1', [id]);
         const bad = P.taxIdRefusal(c.rows[0] && c.rows[0].country, req.body.gstn);
         if (bad) return problem(req, res, { status: 400, ...contract.words.taxNumberRefused(bad) });
         Object.assign(idFields, taxIdToWrite(c.rows[0], req.body.gstn));
@@ -1165,7 +1166,7 @@ router.patch(
 router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), async (req, res) => {
   try {
     // sealed = protected (governance/root/Help) — delete flows MUST refuse it (b43). Enforce it here.
-    const s = await query(`SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);
+    const s = await boundRead(query, req.params.id, `SELECT sealed FROM identities WHERE identity_id = $1`, [req.params.id]);
     if (s.rows[0] && s.rows[0].sealed) return problem(req, res, { status: 403, ...contract.words.sealed() });
     const done = await query(`UPDATE identities SET is_erased=true, erased_at=NOW(), status='erased' WHERE identity_id=$1 RETURNING identity_id`, [req.params.id]);
     /* an erasure that matched nothing erased nothing: never answer 'done' for it (GDPR Art. 17 · DPDP s.12). A non-uuid id is answered 404 by router.param above (K-1), before the database is asked. */
@@ -1378,7 +1379,7 @@ router.get('/routing/preview', auth, ...checked('GET /routing/preview'), async (
   try {
     const me = auth.entityOf(req);
     const q = req.query || {};
-    const r = await query('SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
+    const r = await boundRead(query, me, 'SELECT bridge_id, display_name, population FROM identities WHERE identity_id = $1', [me]);
     const row = r.rows[0] || {};
     const out = await require('../lib/raiseticket').preview(
       { entity_id: me, bridge_id: row.bridge_id, display_name: row.display_name, population: row.population },
@@ -2338,7 +2339,7 @@ router.get('/entitlements', auth, async (req, res) => {
 
     let row = {};
     try {
-      const r = await query('SELECT plan, vertical, entity_kind, catalogue_visibility FROM identities WHERE identity_id = $1', [entity_id]);
+      const r = await boundRead(query, entity_id, 'SELECT plan, vertical, entity_kind, catalogue_visibility FROM identities WHERE identity_id = $1', [entity_id]);
       row = r.rows[0] || {};
     } catch (e) {
       log.fellBack(

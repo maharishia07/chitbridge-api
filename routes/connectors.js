@@ -64,6 +64,7 @@ const CANON_MAX_DEPTH = require('../lib/canon').MAX_DEPTH; /* ⭐ one bound, dec
  * holds. tests/canon.test.js proves byte-identity against this function as it was written.
  */
 const stableStringify = (v) => require('../lib/canon').canon(v);
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 const hashPayload = (v) => crypto.createHash('sha256').update(stableStringify(v)).digest('hex');
 
 /**
@@ -262,7 +263,7 @@ async function emitSignalChit({
   capability_ref,
   constitution_ref
 }) {
-  const ent = await db(`SELECT bridge_id, display_name, currency_code, country FROM identities WHERE identity_id = $1`, [entity_id]);
+  const ent = await boundRead(db, entity_id, `SELECT bridge_id, display_name, currency_code, country FROM identities WHERE identity_id = $1`, [entity_id]);
   const self = ent.rows[0];
   if (!self) throw new Error('owning entity not found');
   /* SEC3: the shop's own money (else its pack's) — never 'INR' by default; unstated → null and the ONE sentence to the caller */
@@ -814,7 +815,7 @@ router.post('/reissue-code', auth, requireConnector, ...checked('POST /reissue-c
     const perm = await canReissue(req);
     if (!perm.ok) return problem(req, res, { status: 403, ...words.keyAdminOnly() });
     const entity_id = ownerEntityId(req);
-    const e = await db(`SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
+    const e = await boundRead(db, entity_id, `SELECT email, display_name FROM identities WHERE identity_id = $1`, [entity_id]);
     const ent = e.rows[0];
     if (!ent || !ent.email) return problem(req, res, { status: 400, ...words.noEmail() });
     const otp = require('../lib/otp').generateOTP('connector');

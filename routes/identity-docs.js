@@ -42,6 +42,7 @@ const { hasNul, textOf } = require('../lib/input-hygiene'); // K-1: a NUL byte i
 /** the typed value as text; a number, list or object is not text (FUZZ-8 textOf refuses it), so it reads as nothing and meets the same "does not look like a ..." refusal a wrong value always did */
 const valueText = (given) => (typeof given === 'string' || given == null ? textOf(given) : '');
 const { contract, faultOf, libraryRefusal, declaresStatuses } = require('../lib/identity-docs-contract'); // the contract (each route's operation) and the words of a fault
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 /**
  * The catalogue. Country pivots to a set of schemes; each says how to mask it and how it is checked.
@@ -129,7 +130,7 @@ const schemesFor = (cc) =>
  * trusted before (default IN), so an Australian shop was offered PAN and Aadhaar and could file one. One read, the shop's row.
  */
 async function shopCountry(entity_id) {
-  const r = await query('SELECT country FROM identities WHERE identity_id = $1', [entity_id]);
+  const r = await boundRead(query, entity_id, 'SELECT country FROM identities WHERE identity_id = $1', [entity_id]);
   return String((r.rows[0] && r.rows[0].country) || '')
     .trim()
     .toUpperCase();

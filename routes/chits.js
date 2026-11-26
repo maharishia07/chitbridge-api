@@ -50,7 +50,7 @@ async function countryOfEntity(entity_id) {
   if (cached && cached.at > Date.now() - 300000) return cached.c;
   let countryCode = null;
   try {
-    const found = await query(`SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
+    const found = await boundRead(query, entity_id, `SELECT country, gstn FROM identities WHERE identity_id = $1`, [entity_id]);
     const row = found.rows[0] || {};
     countryCode = require('../lib/profile').countryOf({ country: row.country, gstin: row.gstn });
   } catch (e) {
@@ -78,6 +78,7 @@ const invoiceIssued = require('../lib/invoice-issued'); // ACC-192 — an issued
 const assign = require('../lib/assign');
 const policy = require('../lib/policy'); // ⚠️ backlog 11 — each copy owner's retention FLOOR, applied at the mint
 const deliverline = require('../lib/deliverline');
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 const cost = require('../lib/cost');
 const raida = require('../lib/raida'); // b182 — the register on a line
 const { requireRegister } = require('../lib/register-gate'); // RAIL-90 — the register is a per-shop capability: off for a shop that never used it
@@ -508,7 +509,7 @@ async function sendSender(sendState, req, res) {
   let sender_display_name = req.identity.display_name;
   const staleClaim = !sender_bridge_id || !sender_display_name;
   if (staleClaim || (req.identity.identity_type === 'actor' && req.identity.parent_entity_id)) {
-    const _ent = await query(`SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
+    const _ent = await boundRead(query, sender_id, `SELECT bridge_id, display_name FROM identities WHERE identity_id = $1`, [sender_id]);
     if (_ent.rows[0]) {
       sender_bridge_id = _ent.rows[0].bridge_id;
       sender_display_name = _ent.rows[0].display_name;
@@ -1220,7 +1221,7 @@ async function sendPrefs(sendState, req, res) {
   const { sender_id, sender_bridge_id, sender_display_name, ROLE_MAP } = sendState;
   let { currency_code } = sendState;
   // Two-copy: the sender's view preference for self-chits (both | sent | received) — exposed via /me.
-  const prefRow = await query(`SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
+  const prefRow = await boundRead(query, sender_id, `SELECT self_copy_pref, currency_code FROM identities WHERE identity_id = $1`, [sender_id]);
   /* the sender's money (WX-R2R, above): the row's own code; a row without one asks lib/regional.currencyFor — the ONE resolver (its regional layer, its fallback) */
   const statedMoney = currency_code || (prefRow.rows[0] && prefRow.rows[0].currency_code) || (await require('../lib/regional').currencyFor(sender_id));
   currency_code = statedMoney
@@ -1441,7 +1442,7 @@ function orderMoneyOf({ stated, seller, sender, fallback }) {
  * @returns {Promise<string|null>} an upper-case code, or null when this installation does not know the seller's money
  */
 async function sellerMoney(sellerId) {
-  const row = await query('SELECT currency_code FROM identities WHERE identity_id = $1', [sellerId]);
+  const row = await boundRead(query, sellerId, 'SELECT currency_code FROM identities WHERE identity_id = $1', [sellerId]);
   const stated = row.rows[0] && row.rows[0].currency_code;
   if (stated) return String(stated).toUpperCase();
   if ((await require('../lib/ctpaddress').resolve(sellerId)).local === false) return null;
@@ -5785,7 +5786,7 @@ const clientMsgId = require('../lib/message-client-id'); /* F5b (1128) */
 /** B3 (Athi): a DISPUTE message posts in the ENTITY's name when an actor of it writes (the actor stays as provenance in the timeline); any other message keeps the writer's own name */
 async function disputeSenderName(req, entity_id, isDispute, display_name) {
   if (!isDispute || !req.identity.parent_entity_id) return display_name;
-  const found = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+  const found = await boundRead(query, entity_id, 'SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
     cbLog.orElse('chits POST /:chit_id/messages: the read failed — answered with none', { rows: [] })
   );
   return (found.rows[0] && found.rows[0].display_name) || display_name;
@@ -6203,7 +6204,7 @@ router.post(
       // B3 (Athi): dispute records + messages carry the ENTITY's name; the acting actor stays as provenance in the timeline.
       let entityName = display_name;
       if (req.identity.parent_entity_id) {
-        const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+        const _e = await boundRead(query, entity_id, 'SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
           cbLog.orElse('chits POST /:chit_id/disputes: the read failed — answered with none', { rows: [] })
         );
         if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;
@@ -6497,7 +6498,7 @@ router.put(
     // B3: the resolution message posts in the ENTITY name (the acting actor stays as provenance in the timeline).
     let entityName = display_name;
     if (req.identity.parent_entity_id) {
-      const _e = await query('SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
+      const _e = await boundRead(query, entity_id, 'SELECT display_name FROM identities WHERE identity_id = $1', [entity_id]).catch(
         cbLog.orElse('chits PUT /:chit_id/disputes/:dispute_id/resolve: the read failed — answered with none', { rows: [] })
       );
       if (_e.rows[0] && _e.rows[0].display_name) entityName = _e.rows[0].display_name;

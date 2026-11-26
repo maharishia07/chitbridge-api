@@ -44,6 +44,7 @@ const { zip } = require('../lib/zip-store');
 const { v4: uuidv4 } = require('uuid');
 const { generateBridgeId } = require('../lib/bridgeid');
 const { textOf } = require('../lib/input-hygiene');
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 const KIT = path.join(__dirname, '..', 'tools', 'tally-connector');
 const CATALOGUE = [
@@ -434,7 +435,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
         String(g || '')
           .replace(/\s/g, '')
           .toUpperCase();
-      const me = await query('SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(
+      const me = await boundRead(query, entity_id, 'SELECT gstn FROM identities WHERE identity_id = $1', [entity_id]).catch(
         logger.orElse('integrations POST /heartbeat: the read failed — answered with none', { rows: [] })
       );
       const myG = norm(me.rows[0] && me.rows[0].gstn),
@@ -527,7 +528,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
       overdue_hours = 12;
     let owner = {};
     try {
-      const pf = await query('SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
+      const pf = await boundRead(query, entity_id, 'SELECT policy_flags FROM identities WHERE identity_id = $1', [entity_id]);
       const f = (pf.rows[0] && pf.rows[0].policy_flags) || {};
       if (/^(received|accepted|completed|manual)$/.test(String(f.books_at || ''))) books_at = String(f.books_at);
       if (Number(f.books_overdue_hours) > 0) overdue_hours = Number(f.books_overdue_hours);
