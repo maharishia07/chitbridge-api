@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 4,
-  "meets": 696,
+  "partial": 5,
+  "meets": 695,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -57820,7 +57820,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/counters.js",
    "line": 79,
-   "hash": "75fc2af2821b0edd",
+   "hash": "7ca9bfdb36046f16",
    "does": "A counter name in -> we make the next free till counter id for your shop, owner only, refusing when none is left -> the new counter.",
    "errors": {
     "count": 0,
@@ -57910,10 +57910,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 API-93/94 lane api9394: handler and contract diff read; the contract names body.name as text (<=200): an object, number or list is refused 400 COUNTER_BAD_REQUEST instead of being String()-ed into a counter named [object Object]; text answers as before; no key, status or code removed, additive refusal only; 13 columns true",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "7ca9bfdb36046f16"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
