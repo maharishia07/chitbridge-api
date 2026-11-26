@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 5,
-  "meets": 695,
+  "partial": 0,
+  "meets": 700,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -6723,11 +6723,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e5b2e340d246e565"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff bdb975f0e..HEAD read for this route: handler text byte-equal, doors and statuses unchanged; the answer gains two optional keys inside the signed-as-at part, no_run (boolean) and words (string or null), from lib/bank-rec-log.js W4-12 (the one NO_RUN_WORDS sentence, one more read only when a month is signed but no run holds), declared in api-output-shapes.json; additive, read only; 13 machine columns true, stage2.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-bank-statements.js"
    ],
@@ -10275,11 +10274,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "fd0a79df071aa942"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff bdb975f0e..HEAD read for this route: handler text unchanged since the w4left sign-off; the hash moved because the published output shape (api-output-shapes.json) now lists the two additive optional keys the handler already sent, return_name and months_to_lock, matching the books-contract row; same seats, gates, statuses; 13 machine columns true, stage2.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js",
@@ -11138,11 +11136,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "4d5d4cfaceb56f36"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff 636f5d254..HEAD read for this route: cireds readability only, the transaction callback parameter h renamed handle at every use (5 lines), nothing else; same reads, same answer, doors, statuses and output shape; 13 machine columns true, stage2.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
@@ -13224,11 +13221,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "25c478aa834d9d83"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff 636f5d254..HEAD read for this route: cireds readability only, the priced-facts merge (KEEP keys onto the live set by position, only where the table row is silent, failure logged) moved verbatim into carryPricedFacts(_lines, _live) and called at the same point; same answer, doors, statuses and output shape; 13 machine columns true, stage2.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "authority-forms.html",
@@ -35061,11 +35057,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "7b07db7aedc656d3"
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff 636f5d254..HEAD read for this route: cireds readability only, the three query filters (by, till, chit) read through one queryText(value, shape) helper, same string-and-shape test and same regexes, else null; same SQL binds, answer, statuses and output shape; 13 machine columns true, stage2.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
