@@ -11,7 +11,7 @@ const src = fs.readFileSync(path.join(__dirname, '..', 'tools', 'tally-connector
 const cut = (name) => { const i = src.indexOf('function ' + name + '('); assert.ok(i > 0, name + ' found'); let d = 0, j = src.indexOf('{', i); for (let k = j; k < src.length; k++) { if (src[k] === '{') d++; else if (src[k] === '}' && --d === 0) return src.slice(i, k + 1); } };
 function counterNameWith(claim, id, person, given) {
   const ctx = { TILL_CLAIM: claim, ls: { get: (k, d) => (k === 'cb_till_id' ? id : k === 'cb_till_given' && given ? given : d) }, shopLs: (k) => k, tillId: () => id, personOn: () => !!person, onAgent: () => false, tillGivenKey: () => 'cb_till_given', cbQuiet() {}, String, Number, RegExp };
-  vm.runInNewContext(cut('counterName') + ';this.out = counterName();', ctx); return ctx.out;
+  vm.runInNewContext(cut('leftoverCounter') + ';' + cut('counterName') + ';this.out = counterName();', ctx); return ctx.out; /* cireds-1130: counterName asks leftoverCounter (the FW-40 and RW2-09 tests, split out for the readability guard) */
 }
 assert.strictEqual(counterNameWith(null, 'C2', false, 'C2'), 'Counter 2', 'the shop gave this counter C2 and holds no answer count yet: the numbered name');
 assert.strictEqual(counterNameWith({ counters: 3 }, 'C2', false, 'C2'), 'Counter 2', 'the shop holds counters: the numbered name');
