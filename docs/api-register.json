@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 4,
-  "meets": 696,
+  "partial": 2,
+  "meets": 698,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -37736,11 +37736,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "692dba974a5c7cd3"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-26 P2WAVE-SEC w5b: diff b1edc5fda..HEAD of routes/actors.js, lib/access-events.js, lib/employee-code.js read; the audit insert now takes inTransaction:true and runs under a SAVEPOINT so a failed audit row no longer aborts the transaction; success path, input schema, answer, codes and statuses unchanged; 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-employees.js",
     "cap-workforce.js",
@@ -42346,11 +42345,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "5f840165102ab753"
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-26 P2WAVE-SEC w5b: diff b1edc5fda..HEAD of lib/attachments-contract.js read; BASE64 pattern now matches one way (quadratic ReDoS gone: 60,000 newlines then a bad byte answers in 0 ms) and maxLength = ceil(MAX_BYTES*1.4)+256; tested: a valid 6 MB base64 with CRLF every 76 chars (8.6 MB, with or without the data: prefix) still passes; the only difference from the old accepted set is a line break directly before the = padding, which no encoder produces; 13 machine columns still true.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "attach-ui.js"
