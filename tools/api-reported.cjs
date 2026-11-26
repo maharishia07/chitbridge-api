@@ -31,10 +31,12 @@
  *                        proved every declared seat's answer: allowed seats answered, refused seats answered the one 401/403/404 Problem shape. Evidence `role_matrix: true`, written only by that tool.
  *   resource_cap         (column 16, OWASP API4:2023, lib/resource-cap.js) applies to every route. Holds when: a LIST read has a page-size cap through lib/bounds (B.limit) or lib/page-limit · a NAMED limiter (global or its own) stands in front of it ·
  *                        a write that sends mail, SMS, WhatsApp or an AI call has its own limiter tighter than the global. A route that fails names its causes in `reported_causes.resource_cap`. Static; tools/resource-cap-live.cjs writes the live evidence.
+ *   paged_read           (column 21, 26 Nov 2026, PERF1 / DISCIPLINES §2; lib/paged-read.js) applies to a GET that answers a LIST (rows, not one record). Holds when the list has a SERVER MAXIMUM (limitOf / pageArgs / B.limit, not the client's word)
+ *                        AND nothing asked answers one default page, not every row. The row carries the facts in `reported_facts.paged_read`: kind, mode (keyset|offset|none), default, max, unasked (bounded|everything). Causes: no_server_max · whole_when_unasked. A NEW list route must hold it (tools/api-ratchet.cjs).
  *   rate_limited         applies to every route. Holds when a limiter (express-rate-limit: a function with resetKey) OTHER than the global /api one sits in front of it, in the route's own
  *                        stack or mounted over its path. The global limiter is the floor for every route and proves nothing per endpoint.
  */
-const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix', 'junk_fuzz', 'resource_cap', 'audit_logged', 'stale_write_refused', 'documented_example'];
+const REPORTED_COLUMNS = ['bfla_role_check', 'parameterised_query', 'rate_limited', 'role_matrix', 'junk_fuzz', 'resource_cap', 'audit_logged', 'stale_write_refused', 'documented_example', 'paged_read'];
 
 /** junk_fuzz (column 17): the live junk run (tools/junk-fuzz.cjs) wrote `junk_fuzz: true` for the route: no 5xx, a registered Problem 4xx, no stack text, nothing written on a refusal, answered in time */
 const junkFuzzColumn = (evidence) => !!(evidence && evidence.junk_fuzz === true);
@@ -80,6 +82,13 @@ function resourceCapCauses({ leaf, source, fileText, operation }) {
   const limiters = limitersOf(leaf);
   const global = limiters.find((item) => !item.own && Number.isFinite(item.max));
   return require('../lib/resource-cap').causesOf({ key: leaf.method + ' ' + leaf.path, method: leaf.method, urlSchema: require('../middleware/validate').urlSchemaOf(operation), text: callTreeSource(source, fileText || ''), limiters, globalMax: global ? global.max : Infinity });
+}
+
+/** paged_read (column 21, PERF1): the paged-read facts of a GET and the causes it fails on (lib/paged-read.js) */
+function pagedReadOf({ leaf, source, fileText, operation, root }) {
+  const pagedRead = require('../lib/paged-read');
+  const facts = pagedRead.factsOf({ method: leaf.method, file: leaf.file || '', path: leaf.path, text: source, treeText: callTreeSource(source, fileText || ''), fileText, urlSchema: require('../middleware/validate').urlSchemaOf(operation), root });
+  return { facts, causes: pagedRead.causesOf(facts) };
 }
 
 /** bfla_role_check: only a route with a role gate in front of it applies; it holds on the test scene's evidence */
@@ -315,16 +324,18 @@ function exampleColumn(operation) {
 }
 
 /** the reported columns of one route: { columns, applies } — a column that does not apply reads true, as the machine columns do */
-function reportedOf({ leaf, source, fileText, evidence, operation, scope }) {
+function reportedOf({ leaf, source, fileText, evidence, operation, scope, root }) {
   const audit = auditColumn(leaf, source, fileText, evidence);
   const stale = staleColumn(leaf, source, fileText, evidence, scope && scope.money);
   const bfla = bflaColumn(leaf, evidence);
   const query = parameterisedColumn(source, fileText);
   const causes = resourceCapCauses({ leaf, source, fileText, operation });
+  const paged = pagedReadOf({ leaf, source, fileText, operation, root });
   return {
-    causes: { resource_cap: causes, stale_write_refused_na: stale.na ? [stale.na] : [] },
-    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence), junk_fuzz: junkFuzzColumn(evidence), resource_cap: causes.length === 0, audit_logged: audit.holds, stale_write_refused: stale.holds, documented_example: exampleColumn(operation) },
-    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true, junk_fuzz: true, resource_cap: true, audit_logged: audit.applies, stale_write_refused: stale.applies, documented_example: true }
+    facts: { paged_read: paged.facts },
+    causes: { resource_cap: causes, paged_read: paged.causes, stale_write_refused_na: stale.na ? [stale.na] : [] },
+    columns: { bfla_role_check: bfla.holds, parameterised_query: query.holds, rate_limited: rateLimitedColumn(leaf), role_matrix: roleMatrixColumn(operation, evidence), junk_fuzz: junkFuzzColumn(evidence), resource_cap: causes.length === 0, audit_logged: audit.holds, stale_write_refused: stale.holds, documented_example: exampleColumn(operation), paged_read: paged.causes.length === 0 },
+    applies: { bfla_role_check: bfla.applies, parameterised_query: query.applies, rate_limited: true, role_matrix: true, junk_fuzz: true, resource_cap: true, audit_logged: audit.applies, stale_write_refused: stale.applies, documented_example: true, paged_read: paged.facts.kind === 'list' }
   };
 }
 
@@ -342,4 +353,4 @@ function causeCounts(rows) {
   return out;
 }
 
-module.exports = { AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, auditEvidence, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
+module.exports = { pagedReadOf, AUDIT_WRITERS, auditColumn, staleColumn, staleKind, exampleColumn, auditTreeSource, auditEvidence, REPORTED_COLUMNS, roleMatrixColumn, junkFuzzColumn, causeCounts, limitersOf, resourceCapCauses, reportedOf, reportedCounts, roleGatesOf, rateLimitedColumn, bflaColumn, sqlCallsIn, parameterisedColumn, callTreeSource, isLimiter };
