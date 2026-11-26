@@ -48,6 +48,7 @@ const GUARDS_PART = [
   'till-shippable.test.cjs', // the installable till carries only modules with no database behind them
   'catalogue-blueprint.test.js', // two trades, one axiom, and a product sequence that cannot collide
   'backup-guard.test.cjs', // ⭐⭐⭐ BKP1: no workflow uploads a plaintext dump; backup.sh refuses without a passphrase; the nightly is never in this public repo
+  'pathfix-grants-list-columns.test.cjs', // wave 7b: GET /api/books-grants names its identities columns (no to_jsonb(i), no schema probe)
   'identities-no-whole-row.test.cjs', // SEC-186: no whole-row identities read (row JSON, star selects) - cb_app has column-level SELECT only
   'spin-scripts.test.cjs', // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs', // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
