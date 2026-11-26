@@ -171,5 +171,13 @@ t('a months blocker and a bank blocker reach the row', () => {
   assert.strictEqual(P.shape(src({ month_rows: rows(10, 0) }), grant(true), null, TODAY).stage_blocker, 'months');
   assert.strictEqual(P.shape(src({ bank: null }), grant(true), null, TODAY).stage_blocker, 'bank');
 });
+t('W4-07: the year-end band also carries Return overdue before Due in 30 days (hand: 2 overdue of 4 clients; 1 due in 30 days)', () => {
+  const rs = [row({ bas: { overdue: true, due_in_days: 60 } }), row({ bas: { overdue: true, due_in_days: 90 } }), row({ bas: { due_in_days: 12 } }), row({})];
+  const tiles = H.bandOf(rs, { seat: 'auditor' }).bands.find((x) => x.key === 'pipeline').tiles;
+  const keys = tiles.map((x) => x.key);
+  assert.ok(keys.indexOf('return_overdue') >= 0 && keys.indexOf('return_overdue') < keys.indexOf('return_due_30'), keys.join());
+  assert.strictEqual(tiles.find((x) => x.key === 'return_overdue').n, 2);
+  assert.strictEqual(tiles.find((x) => x.key === 'return_due_30').n, 1);
+});
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
