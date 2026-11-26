@@ -302,11 +302,23 @@ function checkReported(baseRatchet, head, headRatchet) {
   Object.keys(head.counts.reported || {}).forEach((name) => {
     const actual = head.counts.reported[name].failing;
     const before = baseRatchet.reported_failing && baseRatchet.reported_failing[name];
-    if (before !== undefined && actual > before + added) problems.push('routes failing the reported column ' + name + ' rose to ' + actual + ' (allowed ' + (before + added) + ')');
+    if (before !== undefined && actual > before + (name === 'paged_read' ? 0 : added)) problems.push('routes failing the reported column ' + name + ' rose to ' + actual + ' (allowed ' + (before + added) + ')');
     if (!headRatchet.reported_failing || headRatchet.reported_failing[name] < actual) problems.push('docs/api-ratchet.json reported_failing.' + name + ' is below the register: run node tools/api-ratchet.cjs --write');
   });
   console.log('reported (not yet in meets): ' + Object.keys(head.counts.reported || {}).map((name) => name + ' ' + head.counts.reported[name].failing + '/' + head.counts.reported[name].applies).join(' · '));
   return problems;
+}
+
+/**
+ * paged_read (column 21, PERF1, 26 Nov 2026): a NEW route that answers a list must have a SERVER MAXIMUM (limitOf / pageArgs / B.limit): a list the client alone sizes is the whole range on the day someone asks for it.
+ * The existing lists that answer everything when nothing is asked are a count that may only go down (checkReported: no `added` allowance for this column); a new list route may not add to it either.
+ */
+function checkPagedRead(baseRegister, head) {
+  const known = new Set(baseRegister.routes.map((row) => row.key));
+  return head.routes
+    .filter((row) => !known.has(row.key) && row.reported_facts && row.reported_facts.paged_read && row.reported_facts.paged_read.kind === 'list')
+    .filter((row) => row.reported_facts.paged_read.max === null)
+    .map((row) => 'new list route ' + row.key + ' has no server maximum on its page size (paged_read: read it through lib/page-limit limitOf / pageArgs, or declare query limit with a maximum)');
 }
 
 /** a code in the code must be a row of docs/ERROR-CODES.md; rows waiting for their sentence may not grow beyond the new codes */
@@ -385,7 +397,7 @@ function main() {
     const baseRegister = registerOf(base.dir);
     const headRatchet = readJson(RATCHET_FILE, null);
     const baseRatchet = readJson(path.join(base.dir, 'docs', 'api-ratchet.json'), headRatchet);
-    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(flag('--require-signed') || process.env.CB_REQUIRE_SIGNED === '1' ? checkSignedAtFold(baseRegister, head, ref) : [], checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet), checkTolerant(baseRatchet, head, headRatchet));
+    problems = checkRoutes(baseRegister, head, headRatchet, flag('--hotfix')).concat(flag('--require-signed') || process.env.CB_REQUIRE_SIGNED === '1' ? checkSignedAtFold(baseRegister, head, ref) : [], checkCounts(baseRatchet, head, headRatchet, stageOfCode(base.dir)), checkColumns(baseRatchet, head, headRatchet), checkPagedRead(baseRegister, head), checkReported(baseRatchet, head, headRatchet), checkCodes(baseRatchet, headRatchet), checkRawErrors(rawErrorWritesOf(base.dir), rawErrorWritesOf(ROOT), baseRatchet, headRatchet), checkDoes(baseRatchet, head, headRatchet), checkTolerant(baseRatchet, head, headRatchet));
   } finally {
     base.remove();
   }
