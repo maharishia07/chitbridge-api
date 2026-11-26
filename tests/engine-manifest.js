@@ -342,6 +342,8 @@ const INFRA_LIBS = [
   'db-role.js', 'bound-read.js',
   /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
   'page-limit.js',
+  /* PERF1 paged reads (26 Nov): paged-read.js reads a route's source to fill column 21 of the API register, list-allowance.js names the reads that are one record, a summary or a fixed list, with the reason — build-time register plumbing, not a rule of the platform. */
+  'paged-read.js', 'list-allowance.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
   'public-base.js',
   /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time
