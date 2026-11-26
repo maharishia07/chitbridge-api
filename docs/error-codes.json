@@ -7012,7 +7012,7 @@
    "code": "GRANT_ROUTE_NOT_LISTED",
    "status": "403",
    "title": "Not open to this access",
-   "shopkeeper": "This part of the books is not open to an auditor.",
+   "shopkeeper": "This is not part of this access.",
    "hint": "Use one of the reports the consent screen lists.",
    "owner_area": "network",
    "since": "2026-11-14",
