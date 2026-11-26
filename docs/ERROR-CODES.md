@@ -172,7 +172,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BAD_LINE_ID | 400 | Invalid line id | A line's own id is not an id, or two lines share one, so nothing was saved. | Leave line_id out and one is made, or send the one the chit gave. | chits | 2026-11-12 |
 | FILTER_INVALID | 400 | Invalid filter | A date or a person in the list's filter is not a value it can use. | Use a real day (2026-11-12) for a date and a person's id for assigned_to. | chits | 2026-11-12 |
 | GRANT_READ_ONLY | 403 | Read only | An auditor can read these books, never change them. | Ask the owner of the books to make the change. | network | 2026-11-14 |
-| GRANT_ROUTE_NOT_LISTED | 403 | Not open to this access | This part of the books is not open to an auditor. | Use one of the reports the consent screen lists. | network | 2026-11-14 |
+| GRANT_ROUTE_NOT_LISTED | 403 | Not open to this access | This is not part of this access. | Use one of the reports the consent screen lists. | network | 2026-11-14 |
 | RETENTION_TOO_LONG | 400 | Kept too long | A chit cannot be kept for more than a hundred years. | Choose an earlier expiry date. | chits | 2026-11-12 |
 | CTP_UNRESOLVABLE | 503 | Could not reach the other side | Where one of the chit's parties is hosted could not be read just now, so nothing was written. | Try again in a moment. | ctp | 2026-11-12 |
 | CHIT_AND_ACTION_REQUIRED | 400 | Task and action needed | Say which task and what to do with it. | Send the task and the action. | actors | 2026-10-23 |

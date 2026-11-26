@@ -22,13 +22,13 @@ const g = R.grossOf([{ role: 'sales', amount_minor: 13734000 }], [{ role: 'freig
 assert.deepStrictEqual(g, { sales_minor: 13734000, cost_of_sales_minor: 5395115, gross_profit_minor: 8338885 }); /* 137,340.00 - 53,951.15 = 83,388.85; wages (6015) and rent stay operating expenses (batch 1126) */
 console.log('mis-1121-grossprofit: ok (gross 83,388.85)');
 
-/* F-67: the year box counts the months from the books' start to today — Jul (before the books) and Dec–Jun (to come) are not months of "0 of N locked". Hand: Aug, Sep, Oct, Nov = 4. */
+/* F-67: the year box counts the months from the books' start to today — Jul (before the books) and Dec–Jun (to come) are not months of "0 of N locked". W4-13 (26 Nov): and the month in progress is not yet owed a lock (monthsNotLocked's own rule), so on 21 Nov: Aug, Sep, Oct = 3 (Nov ends 30 Nov). */
 const PC = require(path.join(__dirname, '..', 'lib', 'books-period-choices'));
 const month = (p, start, end, o) => Object.assign({ fiscal_year: '2026-27', period: p, start_date: start, end_date: end, entries: 0, status: 'open', before_books: false }, o);
 const rows = [month(1, '2026-07-01', '2026-07-31', { before_books: true }), month(2, '2026-08-01', '2026-08-31', { entries: 5 }), month(3, '2026-09-01', '2026-09-30', { entries: 5 }), month(4, '2026-10-01', '2026-10-31', { entries: 5 }), month(5, '2026-11-01', '2026-11-30', { entries: 2 }), month(6, '2026-12-01', '2026-12-31'), month(7, '2027-01-01', '2027-01-31')];
-assert.strictEqual(PC.yearsOf(rows, '2026-11-21')[0].months, 4);
+assert.strictEqual(PC.yearsOf(rows, '2026-11-21')[0].months, 3);
 assert.strictEqual(PC.yearsOf(rows)[0].months, 6); /* no day given: every month of the books, as before */
-console.log('mis-1121-grossprofit: year box count ok (4)');
+console.log('mis-1121-grossprofit: year box count ok (3)');
 assert.strictEqual(R.withFigures({ income: [], expenses: [] }), null); /* F-66: nothing last year = no comparison */
 assert.deepStrictEqual(R.throughOf('2027-06-30', '2026-11-21'), { through: '2026-11-21' }); /* F-67: the year to come is read to today */
 assert.deepStrictEqual(R.throughOf('2026-09-30', '2026-11-21'), {});

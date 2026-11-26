@@ -122,7 +122,9 @@ const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullP
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
 /** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */
 const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
-const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req));
+/** W4-03: the auditor's one file read: the kept statement loaded into the Bank page's reader (use=read, GET); the DOWNLOAD (use=download or none) stays held (MONEY-01 A6), and the grant's own log names the look */
+const statementReaderRead = (req) => req.method === 'GET' && filePattern(req.path) === '/bank/statement-files/:id/file' && !!req.query && req.query.use === 'read';
+const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req) || statementReaderRead(req));
 
 /**
  * THE MARKS ROUTER'S DOORS (MARK & QUERY, routes/marks.js, mounted at /api/marks): the same front, a third family. An allow-list again, keyed by METHOD and the full path:
