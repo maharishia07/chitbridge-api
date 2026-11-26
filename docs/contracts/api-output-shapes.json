@@ -4184,6 +4184,12 @@
               "null"
             ]
           },
+          "timezone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "from": {
             "type": "string"
           },

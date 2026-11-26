@@ -299,7 +299,6 @@
    "foreign_id_404": true
   },
   "GET /api/books/daybook": {
-   "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
    "bfla_role_check": true
