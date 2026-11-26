@@ -29,35 +29,53 @@ function requestOf(logLine) {
     const body = record.ctx && typeof record.ctx === 'object' ? Object.assign({}, record, record.ctx) : record;
     return body.msg === 'request' || body.message === 'request' || body.route !== undefined ? body : null;
   } catch (failure) {
-    return null; /* a line that is not JSON is not a request line: it is skipped and counted nowhere */
+    skipped.notJson++; /* a line that is not JSON is not a request line: it is skipped and counted */
+    return null;
   }
 }
 
+/* log lines that were not JSON: counted, so a log that is all noise says so */
+const skipped = { notJson: 0 };
+
 const percentile = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.ceil(p * sorted.length) - 1)] : 0);
+
+/** a request line that is a successful GET on a named route */
+function isReadAnswer(record) {
+  return !!record && record.method === 'GET' && record.status >= 200 && record.status < 300 && !!record.route;
+}
+
+/** one measured call added to its route's entry */
+function addCall(entry, record) {
+  entry.calls++;
+  entry.rows.push(record.rows);
+  if (typeof record.total === 'number') entry.max_total = Math.max(entry.max_total, record.total);
+  if (record.seat) entry.seats.add(record.seat);
+}
+
+/** one route's entry → its row of the report: calls, worst and p95 rows, calls over the line, biggest total, the seats that asked */
+function summaryOf(entry, min) {
+  const sorted = entry.rows.slice().sort((a, b) => a - b);
+  return { route: entry.route, calls: entry.calls, max_rows: sorted[sorted.length - 1], p95_rows: percentile(sorted, 0.95), over: sorted.filter((n) => n > min).length, max_total: entry.max_total, seats: [...entry.seats].sort() };
+}
 
 /** { routes: [{ route, method, calls, measured, max_rows, p95_rows, max_total, seats }], unmeasured, lines } from raw lines */
 function reportOf(lines, min) {
+  skipped.notJson = 0;
   const by = new Map();
   let unmeasured = 0;
   let seen = 0;
   for (const logLine of lines) {
     const record = requestOf(logLine);
-    if (!record || record.method !== 'GET' || !(record.status >= 200 && record.status < 300) || !record.route) continue;
+    if (!isReadAnswer(record)) continue;
     seen++;
     if (typeof record.rows !== 'number') { unmeasured++; continue; }
     const key = record.method + ' ' + record.route;
     const entry = by.get(key) || { route: key, calls: 0, rows: [], max_total: 0, seats: new Set() };
-    entry.calls++;
-    entry.rows.push(record.rows);
-    if (typeof record.total === 'number') entry.max_total = Math.max(entry.max_total, record.total);
-    if (record.seat) entry.seats.add(record.seat);
+    addCall(entry, record);
     by.set(key, entry);
   }
-  const routes = [...by.values()].map((entry) => {
-    const sorted = entry.rows.slice().sort((a, b) => a - b);
-    return { route: entry.route, calls: entry.calls, max_rows: sorted[sorted.length - 1], p95_rows: percentile(sorted, 0.95), over: sorted.filter((n) => n > min).length, max_total: entry.max_total, seats: [...entry.seats].sort() };
-  });
-  return { min, lists_seen: routes.length, get_lines: seen, unmeasured, routes: routes.filter((item) => item.max_rows > min).sort((a, b) => b.max_rows - a.max_rows) };
+  const routes = [...by.values()].map((entry) => summaryOf(entry, min));
+  return { min, lists_seen: routes.length, get_lines: seen, unmeasured, not_json: skipped.notJson, routes: routes.filter((item) => item.max_rows > min).sort((a, b) => b.max_rows - a.max_rows) };
 }
 
 /** the report as text */

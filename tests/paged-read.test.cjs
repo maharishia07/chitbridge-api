@@ -86,5 +86,13 @@ check('a write is never a list: a non-GET is refused the column (n/a), and nothi
   assert.strictEqual(facts('res.json({ items: [] })', { method: 'POST' }).kind, 'n/a');
   assert.deepStrictEqual(causesOf(null), []);
 });
+check('the drive tool counts the longest list of an answer, refuses nothing it cannot read, and a box that is down is status -1', () => {
+  const { rowsOf, answerOf } = require('../tools/paged-reads-drive.cjs');
+  assert.strictEqual(rowsOf({ items: [1, 2, 3], tags: [1] }), 3);
+  assert.strictEqual(rowsOf([1, 2]), 2);
+  assert.strictEqual(rowsOf({ ok: true }), -1);
+  assert.deepStrictEqual([answerOf('{"items":[1],"total":9}').rows, answerOf('{"items":[1],"total":9}').total], [1, 9]);
+  assert.strictEqual(answerOf('<html>').rows, -1);
+});
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
