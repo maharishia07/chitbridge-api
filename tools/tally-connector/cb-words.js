@@ -245,12 +245,12 @@ function cbStampRefusal(root) {
   var last = typeof window !== 'undefined' ? window.CB_LAST_REFUSAL : null;
   if (!last || !last.code || !root || root.nodeType !== 1 || Date.now() - (last.at || 0) > REFUSAL_FRESH_MS) return 0;
   var words = String(last.message || ''), stamped = 0;
-  var put = function (node) { if (!node.hasAttribute('data-cb-error-code')) { node.setAttribute('data-cb-error-code', last.code); stamped++; } };
+  var stampCode = function (node) { if (!node.hasAttribute('data-cb-error-code')) { node.setAttribute('data-cb-error-code', last.code); stamped++; } };
   var inner = function (node) { return !Array.prototype.some.call(node.children || [], function (kid) { return (kid.textContent || '').indexOf(words) >= 0; }); };
   var nodes = [root].concat(Array.prototype.slice.call(root.querySelectorAll ? root.querySelectorAll('*') : []));
   nodes.forEach(function (node) {
     if (node.closest && node.closest('[data-cb-error-code]')) return; /* a card or toast already carries its code */
-    if (node.getAttribute('role') === 'alert' || (words.length > 3 && (node.textContent || '').indexOf(words) >= 0 && inner(node))) put(node);
+    if (node.getAttribute('role') === 'alert' || (words.length > 3 && (node.textContent || '').indexOf(words) >= 0 && inner(node))) stampCode(node);
   });
   return stamped;
 }
