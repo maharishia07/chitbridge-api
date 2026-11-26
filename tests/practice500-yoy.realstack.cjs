@@ -98,7 +98,7 @@ async function main() {
     ok('after the revoke: total 2 = M1 and M3, M2 is gone', r.status === 200 && r.body.total === 2 && JSON.stringify(idsOf(r)) === JSON.stringify([M1.id, M3.id].sort()), JSON.stringify(r.body).slice(0, 300));
   } finally {
     await new Promise((resolve) => server.close(resolve));
-    for (const id of madeIdentities) { try { await query('DELETE FROM books_setting WHERE entity_id = $1', [id]); await query('DELETE FROM identities WHERE identity_id = $1', [id]); } catch (_) {} }
+    for (const id of madeIdentities) { try { await query('DELETE FROM identities WHERE identity_id = $1', [id]); } catch (_) {} }
   }
   console.log(pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
