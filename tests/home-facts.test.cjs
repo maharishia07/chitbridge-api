@@ -187,9 +187,9 @@ const get = (port, p) => new Promise((ok) => {
   t('till: 200', r.status, 200);
   t('till (REP-52): Sold leads the line, with the bills - the money is worded by the page ({money}), never "INR 4320.50"; the summary fallback is gross − refunds', [r.json.lines[0].text, r.json.lines[0].money], ['Sold today {money} · 12 bills in the books', { amount: 4320.5, currency: 'INR' }]);
   t('till: line value is the bill count', r.json.lines[0].value, 12);
-  t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'C1 open', value: 1 });
+  t('till: one counter open (C1 held by a live key, C2 closed)', r.json.lines[1], { text: 'Counter 1 open', value: 1 });
   F.allShut = true; r = await g('till');
-  t('till: every counter closed today -> "Counter C1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter C1 closed {time}', SHUT_AT]);
+  t('till: every counter closed today -> "Counter 1 closed {time}" with the ISO moment (M144)', [r.json.lines[1].text, r.json.lines[1].at], ['Counter 1 closed {time}', SHUT_AT]);
   F.allShut = false; r = await g('till');
   t('till: figures carry the raw numbers; no books day -> takings is omitted (the summary cannot split tenders), never 0', r.json.figures, { day: todayKey, bills: 12, sales: 4320.5, currency: 'INR', counters_open: 1 });
   t('till: at most 2 trips', r.trips <= 2, true);
@@ -204,7 +204,7 @@ const get = (port, p) => new Promise((ok) => {
   F.booksBills = false;
   F.booksDay = false;
   F.allShut = true; F.c2open = true; r = await g('till');
-  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold today {money} · 12 bills in the books', 'Counter C1 closed {time}', 'C2 open']);
+  t('till (M144): C1 closed today while C2 is still open - the closed mark is shown, then the open one', r.json.lines.map((l) => l.text), ['Sold today {money} · 12 bills in the books', 'Counter 1 closed {time}', 'Counter 2 open']);
   F.allShut = false; F.c2open = false;
   F.stale = true; r = await g('till');
   t('till: an older newest day is named by its date ({date}, at the day key), not called today', r.json.lines[0].text, 'Sold {money} · 12 bills in the books on {date}');
@@ -212,7 +212,7 @@ const get = (port, p) => new Promise((ok) => {
   F.booksPast = true; F.shopYear = { country: 'IN', currency_code: 'INR', books: { enabled: true }, gov: null }; r = await g('till');
   t('till (BD-F-01): the books newer day wins over the old counter closing: Sold 2,71,971.43 (27197143 paise) · 8 bills on that date', [r.json.lines[0].text, r.json.lines[0].money, r.json.figures.bills, r.json.figures.day], ['Sold {money} · 8 bills in the books on {date}', { amount: 271971.43, currency: 'INR' }, 8, '2026-11-20']);
   F.booksPast = false; F.shopYear = null; F.stale = false; F.summary = false; r = await g('till');
-  t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['C1 open']);
+  t('till: no summary at all -> no bills line (omitted, not 0)', r.json.lines.map((l) => l.text), ['Counter 1 open']);
   t('till: ...and no bills/takings figure', Object.keys(r.json.figures), ['counters_open']);
   F.summary = true;
   /* RPT2 · the teaser: 8 ISO weeks of sales + the newest closed week against the same week last year — rollup.series, in the same trip */
