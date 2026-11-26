@@ -3487,6 +3487,15 @@
               },
               "count": {
                 "type": "integer"
+              },
+              "no_run": {
+                "type": "boolean"
+              },
+              "words": {
+                "type": [
+                  "string",
+                  "null"
+                ]
               }
             },
             "additionalProperties": false
@@ -5167,7 +5176,9 @@
           "years": {},
           "books_start": {},
           "lock_date": {},
-          "gaps": {}
+          "gaps": {},
+          "return_name": {},
+          "months_to_lock": {}
         },
         "additionalProperties": false
       },
