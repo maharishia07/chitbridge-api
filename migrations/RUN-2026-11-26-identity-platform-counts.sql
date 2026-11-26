@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION ops.identities_public_under(p_handle text)
 RETURNS integer LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $fn$
   SELECT count(*)::int FROM public.identities
    WHERE p_handle IS NOT NULL AND length(p_handle) > 0
-     AND lower(user_id) LIKE replace(replace(replace(lower(p_handle), '\', '\'), '%', '\%'), '_', '\_') || '.%' ESCAPE '\'
+     AND lower(user_id) LIKE replace(replace(replace(lower(p_handle), '\', '\\'), '%', '\%'), '_', '\_') || '.%' ESCAPE '\'
      AND identity_type = 'entity' AND status = 'active' AND catalogue_visibility = 'public'
 $fn$;
 

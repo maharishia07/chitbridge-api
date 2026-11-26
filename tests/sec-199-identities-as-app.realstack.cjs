@@ -56,7 +56,7 @@ const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { r
     const unbound = await query(text, [client]);
     const bound = await boundRead(query, client, text, [client]);
     ok('4 with b860 on, the plain query sees no row and boundRead opens the row', unbound.rows.length === 0 && bound.rows.length === 1 && bound.rows[0].display_name === 'Name c ' + RUN, 'unbound ' + unbound.rows.length + ' bound ' + bound.rows.length);
-  } catch (e) { fail++; console.log('  FAIL setup/run: ' + String(e && e.message).slice(0, 300)); } finally {
+  } catch (e) { fail++; console.log('  FAIL setup/run: ' + String(e && e.stack).split(String.fromCharCode(10)).slice(0, 4).join(' / ').slice(0, 500)); } finally {
     try { await owner.query('GRANT SELECT ON identities TO cb_app'); await owner.query('ALTER TABLE identities NO FORCE ROW LEVEL SECURITY'); await owner.query('ALTER TABLE identities DISABLE ROW LEVEL SECURITY'); } catch (e) { console.log('  RESTORE FAILED: ' + e.message); }
     for (const p of ['identities_own_tree', 'identities_created_by_me', 'identities_read_counterparty', 'identities_read_grant_party']) { try { await owner.query('DROP POLICY IF EXISTS ' + p + ' ON identities'); } catch (e) { /* open anyway */ } }
     try { await owner.query('DELETE FROM books_access_grant WHERE grantor_entity = ANY($1::uuid[])', [planted]); await owner.query('DELETE FROM identities WHERE bridge_id = $1', ['B' + RUN + 'k']); await owner.query('DELETE FROM identities WHERE identity_id = ANY($1::uuid[])', [planted]); } catch (e) { console.log('  CLEANUP: ' + e.message); }
