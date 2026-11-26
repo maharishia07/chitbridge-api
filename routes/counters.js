@@ -40,7 +40,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const { withTransaction } = require('../db');
 const keys = require('../lib/api-keys');
-const { abandonMinted, isPending, patchCounter, readLocked, view } = require('../lib/counters-store'); // S7: the register's reads and writes live in lib/, not on this router
+const { abandonMinted, counterName, isPending, patchCounter, readLocked, view } = require('../lib/counters-store'); // S7: the register's reads and writes live in lib/, not on this router
 
 const sessionOnly = (req, res, next) => {
   if (req.api_key) return problem(req, res, { status: 403, ...words.sessionOnly() });
@@ -93,7 +93,7 @@ router.post('/', auth, sessionOnly, ownerOnly, checked('POST /'), async (req, re
         e.status = 400;
         throw e;
       }
-      const c = { id, name: name || 'Counter ' + id, created_at: new Date().toISOString(), held_by: null };
+      const c = { id, name: name || counterName(id), created_at: new Date().toISOString(), held_by: null };
       await patchCounter(db, entity_id, id, c);
       return c;
     });
