@@ -80,7 +80,7 @@ The REPORTED columns (CAP-17 slice 1, columns 14 role_matrix (every route asked 
 | GET | /api/books/compare | books | routes/books.js:1974 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes | yes | yes | no |
 | GET | /api/books/compare/:id | books | routes/books.js:2148 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes | yes | yes | no |
 | GET | /api/books/compare/:id/csv | books | routes/books.js:2157 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes | yes | yes | no |
-| GET | /api/books/daybook | books | routes/books.js:428 | yes | yes | yes | yes | yes | yes | yes | yes | no | yes | yes | yes | yes | partial | yes | yes | no | yes | yes | yes | yes | yes | no |
+| GET | /api/books/daybook | books | routes/books.js:428 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | partial | yes | yes | no | yes | yes | yes | yes | yes | no |
 | GET | /api/books/depreciation/schedule | books | routes/books.js:2523 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | no | no | yes | yes | yes | no |
 | GET | /api/books/dues | books | routes/books.js:674 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes | yes | yes | no |
 | GET | /api/books/events | books | routes/books.js:1746 | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | yes | meets standard | yes | yes | no | yes | yes | yes | yes | yes | no |

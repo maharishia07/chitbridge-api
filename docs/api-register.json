@@ -14,7 +14,7 @@
    },
    "output_allowlist": {
     "applies": 700,
-    "failing": 1
+    "failing": 0
    },
    "foreign_id_404": {
     "applies": 215,
@@ -7657,7 +7657,7 @@
     "error_tests": true,
     "status_codes": true,
     "strict_input": true,
-    "output_allowlist": false,
+    "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
     "inbound_validated": true,
