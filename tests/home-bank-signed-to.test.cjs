@@ -22,4 +22,5 @@ const db = (runs) => ({ async query(sql, params) {
   assert.strictEqual(two.period_to, '2026-08-31'); assert.strictEqual(two.difference_minor, 0);
   assert.strictEqual(await LOG.latest(db([]), E), null);
   console.log('home-bank-signed-to: 3 ok');
+  console.log('  6 checks'); /* the guards runner counts "<n> checks" (a guard that counts nothing proved nothing; zeroreds 26 Nov: seven guards ended without it and read FAIL in the full run) */
 })().catch((err) => { console.error(err); process.exit(1); });

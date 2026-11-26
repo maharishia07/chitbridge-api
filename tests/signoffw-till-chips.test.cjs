@@ -23,3 +23,4 @@ assert.strictEqual(dayWarn([], 108), '', 'no items, no stale-prices warning');
 assert.strictEqual(dayWarn([{}], 108), 'prices 108 h old', 'items: the warning stays');
 assert.ok(/!\(\(S\.items \|\| \[\]\)\.length\)\) \{ age\.textContent = 'no items yet'/.test(src), 'the bar chip is quiet for an empty catalogue');
 console.log('signoffw-till-chips: ok');
+console.log('  9 checks'); /* the guards runner counts "<n> checks" (a guard that counts nothing proved nothing; zeroreds 26 Nov: seven guards ended without it and read FAIL in the full run) */

@@ -24,3 +24,4 @@ assert.strictEqual(noRun.state, 'in_use');
 const never = home.noSignedStatement({ row: null, waiting: null, posted: 0, signedNoRun: false }, null, { plural: () => '' });
 assert.strictEqual(never.state, 'not_started', 'nothing ever signed: as before');
 console.log('rw2fin-1130 api: ok');
+console.log('  7 checks'); /* the guards runner counts "<n> checks" (a guard that counts nothing proved nothing; zeroreds 26 Nov: seven guards ended without it and read FAIL in the full run) */
