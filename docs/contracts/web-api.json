@@ -2593,6 +2593,7 @@
       "code": "1300",
       "name": "Customers (Sundry Debtors)",
       "group": "sundry_debtors",
+      "group_label": "Trade receivables",
       "dr_minor": 118000,
       "cr_minor": 0,
       "net_minor": 118000,
