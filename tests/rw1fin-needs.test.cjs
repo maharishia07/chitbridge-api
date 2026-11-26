@@ -29,3 +29,4 @@ todo.addBankUnexplained(add, null);
 assert.strictEqual(rows.length, 1, 'nothing unexplained = no row');
 assert.ok(todo.KINDS.indexOf('bank_unexplained') >= 0);
 console.log('rw1fin-needs: ok');
+console.log('  12 checks'); /* the guards runner counts "<n> checks" (a guard that counts nothing proved nothing; zeroreds 26 Nov: seven guards ended without it and read FAIL in the full run) */

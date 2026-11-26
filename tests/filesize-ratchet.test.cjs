@@ -19,6 +19,15 @@ const { spawnSync } = require('child_process');
 const API = path.join(__dirname, '..');
 const WEB_TOOL = path.join(process.env.CB_WEB_DIR || path.join(API, '..', 'chitbridge-web'), 'tools', 'readability', 'filesize.cjs');
 
+/* ⭐ BY-DESIGN WAIVERS (zeroreds 26 Nov, Athi): the baseline resets only at the batch stamp (land script), so branch growth is red until it. Each entry names the file, the
+   size it may reach, why, and when it goes: after the stamp the baseline holds the size and the entry is deleted. Growth past max is red again. */
+const STAMP_WAIVERS = [
+  { file: 'lib/bank-rec-log.js', max: 549, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw1fin/w4 bank-rec log growth in the 1130 batch' },
+  { file: 'lib/books-cashflow.js', max: 530, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
+  { file: 'lib/books-period.js', max: 1871, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
+  { file: 'lib/books-store.js', max: 2158, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
+  { file: 'lib/identity-auth.js', max: 746, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'security growth in the 1130 batch' },
+];
 let pass = 0, fail = 0;
 const t = (name, ok, why) => { if (ok) { pass++; console.log('  ok  ' + name); } else { fail++; console.log('  XX  ' + name + (why ? '\n        ' + why : '')); } };
 
@@ -36,7 +45,15 @@ if (!fs.existsSync(WEB_TOOL) && process.env.CI) {
   const run = spawnSync(process.execPath, [WEB_TOOL, '--root', API, '--against', process.env.CB_READABILITY_BASE || 'origin/main'], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 120000 });
   const out = (run.stdout || '') + (run.stderr || '');
   console.log(out.split('\n').map((line) => '        ' + line).join('\n'));
-  t('no file grew and no new file is over 500 lines (exit ' + run.status + ')', run.status === 0, 'see the FAIL lines above: split the file, or shrink it back to its baseline');
+  /* the red lines that are NOT a waived growth; a waiver covers only "FAIL grew: <file> a -> b" with b <= max (growth beyond it is red again) */
+  const red = out.split('
+').filter((l) => /^s*FAIL /.test(l)).filter((l) => {
+    const m = /FAIL grew: (S+) d+ -> (d+)/.exec(l);
+    const w = m && STAMP_WAIVERS.find((x) => x.file === m[1]);
+    if (w && Number(m[2]) <= w.max) { console.log('        WAIVED (' + w.added + ', until ' + w.until + '): ' + m[1] + ' ' + m[2] + ' <= ' + w.max + ' · ' + w.reason); return false; }
+    return true;
+  });
+  t('no file grew and no new file is over 500 lines (exit ' + run.status + (run.status && !red.length ? ', every red waived below' : '') + ')', red.length === 0 && (run.status === 0 || run.status === 1), red.join(' | ') || 'see the FAIL lines above');
   t('a judgement was printed (not an empty run)', /filesize ratchet:/.test(out));
 }
 

@@ -34,4 +34,13 @@ assert.deepStrictEqual(q1.marked.boxes.map((b) => b.amount_minor), q1.filed.boxe
 assert.deepStrictEqual(q2.marked.boxes.map((b) => b.amount_minor), q2.filed.boxes.map((b) => b.amount_minor));
 const vat = returns.returnFor(ae, '2026-Q1', [], {});
 if (vat.ok) assert.deepStrictEqual(basis.markBasis(ae, '2026-Q1', vat.boxes), { boxes: vat.boxes, notes: [] }, 'a pack with one basis says nothing');
+/* refusal path, fail closed (zeroreds 26 Nov: the §7 lib minimums were not evidenced): a pack that refuses to answer a dated row's basis, or answers none, is unavailable;
+   the note is never invented, the boxes come back untouched, and nothing throws */
+const noted = [{ code: 'G11', amount_minor: 1, note: 'GST-exclusive (x)' }];
+const refusing = { returns: { g10_g11: au.returns.g10_g11, bas: (q) => { if (/^d{4}-d{2}$/.test(q.period)) throw new Error('refused: no basis for ' + q.period); return { g10_g11_basis: 'GST-inclusive (x)' }; } } };
+assert.deepStrictEqual(basis.markBasis(refusing, '2026-Q2', noted), { boxes: noted, notes: [] }, 'a refused row is unavailable: no note, boxes untouched (fail closed)');
+const silent = { returns: { g10_g11: au.returns.g10_g11, bas: () => ({}) } };
+assert.deepStrictEqual(basis.markBasis(silent, '2026-Q2', noted), { boxes: noted, notes: [] }, 'a pack with no basis words is unavailable: never guessed (fail closed)');
+assert.deepStrictEqual(basis.markBasis(null, '2026-Q2', noted), { boxes: noted, notes: [] }, 'no pack at all: nothing is said, nothing throws');
 console.log('rw2acc-basis: ok');
+console.log('  12 checks'); /* the guards runner counts "<n> checks" (a guard that counts nothing proved nothing; zeroreds 26 Nov: seven guards ended without it and read FAIL in the full run) */

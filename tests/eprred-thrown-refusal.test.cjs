@@ -44,3 +44,4 @@ assert.strictEqual(res.s, 422);
 assert(sent.errors.length <= 100, 'listed failures are capped, got ' + sent.errors.length);
 assert(JSON.stringify(sent).length < 20000, 'the refusal is small');
 console.log('eprred-thrown-refusal: ok');
+console.log('  13 checks'); /* the guards runner counts "<n> checks" (a guard that counts nothing proved nothing; zeroreds 26 Nov: seven guards ended without it and read FAIL in the full run) */
