@@ -7394,6 +7394,17 @@ function paintViewOnly(){
   if (vo) { b.disabled = true; b.title = tillViewOnlyWhy(); b.setAttribute('data-vo', '1'); }
   else if (b.getAttribute('data-vo') === '1') { b.disabled = !CART.length; b.title = ''; b.setAttribute('data-vo', '0'); }
 }
+/** the "prices as at" chip: hidden while the prices are fresh (≤ 90 min), amber from 90, red from 240 */
+function paintAgePill(){
+  var age = document.getElementById('agepill');
+  /* FW-40: an empty catalogue has no prices to be old: no red "h old" chip (the shelf already says "Nothing to sell yet") */
+  if (S && S.at && !((S.items || []).length)) { age.textContent = 'no items yet'; age.className = 'pill'; age.hidden = true; }
+  else if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
+    age.textContent = 'prices as at ' + clock12(S.at) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
+    age.className = 'pill' + (mins > 240 ? ' off' : '');
+    age.hidden = mins <= 90; }
+  else { age.textContent = 'no prices yet'; age.className = 'pill off'; age.hidden = false; }
+}
 function paintStatus(){
   try { paintShopName(); paintWho(); } catch (e) { cbQuiet('paintStatus:1', e); }
   try { paintViewOnly(); } catch (e) { cbQuiet('paintStatus:vo', e); }
@@ -7427,14 +7438,7 @@ function paintStatus(){
       net.hidden = false;
     }
   }
-  var age = document.getElementById('agepill');
-  /* FW-40: an empty catalogue has no prices to be old: no red "h old" chip (the shelf already says "Nothing to sell yet") */
-  if (S && S.at && !((S.items || []).length)) { age.textContent = 'no items yet'; age.className = 'pill'; age.hidden = true; }
-  else if (S && S.at) { var mins = Math.round((Date.now() - new Date(S.at).getTime())/60000);
-    age.textContent = 'prices as at ' + clock12(S.at) + (mins > 90 ? ' · ' + Math.round(mins/60) + ' h old' : '');
-    age.className = 'pill' + (mins > 240 ? ' off' : '');
-    age.hidden = mins <= 90; }
-  else { age.textContent = 'no prices yet'; age.className = 'pill off'; age.hidden = false; }
+  paintAgePill();
   var d = STATE.today || {};
   /**
    * ⭐⭐ AT THE TOP OF A TOUCH SHAPE, THIS BILL — NOT THE DAY ([TILL-44], 2026-09-18). Athi: *"my eyes are
@@ -10746,17 +10750,24 @@ function whoWord(){
   if (WHO.kind === 'entity' || (shop && String(WHO.name).trim().toLowerCase() === shop)) return 'Shop login';
   return WHO.name;
 }
+/** a counter id left on this device by another shop (FW-40 · RW2-09): it is not a counter of THIS shop and is not named as one */
+function leftoverCounter(){
+  if (personOn()) return false;
+  /* FW-40: the shop's register is the one source of how many counters there are. When its last answer says it holds none (till.counters = 0), a device-wide leftover id (cb_till_id, from another shop) is not a counter of THIS shop and is not named as one */
+  if (TILL_CLAIM && Number(TILL_CLAIM.counters) === 0) return true;
+  if (onAgent()) return false;
+  /* RW2-09: and a number the shop never gave THIS shop's counter is a leftover too. A sign-in with no paired key gets no `till` block (no claim), so TILL_CLAIM stayed null and the counters=0 test above never ran: the device's C2 from an earlier shop printed as "Counter 2" beside Settings' "0 counters". Given = tillClaim() stored the shop's answer under this shop's own key. */
+  var given = ''; try { given = String(ls.get(tillGivenKey(), '') || ''); } catch (e) { cbQuiet('counterName:3', e); }
+  return !given;
+}
 function counterName(){
-  var own = ''; try { own = String(ls.get(shopLs('cb_till_counter_name'), '') || '').trim(); } catch (e) { cbQuiet('counterName:1', e); }
-  if (own) return own;
+  var named = ''; try { named = String(ls.get(shopLs('cb_till_counter_name'), '') || '').trim(); } catch (e) { cbQuiet('counterName:1', e); }
+  if (named) return named;
   var stored = String(ls.get('cb_till_name', '') || '').trim();
   if (stored && !/^Counter\s*\d*$/i.test(stored)) return stored;
   var id = ''; try { id = String(tillId() || ''); } catch (e) { cbQuiet('counterName:2', e); }
   /* CTR-146: a plain number is a name (C5 = Counter 5); a code such as DQLG is not one, so it is not shown */
-  /* FW-40: the shop's register is the one source of how many counters there are. When its last answer says it holds none (till.counters = 0), a device-wide leftover id (cb_till_id, from another shop) is not a counter of THIS shop and is not named as one */
-  if (!personOn() && TILL_CLAIM && Number(TILL_CLAIM.counters) === 0) return 'Counter';
-  /* RW2-09: and a number the shop never gave THIS shop's counter is a leftover too. A sign-in with no paired key gets no `till` block (no claim), so TILL_CLAIM stayed null and the counters=0 test above never ran: the device's C2 from an earlier shop printed as "Counter 2" beside Settings' "0 counters". Given = tillClaim() stored the shop's answer under this shop's own key. */
-  if (!personOn() && !onAgent()) { var given = ''; try { given = String(ls.get(tillGivenKey(), '') || ''); } catch (e) { cbQuiet('counterName:3', e); } if (!given) return 'Counter'; }
+  if (leftoverCounter()) return 'Counter';
   return /^C?\d+$/i.test(id) ? ('Counter ' + id.replace(/^C/i, '')) : 'Counter';
 }
 
@@ -12969,6 +12980,8 @@ function styleFit(cfg, dev){
   /* ⭐ shape too — the drawing must not work it out a second time and get a different answer */
   return { per: per, rows: rows, on: per * rows, kmin: kmin, gap: gap, billPc: billPc, shape: shape, keyShape: isCard ? 'card' : 'tile' };
 }
+/** the payment chips of the style preview: UPI only where the pack has it */
+function paysChips(){ return '<i>Cash</i><i>Card</i>' + (packHasUpi() ? '<i>UPI</i>' : ''); }
 function styleScreen(cfg, dev){
   var K = window.CBScreen; if (!K) return '';
   var L = K.LAYOUTS[cfg.layout] || K.LAYOUTS.horizontal;
@@ -13069,7 +13082,7 @@ function styleScreen(cfg, dev){
     + (shape === 'mobile' ? '' : '<div class="m-line" style="color:var(--dim)"><b>Customer (optional)</b></div>')
     + lines
     + '<div class="m-tot"><span>Saved ' + money(144.75) + '</span><span>Total</span><b>' + money(2750.25) + '</b></div>'
-    + '<div class="m-pays"><i>Cash</i><i>Card</i>' + (packHasUpi() ? '<i>UPI</i>' : '') + '</div>'
+    + '<div class="m-pays">' + paysChips() + '</div>'
     + '<div class="m-save">Save &amp; print · F9</div>'
     + '<div class="m-sync">all bills sent · last at 3:41 pm</div>'
     + '</div>';
@@ -23410,11 +23423,15 @@ function modePick(m){
   var why = modeWhy(m); if (why) { toastLine(why); return; }
   setMode(m);
 }
+/** the mode a person picked lasts for this tab (a reload keeps it) */
+function rememberModeTab(mode){
+  try { sessionStorage.setItem('cb_till_mode_tab', mode); } catch (e) { cbQuiet('setMode:2', e); }
+}
 function setMode(m){
   var whyNot = modeWhy(m); if (whyNot) { toastLine(whyNot); m = 'sell'; }   /* M127: a saved or typed mode this shop cannot use */
   MODE = OPS.indexOf(m) >= 0 ? m : 'sell';
   ls.set('cb_till_mode', MODE);
-  try { sessionStorage.setItem('cb_till_mode_tab', MODE); } catch (e) { cbQuiet('setMode:2', e); }
+  rememberModeTab(MODE);
   OPS.forEach(function(k){
     var el = document.getElementById('pane_' + k); if (el) el.style.display = (k === MODE) ? 'flex' : 'none';
   });
@@ -29082,6 +29099,15 @@ function paintPurpose(){
   if (inp && document.activeElement !== inp) inp.value = says('subject');
 }
 
+/** RW1-19: UPI is India's mode (reg-in paymentModes.upi): another country's counter shows neither its row nor its hint */
+function paintUpiRows(o, set){
+  var upiOn = packHasUpi();
+  ['row_upi', 'row_upilabel', 'setupupi'].forEach(function(id){ var el = document.getElementById(id); if (el) el.hidden = !upiOn; });
+  var findBox = document.getElementById('set_find');
+  if (findBox) findBox.placeholder = 'find a setting — try ' + (upiOn ? '"upi", ' : '') + '"voice", "bill number"';
+  set('set_upi', (o.upi && o.upi.payee) || '');
+  set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
+}
 function paintSetup(){
   /* ⭐ what this counter is for, painted from the registry ([TILL-179]) */
   try { paintPurpose(); } catch (e) { cbQuiet('paintSetup:1', e); }
@@ -29112,13 +29138,7 @@ function paintSetup(){
   ['add', 'total', 'collect'].forEach(function(k){
     var el = document.getElementById('spk_' + k); if (el) el.checked = !!spkF[k];
   });
-  /* RW1-19: UPI is India's mode (reg-in paymentModes.upi): another country's counter shows neither its row nor its hint */
-  var upiOn = packHasUpi();
-  ['row_upi', 'row_upilabel', 'setupupi'].forEach(function(id){ var el = document.getElementById(id); if (el) el.hidden = !upiOn; });
-  var findBox = document.getElementById('set_find');
-  if (findBox) findBox.placeholder = 'find a setting — try ' + (upiOn ? '"upi", ' : '') + '"voice", "bill number"';
-  set('set_upi', (o.upi && o.upi.payee) || '');
-  set('set_upilabel', (o.upi && o.upi.label) || 'UPI');
+  paintUpiRows(o, set);
   /* ⚠️ the STORED choice, not the effective one — cartCols() also drops a column on a narrow screen, and a tick
      that unticked itself when the window got smaller would read as the counter losing the setting. */
   /* ⭐ the bill-number scheme, and a WORKED EXAMPLE — the fastest way to see what a setting will actually print */
@@ -29438,10 +29458,10 @@ async function returnFindBill(id){
   var held = rows.filter(byId)[0];
   if (held) return { bill: held };
   /* RW2-05: the bill is read BY ITS ID, of any age (Square and Lightspeed refund any past sale); only the answer "no such counter bill" is a refusal */
-  var h = null; try { h = await HOST.history(365, null, id); } catch (e) { cbQuiet('returnFindBill:2', e); }
-  if (!h || h.offline || !Array.isArray(h.bills)) return { why: 'The line is down, so this bill cannot be read from the shop. Try again when it is back.' };
-  var got = h.bills.filter(byId)[0];
-  if (!got || !got.no) return { why: 'The shop holds no counter bill with that address, so it cannot be returned here. A sale made another way is returned from its own page.' };
+  var served = null; try { served = await HOST.history(365, null, id); } catch (e) { cbQuiet('returnFindBill:2', e); }
+  if (!served || served.offline || !Array.isArray(served.bills)) return { why: 'The line is down, so this bill cannot be read from the shop. Try again when it is back.' };
+  var found = served.bills.filter(byId)[0];
+  if (!found || !found.no) return { why: 'The shop holds no counter bill with that address, so it cannot be returned here. A sale made another way is returned from its own page.' };
   var same = rows.filter(function(b){ return String(b.no) === String(got.no) && b.kind !== 'credit_note'; })[0];
   if (same) return { bill: same };
   var row = Object.assign({}, got, { customer: serverBillCustomer(got), _sent: { chit_id: got.chit_id }, _verified: Date.now(), _from_server: true });
@@ -29906,7 +29926,7 @@ window.addEventListener('resize', function(){ try { chipsOverflow(); } catch (e)
 function startMode(){
   var asked = /[?&]mode=([a-z]+)/.exec(location.search);
   if (asked && OPS.indexOf(asked[1]) >= 0) return asked[1];
-  try { return sessionStorage.getItem('cb_till_mode_tab') || 'sell'; } catch (e) { return 'sell'; }
+  try { return sessionStorage.getItem('cb_till_mode_tab') || 'sell'; } catch (e) { cbQuiet('startMode:1', e); return 'sell'; }
 }
 setMode(startMode());
 /* ⭐ the counter opens in the shape and layout this shop chose — before the first paint anybody looks at */
