@@ -468,12 +468,8 @@ const queryAsEach = async (ids, text, paramsOf, options) => {
   list.forEach((_, i) => { rows.push(...all[first + 2 * i].rows); });
   return { rows, rowCount: rows.length };
 };
-/**
- * HOMESPEED (1130) · PLAN ONCE: a firm's read runs the SAME statement for 150 clients and the planner plans the text anew for each (about 22 of the 24 ms of a statement on a small client: the statement is large and row security is expanded on every table it names).
- * queryAsEach(ids, text, paramsOf, { planOnce: true }) PREPAREs the statement once in the message and EXECUTEs it per id (same binding, same values, same rows, same order). Postgres plans the first executions per client
- * and keeps a generic plan only when its own estimate is not costlier (plan_cache_mode auto), so a plan is never chosen that it thinks worse. The name is dropped at the end of the message; DEALLOCATE ALL opens it, so a name left by a
- * message that failed half way (PREPARE is not rolled back) never blocks the next (nothing else here names a prepared statement).
- */
+/* HOMESPEED (1130) · PLAN ONCE: a firm's read runs the SAME large statement for 150 clients and the planner plans the text anew for each (about 22 of 24 ms on a small client). { planOnce: true } PREPAREs it once in the message and EXECUTEs it per id
+ * (same binding, values, rows, order); plan_cache_mode stays auto, so a generic plan is kept only when its own estimate is not costlier. DEALLOCATE ALL opens the message so a name left by a failed one (PREPARE is not rolled back) never blocks the next. */
 const PLAN_ONCE = '_cb_plan_once';
 const planOncePrefix = (text) => ['DEALLOCATE ALL', 'PREPARE ' + PLAN_ONCE + ' AS ' + text];
 /** the message of queryAsEach: the texts that ride in it, and the position of the FIRST id's rows in the answer (a planned message opens with DEALLOCATE ALL and PREPARE, two results, then a binding + statement pair per id) */
