@@ -71,9 +71,7 @@ check('the register: every GET row carries the facts and the new list routes nee
 check('docs/contracts/paged-read-routes.json (the web scan reads its copy) equals what the register says', () => {
   const fs = require('fs');
   const { textOf } = require('../tools/paged-reads-routes.cjs');
-  const file = fs.readFileSync(__dirname + '/../docs/contracts/paged-read-routes.json', 'utf8').replace(/
-/g, '
-');
+  const file = fs.readFileSync(__dirname + '/../docs/contracts/paged-read-routes.json', 'utf8').split(String.fromCharCode(13)).join('');
   assert.strictEqual(file, textOf(require('../docs/api-register.json')), 'run node tools/paged-reads-routes.cjs');
 });
 check('the report lists a route over the line, worst first, and counts a line with no rows as unmeasured', () => {
