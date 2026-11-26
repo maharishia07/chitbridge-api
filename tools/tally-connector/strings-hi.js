@@ -1013,6 +1013,9 @@
     'Your access does not include costs, so the bank statements are hidden.': "आपकी पहुँच में लागत शामिल नहीं है, इसलिए बैंक स्टेटमेंट छिपे हैं।",
     '{count} product\u0005one': '{count} उत्पाद',
     '{count} product\u0005other': '{count} उत्पाद',
+    '{count} month to lock\u0005one': '{count} महीना लॉक होना बाकी',
+    '{count} month to lock\u0005other': '{count} महीने लॉक होने बाकी',
+    'Signed off': 'हस्ताक्षरित',
     /* MACHINE-WRITTEN (loc17, 2026-11-17), NOT REVIEWED BY A NATIVE SPEAKER: needs a native read before a customer sees them */
     'Accounts': 'खाते',
     'Acting for': 'इनकी ओर से काम',
@@ -1202,7 +1205,7 @@
     'books began part-way': 'बही साल के बीच से शुरू हुई',
     'no bank statement signed': 'कोई बैंक विवरण मंज़ूर नहीं',
     'no statement kept': 'कोई विवरण नहीं रखा गया',
-    'not signed off yet': 'अभी मंज़ूर नहीं',
+    'not signed off': 'अभी मंज़ूर नहीं',
     'nothing unexplained': 'कुछ भी अस्पष्ट नहीं',
     'unexplained {a}': '{a} अस्पष्ट',
     '{a} unexplained': '{a} अस्पष्ट',
