@@ -43,8 +43,7 @@ const { textOf } = require('../lib/input-hygiene');
 
 
 async function countEntities(rootId) {
-  const { rows } = await query(`SELECT count(*)::int AS n FROM identities WHERE governed_by = $1`, [rootId]);
-  return rows[0].n;
+  return require('../lib/platform-count').governedCount(rootId); /* SEC-198: a count across shops goes through the named platform door */
 }
 
 // ── GET /api/governance/entities/:id — read-only view, no PII ──

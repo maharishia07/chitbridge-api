@@ -4,6 +4,7 @@
  * fails here and not on sit-au. Unit tests run with full rights and never see 42501.
  *   1 armed: a whole-row read (to_jsonb(i)) as cb_app answers 42501 (without this the rest proves nothing)
  *   2 lib/books-grant.js list(firm) answers (the 244e603dd923 bug: the client list was a 500)    3 lib/work-client.js readClients names the client from its own identities row, as cb_app
+ *   5/6 the platform count door (ops.identities_governed_count / identities_public_under, RUN-2026-11-26) answers as cb_app where the plain count sees 0
  *   4 the SEC-198 door: with b860 on, boundRead(query, id, 'SELECT ... FROM identities WHERE identity_id = $1') opens the row and the plain query does not (the 62 sites moved to it)
  * Run: CB_OWNER_DB_URL=postgres://postgres:...@localhost/db DATABASE_URL=postgres://cb_app:...@localhost/db node tests/sec-199-identities-as-app.realstack.cjs   (owner role: plants rows, applies the RUN files, puts identities back to open in finally)
  * CARD 18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
@@ -31,7 +32,7 @@ const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { r
   const owner = new Pool({ connectionString: ownerUrl, max: 1 });
   const planted = [];
   try {
-    for (const n of ['RUN-2026-11-16-sec-186-revoke-credential-columns.sql', 'RUN-2026-11-14-b860-identities-rls.sql', 'RUN-2026-11-16-identities-read-grant-party.sql']) await owner.query(file(n));
+    for (const n of ['RUN-2026-11-16-sec-186-revoke-credential-columns.sql', 'RUN-2026-11-14-b860-identities-rls.sql', 'RUN-2026-11-16-identities-read-grant-party.sql', 'RUN-2026-11-26-identity-platform-counts.sql']) await owner.query(file(n));
     const plant = async (tag) => {
       const r = await owner.query(`INSERT INTO identities (bridge_id, display_name, email, user_id, identity_type, status, country, currency_code, pin_hash) VALUES ($1, $2, $3, $4, 'entity', 'active', 'AU', 'AUD', 'x') RETURNING identity_id`, ['B' + RUN + tag, 'Name ' + tag + ' ' + RUN, RUN + tag + '@s199.test', 'u-' + RUN + tag]);
       planted.push(r.rows[0].identity_id); return r.rows[0].identity_id;
@@ -39,6 +40,7 @@ const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { r
     const client = await plant('c'), firm = await plant('f');
     await owner.query(`INSERT INTO books_access_grant (grantor_entity, grantee_entity, purpose, granted_by, expires_at) VALUES ($1, $2, 'sec199 test', $1, now() + interval '1 day')`, [client, firm]);
 
+    await owner.query(`INSERT INTO identities (bridge_id, display_name, email, user_id, identity_type, status, country, currency_code, governed_by, catalogue_visibility) VALUES ($1, 'Kid', $2, $3, 'entity', 'active', 'AU', 'AUD', $4, 'public')`, ['B' + RUN + 'k', RUN + 'k@s199.test', 'u-' + RUN + 'c.kid', client]);
     ok('1 armed: a whole-row identities read as cb_app is refused 42501', (await failsWith(() => query('SELECT to_jsonb(i) FROM identities i LIMIT 1'))) === '42501');
     let listed = null, why = null;
     try { listed = await grants.list(firm); } catch (e) { why = e.code || e.message; }
@@ -47,6 +49,9 @@ const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { r
     try { facts = await workClient.readClients([client]); } catch (e) { why = e.code || e.message; }
     const row = facts && facts.get(String(client));
     ok('3 work-client readClients reads the client\'s name, country and money from its own identities row', !why && row && row.identity && row.identity.country === 'AU' && row.identity.currency_code === 'AUD', why || JSON.stringify(row));
+    const platform = require('../lib/platform-count');
+    ok('5 platform door: governedCount(client) is 1 and publicUnder(client handle) is 1 as cb_app under b860, though the plain read sees 0', (await platform.governedCount(client)) === 1 && (await platform.publicUnder('u-' + RUN + 'c')) === 1 && (await query('SELECT count(*)::int AS n FROM identities WHERE governed_by = $1', [client])).rows[0].n === 0);
+    ok('6 platform door answers 0 for a handle that holds nothing and for a LIKE metacharacter handle', (await platform.publicUnder('nobody-' + RUN)) === 0 && (await platform.publicUnder('%')) === 0);
     const text = 'SELECT display_name FROM identities WHERE identity_id = $1';
     const unbound = await query(text, [client]);
     const bound = await boundRead(query, client, text, [client]);
@@ -54,7 +59,7 @@ const failsWith = async (fn) => { try { await fn(); return null; } catch (e) { r
   } catch (e) { fail++; console.log('  FAIL setup/run: ' + String(e && e.message).slice(0, 300)); } finally {
     try { await owner.query('GRANT SELECT ON identities TO cb_app'); await owner.query('ALTER TABLE identities NO FORCE ROW LEVEL SECURITY'); await owner.query('ALTER TABLE identities DISABLE ROW LEVEL SECURITY'); } catch (e) { console.log('  RESTORE FAILED: ' + e.message); }
     for (const p of ['identities_own_tree', 'identities_created_by_me', 'identities_read_counterparty', 'identities_read_grant_party']) { try { await owner.query('DROP POLICY IF EXISTS ' + p + ' ON identities'); } catch (e) { /* open anyway */ } }
-    try { await owner.query('DELETE FROM books_access_grant WHERE grantor_entity = ANY($1::uuid[])', [planted]); await owner.query('DELETE FROM identities WHERE identity_id = ANY($1::uuid[])', [planted]); } catch (e) { console.log('  CLEANUP: ' + e.message); }
+    try { await owner.query('DELETE FROM books_access_grant WHERE grantor_entity = ANY($1::uuid[])', [planted]); await owner.query('DELETE FROM identities WHERE bridge_id = $1', ['B' + RUN + 'k']); await owner.query('DELETE FROM identities WHERE identity_id = ANY($1::uuid[])', [planted]); } catch (e) { console.log('  CLEANUP: ' + e.message); }
     await owner.end();
   }
   console.log('\n' + (pass + fail) + ' checks · ' + pass + ' passed · ' + fail + ' failed');

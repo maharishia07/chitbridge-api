@@ -515,18 +515,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
      */
     if (req.identity.identity_type !== 'actor' && result.rows[0].user_id) {
       try {
-        const prefix =
-          String(result.rows[0].user_id)
-            .toLowerCase()
-            .replace(/([%_\\])/g, '\\$1') + '.';
-        const nc = await query(
-          `SELECT count(*)::int AS n FROM identities
-            WHERE LOWER(user_id) LIKE $1 || '%' ESCAPE '\\'
-              AND identity_type = 'entity' AND status = 'active'
-              AND catalogue_visibility = 'public'`,
-          [prefix]
-        );
-        result.rows[0].network_public_count = nc.rows[0] ? nc.rows[0].n : 0;
+        result.rows[0].network_public_count = await require('../lib/platform-count').publicUnder(result.rows[0].user_id); /* SEC-198: the platform door (a count across shops) */
       } catch (_) {
         /* ⚠️ ABSENT, NOT ZERO. A failed count must not render as "nothing under you is public" — that is a
            definite statement, and this is the absence of one. The screen shows nothing rather than a lie. */
