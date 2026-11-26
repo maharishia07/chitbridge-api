@@ -13121,7 +13121,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 3952,
-   "hash": "2818d0b2dffa97d7",
+   "hash": "db1399a8bbaf335a",
    "does": "A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.",
    "errors": {
     "count": 0,
@@ -13223,7 +13223,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "2818d0b2dffa97d7"
+    "stale_since": "db1399a8bbaf335a"
    },
    "status": "partial",
    "callers": [
@@ -37643,7 +37643,7 @@
    "owner_agent": "cb-people",
    "file": "routes/actors.js",
    "line": 530,
-   "hash": "0186a2e0e741c426",
+   "hash": "692dba974a5c7cd3",
    "does": "Name, role, phone, task cap or access level in -> we let the owner change that co-assist's profile, never their login key or status -> the updated co-assist (owner only).",
    "errors": {
     "count": 0,
@@ -37736,7 +37736,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-12 PR#1167 stage2: handler diff read, 13 columns pass; owner e-mail write cap answers the one 429 RATE_LIMITED (gate, only on calls carrying an e-mail); EMAIL_UNAVAILABLE 409 registered with its plain sentence and names nobody, EMAIL_TAKEN kept for the owner's own list; /entities/register: same 200 words for held and new address, per-address cap one 429; old keys and statuses kept",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-26 P2WAVE-SEC w5b: diff b1edc5fda..HEAD of routes/actors.js, lib/access-events.js, lib/employee-code.js read; the audit insert now takes inTransaction:true and runs under a SAVEPOINT so a failed audit row no longer aborts the transaction; success path, input schema, answer, codes and statuses unchanged; 13 machine columns still true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42245,7 +42245,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/attachments.js",
    "line": 95,
-   "hash": "66478c5b452034ec",
+   "hash": "5f840165102ab753",
    "does": "A chit id, file name and base64 data in -> we store a copy for each participant of that chit -> the attachment record.",
    "errors": {
     "count": 0,
@@ -42345,7 +42345,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by lens-sec 1129 ce52591f1: a VIEWER seat attaches nothing (viewerGate hands on to access.writeGate: the rail's read_only 403, the owner passes); 403 was already declared and tested; chain, operation and answer unchanged.",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-26 P2WAVE-SEC w5b: diff b1edc5fda..HEAD of lib/attachments-contract.js read; BASE64 pattern now matches one way (quadratic ReDoS gone: 60,000 newlines then a bad byte answers in 0 ms) and maxLength = ceil(MAX_BYTES*1.4)+256; tested: a valid 6 MB base64 with CRLF every 76 chars (8.6 MB, with or without the data: prefix) still passes; the only difference from the old accepted set is a line break directly before the = padding, which no encoder produces; 13 machine columns still true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",

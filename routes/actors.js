@@ -677,7 +677,7 @@ router.patch(
           before: beforeRow,
           after: r.rows[0],
           changed_by: req.identity && req.identity.identity_id,
-          reason: (req.body.reason || '').trim() || null
+          reason: (req.body.reason || '').trim() || null, inTransaction: true
         })
       );
       if (audit && audit.failed) console.error('[actors] access change saved but', audit.failed, 'audit row(s) lost', { actor_id });
@@ -1012,7 +1012,7 @@ async function recordBreak(entity_id, subject, before, after, by, reason) {
       before: { break_status: before || null },
       after: { break_status: after },
       changed_by: by,
-      reason
+      reason, inTransaction: true
     })
   );
   if (out.failed) logger.warn("actors: the person's state changed but the access event was not written — the trail has a gap", { subject, after, reason });

@@ -7,7 +7,8 @@
 // Bridge ID: CB-XXXX-XXXX-XXXX, Crockford base32 (no I L O U) + mod-32 check char.
 // CALLED BY src/services/network.js   [from the knowledge graph, 2026-10-18 - regenerate: node tools/graph/trace.cjs]
 const ALPH = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
-const rc = () => ALPH[Math.floor(Math.random() * ALPH.length)];
+/* P2WAVE-SEC GF-platform-08#L227: an id that names a business and is shown on its card is drawn from the system's CSPRNG, never Math.random (guessable from a few outputs) */
+const rc = () => ALPH[require('crypto').randomInt(ALPH.length)];
 function mint() {
   let data = '';
   for (let index = 0; index < 11; index++) data += rc();
