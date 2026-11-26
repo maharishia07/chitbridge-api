@@ -56,4 +56,17 @@ t('W4-02 nothing signed at all stays none; a run stays as before', () => {
   assert.strictEqual(r.state, 'reconciled');
   assert.strictEqual(r.reconciled_to, '2026-10-31');
 });
-process.exit(fail ? 1 : 0);
+/* W4-12: the Bank page's own read carries the ONE no-run sentence when a month is signed and none is in an unbroken run (the run rule gives nothing, the newest sign-off exists) */
+const schema = require(path.join(API, 'lib', 'schema.js'));
+schema.hasTable = async () => true;
+const scripted = (run, any) => ({ async query(sql) { return { rows: /first_gap/.test(sql) ? run : any }; } });
+(async () => {
+  const E = '11111111-1111-4111-8111-111111111111';
+  let out = await bankLog.unexplained(scripted([], [OCT]), E);
+  t('W4-12 a signed month with no run: no_run true and the one sentence', () => { assert.strictEqual(out.no_run, true); assert.strictEqual(out.words, bankLog.NO_RUN_WORDS); assert.strictEqual(out.count, 0); });
+  out = await bankLog.unexplained(scripted([OCT], [OCT]), E);
+  t('W4-12 a run: no sentence', () => { assert.strictEqual(out.no_run, false); assert.strictEqual(out.words, null); assert.strictEqual(out.unexplained_minor, 35432); });
+  out = await bankLog.unexplained(scripted([], []), E);
+  t('W4-12 nothing signed: no sentence', () => { assert.strictEqual(out.no_run, false); });
+  process.exit(fail ? 1 : 0);
+})();
