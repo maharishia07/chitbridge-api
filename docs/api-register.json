@@ -25648,7 +25648,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 987,
+   "line": 983,
    "hash": "621e2f2f391396f3",
    "does": "Signed-in shop -> we read its profile and show what we look for, where each piece can come from and how far it is trusted -> the profile map.",
    "errors": {
@@ -25762,7 +25762,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 817,
+   "line": 815,
    "hash": "3ca681c32dca153a",
    "does": "Signed-in shop with an optional number of days -> we check each order for an answer from the books system -> one row per order with its state and the counts.",
    "errors": {
@@ -25878,7 +25878,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 688,
+   "line": 686,
    "hash": "dcecf37e0cfd7057",
    "does": "Signed-in shop with an optional page -> we read its connectors and when each was last seen -> a page of connector status.",
    "errors": {
@@ -25994,7 +25994,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 964,
+   "line": 960,
    "hash": "af4a542c64bc4085",
    "does": "A shop handle in the address (public) -> we read the stock figures that shop shows publicly, if it is not private -> the available quantities, or not found.",
    "errors": {
@@ -26108,7 +26108,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 722,
+   "line": 720,
    "hash": "f97d3783abe3f0d1",
    "does": "Signed-in shop -> we read which data streams exist, which system owns each, and its connectors -> the streams, their owners and connectors.",
    "errors": {
@@ -64366,7 +64366,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 595,
+   "line": 593,
    "hash": "273953344be0a763",
    "does": "A connector id in the address (signed-in owner, never a key) -> we approve its enrolment so it may connect -> the enrolment now approved.",
    "errors": {
@@ -64497,7 +64497,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 941,
+   "line": 937,
    "hash": "2c6eda3590c3b377",
    "does": "",
    "errors": {
@@ -64610,7 +64610,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 641,
+   "line": 639,
    "hash": "0672ad19cc37824b",
    "does": "A chit id with kind, system, reference and outcome from a connector key -> we note on our copy of the chit what the books system did with it -> the saved record.",
    "errors": {
@@ -64728,7 +64728,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 784,
+   "line": 782,
    "hash": "d86df23c95c37d1d",
    "does": "A chit id and on or off (signed-in person, never a key) -> we mark that order as not meant for the books, or lift it, with who and when -> a skipped true or false.",
    "errors": {
@@ -64970,7 +64970,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 1024,
+   "line": 1020,
    "hash": "6627938ea0d3c11c",
    "does": "Shop profile fields read from their system, sent with a connector key -> we keep them with their source, refusing a different tax number -> the profile now held.",
    "errors": {
@@ -83352,7 +83352,7 @@
    "owner_area": "integrations",
    "owner_agent": "cb-connect",
    "file": "routes/integrations.js",
-   "line": 748,
+   "line": 746,
    "hash": "2a1be8be966e3ef7",
    "does": "Which system owns each data stream (signed-in person, never a key) -> we save those owners for the shop -> the streams as saved.",
    "errors": {

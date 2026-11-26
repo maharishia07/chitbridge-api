@@ -27,20 +27,6 @@ const STAMP_WAIVERS = [
   { file: 'lib/books-period.js', max: 1871, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
   { file: 'lib/books-store.js', max: 2158, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
   { file: 'lib/identity-auth.js', max: 746, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'security growth in the 1130 batch' },
-  { file: 'lib/api-keys.js', max: 660, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'lib/catalogue-view.js', max: 867, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'lib/chit-proposal.js', max: 877, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'lib/mint.js', max: 534, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'lib/profile.js', max: 983, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'lib/raiseticket.js', max: 569, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/actors.js', max: 1793, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/catalogue.js', max: 2092, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/chits.js', max: 7161, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/connectors.js', max: 1024, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/ctp.js', max: 664, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/integrations.js', max: 1078, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/network-design.js', max: 674, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
-  { file: 'routes/till.js', max: 4203, added: '2026-11-26', until: 'batch 1131 stamp', reason: 'SEC-198 identity reads through boundRead in the 1131 batch' },
 ];
 let pass = 0, fail = 0;
 const t = (name, ok, why) => { if (ok) { pass++; console.log('  ok  ' + name); } else { fail++; console.log('  XX  ' + name + (why ? '\n        ' + why : '')); } };

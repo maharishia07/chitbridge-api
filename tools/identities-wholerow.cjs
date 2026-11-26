@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
  * tools/identities-wholerow.cjs — SEC-199: every read of a WHOLE identities row in api runtime code (to_jsonb(i), row_to_json(i), i.*, SELECT * FROM identities, RETURNING *).
+ * OWNER cb-security
+ * RISK  security
  * OWNS  the whole-row finder · CALLED BY  tests/sec-199-identities-wholerow.test.cjs
  * FLOW  files() → hits(): per line, the whole-row expressions; the alias set from the 10 lines around (FROM|JOIN|UPDATE|INTO identities [AS] x); a hit when the expression names that alias or the table
  * CARD 18-identity-sign-in-and-access/row-level-security-and-shop-scoped-data
@@ -31,24 +33,33 @@ function namesAround(lines, at) {
   for (const m of win.matchAll(ALIAS_AFTER)) { names.add('identities'); if (m[1] && !NOT_ALIAS.test(m[1])) names.add(m[1].toLowerCase()); }
   return names;
 }
+/** the star reads on line `at`: SELECT * FROM identities, and RETURNING * of an identities write */
+function starReads(lines, at, sql, names) {
+  const found = [];
+  if (/\bSELECT\s+\*\s+FROM\s+(?:public\.)?identities\b/i.test(lines.slice(at, at + 2).join(' ').replace(/\s+/g, ' '))) found.push('SELECT * FROM identities');
+  if (/\bRETURNING\s+\*/i.test(sql) && names.has('identities') && /\b(UPDATE|INSERT\s+INTO)\s+(public\.)?identities\b/i.test(lines.slice(Math.max(0, at - 10), at + 1).join(' '))) found.push('RETURNING *');
+  return found;
+}
+/** the whole-row expressions on line `at` (none for a comment, a wholerow:ok line, or a line near no identities table) */
+function wholeRowsOn(lines, at) {
+  const text = lines[at];
+  if (/^\s*(\/\/|\*|\/\*)/.test(text) || /wholerow:ok/.test(text) || !/to_jsonb|row_to_json|\*|identities/i.test(text)) return [];
+  const names = namesAround(lines, at);
+  if (!names.size) return [];
+  const sql = text.replace(/\/\*.*?\*\//g, '').replace(/\/\/.*$/, '');
+  const found = [];
+  for (const m of sql.matchAll(/\b(?:to_jsonb|row_to_json|to_json)\s*\(\s*([a-z_]\w*)\s*\)/gi)) if (names.has(m[1].toLowerCase())) found.push(m[0]);
+  for (const m of sql.matchAll(/\b([a-z_]\w*)\.\*/gi)) if (names.has(m[1].toLowerCase()) && !/\*\.\*/.test(m[0])) found.push(m[0]);
+  return found.concat(starReads(lines, at, sql, names));
+}
+/** every whole-row identities read under `root` (default: this api): [{ file, line, what, text }] */
 function hits(root) {
   const out = [];
   for (const rel of RUNTIME.flatMap((d) => files(root || HOME, d))) {
     const lines = fs.readFileSync(path.join(root || HOME, rel), 'utf8').split('\n');
-    lines.forEach((text, at) => {
-      if (/^\s*(\/\/|\*|\/\*)/.test(text) || /wholerow:ok/.test(text) || !/to_jsonb|row_to_json|\*|identities/i.test(text)) return;
-      const names = namesAround(lines, at);
-      if (!names.size) return;
-      const sql = text.replace(/\/\*.*?\*\//g, '').replace(/\/\/.*$/, '');
-      const found = [];
-      for (const m of sql.matchAll(/\b(?:to_jsonb|row_to_json|to_json)\s*\(\s*([a-z_]\w*)\s*\)/gi)) if (names.has(m[1].toLowerCase())) found.push(m[0]);
-      for (const m of sql.matchAll(/\b([a-z_]\w*)\.\*/gi)) if (names.has(m[1].toLowerCase()) && !/\*\.\*/.test(m[0])) found.push(m[0]);
-      if (/\bSELECT\s+\*\s+FROM\s+(?:public\.)?identities\b/i.test(lines.slice(at, at + 2).join(' ').replace(/\s+/g, ' '))) found.push('SELECT * FROM identities');
-      if (/\bRETURNING\s+\*/i.test(sql) && names.has('identities') && /\b(UPDATE|INSERT\s+INTO)\s+(public\.)?identities\b/i.test(lines.slice(Math.max(0, at - 10), at + 1).join(' '))) found.push('RETURNING *');
-      found.forEach((what) => out.push({ file: rel, line: at + 1, what, text: text.trim().slice(0, 140) }));
-    });
+    lines.forEach((text, at) => wholeRowsOn(lines, at).forEach((what) => out.push({ file: rel, line: at + 1, what, text: text.trim().slice(0, 140) })));
   }
   return out;
 }
-if (require.main === module) { const h = hits(); h.forEach((x) => console.log(x.file + ':' + x.line + '  ' + x.what + '  | ' + x.text)); console.log(h.length + ' whole-row identities read(s)'); process.exit(h.length ? 1 : 0); }
+if (require.main === module) { const found = hits(); found.forEach((x) => console.log(x.file + ':' + x.line + '  ' + x.what + '  | ' + x.text)); console.log(found.length + ' whole-row identities read(s)'); process.exit(found.length ? 1 : 0); }
 module.exports = { hits };

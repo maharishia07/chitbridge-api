@@ -497,9 +497,7 @@ router.post('/heartbeat', auth, auth.requireScope('connector'), schemaValidate(H
       enrol
     };
     if (src) patchCfg.source = src;
-    const have = await boundRead(
-      query,
-      entity_id,
+    const have = await boundRead(query, entity_id,
       `SELECT identity_id FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL AND connector_config->>'kit_id' = $2`,
       [entity_id, kit_id]
     );
@@ -834,9 +832,7 @@ router.get('/reconcile', auth, schemaValidate(RECONCILE_OPERATION), ...filterFor
     /* ⭐ when did a connector first arrive? Nothing released before that could have been booked, so it is not late (2026-09-07). */
     let since = null;
     try {
-      const c = await boundRead(
-        query,
-        entity_id,
+      const c = await boundRead(query, entity_id,
         "SELECT MIN(created_at) AS t FROM identities WHERE parent_entity_id = $1 AND identity_type = 'actor' AND connector_type IS NOT NULL",
         [entity_id]
       );
