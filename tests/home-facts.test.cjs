@@ -108,7 +108,7 @@ function answer(text, params) {
     { payment_id: 'p3', party_id: 'c3', direction: 'in', amount_minor: 90000, currency: 'INR', cheque_no: '000779', cheque_bank: 'HDFC', cheque_date: d(-9), received_at: d(-9), status: 'deposited' },
     { payment_id: 'p4', party_id: 's1', direction: 'out', amount_minor: 70000, currency: 'INR', cheque_no: '110', cheque_bank: 'SBI', cheque_date: d(0), received_at: d(0), status: 'received' }] }; }
   /* STD1: the ONE count — GROUP BY todo over every open row (211 here: more than any page of 50 or 200) */
-  if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
+  if (/FROM books_outbox/.test(sql)) { F.outboxSql = sql; return { rows: F.quietOutbox ? [] : [{ todo: 'accept', n: 120 }, { todo: 'add_supplier', n: 90 }, { todo: 'record', n: 1 }] }; }
   if (/FROM catalogue_items/.test(sql)) return { rows: [{ items: 10, no_cost: 4, cost: SECRET, item_data: { cost: { value: SECRET } } }] };
   if (/FROM combo_templates/.test(sql)) return { rows: [{ n: 2 }] };
   if (/FROM definition WHERE/.test(sql)) return { rows: [{ drafts: 1, live: 5 }] };
@@ -306,6 +306,13 @@ const get = (port, p) => new Promise((ok) => {
   t('accounts: the figures carry each count (books-store waitingCount — the one count, > 200 rows)', [r.json.figures.waiting, r.json.figures.accept, r.json.figures.add_supplier, r.json.figures.record], [211, 120, 90, 1]);
   t('accounts: STD1 — counted by ONE GROUP BY over every open row (no LIMIT, no sentence read)', [/GROUP BY 1/.test(F.outboxSql || ''), /LIMIT/.test(F.outboxSql || ''), /SELECT why FROM/.test(F.outboxSql || '')], [true, false, false]);
   t('accounts: at most 2 trips', r.trips <= 2, true);
+  /* RW3-07: nothing in the outbox but 6 entries with no tax invoice + 17 with no file (hand: 6 + 17 = 23) -> the card says '23 entries to fix' and NEVER 'Nothing waiting' beside it */
+  { const TD = require(API + '/lib/books-todo'), wasEv = TD.evidenceCounts; TD.evidenceCounts = async () => ({ no_tax_invoice: 6, no_file: 17, no_source: 0, open_queries: 0 }); F.quietOutbox = true;
+    r = await g('accounts');
+    t('accounts: 23 entries to fix and no "Nothing waiting" line', [r.json.lines.map((l) => l.text).filter((x) => x !== 'Checked {when}'), r.json.figures.entries_to_fix], [['23 entries to fix'], 23]);
+    TD.evidenceCounts = async () => ({ no_tax_invoice: 0, no_file: 0, no_source: 0, open_queries: 0 }); r = await g('accounts');
+    t('accounts: all quiet -> the one "Nothing waiting" line', r.json.lines.map((l) => l.text).filter((x) => x !== 'Checked {when}'), ['Nothing waiting']);
+    TD.evidenceCounts = wasEv; F.quietOutbox = false; }
   F.booksOn = false; r = await g('accounts');
   t('accounts: ledger off -> no lines, and it says why', [r.status, r.json.lines, typeof r.json.unavailable], [200, [], 'string']);
   F.booksOn = true;
