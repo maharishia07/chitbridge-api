@@ -10179,7 +10179,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2241,
-   "hash": "babb6b922b5aca78",
+   "hash": "e39385a76dc58ac9",
    "does": "Optionally a year in -> we read each month's lock state, figures (sales_minor is ex-tax, the P&L's income, since 15 Nov 2026), tax return state and change trail -> the periods.",
    "errors": {
     "count": 1,
@@ -10274,7 +10274,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixGreyAU 2766f3dfd: the lock/reopen advice answers may:false with the seat sentence for a seat that is not the owner (books-month-advice seatAnswer); same keys, no new status.",
+    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 wave 7 fold re-sign (pathreds RW3-16): diff a7ffe7005..HEAD read for this route: the answer gains return_name (the client return word or null; additive key, declared in the books-contract row and tests/pathreds-1130.test.cjs), same seats, same gates; 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
