@@ -366,6 +366,7 @@ router.get('/suppliers', grantFront, auth, ...checked('GET /suppliers'), async (
        Per supplier: their live offers scoped to a group I am in or to me by name (lib/customer-groups), by the supplier's own names and the
        engine's promise. Read in parallel; a supplier whose read fails simply shows no tag. A stranger gets [] everywhere. */
     try {
+      if (req.acting_for_grant) throw new Error('grant'); /* CON-165: the offers a supplier gives are cut from a firm's answer: skip the reads */
       const cg = require('../lib/customer-groups');
       const cv = require('../lib/catalogue-view');
       const eng = require('../lib/offers-engine').CBOffers;
