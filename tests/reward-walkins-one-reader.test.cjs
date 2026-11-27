@@ -38,6 +38,11 @@ const db = { async query(sql, p) {
   eq('C (claimed away) is not listed', 'C' in by, false);
   const none = await store.walkIns(db, 'shop', { expires_months: 0 });
   eq('no expiry declared: stored sums as before', Object.fromEntries(none.rows.map((x) => [x.phone, x.points])), { A: 150, B: 80 });
+  /* a given point is a promise (DECISIONS 28 Nov): no live programme -> the holder still holds the stored balance, in the list and at the till, never 0 */
+  const withE = async (_e, fn) => fn(db);
+  const kept = await store.balance('shop', { scheme: 'phone', value: 'A' }, withE, null);
+  eq('no programme: balance of A is the stored 150, not 0', [kept.programme, kept.points, kept.worth], [null, 150, null]);
+  eq('no programme: list = till for A and B', Object.fromEntries(none.rows.map((x) => [x.phone, x.points])), { A: 150, B: 80 });
   /* the guard: one reader of reward_ledger */
   const hits = [];
   const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/.*$/gm, '$1');
