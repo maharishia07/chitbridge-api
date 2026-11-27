@@ -1602,9 +1602,9 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - effect: offline online-only · round trips 1 (wire 3) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): - · writes (derived): - · callers: - · actions: -
 
-### books-evidence (unassigned, 1 of 1 with a description)
+### books-evidence (cb-accounting, 1 of 1 with a description)
 
-**POST /api/books/evidence** · books-evidence · unassigned · meets standard
+**POST /api/books/evidence** · books-evidence · cb-accounting · meets standard
 - does: An entry id and a file in -> we check the seat, the type by its bytes and that the entry is in these books -> the file kept beside the entry (add-only).
 - errors: 1 code(s) [SIGN_IN_FOR_LEDGER] · statuses 400, 401, 403, 404, 413, 415, 422, 500, 503 · money n (derived)
 - effect: offline online-only · round trips 12 (wire null) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
