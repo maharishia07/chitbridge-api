@@ -42,4 +42,13 @@ const ledgerRows = posted.map((l) => ({ code: String(l.code || l.account), role:
 const bas = GR.returnFor(R.packFor('AU'), '2026-Q2', ledgerRows, { simpler: false });
 const box = (c) => bas.boxes.find((b) => b.code === c).amount_minor;
 eq('BAS Q2: G3 picks the bread up (400); 1A is the latte\'s GST alone (100); G1 1500', [box('G3'), box('1A'), box('G1')], [400, 100, 1500]);
+console.log('\n== BOOKS-new-2: a cash bill rounded to 5c books the rounding on its own ledger, never in sales or GST ==\n');
+/* HAND: one line A$1,159.79 GST-inclusive, paid in cash: 5c step -> cash due 1,159.80. GST = 115979/11 = 10543.5 -> 10544 (half up) on the UNROUNDED supply; sales 105435; the 1c is 6900 Rounding. */
+const cashInv = TL.invoiceFor({ lines: [{ particulars: 'Frame', quantity: 1, price: 1159.79, gst_rate: 10 }], seller: asked.seller, buyer: { country: 'AU' }, currency: 'AUD', at: '2026-11-27', priceIncludesTax: true }).invoice;
+const cashRows = H.byRateOf(cashInv, 'AUD').rows;
+const cashPosted = makePost('E', 0, { pack: R.packFor('AU') })({ type: 'walkin_day', ref: 'T', date: '2026-11-27', by_rate: cashRows, modes: { cash: 1159.8 }, round_off: 0.01 });
+const cashAt = (code) => cashPosted.filter((l) => String(l.code) === code).map((l) => (l.cr_minor || 0) - (l.dr_minor || 0));
+eq('cash Dr 115980; sales Cr 105435; GST Cr 10544 (on the unrounded supply); rounding Cr 1', [cashAt('1400'), cashAt('4000'), cashAt('2200'), cashAt('6900')], [[-115980], [105435], [10544], [1]]);
+const cashBas = GR.returnFor(R.packFor('AU'), '2026-Q2', cashPosted.map((l) => ({ code: String(l.code), role: l.account, dr_minor: l.dr_minor || 0, cr_minor: l.cr_minor || 0 })), { simpler: false });
+eq('BAS 1A is the unrounded GST 10544; the rounding cent is in no box', cashBas.boxes.filter((b) => ['1A', 'G1'].indexOf(b.code) >= 0).map((b) => [b.code, b.amount_minor]), [['G1', 115979], ['1A', 10544]]);
 console.log('\n' + pass + ' checks' + (fail ? ', ' + fail + ' FAILED' : ''));
