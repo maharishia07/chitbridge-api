@@ -1219,7 +1219,15 @@
       "posted_by": null
      }
     ],
-    "count": 5
+    "count": 5,
+    "total": 5,
+    "page": 1,
+    "limit": 100,
+    "next": null,
+    "totals": {
+     "dr_minor": 0,
+     "cr_minor": 0
+    }
    },
    "optional": [
     "entries[].evidence.cite",
