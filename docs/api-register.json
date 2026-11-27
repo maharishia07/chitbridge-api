@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 699,
+  "partial": 0,
+  "meets": 700,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -8554,11 +8554,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "e38f39361403d979"
+    "signed_off_by_date": "cb-api 2026-11-27 batch 1132 re-sign, diff origin/main...ca4bcb1f9 read (routes/books.js one line: pageQ -> Daybook.daybookPageQ; lib/books-daybook.js daybookPageQ = pageQ when asked, else ONE default page limit 100 (max 500, clamped as before, never an error), page 1, order as asked; chain, operation and contract unchanged), 13 machine columns true, paged_read true; the answer keys total, page, limit, next, totals are in docs/contracts/api-output-shapes.json and web-api.json (count = rows on the page, total = the range); status codes unchanged (401,403,404,422,500). Behaviour note for cb-accounting/web: a caller that sent no limit now gets one page and must read next; this sign-off covers the surface only. Prior note: cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW3-11 (0713fcf3a): one additive key, timezone (the audited shop zone via books-hooks.zoneOf), al",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
