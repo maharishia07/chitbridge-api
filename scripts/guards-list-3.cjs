@@ -427,7 +427,6 @@ const GUARDS_PART = [
   'dues-ledger-off-empty.test.cjs', // WALK S S-F-07: GET /dues with the ledger off is 200 and empty, not a 404
   'assign-race-r9.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'books-evidence-attach.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
-  'fw2-p1-attach-1132.test.cjs', // enrolled 1132 (every-test-is-enrolled): FW2-03 attach door
   'books-yearclose-reopen.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux with the books engines
   'delegation.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux
   'gor-fullproof-1120.test.cjs', // enrolled 2026-11-20 (every-test-is-enrolled): passes offline on Linux

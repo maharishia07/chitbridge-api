@@ -470,5 +470,6 @@ const GUARDS_PART = [
   'move-proof.test.cjs', // D1 (1130): a moved route handler is proven the same code (verbatim, require path, declaration join, local rename) and every other change is refused
   'api-resign-moves.test.cjs', // D1+D3 (1130): the re-sign judge, the line patch of api-signoffs.json (one line, same key order), and the signed-at-fold check of the ratchet
   'api-openapi-diff.test.cjs', // D1 (1130): breaking changes in the published operations (answer key lost, request key now required, narrowed type/enum/limit, status removed)
+  'fw2-p1-attach-1132.test.cjs', // enrolled 1132 (every-test-is-enrolled): FW2-03 attach door (part 2: part 3 is at the 500-line cap)
 ];
 module.exports = { GUARDS_PART };
