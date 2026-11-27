@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 219 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 207 | `rows` | `crm.js` | still in them: |
 | 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 182 | `words` | `variant.browser.js` |  |
+| 183 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 145 | `answer` | `availability.js` | from March; then nearest. |
@@ -56,9 +56,9 @@ of file each thing is; this says what already does the job.
 | 68 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 68 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 67 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
+| 67 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 66 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 66 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
-| 66 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 65 | `body` | `books-acting.js` | a write's body: |
 | 65 | `named` | `bank-rec-log.js` | W15-71: |
 | 65 | `write` | `junitresults.js` | control characters are not legal XML at all — |
