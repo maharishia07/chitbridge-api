@@ -6525,12 +6525,14 @@ var BILL_NO_SKIP_MAX = 500;
  * 'used' for ever ends in the shopkeeper's words after BILL_NO_SKIP_MAX tries.
  */
 async function freeBillNumber(at){
-  var no = null, last = null;
+  var no = null, last = null, asked = false;
   for (var tries = 0; tries < BILL_NO_SKIP_MAX; tries++) {
     no = await nextNumber(undefined, false, at);
     if (!(await DB.exists('bills', no))) return no;
     if (no === last) break;      /* the series did not move: stepping again would never end */
     last = no;
+    /* a clash means this device is behind: ask the shop once where the counter's run stands (the claim's floor, which takeNumber applies), so the step also clears every number the SERVER holds */
+    if (!asked) { asked = true; try { await refresh(); } catch (e) { cbQuiet('freeBillNumber:1', e); } }
   }
   throw new Error('Bill number ' + no + ' is already used on this counter, so nothing was saved and nothing was changed. Press Save again: the counter takes the next number.');
 }

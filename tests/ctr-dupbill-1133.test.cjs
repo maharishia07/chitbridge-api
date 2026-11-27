@@ -35,13 +35,14 @@ const BODY = [
 ].join('\n');
 
 /** one device: its own series box, and a `bills` store that may be shared with another device (the counter's bill list) */
-function device(prefix, boxes, bills) {
+function device(prefix, boxes, bills, shop) {
+  const lsStore = {};
   const clock = new RealDate(2026, 10, 27, 10, 0, 0);
   const ClockDate = class extends RealDate {
     constructor(...a) { if (a.length === 0) super(clock.getTime()); else super(...a); }
     static now() { return clock.getTime(); }
   };
-  const factory = new Function('Date', 'window', 'CBDoc', 'S', 'DB', 'ls', 'shopLs', 'tillId', 'tillOpt', 'cbQuiet', 'navigator', 'tillStore',
+  const factory = new Function('Date', 'window', 'CBDoc', 'S', 'DB', 'ls', 'shopLs', 'tillId', 'tillOpt', 'cbQuiet', 'navigator', 'tillStore', 'refresh',
     'var PREFIX = ' + JSON.stringify(prefix) + '; var OPT = { series: { dating: "fy", resets: "year", dayRollHour: 0 } };\n'
     + 'tillId = function(){ return PREFIX; }; tillOpt = function(){ return OPT; };\n' + BODY);
   const DB = {
@@ -49,7 +50,8 @@ function device(prefix, boxes, bills) {
     set: async (k, v) => { boxes[k] = JSON.parse(JSON.stringify(v)); },
     exists: async (store, key) => store === 'bills' && bills.has(key)
   };
-  return factory(ClockDate, { CBDoc }, CBDoc, { shop: { country: 'AU' } }, DB, { get: (k, d) => d, set: () => {} }, (k) => k, null, null, () => {}, undefined, () => 'cb-till');
+  return factory(ClockDate, { CBDoc }, CBDoc, { shop: { country: 'AU' } }, DB, { get: (k, d) => (lsStore[k] === undefined ? d : lsStore[k]), set: (k, v) => { lsStore[k] = v; } }, (k) => k, null, null, () => {}, undefined, () => 'cb-till',
+    async () => { if (shop) lsStore.cb_till_resume = JSON.stringify({ prefix: prefix, period: '2026', next: shop.next }); });
 }
 const no = (n) => 'C1/2026/' + String(n).padStart(4, '0');
 
@@ -83,6 +85,12 @@ const t = async (name, fn) => {
     const d = device('C1', boxes, bills);
     assert.strictEqual(await d.free(), no(121));
     assert.strictEqual(boxes.series.next, 122);
+  });
+
+  await t('the server is ahead of this device (it holds 0001-0040, this device holds 0001): one clash asks the shop and the bill takes 0041', async () => {
+    const bills = new Set([no(1)]);
+    const d = device('C1', {}, bills, { next: 41 });
+    assert.strictEqual(await d.free(), no(41));
   });
 
   await t('a store that says every number is taken ends in words, not a loop', async () => {
