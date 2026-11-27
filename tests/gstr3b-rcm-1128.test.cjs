@@ -7,7 +7,7 @@
  *   both in the month: 3.1(d) txval 200000 / iamt 23000; 4(A)(3) iamt 18000; the net ITC 18000 (the 5% freight gives none)
  *   a forward-charge purchase of 1,000.00 at 5% from a registered seller beside them stays 4(A)(5): iamt 50, never 3.1(d)
  * Compared as carried totals: the sum of the invoices' own RcmIgstVal (23000) = the file's 3.1(d) iamt; the books' RCM liability is the same number (tests/rcm-post.test.cjs).
- * A shop that is not a regular taxpayer files no 3.1(d) here (composition: CMP-08), a shop in AU is refused as before (acc-278).
+ * A shop that is not a regular taxpayer files no 3.1(d) here (composition is refused outright and told CMP-08: CTRY-148), a shop in AU is refused as before (acc-278).
  * Run: node tests/gstr3b-rcm-1128.test.cjs
  */
 'use strict';
@@ -62,9 +62,17 @@ test('two carried totals agree: the invoices\' own RcmIgstVal (23000) = the file
   assert.equal(file([freight5, freight18]).sup_details.isup_rev.iamt, carried);
 });
 
-test('a shop that is not a regular taxpayer files no 3.1(d) and takes no credit from this builder', () => {
+test('a composition shop is refused in words naming CMP-08 (CTRY-148); no builder answer, no 3.1(d), no credit', () => {
   const composition = { Gstin: BUYER.Gstin, RegType: 'composition', Country: 'IN' };
   const out = file([freight18], composition);
+  assert.equal(out.ok, false);
+  assert.match(out.why, /CMP-08/);
+  assert.equal(out.sup_details, undefined);
+});
+
+test('a shop of another non-regular type (unregistered) still files no 3.1(d) and takes no credit from this builder', () => {
+  const unregistered = { Gstin: BUYER.Gstin, RegType: 'unregistered', Country: 'IN' };
+  const out = file([freight18], unregistered);
   assert.deepEqual(out.sup_details.isup_rev, { txval: 0, iamt: 0, camt: 0, samt: 0, csamt: 0 });
   assert.deepEqual(out.itc_elg.itc_net, zeroItc);
 });
