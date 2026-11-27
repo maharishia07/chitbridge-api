@@ -835,4 +835,5 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INVOICE_INCOMPLETE | 422 | Invoice has no total | The invoice carries part of its money block but no total, so it was not sent. Nothing was saved. | Send it with its complete money block, or send the lines and let the server price them. | accounting | 2026-11-22 |
 | CREDIT_NOTE_REASON_MISSING | 422 | Credit note needs a reason | A credit note here must say why it is issued, so it was not sent. Nothing was saved. | Add a short reason, such as goods returned or price corrected, and send it again. | accounting | 2026-11-22 |
 | STANDARD_UNKNOWN | 422 | Standard not known | That standard or document is not one we know, so nothing was recorded. | Check the names against your readiness list and send it again. | rail | 2026-11-22 |
+| MOVE_IN_MINT_BUSY | 409 | Move in numbers busy | Nothing was imported: the numbers for the new contacts could not be taken just now. | Try the same file again. | connect | 2026-11-27 |
 <!-- codes:end -->
