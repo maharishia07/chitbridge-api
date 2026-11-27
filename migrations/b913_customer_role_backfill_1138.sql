@@ -1,4 +1,4 @@
--- b912_customer_role_backfill_1138.sql — ONE-CUSTOMER (28 Nov 2026): a supplier the shop has SENT a sales bill is also its customer; file the customer row the old send step skipped.
+-- b913_customer_role_backfill_1138.sql — ONE-CUSTOMER (28 Nov 2026): a supplier the shop has SENT a sales bill is also its customer; file the customer row the old send step skipped.
 --
 -- ⚠️ NOT RUN anywhere · Athi runs it (Supabase SQL editor, AS postgres: RLS does not apply to the owner, so one run sees every shop), SIT first. Safe to repeat: ON CONFLICT DO NOTHING on
 --    (owner_entity_id, customer_identity_id); a second run inserts 0 rows. Adds rows only; nothing is updated or deleted.

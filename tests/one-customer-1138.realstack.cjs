@@ -1,6 +1,6 @@
 'use strict';
 /**
- * tests/one-customer-1138.realstack.cjs — ONE-CUSTOMER (28 Nov 2026) on a REAL Postgres: the one reader (lib/customer-groups CUSTOMER_ROLE_SQL) and the backfill file migrations/b912_customer_role_backfill_1138.sql.
+ * tests/one-customer-1138.realstack.cjs — ONE-CUSTOMER (28 Nov 2026) on a REAL Postgres: the one reader (lib/customer-groups CUSTOMER_ROLE_SQL) and the backfill file migrations/b913_customer_role_backfill_1138.sql.
  * HAND-COMPUTED  shop S; parties on S's supplier list: A (never billed), B (2 sent invoices + 1 credit note = 3 sales bills), C (sent only an order), E (an invoice that is still a draft);
  *   D is a plain customer (never a supplier); F is a supplier S has billed AND already holds a customer row for (a row an earlier send made).
  *   before the backfill: the customers list (CUSTOMER_ROLE_SQL over S's customer_list) shows D and F only; B has no row at all.
@@ -42,7 +42,7 @@ const uuid = () => crypto.randomUUID();
   const sorted = (...t) => t.map((x) => P[x]).sort();
   try {
     eq('before the backfill the customers list is D and F (F was billed; A is a supplier never billed)', await shown(), sorted('d', 'f'));
-    const file = fs.readFileSync(path.join(API, 'migrations', 'b912_customer_role_backfill_1138.sql'), 'utf8');
+    const file = fs.readFileSync(path.join(API, 'migrations', 'b913_customer_role_backfill_1138.sql'), 'utf8');
     /* the file is global (every shop): run it, then count only this run's shop */
     await o.query(file);
     const rows = (await o.query(`SELECT customer_identity_id AS id, txn_count, added_via FROM customer_list WHERE owner_entity_id = $1 AND customer_identity_id = ANY($2)`, [S, [P.a, P.b, P.c, P.e].map(String)])).rows;
