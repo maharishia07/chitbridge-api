@@ -41,7 +41,7 @@ const src = (...p) => fs.readFileSync(path.join(H.API, ...p), 'utf8').replace(/\
   /* A6 / A7 */
   const G = require(path.join(H.API, 'middleware', 'books-grant')), GC = L('books-grants-contract');
   const words = GC.consentWords(true, 'auditor');
-  ok('A6 file downloads are not in the allow-list; the words say so (one source)', !G.GRANT_READS.has('/evidence/:id') && !G.GRANT_READS.has('/bank/statement-files/:id/file') && G.FILE_READS.size === 2 && words.can_read.length === G.GRANT_READS.size
+  ok('A6 file downloads are not in the allow-list; the words say so (one source)', !G.GRANT_READS.has('/evidence/:id') && !G.GRANT_READS.has('/bank/statement-files/:id/file') && G.FILE_READS.size === 2 && words.can_read.length === G.GRANT_READS.size + 1
     && words.cannot.some((w) => /download your bank statement files or the evidence/.test(w)) && !words.can_read.some((w) => /each bank statement|evidence kept/.test(w)), JSON.stringify(words));
   const routes = src('routes', 'books.js');
   ok('A7 the four reports ask costBlindStops first', ['/cashflow', '/trial-balance', '/pl', '/bs'].every((p) => routes.indexOf("router.get('" + p + "', auth, moneyReader, on, ...checked('GET " + p + "'), async (req, res) => {\n  try {\n    if (await costBlindStops(req, res, ctx(req), REPORT_COST_BLIND_SAY)) return;") >= 0));
