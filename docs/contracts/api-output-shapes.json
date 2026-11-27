@@ -19857,6 +19857,12 @@
           "unpriced": {
             "type": "boolean"
           },
+          "total": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
           "rows": {
             "type": "array",
             "items": {

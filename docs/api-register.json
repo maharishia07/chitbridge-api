@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 2,
-  "meets": 698,
+  "partial": 0,
+  "meets": 700,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -39020,7 +39020,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3531,
-   "hash": "6ed432549ff6671f",
+   "hash": "78376500d644b5dc",
    "does": "Nothing in (or a starter list asked by ?rows), a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has, and for a list asked by ?rows whether it is unpriced and its rows -> the starting points.",
    "errors": {
     "count": 0,
@@ -39117,11 +39117,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "6ed432549ff6671f"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-27 batch 1134 PR#1403 re-sign, diff origin/main...438ac3c15 read for this route: optional ?rows=<key> (CAT-344/345) adds unpriced, rows, total and limit to the answer; no-rows answer unchanged; ?rows capped by the shared pageLimit.limitOf (default and max 500, longest list 216, clamps never 422), paged-read-routes.json row added; errors stay the 401/403/500 of failed(), no new code; shape keys total and limit were missing from api-output-shapes.json (closed shape) and were added by hand; only the static starter list is read, no behaviour change beyond the described; 13 machine columns true, stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "till.html"
    ],
@@ -77758,11 +77757,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "352e19751c3c596a"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-27 batch 1134 PR#1403 re-sign, diff origin/main...438ac3c15 read for this route: the answer message only: photosNote(dropped, bp) also says the list photos were not copied when the starter list has any image (CAT-345: outside the home country pictures are removed before the strip counts them); same status, same keys, message already a string in the shape, no new code, input and writes unchanged; 13 machine columns true, stage2",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "catalogue-lines.js"
    ],
