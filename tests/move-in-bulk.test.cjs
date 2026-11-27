@@ -9,6 +9,7 @@
 const assert = require('assert');
 const path = require('path');
 const MI = require(path.join(__dirname, '..', 'lib', 'move-in'));
+const BULK = require(path.join(__dirname, '..', 'lib', 'move-in-bulk')); /* the module under test: the set, and the rules it keeps */
 const SHOP = '00000000-0000-0000-0000-0000000000aa';
 let pass = 0, fail = 0;
 const t = async (name, fn) => { try { await fn(); pass++; console.log('  PASS  ' + name); } catch (e) { fail++; console.error('  FAIL  ' + name + '\n        ' + (e && e.message)); } };
@@ -72,6 +73,11 @@ const ctx = { world: { listIds: [] }, by: 'u1' };
   });
   await t('after the refusal no list row is written (the refusal is never retried inside the set)', () => {
     assert.strictEqual(clash.log.filter((x) => /INSERT INTO (customer_list|supplier_list)/.test(x.s)).length, 0);
+  });
+  await t('an empty file asks the database nothing and lands nothing (closed: no statement without a row)', async () => {
+    const quiet = fakeDb();
+    const none = await BULK.addContactsAsSet(quiet.h, SHOP, [], MI.ADDED_VIA);
+    assert.strictEqual(none.size, 0); assert.strictEqual(quiet.log.length, 0);
   });
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
