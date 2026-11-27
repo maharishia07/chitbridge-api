@@ -2580,6 +2580,9 @@
   .trade b{display:block;font-size:1.1em;margin-bottom:3px}
   .trade .out{display:block;color:var(--dim);font-size:.9em;margin-bottom:6px}
   .trade .eg{display:block;color:var(--dim);font-size:.85em}
+  .startrows{max-height:46vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+  .startrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid var(--line)}
+  .startrow input{width:7em;text-align:end}
   .trade[disabled]{opacity:.55;cursor:default}
   /* ⚠️ the same card, deliberately — a different way in, not a lesser one. Only the CLASS differs, because
      the class is how the set of trades is read. */
@@ -21406,13 +21409,48 @@ function startSay(t, bad){
 async function startMint(key){
   Array.prototype.forEach.call(document.querySelectorAll('.trade'), function(b){ b.setAttribute('disabled',''); });
   startSay('Setting up your shop…', false);
+  /* ⭐ CAT-344: a list with no prices of its own (every list outside the home country) is shown with an EMPTY price column and the owner's prices
+     are sent as {products}; the server answers which kind this list is. A refused or missing answer falls through to the plain mint, which says why. */
+  var plan = null;
+  try { plan = await HOST.tillGet('/api/till/catalogue/blueprints?rows=' + encodeURIComponent(key)); } catch (_) { plan = null; }
+  if (plan && plan.unpriced && plan.rows && plan.rows.length) { startPriceRows(key, plan.rows); return; }
+  return startMintSend({ blueprint: key });
+}
+var START_PRICING = null;
+/** CAT-344: the unpriced list as rows with an empty price box each; Add sends only the rows the owner priced */
+function startPriceRows(key, rows){
+  START_PRICING = { key: key, rows: rows };
+  startSay('', false);
+  document.getElementById('startbody').innerHTML = '<p class="note">Type your price for what you sell. A row left empty is not added.</p>'
+    + '<div class="startrows" data-testid="till-start-rows">' + rows.map(function(row, i){
+      return '<label class="startrow"><span>' + esc(row.name) + ' <span class="u">per ' + esc(row.unit) + '</span></span>'
+        + '<input type="text" inputmode="decimal" id="startprice' + i + '" data-testid="till-start-price-' + i + '" data-cbsid="CTR006-I05" aria-label="Price of ' + esc(row.name) + ' per ' + esc(row.unit) + '"></label>';
+    }).join('') + '</div>'
+    + '<div class="dlgbtns"><button class="pri" id="startgo" data-testid="till-start-add" onclick="startPriced()" data-cbsid="CTR006-B46">Add priced products</button>'
+    + '<button id="startback" data-testid="till-start-back" onclick="startOpen()" data-cbsid="CTR006-B47">Back</button></div>';
+}
+/** CAT-344: the rows with a price go to the approved-rows door; a row left empty is named, never sent, never priced for the owner */
+async function startPriced(){
+  var rows = (START_PRICING && START_PRICING.rows) || [], sending = [], left = [];
+  rows.forEach(function(row, i){
+    var box = document.getElementById('startprice' + i), text = box ? String(box.value || '').trim() : '';
+    if (text) sending.push({ name: row.name, unit: row.unit, category: row.category, price: text }); else left.push(row.name);
+  });
+  if (!sending.length) { startSay('Type a price against at least one product, then Add.', true); return; }
+  var go = document.getElementById('startgo'); if (go) go.setAttribute('disabled', '');
+  var done = await startMintSend({ blueprint: START_PRICING.key, products: sending }, left);
+  if (!done && go) go.removeAttribute('disabled');
+}
+/** the mint call and what follows it; extra = names of rows the owner left without a price (said, not hidden). → true when written */
+async function startMintSend(body, extra){
   var r = null;
-  try { r = await HOST.tillPost('/api/till/catalogue', { blueprint: key }, { noQueue: true }); } catch (_) { r = null; }
+  try { r = await HOST.tillPost('/api/till/catalogue', body, { noQueue: true }); } catch (_) { r = null; }
   if (!r || !r.ok) {
     Array.prototype.forEach.call(document.querySelectorAll('.trade'), function(b){ b.removeAttribute('disabled'); });
     startSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.', true);
-    return;
+    return false;
   }
+  if (extra && extra.length) r.message = (r.message || 'Added') + ' · left out, no price: ' + extra.slice(0, 5).join(', ') + (extra.length > 5 ? ' and ' + (extra.length - 5) + ' more' : '');
   startSay((r.message || 'Added') + ' · reading them onto this counter…', false);
   /* ⭐ the products exist on the server now; the counter reads its shop again so they arrive the usual way */
   try { await refresh(); } catch (e) { cbQuiet('startMint:1', e); }
@@ -21421,6 +21459,7 @@ async function startMint(key){
      which does not exist, inside a try/catch that would have swallowed it. The shop would have been minted
      and the shelf would have looked empty until the next keystroke. [[feedback-silence-is-the-bug]] */
   try { paintChips(); paintQuick(); paintHits(); } catch (e) { cbQuiet('startMint:2', e); }
+  return true;
 }
 /** the boxes, by their server field name */
 function shopBox(k){ return document.querySelector('#shopform input[data-shop="' + k + '"]'); }

@@ -3537,17 +3537,35 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), ...checked(
     } catch (e) {
       log.fellBack('till GET /catalogue/blueprints: failed — carried on without it', e);
     }
-    res.json({
-      version: blueprints.VERSION,
-      axiom: blueprints.AXIOM,
-      enrich: blueprints.ENRICH,
-      have: have,
-      blueprints: Object.keys(blueprints.BLUEPRINTS).map((name) => blueprintCard(blueprints, name))
-    });
+    res.json(
+      Object.assign(
+        {
+          version: blueprints.VERSION,
+          axiom: blueprints.AXIOM,
+          enrich: blueprints.ENRICH,
+          have: have,
+          blueprints: Object.keys(blueprints.BLUEPRINTS).map((name) => blueprintCard(blueprints, name))
+        },
+        await unpricedRowsOf(blueprints, req.query && req.query.rows, auth.entityOf(req))
+      )
+    );
   } catch (e) {
     problem(req, res, failed(e, req));
   }
 });
+
+/**
+ * ⭐ CAT-344 · ?rows=<list key>: the rows of one starter list AS THIS SHOP MAY SEE THEM, so the Start-your-shop dialog can show an empty price column
+ * when the list is unpriced (every list outside the home country, CAT-345) and send the owner's prices as {products}. { unpriced, rows: [{ name, unit,
+ * category }] } or {} when no list was asked for or the list carries its own prices (the dialog then mints the list as it is). The country is read
+ * only when rows are asked for, so the ordinary card answer keeps its trips.
+ */
+async function unpricedRowsOf(blueprints, key, entity_id) {
+  if (typeof key !== 'string' || !key) return {};
+  const plan = blueprints.localised(key, await require('../lib/shop-country').shopCountryOf(entity_id));
+  if (!plan.starter.length || plan.starter.some((row) => row.price != null)) return { unpriced: false };
+  return { unpriced: true, rows: plan.starter.map((row) => ({ name: row.name, unit: row.unit || plan.defaultUnit, category: row.category || null })) };
+}
 
 /** one trade's card: its key, label, outcome, pin, how many products and units and categories it starts with, and a four-name sample */
 function blueprintCard(blueprints, name) {
