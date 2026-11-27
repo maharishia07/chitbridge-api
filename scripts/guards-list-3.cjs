@@ -1,8 +1,8 @@
 /**
- * guards-list-3.cjs — PART 3 OF 3 OF THE OFFLINE GUARD LIST (moved out of scripts/guards.cjs, 22 Nov 2026, filesize ratchet: a new file stays under 500 lines).
+ * guards-list-3.cjs — PART 3 OF 4 OF THE OFFLINE GUARD LIST (moved out of scripts/guards.cjs, 22 Nov 2026, filesize ratchet: a new file stays under 500 lines).
  *
  * OWNER     cb-qa
- * OWNS      GUARDS_PART: 453 consecutive entries of the declared offline list, in run order (first: parallel-run.test.cjs). Add a guard to the LAST part (guards-list-3.cjs), the day it becomes true, not before.
+ * OWNS      GUARDS_PART: 445 consecutive entries of the declared offline list, in run order (first: parallel-run.test.cjs). Add a guard to the LAST part (guards-list-4.cjs), the day it becomes true, not before.
  * CALLED BY scripts/guards-list.cjs (joins the three parts, order kept) · tests that read the list as text: every-test-is-enrolled, junit-board, filesize-ratchet, readability-guard, junk-fuzz, sec-75-entity-schemas (via tests/support/guards-list-text.cjs).
  * FLOW      guards-list.cjs requires this file ──▶ one array, no entry changed ──▶ scripts/guards.cjs ──▶ scripts/guards-run.cjs
  * CARD      qa/offline-guards
@@ -491,13 +491,5 @@ const GUARDS_PART = [
   'pathreds-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'homespeed-plan-once.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'w4acc-bas-wages-boxes.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
-  'w4bank-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
-  'rw3-counter-name.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
-  'rw3firm-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
-  'rw3home-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
-  'ctr-dupbill-1133.test.cjs', // CTR-DUPBILL: a refused bill number steps to the next free one
-  'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
-  'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
-  'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
