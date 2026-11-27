@@ -82,10 +82,10 @@ of file each thing is; this says what already does the job.
 | 51 | `gate` | `country-setup.js` | gate(h, entity): |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `open` | `cap-attention.js` | a count pressed: |
-| 50 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
 | 50 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
+| 49 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 49 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 49 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 49 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
