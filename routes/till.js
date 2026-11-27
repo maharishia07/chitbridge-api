@@ -3546,7 +3546,7 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), ...checked(
           have: have,
           blueprints: Object.keys(blueprints.BLUEPRINTS).map((name) => blueprintCard(blueprints, name))
         },
-        await unpricedRowsOf(blueprints, req.query && req.query.rows, auth.entityOf(req))
+        await unpricedRowsOf(blueprints, req.query && req.query.rows, auth.entityOf(req), pageLimit.limitOf(req.query && req.query.limit, STARTER_ROWS_MAX, STARTER_ROWS_MAX))
       )
     );
   } catch (e) {
@@ -3560,11 +3560,13 @@ router.get('/catalogue/blueprints', auth, auth.requireScope('till'), ...checked(
  * category }] } or {} when no list was asked for or the list carries its own prices (the dialog then mints the list as it is). The country is read
  * only when rows are asked for, so the ordinary card answer keeps its trips.
  */
-async function unpricedRowsOf(blueprints, key, entity_id) {
+const STARTER_ROWS_MAX = 500; /* PERF1: a starter list is a trade's fixed list (the longest has 216 rows); the server never answers more than this, whatever ?limit= says */
+async function unpricedRowsOf(blueprints, key, entity_id, limit) {
   if (typeof key !== 'string' || !key) return {};
   const plan = blueprints.localised(key, await require('../lib/shop-country').shopCountryOf(entity_id));
   if (!plan.starter.length || plan.starter.some((row) => row.price != null)) return { unpriced: false };
-  return { unpriced: true, rows: plan.starter.map((row) => ({ name: row.name, unit: row.unit || plan.defaultUnit, category: row.category || null })) };
+  const rows = plan.starter.slice(0, limit).map((row) => ({ name: row.name, unit: row.unit || plan.defaultUnit, category: row.category || null }));
+  return Object.assign({ unpriced: true, rows: rows, total: plan.starter.length, limit: limit }, pageLimit.capOf({ asked: false, capped: false, max: limit }, rows.length, plan.starter.length));
 }
 
 /** one trade's card: its key, label, outcome, pin, how many products and units and categories it starts with, and a four-name sample */
