@@ -20,7 +20,8 @@ function run(p, method, headers) {
   return out;
 }
 const code = (o) => JSON.stringify(o.body || {});
-const doors = ['/api/crm/parties', '/api/crm/parties/' + ID];
+const doors = ['/api/crm/parties', '/api/crm/parties/' + ID, '/api/relationships/customers', '/api/relationships/suppliers'];
+const relRouter = require('../routes/relationships');
 
 /* 1 the two reads pass to their routes; every other method on them is refused read-only; no header is untouched */
 for (const p of doors) {
@@ -34,10 +35,10 @@ for (const p of doors) {
 }
 assert.strictEqual(run('/api/crm/parties', 'DELETE', {}).next, true, 'no header: the shop own request is untouched');
 
-/* 2 every OTHER route of the CRM router, with the header, is refused and never reaches a handler as the firm's own */
+/* 2 every OTHER route of the CRM and relationships routers, with the header, is refused and never reaches a handler as the firm's own */
 const fronted = [];
-router.stack.filter((layer) => layer.route).forEach((layer) => {
-  const full = '/api/crm' + layer.route.path.replace(/:[a-z_]+/g, ID);
+[['/api/crm', router], ['/api/relationships', relRouter]].forEach(([mount, r]) => r.stack.filter((layer) => layer.route).forEach((layer) => {
+  const full = mount + layer.route.path.replace(/:[a-z_]+/g, ID);
   const hasFront = layer.route.stack.some((s) => s.handle === grant);
   Object.keys(layer.route.methods).forEach((m) => {
     const method = m.toUpperCase();
@@ -51,8 +52,8 @@ router.stack.filter((layer) => layer.route).forEach((layer) => {
     assert.strictEqual(o.next, false, method + ' ' + full + ' must be refused under X-Books-For');
     assert.strictEqual(o.status, 403, method + ' ' + full);
   });
-});
-assert.deepStrictEqual(fronted.sort(), ['GET /api/crm/parties', 'GET /api/crm/parties/' + ID].sort(), 'exactly the two reads hold the grant front');
+}));
+assert.deepStrictEqual(fronted.sort(), doors.map((d) => 'GET ' + d).sort(), 'exactly the listed reads hold the grant front');
 
 /* 3 Marketing and the rest of the CRM paths are closed */
 for (const p of ['/api/crm/parties/' + ID + '/timeline', '/api/crm/parties/' + ID + '/contact-prefs', '/api/crm/segments', '/api/crm/followups', '/api/crm/calls', '/api/crm/leads', '/api/crm/privacy-requests', '/api/marketing/offers', '/api/marketing']) {
@@ -80,6 +81,8 @@ assert.strictEqual(may(seat('editor', true), 'nobody'), false, 'an unknown role'
 const hostile = { party_id: ID, display_name: 'Agro Mills', name: 'Agro', party_no: 'P-0001', kind: 'entity', roles: { customer: true, supplier: true }, phone: '+61400000000', email: 'a@example.com', otp_contact: 'x', gstn: '33ABCDE1234F1Z5', gstin: { value: 'v' }, bridge_id: 'b', user_id: 'agro',
   tax_ids: [{ scheme: 'GSTIN', value: '33ABCDE1234F1Z5' }], terms: { customer: { credit_days: 30 } }, dues: { net_minor: 5 }, followups: [{ what: 'secret' }], points: 9, contact_prefs: [1], consent: [1], unbilled: 7,
   customer: { segment: 'regular', txn_count: 4, groups: ['VIP'], list_id: 'l' }, supplier: { category: 'Raw', notes: 'owner note', preferred: true }, lead: { stage: 'lead', since: 'x' } };
+const relRows = GV.cutRelations({ customers: [{ customer_list_id: 'l', display_name: 'A', phone: '+614', email: 'a@example.com', otp_contact: 'x', groups: ['VIP'], balance_minor: 5 }], total: 1 }, 'customers');
+assert.deepStrictEqual(Object.keys(relRows.customers[0]).sort(), ['balance_minor', 'customer_list_id', 'display_name']);
 const cut = GV.cutParty(hostile);
 for (const key of ['phone', 'email', 'otp_contact', 'gstn', 'gstin', 'bridge_id', 'user_id', 'followups', 'points', 'contact_prefs', 'consent', 'unbilled']) assert.ok(!(key in cut), key + ' is not kept');
 assert.ok(!('notes' in cut.supplier) && !('groups' in cut.customer) && !('list_id' in cut.customer) && !('since' in cut.lead));
