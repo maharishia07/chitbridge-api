@@ -27,7 +27,7 @@
   "audit_logged": 354,
   "stale_write_refused": 62,
   "documented_example": 699,
-  "paged_read": 46
+  "paged_read": 45
  },
  "debt": []
 }

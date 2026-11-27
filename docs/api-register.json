@@ -72,7 +72,7 @@
    },
    "paged_read": {
     "applies": 77,
-    "failing": 46
+    "failing": 45
    }
   },
   "resource_cap_causes": {},
@@ -8448,7 +8448,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 428,
-   "hash": "92012ff5c88a132d",
+   "hash": "e38f39361403d979",
    "does": "A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.",
    "errors": {
     "count": 1,
@@ -8519,7 +8519,7 @@
     "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false,
-    "paged_read": false
+    "paged_read": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -8535,9 +8535,7 @@
    },
    "reported_causes": {
     "resource_cap": [],
-    "paged_read": [
-     "whole_when_unasked"
-    ],
+    "paged_read": [],
     "stale_write_refused_na": [
      "read"
     ]
@@ -8548,7 +8546,7 @@
      "mode": "keyset",
      "default": 100,
      "max": 500,
-     "unasked": "everything",
+     "unasked": "bounded",
      "via": "limitOf"
     }
    },
@@ -8556,7 +8554,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW3-11 (0713fcf3a): one additive key, timezone (the audited shop zone via books-hooks.zoneOf), already declared nullable in the closed output schema (api-output-shapes.json); no key, status or code removed; same chain, same gates (moneyReader, books on)",
+    "signed_off_by_date": "cb-api 2026-11-27 batch 1132 re-sign, diff origin/main...ca4bcb1f9 read (routes/books.js one line: pageQ -> Daybook.daybookPageQ; lib/books-daybook.js daybookPageQ = pageQ when asked, else ONE default page limit 100 (max 500, clamped as before, never an error), page 1, order as asked; chain, operation and contract unchanged), 13 machine columns true, paged_read true; the answer keys total, page, limit, next, totals are in docs/contracts/api-output-shapes.json and web-api.json (count = rows on the page, total = the range); status codes unchanged (401,403,404,422,500). Behaviour note for cb-accounting/web: a caller that sent no limit now gets one page and must read next; this sign-off covers the surface only. Prior note: cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW3-11 (0713fcf3a): one additive key, timezone (the audited shop zone via books-hooks.zoneOf), al",
     "lifecycle": "stable"
    },
    "status": "meets standard",

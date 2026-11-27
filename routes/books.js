@@ -430,7 +430,7 @@ router.get('/daybook', auth, moneyReader, on, ...checked('GET /daybook'), async 
     const e = ctx(req),
       from = dateQ(req.query.from, today(req)),
       to = dateQ(req.query.to, from),
-      pg = pageQ(req.query);
+      pg = Daybook.daybookPageQ(req.query); /* 1132: nothing asked = ONE default page, never the whole range */
     const asked = await Daybook.sinceAsked(req, e);
     if (asked.refusal) return problem(req, res, asked.refusal);
     const since = asked.since;
