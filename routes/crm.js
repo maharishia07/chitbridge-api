@@ -138,7 +138,9 @@ async function pointsOf(owner, party) {
   if (!party.roles.customer) return null;
   try {
     const balance = await require('../lib/reward-store').balance(owner, { scheme: 'identity', value: party.party_id }, withEntity);
-    return balance.programme ? { programme: balance.programme.name, points: balance.points, worth: balance.worth } : null;
+    if (balance.programme) return { programme: balance.programme.name, points: balance.points, worth: balance.worth };
+    /* a given point is a promise (Athi 28 Nov 2026): held with no programme running, shown as the till shows it; redemption waits for a programme */
+    return balance.points ? { programme: null, points: balance.points, worth: null } : null; /* programme:null = held, not redeemable until one runs */
   } catch (e) {
     if (!(e && e.code === '42P01')) throw e;
     return null;

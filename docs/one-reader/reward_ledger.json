@@ -1,0 +1,8 @@
+{
+  "_doc": "see docs/one-reader/books_access_grant.json (on the grants branch) for the rule: one owning module, dated waivers, tests/one-reader-tables.test.cjs",
+  "table": "reward_ledger",
+  "owner": "lib/reward-store.js",
+  "decision": "foldOf over the stored sum (balanceOn for one holder, walkIns for the list): what the holder can spend that day under the promise own terms (DECISIONS 28 Nov 2026)",
+  "state_patterns": [],
+  "waivers": []
+}

@@ -2564,7 +2564,11 @@ router.get('/reward', auth, auth.requireScope('till'), ...checked('GET /reward')
     const holder = holderFrom({ scheme: req.query.scheme, value: req.query.value });
     if (!holder) return refuseBad(req, res, 'scheme (identity|phone) and value required');
     const prog = await progOf(entity_id);
-    if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
+    /* a given point is a promise (Athi 28 Nov 2026): with no live programme the holder still holds the stored balance, never 0 (reward-store.balance) */
+    if (!prog) {
+      const kept = await store.balance(entity_id, holder, withEntity, null);
+      return res.json({ ok: true, holder, programme: null, points: kept.points, entries: kept.entries }); /* programme:null says it: held, not redeemable until a programme runs */
+    }
     /* the balance is the SUM of every entry (lib/reward-store.balanceOn), never a fold of the newest page */
     const balance = await store.balance(entity_id, holder, withEntity, prog);
     res.json(rewardHeld(holder, prog, balance));
