@@ -743,7 +743,7 @@ router.get('/customers', auth, ...checked('GET /customers'), async (req, res) =>
        JOIN identities i ON i.identity_id = cl.customer_identity_id
        WHERE cl.owner_entity_id = $1
          AND ${frag(customerGroups.NOT_SELF_CUSTOMER_SQL)}
-         AND ${frag(customerGroups.NOT_A_SUPPLIER_SQL)}
+         AND ${frag(customerGroups.CUSTOMER_ROLE_SQL)}
        ORDER BY cl.last_txn_at DESC NULLS LAST`,
           [owner]
         )

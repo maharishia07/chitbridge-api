@@ -18,5 +18,6 @@ const GUARDS_PART = [
   'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
   'acc-setoff-both-roles-1138.test.cjs', // ACC-new-1: a trader that is both supplier and customer is one party; a sales bill adds the customer row, an advice/order does not; H 165.00 in / 95.00 out
+  'one-customer-1138.test.cjs', // ONE-CUSTOMER: one reader of "is X a customer" (lib/customer-groups); a guard fails when a module writes its own supplier/customer predicate
 ];
 module.exports = { GUARDS_PART };
