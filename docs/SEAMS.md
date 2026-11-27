@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 146 | `answer` | `availability.js` | from March; then nearest. |
 | 144 | `item` | `bank-band.js` |  |
-| 131 | `money` | `bill-privacy.js` |  |
+| 132 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 112 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
@@ -109,11 +109,11 @@ of file each thing is; this says what already does the job.
 | 41 | `money` | `cart.js` |  |
 | 41 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 40 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
+| 40 | `entries` | `books-store.js` |  |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 39 | `guard` | `amend.js` | would disturb what has gone out. |
-| 39 | `entries` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `ensureCap` | `app.html` |  |
