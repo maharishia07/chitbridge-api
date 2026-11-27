@@ -19429,7 +19429,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 105,
-   "hash": "b5eb8287161ca9c1",
+   "hash": "2a939a2dab71aa91",
    "does": "Optional view, consent flag and page in -> we list the shop's customers, suppliers and leads with their balances and alerts -> a page of parties.",
    "errors": {
     "count": 0,
@@ -19530,7 +19530,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "b5eb8287161ca9c1"
+    "stale_since": "2a939a2dab71aa91"
    },
    "status": "partial",
    "callers": [
@@ -19565,7 +19565,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 157,
-   "hash": "a087c6aab2123a86",
+   "hash": "ca044cd3f6beeb9f",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
     "count": 0,
@@ -19672,7 +19672,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "a087c6aab2123a86"
+    "stale_since": "ca044cd3f6beeb9f"
    },
    "status": "partial",
    "callers": [
@@ -33692,7 +33692,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 726,
-   "hash": "cebcefae7ee5e691",
+   "hash": "2691ca0d18e2da8c",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
     "count": 0,
@@ -33798,7 +33798,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "cebcefae7ee5e691"
+    "stale_since": "2691ca0d18e2da8c"
    },
    "status": "partial",
    "callers": [
@@ -34339,7 +34339,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 348,
-   "hash": "d7add44ba3e07bc6",
+   "hash": "061e2452cf5c18d3",
    "does": "Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.",
    "errors": {
     "count": 0,
@@ -34446,7 +34446,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "d7add44ba3e07bc6"
+    "stale_since": "061e2452cf5c18d3"
    },
    "status": "partial",
    "callers": [
