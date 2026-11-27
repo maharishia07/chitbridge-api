@@ -169,6 +169,27 @@ const call = (port, method, p, body) => new Promise((done) => {
   r = await q('GET', '/returns?stagger=monthly');
   ok('a monthly stagger: twenty-four months, May 2026 the latest ended (3.00 of output VAT)', r.status === 200 && r.body.periods.length === 24 && r.body.period.period === '2026-05' && box(r, 1).tax_minor === 300, JSON.stringify(r.body.period));
 
+  /* ⭐ ACC-410 (walk AE 27 Nov): the VAT period and the Emirate are the SHOP's setup answers (entity_governance.tax_registration.asked), read by the return for ANY seat. A shop that holds none answers
+     `needs: stagger` to every seat (nothing is guessed); a shop that holds Dubai + stagger 1 answers the same boxes to the owner and to the shop's auditor, with no stagger or Emirate sent. Hand figures: Box 1 10000/500 · Box 9 40000/2000 · Box 14 −1500 (refund 1500). */
+  {
+    let HELD = null; const withHeld = X.db.query;
+    X.db.query = async (t, p) => /SELECT tax_registration FROM entity_governance/.test(String(t)) ? { rows: HELD ? [{ tax_registration: { registered: true, asked: HELD } }] : [] } : withHeld(t, p);
+    const AE_AUDITOR = { identity_id: '55555559-0000-4000-8000-000000000000', parent_entity_id: AE, identity_type: 'actor', whole_entity: true, can_see_costs: true /* the row auth read (SEC-119) */ };
+    const seat = async (who) => { WHO = who; try { return await q('GET', '/returns'); } finally { WHO = owner(AE, 'Deira Stores'); } };
+    const boxesOf = (res) => JSON.stringify([1, 9, 14].map((n) => [box(res, n).amount_minor, box(res, n).tax_minor]));
+    const want = JSON.stringify([[10000, 500], [40000, 2000], [null, -1500]]);
+    r = await seat(AE_AUDITOR);
+    ok('ACC-410 a shop that holds no VAT period: the auditor gets `needs: stagger`, no period, no box, no net to pay (the same as the owner)', r.status === 200 && r.body.needs === 'stagger' && r.body.boxes.length === 0 && r.body.periods.length === 0, r.status + ' ' + JSON.stringify(r.body).slice(0, 300));
+    HELD = { region: 'Dubai', period: '1' };
+    const owned410 = await seat(owner(AE, 'Deira Stores')), firm = await seat(AE_AUDITOR);
+    ok('ACC-410 the setup holds Dubai + stagger 1: the owner reads Box 1 · 9 · 14 with nothing sent (' + boxesOf(owned410) + ')', owned410.status === 200 && !owned410.body.needs && boxesOf(owned410) === want && owned410.body.refund_minor === 1500, JSON.stringify(owned410.body).slice(0, 200));
+    ok('ACC-410 ⭐ the auditor reads the SAME period, the same boxes, the same refund (two carried totals compared, not recomputed)', firm.status === 200 && boxesOf(firm) === boxesOf(owned410) && firm.body.period.period === owned410.body.period.period && firm.body.refund_minor === owned410.body.refund_minor && firm.body.asked.emirate === 'Dubai' && firm.body.asked.stagger === 1);
+    HELD = { region: 'Dubai' };
+    r = await seat(AE_AUDITOR);
+    ok('ACC-410 a held Emirate alone does not guess the VAT period: still `needs: stagger`', r.body.needs === 'stagger' && r.body.boxes.length === 0);
+    X.db.query = withHeld;
+  }
+
   /* ── an Indian shop: its return is the GSTR, read from the rail ── */
   WHO = owner(IN, 'Mayur Traders'); DAY = '2026-10-20';
   await X.store.saveSetting(X.db, IN, { enabled: false });
