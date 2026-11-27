@@ -10,6 +10,7 @@
 'use strict';
 const assert = require('node:assert/strict');
 const T = require('../lib/tax-lines');
+const R = require('../lib/gstr-refusal');
 
 const GSTIN = '33AAAAA0000A1Z5';
 const ledger = T.ledger(
@@ -36,6 +37,12 @@ check('regular shop: unchanged, files 3000.00 taxable, 270.00 + 270.00 tax', () 
 });
 check('no RegType stated: treated as regular, unchanged', () => {
   assert.equal(T.gstr3b(ledger, { Country: 'IN', Gstin: GSTIN }, '092026').ok, undefined);
+});
+check('the refusal helper is closed to composition only: case-insensitive, and never for regular, unregistered or no party', () => {
+  assert.equal(R.composition({ RegType: 'Composition' }).ok, false);
+  assert.equal(R.composition({ RegType: 'regular' }), null);
+  assert.equal(R.composition({ RegType: 'unregistered' }), null);
+  assert.equal(R.composition(null), null);
 });
 console.log(fail ? '\n' + fail + ' failed' : '\nall passed');
 process.exit(fail ? 1 : 0);
