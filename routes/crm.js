@@ -117,7 +117,8 @@ router.get('/parties', grantFront, auth, noKey, ...checked('GET /parties'), asyn
           .indexOf('consent') >= 0,
       page: PL.pageOf(asked.page),
       limit: PL.limitOf(asked.limit, crm.PAGE, crm.PAGE),
-      q: textOf(asked.q)
+      q: textOf(asked.q),
+      names_only: granted /* CON-165: no search on phone or e-mail under a grant */
     });
     /* S34: every key crm.list can carry is named (consent_migrated only with ?with=consent, leads_migrated only on the leads view: undefined, so JSON leaves it out), then may */
     if (granted) return res.json(GV.cutList(listed, GV.readOnlyMay()));

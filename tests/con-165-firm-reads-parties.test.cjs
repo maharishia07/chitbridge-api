@@ -93,4 +93,20 @@ assert.ok(!JSON.stringify(listed).includes('+61411'));
 assert.strictEqual(listed.may.write.may, false);
 assert.strictEqual(listed.may.remove.ok, false);
 assert.deepStrictEqual(GV.QUERY_KEEP, ['q', 'page', 'limit']);
+
+/* 6 the look LISTS the two reads for either role (without this the grant look answers GRANT_ROUTE_NOT_LISTED and the feature is dead) and no write */
+const reqOf = (method, path) => ({ method, baseUrl: '/api/crm', path, headers: {} });
+for (const role of ['auditor', 'adviser']) {
+  assert.strictEqual(grant.listedFor(role, reqOf('GET', '/parties')), true, role + ' list');
+  assert.strictEqual(grant.listedFor(role, reqOf('GET', '/parties/' + ID)), true, role + ' record');
+  for (const p of ['/parties/' + ID + '/timeline', '/segments', '/followups']) assert.ok(!grant.listedFor(role, reqOf('GET', p)), role + ' ' + p + ' not listed');
+  assert.ok(!grant.listedFor(role, reqOf('POST', '/parties')), role + ' POST not listed');
+}
+/* 7 ?q under a grant is no phone or e-mail oracle */
+const crm = require('../lib/crm');
+const planted = { display_name: 'Agro Mills', party_no: 'P-0001', phone: '+61 412 345 678', email: 'secret@example.com', user_id: 'agromills' };
+assert.strictEqual(crm.matchesQuery(planted, '412345678'), true, 'the shop itself still finds by phone');
+for (const probe of ['412345678', '+61412345678', 'secret@example.com', 'secret', 'agromills']) assert.strictEqual(crm.matchesQuery(planted, probe, true), false, 'under a grant ' + probe + ' finds nothing');
+assert.strictEqual(crm.matchesQuery(planted, 'agro', true), true);
+assert.strictEqual(crm.matchesQuery(planted, 'P-0001', true), true);
 console.log('con-165-firm-reads-parties: ok');

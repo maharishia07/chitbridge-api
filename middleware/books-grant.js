@@ -126,7 +126,7 @@ const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(re
 const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
 /** W4-03: the auditor's one file read: the kept statement loaded into the Bank page's reader (use=read, GET); the DOWNLOAD (use=download or none) stays held (MONEY-01 A6), and the grant's own log names the look */
 const statementReaderRead = (req) => req.method === 'GET' && filePattern(req.path) === '/bank/statement-files/:id/file' && !!req.query && req.query.use === 'read';
-const listedFor = (role, req) => (isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req) || statementReaderRead(req));
+const listedFor = (role, req) => (isPartyRead(req) ? true /* CON-165: the exact area path, GET only (isPartyRead): the look lists it for either role */ : isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req) || statementReaderRead(req));
 
 /**
  * THE MARKS ROUTER'S DOORS (MARK & QUERY, routes/marks.js, mounted at /api/marks): the same front, a third family. An allow-list again, keyed by METHOD and the full path:
@@ -249,7 +249,7 @@ async function decide(req) {
   const member = String(req.headers[HEADER] || '').trim();
   if (!grants.UUID.test(member)) return { bad: true };
   const role = grants.roleOf(roleNamed(req));
-  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.api_key && !req.identity.parent_entity_id, manager: require('../lib/owner').isManager(req), role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req), bank_write: bankWrite(req) /* the look checks the grant's posting policy for it */ };
+  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.api_key && !req.identity.parent_entity_id, manager: require('../lib/owner').isManager(req), role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) || isPartyRead(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req), bank_write: bankWrite(req) /* the look checks the grant's posting policy for it */ };
   return grants.look(entityOfReal(req.identity), member.toLowerCase(), request);
 }
 
@@ -315,7 +315,7 @@ async function deniedAs(req, verdict) {
  * the answer is cut to the allow-list of lib/party-grant-view. Every other method on those paths is BOOKS_FOR_READ_ONLY (refuseElsewhere), every other CRM and Marketing path is BOOKS_FOR_NOT_HERE: a new route is born closed.
  */
 const PARTIES_SEAT_WORDS = 'Your seat reads the figures of this client, not the people. Ask the partner to change your role.';
-const PARTIES_READ_ONLY = "A client's parties are open to you to read, not to change. Nothing was done.";
+const PARTIES_READ_ONLY = "Read only for a firm seat: a conversation or a client's parties can be read, not changed. Nothing was done.";
 const isPartyRead = (req) => req.method === 'GET' && delegation.areaOfPath(fullPathOf(req)) === 'parties';
 /** the seat and the grant's role both reach the 'parties' area for reading (one table: lib/delegation) */
 const partySeatMay = (req) => delegation.mayActIn('parties', 'read', { identity: req.identity, via: 'grant', role: grants.roleOf(roleNamed(req)), api_key: req.api_key }).may;
@@ -375,4 +375,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { FILE_READS, bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { isPartyRead, FILE_READS, bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
