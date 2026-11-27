@@ -17,8 +17,17 @@ const matrix = require('../tools/seat-matrix.cjs');
 const fs = require('fs');
 let failed = 0, passed = 0;
 const check = (ok, text) => { if (ok) passed++; else { failed++; console.log('  FAIL ' + text); } };
-const pass = { owner: true, accountant: false, counter: true, viewer: true };
-matrix.SEATS.forEach((seat) => check(abilities.maySell(seat.req) === pass[seat.key], seat.key + ': maySell ' + pass[seat.key]));
+const who = (hat, level, extra) => ({ api_key: null, identity: Object.assign({ identity_type: 'actor', parent_entity_id: 'shop', hat, access_level: level }, extra || {}) });
+const cases = [
+  ['owner', { api_key: null, identity: { identity_type: 'entity' } }, true],
+  ['counter staff', who('act', 'editor'), true],
+  ['a manager who sells (not the Bookkeeper grant)', who('manager', 'editor'), true],
+  ['a manager with whole-shop reach but no cost sight', who('manager', 'editor', { whole_entity: true }), true],
+  ['the Bookkeeper (manager hat, editor, whole shop, costs)', who('manager', 'editor', { whole_entity: true, can_see_costs: true }), false],
+  ['an outside firm under a grant', who('manager', 'editor', { whole_entity: true, can_see_costs: true, acting_for_grant: true }), false],
+  ['view-only staff', who('view_only', 'viewer'), false]
+];
+cases.forEach(([name, req, want]) => check(abilities.maySell(req) === want, name + ': sells ' + want));
 check(abilities.maySell({ api_key: { jti: 'k' }, till: { key: { jti: 'k' } }, identity: { identity_type: 'entity' } }) === true, 'a till key passes the door');
 const src = fs.readFileSync(require('path').join(__dirname, '..', 'routes', 'till.js'), 'utf8');
 check(/router\.get\('\/snapshot', auth, sellsOnly,/.test(src), 'GET /snapshot is behind the sells door');
