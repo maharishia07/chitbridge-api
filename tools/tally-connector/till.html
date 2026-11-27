@@ -17524,6 +17524,10 @@ function addItem(i, qty, mods){
                       added once here rather than being re-derived on every repaint, so a bill is what was true
                       when it was made (the same rule mrp follows below). */
                    price:rmoney((Number(i.price)||0) + modAdd(mods)), qty:n, hsn:i.hsn||null,
+                   /* ⭐ CAT-352: THE PRICING STRUCTURE TRAVELS WITH THE LINE, as the shop's snapshot sent it (routes/till.js itemPricingCopy). lineOf()
+                      asked CBPricing about the CART LINE, and the line carried none of these — so a tiered product always rang at the list price. */
+                   pricing_kind:i.pricing_kind||null, pricing_tiers:i.pricing_tiers||null, pricing_amount:i.pricing_amount, pricing_min:i.pricing_min, pricing_max:i.pricing_max,
+                   pricing_def_name:i.pricing_def_name||null, mod_add:rmoney(modAdd(mods)),
                    mods:(mods && mods.length ? mods : null),
                    mrp:(Number(i.mrp) > 0 ? Number(i.mrp) : null),
                    /* ⭐ carried on the LINE as well as the bill: a reprint has to show which item needed it */
@@ -18373,12 +18377,36 @@ function pricedAt(i, qty){
       pricing_def_name: i.pricing_def_name, price: list }, qty, list);
   } catch (_) { return { amount: list, kind: null, why: 'list price', tier: null, violation: null, list: list }; }
 }
+/** ⭐ CAT-340: a quantity break is the ITEM's — 6 navy + 6 teal of one paint are 12 of it. Summed over the bill's lines of that product (a line not on the bill prices alone). */
+function itemQty(c){
+  var q = Number(c.qty) || 0;
+  if (CART.indexOf(c) < 0) return q;
+  return CART.reduce(function(t, x){ return String(x.item_id) === String(c.item_id) ? t + (Number(x.qty) || 0) : t; }, 0);
+}
+/**
+ * ⭐ CAT-347: THE VIEWER'S GROUPS, from the customer chosen on the bill — the same names lib/customer-groups.groupsOf builds on the server
+ * ('customer:<id>', the segment, 'group:<name>' for each group the seller placed them in), read off the snapshot's customer row. A walk-in
+ * (nobody chosen, or a name not on the shop's list) gets none, so a customer-only offer stays closed to them, by design.
+ */
+function custGroupsNow(){
+  var el = document.getElementById('cname'), name = el ? String(el.value || '').trim().toLowerCase() : '';
+  if (!name) return [];
+  var cust = ((S && S.customers) || []).filter(function(x){ return String(x.name || '').toLowerCase() === name; })[0];
+  if (!cust) return [];
+  var out = [];
+  if (cust.identity_id) out.push('customer:' + cust.identity_id);
+  if (cust.segment) out.push(String(cust.segment));
+  (Array.isArray(cust.groups) ? cust.groups : []).forEach(function(g){ out.push('group:' + g); });
+  return out;
+}
 function lineOf(c, n){
   var d = c.item_data || {};
   /* ⚠️⚠️ THE PRICED UNIT, NOT THE LIST PRICE. This is the first step of the line and the counter used to skip it,
      so a tiered product billed at the list price here while the storefront re-priced it — the same goods at two
      prices depending which door the customer came through. */
-  var pr = pricedAt(c, Number(c.qty) || 0);
+  var pr = pricedAt(c, itemQty(c));
+  /* the choices move the price (modAdd, added once at addItem): a break re-prices the PRODUCT, the choices still add on top */
+  if (pr && (pr.tier || pr.kind === 'fixed') && Number(c.mod_add) > 0) pr = Object.assign({}, pr, { amount: rmoney((Number(pr.amount) || 0) + Number(c.mod_add)) });
   return { key: (n == null ? (c.key || c.item_id) : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
            name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(pr.amount) || 0,
            priced: pr,
@@ -18400,7 +18428,7 @@ function price(){
   var lines = CART.map(function(c){ return lineOf(c); });
   var ev = null;
   try { if (window.CBOffers && S && (S.offers||[]).length)
-    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:shopCur(), now:new Date().toISOString() } }); } catch(_){ ev = null; }
+    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:shopCur(), now:new Date().toISOString(), customer_groups:custGroupsNow() } }); } catch(_){ ev = null; }
   /* ⭐ kept for the totals, so "Saved" can name what it is made of rather than being a lump nobody can check */
   EV = ev;
   CART.forEach(function(c, n){ priceCartLine(c, n, lines, ev); });

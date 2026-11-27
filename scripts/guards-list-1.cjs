@@ -466,5 +466,6 @@ const GUARDS_PART = [
   'assist-strict-input.test.cjs', // S33: CB Assist and catalogue-source write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'offers-products-strict-input.test.cjs', // S33: products and network-offers write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'connectors-strict-input.test.cjs', // S33: connector cockpit and integrations write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'till-pricing-1135.test.cjs', // CAT-352/347/340: the counter rings a tier break (12 x 50.00 = 600.00, GST 54.55), per ITEM not per line, and passes the chosen customer's groups (regular 36.00, walk-in 40.00)
 ];
 module.exports = { GUARDS_PART };
