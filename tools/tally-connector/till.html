@@ -21414,7 +21414,7 @@ async function startMint(key){
   /* ⭐ CAT-344: a list with no prices of its own (every list outside the home country) is shown with an EMPTY price column and the owner's prices
      are sent as {products}; the server answers which kind this list is. A refused or missing answer falls through to the plain mint, which says why. */
   var plan = null;
-  try { plan = await HOST.tillGet('/api/till/catalogue/blueprints?rows=' + encodeURIComponent(key)); } catch (_) { plan = null; }
+  try { plan = await HOST.tillGet('/api/till/catalogue/blueprints?rows=' + encodeURIComponent(key)); } catch (e) { cbQuiet('startMint:rows', e); plan = null; /* no list answer: the plain mint below says why */ }
   if (plan && plan.unpriced && plan.rows && plan.rows.length) { startPriceRows(key, plan.rows); return; }
   return startMintSend({ blueprint: key });
 }
@@ -21439,14 +21439,14 @@ async function startPriced(){
     if (text) sending.push({ name: row.name, unit: row.unit, category: row.category, price: text }); else left.push(row.name);
   });
   if (!sending.length) { startSay('Type a price against at least one product, then Add.', true); return; }
-  var go = document.getElementById('startgo'); if (go) go.setAttribute('disabled', '');
+  var goButton = document.getElementById('startgo'); if (goButton) goButton.setAttribute('disabled', '');
   var done = await startMintSend({ blueprint: START_PRICING.key, products: sending }, left);
-  if (!done && go) go.removeAttribute('disabled');
+  if (!done && goButton) goButton.removeAttribute('disabled');
 }
 /** the mint call and what follows it; extra = names of rows the owner left without a price (said, not hidden). → true when written */
 async function startMintSend(body, extra){
   var r = null;
-  try { r = await HOST.tillPost('/api/till/catalogue', body, { noQueue: true }); } catch (_) { r = null; }
+  try { r = await HOST.tillPost('/api/till/catalogue', body, { noQueue: true }); } catch (e) { cbQuiet('startMintSend:post', e); r = null; /* the next lines tell the owner nothing was added */ }
   if (!r || !r.ok) {
     Array.prototype.forEach.call(document.querySelectorAll('.trade'), function(b){ b.removeAttribute('disabled'); });
     startSay(((r && r.why) || 'ChitBridge could not be reached') + '. Nothing has been added.', true);
