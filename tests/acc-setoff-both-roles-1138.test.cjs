@@ -28,7 +28,7 @@ async function sendStep() {
     const db = { query: async (text) => { asked.push(text); return { rows: /FROM supplier_list/.test(text) ? [{ one: 1 }] : [] }; } };
     require.cache[require.resolve(path.join(H.API, 'db'))] = { exports: { withEntity: async (e, fn) => fn(db), query: db.query } };
     delete require.cache[require.resolve(path.join(H.API, 'lib', 'chits-send-bill'))];
-    await require(path.join(H.API, 'lib', 'chits-send-bill')).addReceiverToCustomerList(SHOP, { entity_id: TRADER }, purpose);
+    await require(path.join(H.API, 'lib', 'chits-send-bill')).addReceiverToCustomerList({ sender_id: SHOP, purpose }, { entity_id: TRADER });
     delete require.cache[require.resolve(path.join(H.API, 'db'))];
     return asked.some((t) => /INSERT INTO customer_list/.test(t));
   };

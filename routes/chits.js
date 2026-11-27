@@ -2897,8 +2897,8 @@ async function sendCustomers(sendState, req, res) {
   // ── Best-effort CRM auto-add — AFTER commit; a CRM write must never fail a guaranteed chit (D-065) ──
   // Q4: this post-commit write is OUTSIDE the delivery, so it runs in its OWN withEntity(sender) — customer_list
   // is RLS-scoped on owner_entity_id, so a bare query() would fail closed under FORCE.
-  /* WALK-N N-F-06: only the side the chit's direction names - a BUYER's order never makes its seller its customer (rail-actions.receiverIsCustomer) */
-  if (!is_draft && railActions.receiverIsCustomer(sendState)) for (const receiver of receiverDetails) await addReceiverToCustomerList(sender_id, receiver, sendState.purpose);
+  /* WALK-N N-F-06 + ACC-new-1: who is a customer is customer-groups.receiverBecomesCustomer's word (chit direction, supplier only through a sales bill), asked per receiver */
+  if (!is_draft) for (const receiver of receiverDetails) await addReceiverToCustomerList(sendState, receiver);
   /* ⭐ WALK I I-F-07: a counter bill that NAMES its customer (business_json.customer, no rail entity) puts that customer on the ONE party list — it said "customers appear when you bill them" and the list stayed empty. Best-effort, after commit. */
   if (!is_draft) await addNamedCounterCustomer(sender_id, sendState.business_json);
   /* ⭐ THE SELLER'S CUSTOMER LIST for an order sent from the Suppliers menu (2026-09-06, found by [OFF-03]): the block above records the
