@@ -1515,7 +1515,7 @@ async function sendSeller(sendState, req, res) {
     );
     if (shelf) {
       const taxShelfOf = { items: shelf.items, slabs: shelf.slabs, categories: shelf.categories, face: shelf.face, zone: shelf.zone /* AE2-F-01: the shop's country, so a line's scheme is its pack's */ }; /* the Map, as the storefront passes it — see slabOf */
-      line_items = taxLines.decorate(line_items, taxShelfOf);
+      line_items = await require('../lib/default-tax-rate').stampTypedLines(sellerId, taxLines.decorate(line_items, taxShelfOf), blankRated.at, query.for(sellerId)); /* TAXLINE-1132: a TYPED line (Compose: no catalogue item) takes the seller country's standard rate, like a new product */
       if (counterBill) ({ lines: line_items, changes: sendState.kindChanges } = counterKinds.stamp(line_items, taxShelfOf, { note: purpose === 'credit_note' })); /* AG-F-01: the catalogue's tax kind, not the till's */
     }
   } catch (e) {
