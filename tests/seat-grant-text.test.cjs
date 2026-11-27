@@ -27,7 +27,7 @@ const check = (ok, text) => { if (ok) passed++; else { failed++; console.log('  
 /** the verdict of the real gate for this seat: true (passes fully) or not */
 function gateSays(name) {
   const a = abilities.ABILITIES[name];
-  if (a.may) return abilities.may(name, seat) === true;
+  if (a.may) return abilities.mayDo(name, seat) === true;
   const chain = chains[a.route];
   if (!chain) { check(false, name + ': route ' + a.route + ' not found in routes/books.js'); return null; }
   return matrix.cellOf(chain, seat) === true;
@@ -42,6 +42,6 @@ check(preset.why === abilities.whyOf(preset.does, preset.stays), 'the grant sent
 /* the screen flag and the gate answer alike: GET /fx-rates may.add = POST /fx-rates gate */
 const owner = { api_key: null, identity: { identity_type: 'entity' } };
 const counter = matrix.SEATS.find((s) => s.key === 'counter').req;
-[owner, seat, counter].forEach((req) => check(abilities.may('fx_rates', req) === (matrix.cellOf(['ownerOrAccountant'], req) === true), 'fx_rates: the screen flag and the POST gate answer alike'));
+[owner, seat, counter].forEach((req) => check(abilities.mayDo('fx_rates', req) === (matrix.cellOf(['ownerOrAccountant'], req) === true), 'fx_rates: the screen flag and the POST gate answer alike'));
 console.log('\n  ' + (passed + failed) + ' checks, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
