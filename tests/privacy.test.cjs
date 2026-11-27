@@ -266,9 +266,9 @@ const prefs = (id) => '/parties/' + (id || P(2)) + '/contact-prefs';
   await ita('G5: the party record carries contact_prefs (the same shape)', async () => {
     const r = (await t.get(P3)).body; assert.strictEqual(r.contact_prefs.migrated, true); assert.strictEqual(r.contact_prefs.may.phone.service.code, 'OPTED_OUT');
   });
-  await ita('G4: GET /parties answers total · page · limit; no ?limit = the whole list; ?limit=1&page=2 is the second party', async () => {
+  await ita('G4: GET /parties answers total · page · limit; no ?limit = the first 500; ?limit=1&page=2 is the second party', async () => {
     const all = (await t.get('/parties')).body;
-    assert.strictEqual(all.total, 2); assert.strictEqual(all.page, 1); assert.strictEqual(all.limit, 5000); assert.strictEqual(all.parties.length, 2); assert.strictEqual(all.count, all.total);
+    assert.strictEqual(all.total, 2); assert.strictEqual(all.page, 1); assert.strictEqual(all.limit, 500); assert.strictEqual(all.parties.length, 2); assert.strictEqual(all.count, all.total);
     const p2 = (await t.get('/parties?limit=1&page=2')).body;
     assert.strictEqual(p2.parties.length, 1); assert.strictEqual(p2.total, 2); assert.strictEqual(p2.parties[0].party_id, all.parties[1].party_id);
   });

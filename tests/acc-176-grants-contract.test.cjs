@@ -83,7 +83,7 @@ const refusedWith = (fn, code) => { try { fn(); } catch (e) { assert.strictEqual
   });
   await t('the consent words name exactly the allow-list, and say what an auditor cannot do', () => {
     const words = contract.consentWords(true);
-    assert.strictEqual(words.can_read.length, booksGrant.GRANT_READS.size);
+    assert.strictEqual(words.can_read.length, booksGrant.GRANT_READS.size + 1, 'every listed read in words, plus the parties line (CON-165)');
     assert.ok(words.cannot.some((line) => /phone numbers or bank details/.test(line)) && words.cannot.some((line) => /change or add/.test(line)));
     assert.ok(/will see your costs/.test(words.costs) && /will not see your costs/.test(contract.consentWords(false).costs));
     assert.ok([...booksGrant.GRANT_READS].every((route) => contract.READS_IN_WORDS[route]), 'every listed route has its plain words');

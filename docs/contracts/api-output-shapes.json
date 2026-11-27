@@ -7844,6 +7844,7 @@
           "total",
           "page",
           "limit",
+          "next",
           "truncated",
           "alerts",
           "may"
@@ -7872,6 +7873,12 @@
           },
           "limit": {
             "type": "number"
+          },
+          "next": {
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "truncated": {
             "type": "boolean"
