@@ -67,6 +67,9 @@ t('a connector is Linked; suppliers are the rail count', rowOf(b.lean, 'systems'
 t('boilerplate drift shows once the mint version exists', B({ gov: Object.assign({}, rows.gov[0], { boilerplate_version: '2' }) }).lean[1].rows[0].fix === 'Review');
 t('trade: customers carry open chits, suppliers carry open orders', rowOf(b.use, 'trade', 'customers').m === '24 chits open' && rowOf(b.use, 'trade', 'suppliers-out').m === '5 orders open');
 t('co-assists: what each sees', rowOf(b.use, 'act', 'actor:0').m === 'Staff · no costs' && rowOf(b.use, 'act', 'actor:1').m === 'Staff · sees costs' && b.roles.adviser.name === 'Accountant');
+const withFirms = B({ rows: { firms: [{ name: 'Ng & Co', state: 'active' }, { name: 'Pending LLP', state: 'requested' }] } }).use.find((g) => g.key === 'act').rows;
+t('UX-226b O9: a firm that acts for the shop and a firm still asked are NAMED rows beside the staff; the count (rows not empty/later) equals them', withFirms.length === 4 && withFirms[2].n === 'Ng & Co' && withFirms[2].m === 'Firm · acts for you' && withFirms[3].s === 'wait' && withFirms.every((r) => r.s !== 'empty'), JSON.stringify(withFirms));
+t('UX-226b O9: no staff and no firm is the one empty row; a firm alone drops it', B({ rows: { actors: [] } }).use[1].rows[0].s === 'empty' && B({ rows: { actors: [], firms: [{ name: 'F', state: 'active' }] } }).use[1].rows.length === 1);
 const pr = rowOf(b.use, 'cite', 'proof');
 t('trade proof is ONE statement: the header 3 of 4, what is still to show, with Finish (H7)', /^3 of 4 shown · still to show: GSTIN$/.test(pr.m) && pr.fix === 'Finish' && pr.t === 'Incomplete' && !!pr.href, JSON.stringify(pr));
 t('jurisdiction: country known, version not recorded (H5), not "not yet" beside a country', rowOf(b.lean, 'rules', 'jurisdiction').m === 'Jurisdiction · version not recorded' && rowOf(b.lean, 'rules', 'jurisdiction').t !== 'not yet', JSON.stringify(rowOf(b.lean, 'rules', 'jurisdiction')));
