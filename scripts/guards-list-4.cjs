@@ -17,5 +17,6 @@ const GUARDS_PART = [
   'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
   'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
+  'acc414-dispute-ref.test.cjs', // ACC-414: a dispute holds a real bill of the party (number or id); an unknown ref is 404, a settled bill 400
 ];
 module.exports = { GUARDS_PART };
