@@ -10,9 +10,9 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 219 | `list` | `amend.js` | list(entity_id, chit_id) — |
-| 207 | `rows` | `crm.js` | still in them: |
+| 208 | `rows` | `crm.js` | still in them: |
 | 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 182 | `words` | `variant.browser.js` |  |
+| 183 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 145 | `answer` | `availability.js` | from March; then nearest. |
@@ -26,7 +26,7 @@ of file each thing is; this says what already does the job.
 | 102 | `next` | `dayopen.js` | the next thing to do — |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 100 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 92 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
+| 93 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 90 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 90 | `again` | `signin-ui.js` |  |
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -36,9 +36,9 @@ of file each thing is; this says what already does the job.
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 85 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 85 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 82 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 82 | `read` | `books-grant-drill.js` |  |
 | 82 | `count` | `money-check.js` | the count /health reads |
-| 81 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 81 | `rows` | `cap-settings.js` |  |
 | 80 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 79 | `items` | `books-store.js` | PERF1: |
@@ -53,9 +53,9 @@ of file each thing is; this says what already does the job.
 | 70 | `shape` | `books-practice.js` | a client's practice row: |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 69 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
-| 67 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
+| 68 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
+| 68 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 67 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
-| 66 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 66 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 66 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 66 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -82,10 +82,10 @@ of file each thing is; this says what already does the job.
 | 51 | `gate` | `country-setup.js` | gate(h, entity): |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `open` | `cap-attention.js` | a count pressed: |
+| 50 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
 | 50 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
-| 49 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 49 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 49 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 49 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
@@ -107,8 +107,8 @@ of file each thing is; this says what already does the job.
 | 41 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 41 | `opts` | `books-grant-filters.js` |  |
 | 41 | `money` | `cart.js` |  |
+| 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 41 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
-| 40 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
@@ -152,6 +152,7 @@ of file each thing is; this says what already does the job.
 | 30 | `post` | `books-manual.js` | POST /events — |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `move` | `rail.js` | Order = the order the server refused in: |
+| 29 | `step` | `cart.js` |  |
 | 29 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 29 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
 | 29 | `recorded` | `stock-below-zero.js` | is this movement (the unique key: |
@@ -160,7 +161,6 @@ of file each thing is; this says what already does the job.
 | 29 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 28 | `figures` | `bank-demo.js` |  |
 | 28 | `card` | `cap-shop.js` |  |
-| 28 | `step` | `cart.js` |  |
 | 28 | `cblog` | `core.js` | const __cblog = []; |
 | 28 | `chart` | `fx-rates.js` |  |
 | 28 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
