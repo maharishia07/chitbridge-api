@@ -168,6 +168,7 @@ const GUARDS_PART = [
   'bill-total-wire.test.cjs', // ACC-348a: the chit list row and the chit detail carry the same bill_total (total, agree, currency_code); a disagreement is agree:false; never shipped copies
   'acc-206-readers.test.cjs', // ACC-206 C2-C4: every reader of a bill total is built from counterBill.billTotalSql / pickOf; the beckn quote says 189 for the pre-2-Nov invoice
   'money-reader-scan.test.cjs', // ACC-206 G1: no raw read of the bill total outside the one pick; each named exception carries its reason (SCAN_SELFTEST=1 proves it bites)
+  'reward-walkins-one-reader.test.cjs', // DRIFT cluster 5 (27 Nov): the walk-in list quotes what the till spends (reward-store.walkIns/foldOf); no SQL on reward_ledger outside reward-store (SCAN_SELFTEST=1 proves it bites)
   'cost-margin-basis.test.cjs', // ACC-206 C1: the owner's chit margin is on the taxable value, one case per matrix column (tests/lib/bill-total-fixtures.cjs)
   'cur1-money-adopt.test.cjs', // CUR-1: the adopted money is the ISO 4217 value type (HUF 2, PTS and unlisted refused, mismatch 409), both copies
   'cur1b-withdrawn.test.cjs', // CUR-1b: withdrawn codes (BGN HRK CUC SLL ZWL) stay readable, refused for new money; XDR never a shop's money
