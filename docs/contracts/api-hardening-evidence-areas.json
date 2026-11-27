@@ -3024,6 +3024,10 @@
   },
   "PUT /api/testing/cmdb/:ci": {
    "junk_fuzz": true
+  },
+  "POST /api/books/evidence": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
   }
  },
  "junk_fuzz": {
