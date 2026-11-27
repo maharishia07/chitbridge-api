@@ -495,6 +495,9 @@ const GUARDS_PART = [
   'rw3-counter-name.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'rw3firm-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'rw3home-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'ctr-dupbill-1133.test.cjs', // CTR-DUPBILL: a refused bill number steps to the next free one
+  'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
+  'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };

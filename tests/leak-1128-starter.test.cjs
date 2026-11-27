@@ -37,7 +37,7 @@ const india = BP.localised('hotel', 'IN');
 ok('India still gets the Chennai list itself (same object, Idli at 40)', india === BP.blueprint('hotel') && india.starter[0].name === 'Idli' && india.starter[0].price === 40);
 ok('the india list is also what mintPlan gives for IN', BP.mintPlan('hotel', [], { country: 'IN' }).items[0].name === 'Idli');
 ok('a caller that passes no country keeps today’s behaviour (mintPlan unchanged)', BP.mintPlan('hotel', []).items[0].name === 'Idli');
-ok('another list (veg) is not swapped for any country', BP.localised('veg', 'AU') === BP.blueprint('veg'));
+ok('another list (veg) keeps its rows for any country, unpriced (CAT-345)', BP.localised('veg', 'AU') !== BP.blueprint('veg') && BP.localised('veg', 'AU').starter.length === BP.blueprint('veg').starter.length && BP.localised('veg', 'IN') === BP.blueprint('veg'));
 ok('an unknown list stays the neutral general one', BP.localised('nope', 'AU').key === 'general');
 ok('the constant is never mutated by any of the above', JSON.stringify(BP.blueprint('hotel')) === before);
 
