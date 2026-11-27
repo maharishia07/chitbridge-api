@@ -21,7 +21,7 @@ const ledger = [
 ];
 let TERMS = null; /* the newest reward definition's rules when no programme is live (a paused / ended programme) */
 const db = { async query(sql, p) {
-  if (/FROM definition d JOIN definition_version/.test(sql)) return /status = 'live'/.test(sql) ? { rows: [] } : { rows: TERMS ? [{ definition_id: 'd1', name: 'Points', rules: TERMS }] : [] };
+  if (/FROM definition d JOIN definition_version/.test(sql)) return /d.status = 'live'/.test(sql) ? { rows: [] } : { rows: TERMS ? [{ definition_id: 'd1', name: 'Points', rules: TERMS }] : [] };
   if (/GROUP BY holder_value/.test(sql)) { const g = {}; for (const x of ledger) { const k = x.holder_value; g[k] = g[k] || { phone: k, points: 0, last_at: x.at }; g[k].points += x.points; if (x.at > g[k].last_at) g[k].last_at = x.at; } return { rows: Object.values(g).filter((x) => x.points > 0).sort((a, b) => (a.last_at < b.last_at ? 1 : -1)) }; }
   if (/holder_value = ANY/.test(sql)) return { rows: ledger.filter((x) => p[1].includes(x.holder_value)).sort((a, b) => (a.holder_value === b.holder_value ? (a.at < b.at ? 1 : -1) : a.holder_value < b.holder_value ? -1 : 1)) };
   if (/FROM reward_ledger/.test(sql)) { const mine = ledger.filter((x) => x.holder_value === p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)); const total = mine.reduce((t, x) => t + x.points, 0); return { rows: mine.slice(0, p[3] == null ? undefined : p[3]).map((x) => ({ ...x, total })) }; }
