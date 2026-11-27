@@ -1354,7 +1354,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 453,
+   "line": 451,
    "hash": "2067c7efa6139a2c",
    "does": "A follow-up id in -> we remove that follow-up from the shop's list -> ok, or not-found.",
    "errors": {
@@ -1489,7 +1489,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 762,
+   "line": 760,
    "hash": "b9e82e9953752b7f",
    "does": "A group name from the owner -> we delete the group from every customer -> the name and how many were removed; owner only.",
    "errors": {
@@ -1622,7 +1622,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 470,
+   "line": 468,
    "hash": "2d3e6d49caf3438b",
    "does": "A party id from the owner in -> we hide that party from the lists and delete nothing, so chits and notes stay -> ok with the party id; owner only.",
    "errors": {
@@ -19166,7 +19166,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 523,
+   "line": 521,
    "hash": "5c03e033a8c955f0",
    "does": "Optional scope and page in -> we build the call desk queue of who to ring and what outcomes can be logged -> a page of calls with late and today counts.",
    "errors": {
@@ -19297,7 +19297,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 395,
+   "line": 393,
    "hash": "fd38a8251e14126b",
    "does": "Optional scope, done flag and page in -> we read the shop's follow-ups with late and today counts -> a page of follow-ups and what the caller may do.",
    "errors": {
@@ -19428,8 +19428,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 103,
-   "hash": "c20e04c7506579bf",
+   "line": 104,
+   "hash": "f38acdc113a913ba",
    "does": "Optional view, consent flag and page in -> we list the shop's customers, suppliers and leads with their balances and alerts -> a page of parties.",
    "errors": {
     "count": 0,
@@ -19528,7 +19528,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by Y-F-05 17d034713: no_money from the books' own read gate (routes/books gates.mayReadMoney) so a seat the books refuse (cashier, viewer) gets the list without dues; same keys, money keys absent for that seat; same statuses.",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. ?q of 100 characters or fewer passes (bounded in the query schema), an empty q is no filter, under a grant q matches names and party numbers only (no phone or e-mail search); `next` is the next page number, null on the last page; page default and ceiling 500 (was 5000; clamps, never 422; API-CHANGELOG line 2026-11-27). Open callers that read the whole list must follow `next`. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -19563,8 +19563,8 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 150,
-   "hash": "bad7a92fc1a3ae76",
+   "line": 147,
+   "hash": "4e40cc134cb62f6d",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
     "count": 0,
@@ -19669,7 +19669,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash and shape moved by three lanes: Y-F-05 17d034713 (no_money), LV-17 (bills { n, last_at } counted over the whole history, the dearer of the chit bills and the ledger bills, new key in the closed shape), lens-sec 23b4c8830 (otp_contact, the login phone, is no longer sent; the web callers cap-crm-record and cap-crm-leads read it only as a fall-back after phone, so an absent key is safe); points via pointsOf verbatim; statuses unchanged.",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. One cut record under a grant, the open record unchanged; foreign id still 404. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -19702,7 +19702,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 652,
+   "line": 650,
    "hash": "b09fcc80d1f69502",
    "does": "A party id in -> we read their contact preferences and the consent law words for the shop's country -> the preferences and the law text.",
    "errors": {
@@ -19836,7 +19836,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 213,
+   "line": 211,
    "hash": "bc936a72cf608b62",
    "does": "A party id and an optional page cursor in -> we gather their chits, messages, disputes, notes and follow-ups into one history -> a newest-first timeline page.",
    "errors": {
@@ -19979,7 +19979,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 694,
+   "line": 692,
    "hash": "5d7d9073586ec0db",
    "does": "Optional open flag and page from the owner or an editor -> we read the register of privacy requests -> a page of requests with open and late counts; viewers are refused.",
    "errors": {
@@ -20110,7 +20110,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 739,
+   "line": 737,
    "hash": "0fb6b1b604ab1138",
    "does": "Nothing but the signed-in shop -> we read the customer segments, groups and what each action may do -> the segments, groups and counts.",
    "errors": {
@@ -33690,7 +33690,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 723,
-   "hash": "58b9c1e4f72c982e",
+   "hash": "dbeecd4aa2564d45",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
     "count": 0,
@@ -33794,7 +33794,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash and shape moved by lens-sec 23b4c8830: otp_contact (the login phone) is deleted from every row after partyFields.decorate used it for a minted party's phone; the web reads phone first; same statuses.",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Customer picker rows cut by CUSTOMER_ROW_KEEP, a subset of the open row; envelope and open answer unchanged. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -34336,7 +34336,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 346,
-   "hash": "a0891d21f5e92c94",
+   "hash": "14e5e0de15122136",
    "does": "Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.",
    "errors": {
     "count": 0,
@@ -34441,7 +34441,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1228 (CAT-247, engines v1.92.0 adopt, head 2fb943a3): handler read: ctx.timezone is named by the server (lib/offers-live shopZoneFor, which calls crm-followups.zoneOfShop and books-hooks.zoneOf, no second reader; read only when an offer has a window), not a caller key; suppliers reads i.timezone on the row already fetched and drops supplier_timezone before the answer; no key, status, code or refusal changed; 13 columns true; cat-247-offer-window-zone 10 checks green",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Supplier picker rows cut by SUPPLIER_ROW_KEEP, a subset of the open row; under a grant the per-supplier offers read is skipped (inside the existing try, open answer unchanged); consent words (parties line) name tax numbers and trade recency, matching the allow-list; envelope and open answer unchanged. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -42819,7 +42819,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 443,
+   "line": 441,
    "hash": "16ef40fa90b074ce",
    "does": "A previous[] list from a hand-over in -> we put each follow-up back with who held it, through the one follow-up mover, naming any we could not -> how many moved and the named skips.",
    "errors": {
@@ -42947,7 +42947,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 427,
+   "line": 425,
    "hash": "5a5cf9a0c078b73e",
    "does": "A follow-up id and changes in -> we update the follow-up, refusing a done flag that is not true or false -> the saved follow-up.",
    "errors": {
@@ -52192,7 +52192,6 @@
    "reads": [],
    "writes": [
     "customer_list",
-    "identities",
     "supplier_list"
    ],
    "money": false,
@@ -64860,7 +64859,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 410,
+   "line": 408,
    "hash": "31a304923dab0041",
    "does": "A party and what to follow up in -> we check it is one of the shop's parties and save the follow-up -> the new follow-up.",
    "errors": {
@@ -64998,7 +64997,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 750,
+   "line": 748,
    "hash": "5b8c974f9d6b59d0",
    "does": "A group name with members to add or remove, from the owner or an editor -> we change the group in one transaction -> the group name, who was added or removed, and its count.",
    "errors": {
@@ -65133,7 +65132,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 487,
+   "line": 485,
    "hash": "1d7529f749b34bc2",
    "does": "A lead's name, phone and optional stage in -> we add them as a local customer marked as a lead at that stage -> the new lead, or a refusal if they exist.",
    "errors": {
@@ -65270,7 +65269,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 559,
+   "line": 557,
    "hash": "77434544d2c3283a",
    "does": "Rows of leads from an editor, optionally a dry run -> we add new leads, merge ones we know and skip bad rows -> the counts and a per-row result; nothing saved on a dry run.",
    "errors": {
@@ -65399,7 +65398,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 676,
+   "line": 674,
    "hash": "cea2f6634fedc2a5",
    "does": "A party id and what the customer said about contact -> we note it as staff-recorded consent, never as the customer's own answer -> the saved preference.",
    "errors": {
@@ -65532,7 +65531,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 372,
+   "line": 370,
    "hash": "5d02ed7bdfc18d8d",
    "does": "A party id and a call, message, visit or note in -> we check the contact rules for outbound contact and log it against that party -> the saved interaction.",
    "errors": {
@@ -65672,7 +65671,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 539,
+   "line": 537,
    "hash": "5929eacc65a5803f",
    "does": "A party id and a call outcome in -> we log the call and set the next follow-up and stage it suggests -> the interaction, follow-up, stage and suggestion.",
    "errors": {
@@ -65803,7 +65802,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 573,
+   "line": 571,
    "hash": "d8ddfb9dd33fe94a",
    "does": "A lead's id and a stage in -> we record the new stage as a fresh entry, refusing anyone who has already traded -> ok with the lead's stage and date.",
    "errors": {
@@ -65939,7 +65938,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 706,
+   "line": 704,
    "hash": "8ef63c2f632919df",
    "does": "A privacy request, optionally about a party -> we log it in the register -> the saved request.",
    "errors": {
@@ -66070,7 +66069,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 721,
+   "line": 719,
    "hash": "c1d848b46e756dd6",
    "does": "A request id and the answer from the owner -> we record the shop's answer to the privacy request -> the updated request; owner only.",
    "errors": {
@@ -66205,7 +66204,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 774,
+   "line": 772,
    "hash": "27705e35b442e4e0",
    "does": "A segment key, a message and an optional dry flag from the owner or an editor -> we count who may be messaged, or send to each allowed member -> the counts, who was refused and why.",
    "errors": {
@@ -66336,7 +66335,7 @@
    "owner_area": "crm",
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
-   "line": 600,
+   "line": 598,
    "hash": "5345c5fb9d3ed00b",
    "does": "A walk-in's phone and optional name in -> we add them as a customer and move the points held on that phone to them in one go -> the new party and the points claimed.",
    "errors": {
