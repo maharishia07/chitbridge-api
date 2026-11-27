@@ -1,6 +1,8 @@
 'use strict';
 /**
  * routes/books-evidence.js — A RECEIPT BESIDE AN ENTRY OF THESE BOOKS (FW2-03, cold auditor walk 27 Nov); the file's bytes are read at GET /evidence/:id in routes/books.js.
+ * OWNER     cb-accounting
+ * RISK      money
  * OWNS      POST /api/books/evidence
  * CALLED BY server.js (mounted beside routes/books.js at /api/books); the Day book's Attach receipt (web public/app/cap-books.js bkAttachToEntry)
  * FLOW      books-grant front (X-Books-For + a live adviser grant → the client's entity and an editor identity) → auth → noKey → editor → on → schemaValidate → lib/books-evidence-attach.put (seat, type by first bytes, size, entry of THIS shop, add-only) → the answer; a refusal → problem

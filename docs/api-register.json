@@ -50963,7 +50963,7 @@
    "owner_area": "books-evidence",
    "owner_agent": "unassigned",
    "file": "routes/books-evidence.js",
-   "line": 28,
+   "line": 30,
    "hash": "a5abe7969f41da11",
    "does": "An entry id and a file in -> we check the seat, the type by its bytes and that the entry is in these books -> the file kept beside the entry (add-only).",
    "errors": {
