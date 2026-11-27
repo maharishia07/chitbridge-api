@@ -107,6 +107,7 @@ router.get('/parties', grantFront, auth, noKey, ...checked('GET /parties'), asyn
       actor: byOf(req),
       blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
       no_money: await noMoney(req), // Y-F-05: dues are books money — the seat GET /dues refuses gets the list without them
+      limit: PL.limitOf(firm.askedOf(req).limit, crm.PAGE, crm.PAGE), /* CRM-261: 500 a page, the shared pager's cap */
       ...firm.listOptions(req) /* CON-165: under a grant only q · page · limit are read, and no search on phone or e-mail */
     });
     /* S34: every key crm.list can carry is named (consent_migrated only with ?with=consent, leads_migrated only on the leads view: undefined, so JSON leaves it out), then may */
