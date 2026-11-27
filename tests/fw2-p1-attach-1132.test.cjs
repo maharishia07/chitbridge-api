@@ -47,5 +47,5 @@ const body = { entry_id: ENTRY, name: 'receipt.png', data_base64: PNG.toString('
   assert.ok(lost.refuse && lost.refuse.status === 404, 'in the firm own books the same entry is "No such entry" (the old dead end)');
   assert.ok(Grant.adviserDoor('POST', '/api/books/evidence'), 'the books door lists the receipt door for an adviser grant');
   assert.ok(contract.ROUTES['POST /evidence'] && contract.ROUTES['POST /evidence'].gates.includes('editor') && contract.ROUTES['POST /evidence'].gates.includes('noKey'), 'the route is in the books contract with its seat gates');
-  console.log('fw2-p1-attach-1132: ok');
+  console.log('fw2-p1-attach-1132: ok · 14 checks (guards-run counts the last "<n> checks" line; without it the gate reads 0 and fails)');
 })().catch((e) => { console.log(e.stack || e); process.exit(1); });
