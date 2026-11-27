@@ -314,11 +314,10 @@ async function deniedAs(req, verdict) {
  * CON-165 (Athi 27 Nov): THE PARTY READS A FIRM SEAT MAKES under a grant: exactly GET /api/crm/parties and GET /api/crm/parties/:id (the delegation area 'parties', an exact-path regex). The two routes put this front in themselves (routes/crm.js);
  * the answer is cut to the allow-list of lib/party-grant-view. Every other method on those paths is BOOKS_FOR_READ_ONLY (refuseElsewhere), every other CRM and Marketing path is BOOKS_FOR_NOT_HERE: a new route is born closed.
  */
-const PARTIES_SEAT_WORDS = 'Your seat reads the figures of this client, not the people. Ask the partner to change your role.';
 const PARTIES_READ_ONLY = "Read only for a firm seat: a conversation or a client's parties can be read, not changed. Nothing was done.";
+/** is this request one of the listed party reads: a GET on the exact paths of the delegation area 'parties' */
 const isPartyRead = (req) => req.method === 'GET' && delegation.areaOfPath(fullPathOf(req)) === 'parties';
-/** the seat and the grant's role both reach the 'parties' area for reading (one table: lib/delegation) */
-const partySeatMay = (req) => delegation.mayActIn('parties', 'read', { identity: req.identity, via: 'grant', role: grants.roleOf(roleNamed(req)), api_key: req.api_key }).may;
+/** is this request a write (any method but GET) on the party paths: refused read-only before it can reach a handler */
 const partyWrite = (req) => req.method !== 'GET' && delegation.areaOfPath(req.path) === 'parties';
 
 /** a request that names a member: who may, the look, then the synthetic identity: an auditor runs READ ONLY for the rest of the request, an adviser in one normal transaction stamped with the grant */
@@ -326,7 +325,6 @@ async function actOn(req, res, next) {
   if (!mayUseGrant(req)) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', notForYouWords());
   if (seatRefuses(req)) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', REPORTS_ONLY_WORDS);
   req.books_role = await resolveRole(req);
-  if (isPartyRead(req) && !partySeatMay(req)) return refuse(req, res, 403, 'BOOKS_GRANT_NOT_FOR_YOU', PARTIES_SEAT_WORDS);
   if (isMarks(req) && markWriteDoor(req)) return markWrite(req, res, next);
   if (isMarks(req) && !markReadDoor(req)) return refuse(req, res, 403, 'MARK_WRITE_NOT_LISTED', 'This part of the books is not open to an auditor.');
   const verdict = await decide(req);
@@ -363,6 +361,7 @@ const BOOKS_FOR_NOT_HERE = "This request names a client's books, which only the 
 const roleOfHeader = (req) => grants.roleOf(req.headers[ROLE_HEADER]) || grants.AUDITOR;
 /** the grants are the client's own consent: a firm acting for a client (X-Books-For) never creates or changes one, so a write on /api/books-grants that names a client's books is refused, nothing done (A15, 20 Nov) */
 const grantsWrite = (req) => req.method !== 'GET' && req.method !== 'HEAD' && /^\/api\/books-grants(\/|$)/.test(String(req.path));
+/** the app-level fence: X-Books-For on a path no grant area reaches is refused in words; a write on a party path is refused read-only; a path an area reaches passes on to its own front */
 function refuseElsewhere(req, res, next) {
   if (req.headers[HEADER] !== undefined && grantsWrite(req)) return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
   if (req.headers[HEADER] !== undefined && partyWrite(req)) return problem(req, res, { status: 403, code: 'BOOKS_FOR_READ_ONLY', detail: PARTIES_READ_ONLY, legacy: { error: PARTIES_READ_ONLY, message: PARTIES_READ_ONLY } });

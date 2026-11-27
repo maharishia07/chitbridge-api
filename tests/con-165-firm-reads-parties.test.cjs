@@ -10,7 +10,7 @@ const assert = require('assert');
 process.env.NODE_ENV = 'test'; process.env.DATABASE_URL = ''; process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 const grant = require('../middleware/books-grant');
 const delegation = require('../lib/delegation');
-const GV = require('../lib/party-grant-view');
+const grantView = require('../lib/party-grant-view');
 const router = require('../routes/crm');
 const ID = '10000000-0000-4000-8000-000000000001';
 function run(p, method, headers) {
@@ -81,21 +81,21 @@ assert.strictEqual(may(seat('editor', true), 'nobody'), false, 'an unknown role'
 const hostile = { party_id: ID, display_name: 'Agro Mills', name: 'Agro', party_no: 'P-0001', kind: 'entity', roles: { customer: true, supplier: true }, phone: '+61400000000', email: 'a@example.com', otp_contact: 'x', gstn: '33ABCDE1234F1Z5', gstin: { value: 'v' }, bridge_id: 'b', user_id: 'agro',
   tax_ids: [{ scheme: 'GSTIN', value: '33ABCDE1234F1Z5' }], terms: { customer: { credit_days: 30 } }, dues: { net_minor: 5 }, followups: [{ what: 'secret' }], points: 9, contact_prefs: [1], consent: [1], unbilled: 7,
   customer: { segment: 'regular', txn_count: 4, groups: ['VIP'], list_id: 'l' }, supplier: { category: 'Raw', notes: 'owner note', preferred: true }, lead: { stage: 'lead', since: 'x' } };
-const relRows = GV.cutRelations({ customers: [{ customer_list_id: 'l', display_name: 'A', phone: '+614', email: 'a@example.com', otp_contact: 'x', groups: ['VIP'], balance_minor: 5 }], total: 1 }, 'customers');
+const relRows = grantView.cutRelations({ customers: [{ customer_list_id: 'l', display_name: 'A', phone: '+614', email: 'a@example.com', otp_contact: 'x', groups: ['VIP'], balance_minor: 5 }], total: 1 }, 'customers');
 assert.deepStrictEqual(Object.keys(relRows.customers[0]).sort(), ['balance_minor', 'customer_list_id', 'display_name']);
-const cut = GV.cutParty(hostile);
+const cut = grantView.cutParty(hostile);
 for (const key of ['phone', 'email', 'otp_contact', 'gstn', 'gstin', 'bridge_id', 'user_id', 'followups', 'points', 'contact_prefs', 'consent', 'unbilled']) assert.ok(!(key in cut), key + ' is not kept');
 assert.ok(!('notes' in cut.supplier) && !('groups' in cut.customer) && !('list_id' in cut.customer) && !('since' in cut.lead));
 assert.strictEqual(cut.display_name, 'Agro Mills');
 assert.deepStrictEqual(cut.tax_ids, hostile.tax_ids);
 assert.deepStrictEqual(cut.dues, hostile.dues);
 assert.ok(!JSON.stringify(cut).includes('example.com') && !JSON.stringify(cut).includes('+61400'));
-const listed = GV.cutList({ parties: [hostile], walk_ins: [{ phone: '+61411111111', points: 3 }], count: 1, total: 1, page: 1, limit: 500, next: null, truncated: false, alerts: {} }, GV.readOnlyMay());
+const listed = grantView.cutList({ parties: [hostile], walk_ins: [{ phone: '+61411111111', points: 3 }], count: 1, total: 1, page: 1, limit: 500, next: null, truncated: false, alerts: {} }, grantView.readOnlyMay());
 assert.deepStrictEqual(listed.walk_ins, []);
 assert.ok(!JSON.stringify(listed).includes('+61411'));
 assert.strictEqual(listed.may.write.may, false);
 assert.strictEqual(listed.may.remove.ok, false);
-assert.deepStrictEqual(GV.QUERY_KEEP, ['q', 'page', 'limit']);
+assert.deepStrictEqual(grantView.QUERY_KEEP, ['q', 'page', 'limit']);
 
 /* 6 the look LISTS the two reads for either role (without this the grant look answers GRANT_ROUTE_NOT_LISTED and the feature is dead) and no write */
 const reqOf = (method, path) => ({ method, baseUrl: '/api/crm', path, headers: {} });

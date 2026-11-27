@@ -63,7 +63,7 @@ const PV = require('../lib/privacy');
 const { textOf } = require('../lib/input-hygiene');
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager */
 const grantFront = require('../middleware/books-grant'); /* CON-165: a firm seat under a books grant READS the two party GETs below, cut by lib/party-grant-view; no other route here has the front, so the header on any other is refused by refuseElsewhere */
-const GV = require('../lib/party-grant-view');
+const grantView = require('../lib/party-grant-view');
 const PAGE_DEFAULT = 300,
   PAGE_MAX = 1000; /* one page of this file's follow-ups and calls (300 = the queue's old silent cut, now a page with a total) */
 
@@ -105,7 +105,7 @@ const idOf = (req) => {
 router.get('/parties', grantFront, auth, noKey, ...checked('GET /parties'), async (req, res) => {
   try {
     const granted = !!req.acting_for_grant; /* CON-165: only q · page · limit are read under a grant (no view=leads, no with=consent) */
-    const asked = granted ? GV.QUERY_KEEP.reduce((out, key) => Object.assign(out, req.query[key] === undefined ? {} : { [key]: req.query[key] }), {}) : req.query;
+    const asked = granted ? grantView.QUERY_KEEP.reduce((out, key) => Object.assign(out, req.query[key] === undefined ? {} : { [key]: req.query[key] }), {}) : req.query;
     const listed = await crm.list(ctx(req), {
       actor: byOf(req),
       blind: await require('../lib/cost').isCostBlind(req, ctx(req)), // RAIL-146e: ONE can_see_costs read; a blind reader's unbilled money is partial
@@ -121,7 +121,7 @@ router.get('/parties', grantFront, auth, noKey, ...checked('GET /parties'), asyn
       names_only: granted /* CON-165: no search on phone or e-mail under a grant */
     });
     /* S34: every key crm.list can carry is named (consent_migrated only with ?with=consent, leads_migrated only on the leads view: undefined, so JSON leaves it out), then may */
-    if (granted) return res.json(GV.cutList(listed, GV.readOnlyMay()));
+    if (granted) return res.json(grantView.cutList(listed, grantView.readOnlyMay()));
     // prettier-ignore
     res.json({ parties: listed.parties, walk_ins: listed.walk_ins, count: listed.count, total: listed.total, page: listed.page, limit: listed.limit, next: listed.next, truncated: listed.truncated, alerts: listed.alerts, consent_migrated: listed.consent_migrated, leads_migrated: listed.leads_migrated, may: crmMay(req) });
   } catch (e) {
@@ -162,7 +162,7 @@ router.get('/parties/:id', grantFront, auth, noKey, ...checked('GET /parties/:id
     const found = await crm.one(owner, id, { stages: true, consent: true, blind, no_money: await noMoney(req) });
     if (!found) return problem(req, res, { status: 404, ...notYourParty() });
     const p = found.party;
-    if (req.acting_for_grant) return res.json(GV.cutRecord(p, found.merged_from, GV.readOnlyMay())); /* CON-165: the cut row only: no points, follow-ups, consent or contact */
+    if (req.acting_for_grant) return res.json(grantView.cutRecord(p, found.merged_from, grantView.readOnlyMay())); /* CON-165: the cut row only: no points, follow-ups, consent or contact */
     const rec = Object.assign({}, p, { merged_from: found.merged_from });
     let chitBills = { n: 0, last: null }; /* LV-17: the party's bills counted by the server, never from a page of the timeline */
     /* the relationship: select.rows + measure.scorecard, exactly what /relationships/scorecard/:id answers — a local party has no chits */
