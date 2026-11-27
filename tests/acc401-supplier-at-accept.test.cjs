@@ -45,7 +45,7 @@ const W = '11111111-1111-4111-8111-111111111111', V = '22222222-2222-4222-8222-2
   let connected = true, taxHolder = null, steps = [], patched = [], nos = 0;
   LI.mayTrade = async () => (connected ? { ok: true } : { ok: false, why: 'local', say: 'not on ChitBridge' });
   PF.patch = async (h, o, side, id, body) => {
-    if (taxHolder) { const e = new Error('Another party already has this tax id.'); e.code = 'DUPLICATE_PARTY'; e.holder = taxHolder; e.other = 'L-1'; throw e; }
+    if (taxHolder) { const e = new Error('Another party already has this tax id.'); e.status = 409; e.holder = taxHolder; e.other = 'L-1'; throw e; }
     patched.push(body.tax_ids[0]); return { changed: ['tax_id:GSTIN'] };
   };
   PF.ensureNo = async () => { nos++; return 'P-1'; };
