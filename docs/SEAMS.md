@@ -21,7 +21,7 @@ of file each thing is; this says what already does the job.
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 112 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 110 | `entry` | `books-store.js` |  |
+| 111 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
@@ -36,9 +36,9 @@ of file each thing is; this says what already does the job.
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 85 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 85 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 82 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 82 | `read` | `books-grant-drill.js` |  |
 | 82 | `count` | `money-check.js` | the count /health reads |
-| 81 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 81 | `rows` | `cap-settings.js` |  |
 | 80 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 79 | `items` | `books-store.js` | PERF1: |
@@ -53,9 +53,9 @@ of file each thing is; this says what already does the job.
 | 70 | `shape` | `books-practice.js` | a client's practice row: |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 69 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
-| 67 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
+| 68 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
+| 68 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 67 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
-| 66 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 66 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 66 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 66 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
@@ -65,12 +65,12 @@ of file each thing is; this says what already does the job.
 | 64 | `view` | `country-ready.js` |  |
 | 64 | `view` | `books-payables.js` | group: |
 | 64 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
+| 63 | `facts` | `bill-steps.js` | MY state_log — |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 62 | `facts` | `bill-steps.js` | MY state_log — |
+| 59 | `note` | `dbwatch.js` |  |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
 | 58 | `lines` | `cart.js` |  |
 | 58 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
-| 58 | `note` | `dbwatch.js` |  |
 | 57 | `sheet` | `cap-employees.js` |  |
 | 57 | `account` | `home-facts.js` | OMITTED: |
 | 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
@@ -98,9 +98,9 @@ of file each thing is; this says what already does the job.
 | 46 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 46 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 45 | `order` | `cap-iddocs.js` | var LIST = null; |
+| 45 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 45 | `mine` | `crm.js` | `opt.removedOk`: |
 | 44 | `load` | `books-grant-view.js` |  |
-| 44 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 42 | `changes` | `books-store.js` |  |
 | 42 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
@@ -112,12 +112,12 @@ of file each thing is; this says what already does the job.
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
+| 39 | `says` | `adopt.js` |  |
 | 39 | `guard` | `amend.js` | would disturb what has gone out. |
 | 39 | `entries` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `ensureCap` | `app.html` |  |
-| 38 | `says` | `adopt.js` |  |
 | 38 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 37 | `note` | `device-id.js` | note(where, problem) — |
 | 37 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
@@ -152,6 +152,7 @@ of file each thing is; this says what already does the job.
 | 30 | `post` | `books-manual.js` | POST /events — |
 | 30 | `summary` | `catalogue-read.js` | A count a person can act on: |
 | 30 | `move` | `rail.js` | Order = the order the server refused in: |
+| 29 | `step` | `cart.js` |  |
 | 29 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 29 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
 | 29 | `recorded` | `stock-below-zero.js` | is this movement (the unique key: |
@@ -160,7 +161,6 @@ of file each thing is; this says what already does the job.
 | 29 | `copies` | `work-rows.js` | receipt, an expense, is left out by the SAME list the inbox uses), one per chit (a note to self holds two copi |
 | 28 | `figures` | `bank-demo.js` |  |
 | 28 | `card` | `cap-shop.js` |  |
-| 28 | `step` | `cart.js` |  |
 | 28 | `cblog` | `core.js` | const __cblog = []; |
 | 28 | `chart` | `fx-rates.js` |  |
 | 28 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
