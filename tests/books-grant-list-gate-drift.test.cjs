@@ -59,4 +59,11 @@ ok('list() asks stateOf and keeps no state rule of its own (no app-clock date te
   assert.ok(/stateOf\(row\)/.test(body), 'list() must state each grant with stateOf');
   assert.ok(!/new Date\(row\.expires_at\)/.test(body) && !/edge_live \? 'live'/.test(body), 'list() holds its own state rule: drift from the gate');
 });
+ok('a firm that connected by request (active agency edge) is live in the list AND admitted at the gate: both read the ONE edge SQL', () => {
+  const { isGrantParentSql } = require('../lib/network-membership');
+  assert.ok(isGrantParentSql('$1::text', '$2::text').includes("a.type = 'agency' AND a.state = 'active'"), 'the agency edge is in the one parent test');
+  const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-grant.js'), 'utf8');
+  assert.ok(src.includes("${isGrantParentSql('g.grantee_entity::text', 'g.grantor_entity::text')} AS edge_live"), 'list() reads edge_live through isGrantParentSql');
+  assert.ok(src.includes("${isGrantParentSql('$1::text', '$2::text')} AS edge_live"), 'the gate (rowFor) reads edge_live through the same isGrantParentSql');
+});
 console.log('\n  ✓ ' + n + ' passed');
