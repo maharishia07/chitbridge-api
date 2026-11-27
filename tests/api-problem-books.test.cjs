@@ -159,7 +159,7 @@ const CASH_PATCH = {
 /* the READY side of the reads whose not-ready answer the stand-in db gives: the schema is learned from both branches of the handler (API-8 review) */
 /* the stand-in answers (the READY reads, the writes' literals, the ledger and statement patches, the Needs-you and opening rows): tests/support/api-problem-books-fixtures.cjs */
 const {
-  RAIL_STOP, RETURN_BASE, RETURN_READY, RETURN_NEEDS, REVALUE_READY, ENTRY, ENTRY2, CHIT, DAY, ATTENTION_COUNTS, ATTENTION_ENTRIES, ATTENTION_PATCH, BILL_LATE, BILL_QUIET, PARTY_BILLS, BILLS_PATCH, PAY_ROW, JOURNAL, JOURNAL_MOVED, DUPLICATE, OFF, REVERSAL, REVERSAL_REOPENS, ALLOCATION, CHEQUE, PROPOSAL, PROPOSAL_SETTLES, ADVICE, RECORDED, RECORDED_SETTLES, REPLAY, OUTCOME, ENABLED, RETRIED, CHART, LEDGER_LINE, LEDGER_LINE_BARE, LEDGER_PATCH, LEDGER_PAGE_PATCH, packIN, ASSET_DISPOSED, COMPARE_READY, COMPARE_PATCH, STATEMENT_PATCH, MANUAL_PREVIEW, SHOP_TERMS, PAID, PAYMENT_PATCH, ADVICE_PATCH_READY, OPENING_REFUSAL, OPENING_PREVIEW, OPENING_SAVED, OPENING_CHANGE
+  EVIDENCE_ROWS, RAIL_STOP, RETURN_BASE, RETURN_READY, RETURN_NEEDS, REVALUE_READY, ENTRY, ENTRY2, CHIT, DAY, ATTENTION_COUNTS, ATTENTION_ENTRIES, ATTENTION_PATCH, BILL_LATE, BILL_QUIET, PARTY_BILLS, BILLS_PATCH, PAY_ROW, JOURNAL, JOURNAL_MOVED, DUPLICATE, OFF, REVERSAL, REVERSAL_REOPENS, ALLOCATION, CHEQUE, PROPOSAL, PROPOSAL_SETTLES, ADVICE, RECORDED, RECORDED_SETTLES, REPLAY, OUTCOME, ENABLED, RETRIED, CHART, LEDGER_LINE, LEDGER_LINE_BARE, LEDGER_PATCH, LEDGER_PAGE_PATCH, packIN, ASSET_DISPOSED, COMPARE_READY, COMPARE_PATCH, STATEMENT_PATCH, MANUAL_PREVIEW, SHOP_TERMS, PAID, PAYMENT_PATCH, ADVICE_PATCH_READY, OPENING_REFUSAL, OPENING_PREVIEW, OPENING_SAVED, OPENING_CHANGE
 } = require('./support/api-problem-books-fixtures.cjs')({ SHOP, PARTY, SETTING_ROW, HERE });
 const WRITES_READY = [
   /* l16: the opening balances page (routes/books-opening.js): the library's answers stand in, the route's own gates, schema and refusal mapping run for real */
@@ -335,7 +335,7 @@ const BOX_ROWS = [
   X('statement-file-already-in-box', 'POST /api/books/bank/statement-files', 409, { body: SF_BODY, patch: SF_REFUSES('Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.', 'ALREADY_IN_BOX', 409, { existing_id: PARTY }) }),
   X('statement-file-too-large', 'POST /api/books/bank/statement-files', 413, { body: SF_BODY, patch: SF_REFUSES('That file is over 6 MB, which is more than a statement should be.', 'FILE_TOO_LARGE', 413) }),
   X('statement-file-wrong-type', 'POST /api/books/bank/statement-files', 415, { body: SF_BODY, patch: SF_REFUSES('Only CSV, JSON or TXT statements can be kept here.', 'FILE_TYPE_NOT_KEPT', 415) }),
-  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) })
+  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) }), ...EVIDENCE_ROWS(X)
 ];
 const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
@@ -468,7 +468,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema'), backfill: lib('books-backfill') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema'), backfill: lib('books-backfill'), bea: lib('books-evidence-attach') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);
@@ -719,7 +719,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-opening.js')) }); /* l16: the opening balances page's doors, its own file under the same mount */
-  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-evidence.js')) }); /* FW2-03 */ /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-events-batch.js')) }); /* SPD bank Add: POST /events/batch, its own file under the same mount (1129) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();

@@ -1721,6 +1721,9 @@
   "POST /api/books/money-check/resolve": {
    "strict_input": true
   },
+  "POST /api/books/evidence": {
+   "strict_input": true
+  },
   "POST /api/flags/query": {
    "strict_input": true
   },

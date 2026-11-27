@@ -2290,6 +2290,14 @@
     422
    ]
   },
+  "POST /api/books/evidence": {
+   "cases": 2,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    422
+   ]
+  },
   "POST /api/books/fx-rates": {
    "cases": 2,
    "failed": 0,
