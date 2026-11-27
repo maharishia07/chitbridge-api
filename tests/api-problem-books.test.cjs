@@ -159,7 +159,7 @@ const CASH_PATCH = {
 /* the READY side of the reads whose not-ready answer the stand-in db gives: the schema is learned from both branches of the handler (API-8 review) */
 /* the stand-in answers (the READY reads, the writes' literals, the ledger and statement patches, the Needs-you and opening rows): tests/support/api-problem-books-fixtures.cjs */
 const {
-  RAIL_STOP, RETURN_BASE, RETURN_READY, RETURN_NEEDS, REVALUE_READY, ENTRY, ENTRY2, CHIT, DAY, ATTENTION_COUNTS, ATTENTION_ENTRIES, ATTENTION_PATCH, BILL_LATE, BILL_QUIET, PARTY_BILLS, BILLS_PATCH, PAY_ROW, JOURNAL, JOURNAL_MOVED, DUPLICATE, OFF, REVERSAL, REVERSAL_REOPENS, ALLOCATION, CHEQUE, PROPOSAL, PROPOSAL_SETTLES, ADVICE, RECORDED, RECORDED_SETTLES, REPLAY, OUTCOME, ENABLED, RETRIED, CHART, LEDGER_LINE, LEDGER_LINE_BARE, LEDGER_PATCH, LEDGER_PAGE_PATCH, packIN, ASSET_DISPOSED, COMPARE_READY, COMPARE_PATCH, STATEMENT_PATCH, MANUAL_PREVIEW, SHOP_TERMS, PAID, PAYMENT_PATCH, ADVICE_PATCH_READY, OPENING_REFUSAL, OPENING_PREVIEW, OPENING_SAVED, OPENING_CHANGE
+  EVIDENCE_ROWS, RAIL_STOP, RETURN_BASE, RETURN_READY, RETURN_NEEDS, REVALUE_READY, ENTRY, ENTRY2, CHIT, DAY, ATTENTION_COUNTS, ATTENTION_ENTRIES, ATTENTION_PATCH, BILL_LATE, BILL_QUIET, PARTY_BILLS, BILLS_PATCH, PAY_ROW, JOURNAL, JOURNAL_MOVED, DUPLICATE, OFF, REVERSAL, REVERSAL_REOPENS, ALLOCATION, CHEQUE, PROPOSAL, PROPOSAL_SETTLES, ADVICE, RECORDED, RECORDED_SETTLES, REPLAY, OUTCOME, ENABLED, RETRIED, CHART, LEDGER_LINE, LEDGER_LINE_BARE, LEDGER_PATCH, LEDGER_PAGE_PATCH, packIN, ASSET_DISPOSED, COMPARE_READY, COMPARE_PATCH, STATEMENT_PATCH, MANUAL_PREVIEW, SHOP_TERMS, PAID, PAYMENT_PATCH, ADVICE_PATCH_READY, OPENING_REFUSAL, OPENING_PREVIEW, OPENING_SAVED, OPENING_CHANGE
 } = require('./support/api-problem-books-fixtures.cjs')({ SHOP, PARTY, SETTING_ROW, HERE });
 const WRITES_READY = [
   /* l16: the opening balances page (routes/books-opening.js): the library's answers stand in, the route's own gates, schema and refusal mapping run for real */
@@ -319,8 +319,6 @@ const SF_READY = { schema: { hasTable: async () => true } }; /* the box's tables
 const SF_FILE = { id: PARTY, account_id: PARTY, label: '..1234', period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR', name: 'oct.csv', size: 120, mime: 'text/csv', kind: 'csv', source: 'owner', overlaps: false, by_name: 'Test shop', by_firm: null, for_client: false, added_at: DAY + 'T05:00:00.000Z', read_at: null, reads: 0 };
 const SF_LIST = { months: ['2026-10', '2026-11'], accounts: [{ account_id: PARTY, code: '1510', name: 'Bank', label: '..1234' }], cells: [{ account_id: PARTY, month: '2026-10', missing: false, file_ids: [PARTY] }, { account_id: PARTY, month: '2026-11', missing: true, file_ids: [] }], files: [SF_FILE], older: 0 };
 const SF_BODY = { account: '1510', name: 'oct.csv', text: 'a,b', sha256: 'a'.repeat(64), period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR' };
-const EV_BODY = { entry_id: ENTRY, name: 'receipt.png', data_base64: 'iVBORw0KGgo=' };
-const EV_REFUSES = (status, word) => ({ bea: { put: async () => ({ refuse: Object.assign({ status }, require(path.join(HERE, 'lib', 'attachments-contract')).words[word]()) }) } });
 const SF_ADD = (answer) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => answer } });
 const SF_REFUSES = (reason, code, status, more) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => { throw Object.assign(BSF.refuse(reason, code, status), more || {}); } } });
 const BOX_ROWS = [
@@ -337,15 +335,7 @@ const BOX_ROWS = [
   X('statement-file-already-in-box', 'POST /api/books/bank/statement-files', 409, { body: SF_BODY, patch: SF_REFUSES('Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.', 'ALREADY_IN_BOX', 409, { existing_id: PARTY }) }),
   X('statement-file-too-large', 'POST /api/books/bank/statement-files', 413, { body: SF_BODY, patch: SF_REFUSES('That file is over 6 MB, which is more than a statement should be.', 'FILE_TOO_LARGE', 413) }),
   X('statement-file-wrong-type', 'POST /api/books/bank/statement-files', 415, { body: SF_BODY, patch: SF_REFUSES('Only CSV, JSON or TXT statements can be kept here.', 'FILE_TYPE_NOT_KEPT', 415) }),
-  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) }),
-  /* FW2-03: a receipt beside an entry of these books (the owner, an editor, or an adviser under a grant): lib/books-evidence-attach.put answers { ok } or { refuse } in the attachments contract's words */
-  X('evidence-attached', 'POST /api/books/evidence', 200, { body: EV_BODY, patch: { bea: { put: async () => ({ ok: { id: PARTY, name: 'receipt.png', mime: 'image/png', size: 48, entry_id: ENTRY } }) } } }),
-  X('evidence-seat', 'POST /api/books/evidence', 403, { body: EV_BODY, patch: EV_REFUSES(403, 'notEntrySeat') }),
-  X('evidence-entry-not-here', 'POST /api/books/evidence', 404, { body: EV_BODY, patch: EV_REFUSES(404, 'entryNotFound') }),
-  X('evidence-too-large', 'POST /api/books/evidence', 413, { body: EV_BODY, patch: EV_REFUSES(413, 'tooLarge') }),
-  X('evidence-wrong-type', 'POST /api/books/evidence', 415, { body: EV_BODY, patch: EV_REFUSES(415, 'typeNotAllowed') }),
-  X('evidence-not-ready', 'POST /api/books/evidence', 503, { body: EV_BODY, patch: EV_REFUSES(503, 'entryNotReady') }),
-  X('evidence-fields-missing', 'POST /api/books/evidence', 400, { body: { entry_id: ENTRY, mime: 'image/png' } })
+  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) }), ...EVIDENCE_ROWS(X)
 ];
 const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
@@ -729,7 +719,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-opening.js')) }); /* l16: the opening balances page's doors, its own file under the same mount */
-  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-evidence.js')) }); /* FW2-03 */ /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-events-batch.js')) }); /* SPD bank Add: POST /events/batch, its own file under the same mount (1129) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();
