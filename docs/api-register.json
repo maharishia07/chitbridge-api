@@ -5,8 +5,8 @@
   "routes": 701,
   "no_does": 1,
   "not_started": 0,
-  "partial": 4,
-  "meets": 697,
+  "partial": 0,
+  "meets": 701,
   "columns": {
    "strict_input": {
     "applies": 360,
@@ -2978,7 +2978,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 482,
+   "line": 483,
    "hash": "683aa6ccd46c28b5",
    "does": "A supplier id from the owner -> we hide that supplier from the lists, keeping chits and history -> a removed message; owner only.",
    "errors": {
@@ -19528,11 +19528,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2a939a2dab71aa91"
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. ?q of 100 characters or fewer passes (bounded in the query schema), an empty q is no filter, under a grant q matches names and party numbers only (no phone or e-mail search); `next` is the next page number, null on the last page; page default and ceiling 500 (was 5000; clamps, never 422; API-CHANGELOG line 2026-11-27). Open callers that read the whole list must follow `next`.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-crm-leads.js",
     "cap-crm.js",
@@ -19670,11 +19669,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ca044cd3f6beeb9f"
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. One cut record under a grant, the open record unchanged; foreign id still 404.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js",
     "cap-crm-groups-window.js",
@@ -33691,7 +33689,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 726,
+   "line": 727,
    "hash": "2691ca0d18e2da8c",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
@@ -33796,11 +33794,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2691ca0d18e2da8c"
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Customer picker rows cut by CUSTOMER_ROW_KEEP, a subset of the open row; envelope and open answer unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -33828,7 +33825,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 792,
+   "line": 793,
    "hash": "7c3134ca129680fe",
    "does": "A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.",
    "errors": {
@@ -33961,7 +33958,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 718,
+   "line": 719,
    "hash": "e85807898c5889e2",
    "does": "Nothing but the signed-in shop -> we read the customer group names it has made -> the group names.",
    "errors": {
@@ -34089,7 +34086,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1058,
+   "line": 1059,
    "hash": "afebf4d8f77fd1b3",
    "does": "Optional since date -> we list every business the shop has traded with, from the chits, so none needs adding first -> counterparties to score.",
    "errors": {
@@ -34213,7 +34210,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1071,
+   "line": 1072,
    "hash": "00f435ab5f1dde1d",
    "does": "A counterparty id and optional since date -> we score how they trade with us from the shared chit copies and the shop's overdue policy -> their scorecard, or not-found.",
    "errors": {
@@ -34339,7 +34336,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 348,
-   "hash": "061e2452cf5c18d3",
+   "hash": "6949bf62c96231c1",
    "does": "Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.",
    "errors": {
     "count": 0,
@@ -34444,11 +34441,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "061e2452cf5c18d3"
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Supplier picker rows cut by SUPPLIER_ROW_KEEP, a subset of the open row; under a grant the per-supplier offers read is skipped (inside the existing try, open answer unchanged); consent words (parties line) name tax numbers and trade recency, matching the allow-list; envelope and open answer unchanged.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -34480,7 +34476,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 657,
+   "line": 658,
    "hash": "34ea3d3a80a87da1",
    "does": "A supplier id from the shop's own list -> we read that supplier's catalogue columns and products for drafting an order -> the catalogue, or not-on-your-list.",
    "errors": {
@@ -34615,7 +34611,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 529,
+   "line": 530,
    "hash": "35dc2f6490074d69",
    "does": "A search word of two letters or more -> we look across the catalogues of the shop's own suppliers -> which suppliers stock it and the matching items.",
    "errors": {
@@ -44426,7 +44422,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 987,
+   "line": 988,
    "hash": "dd576f3429fe253d",
    "does": "A customer id and a segment override or party fields -> we save the change on the shop's side -> the updated customer.",
    "errors": {
@@ -44558,7 +44554,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 439,
+   "line": 440,
    "hash": "8376a88466eb5d16",
    "does": "A supplier id and the owner's own fields (nickname, category, notes, preferred) -> we save them on the shop's side only, never on the supplier -> the updated supplier.",
    "errors": {
@@ -78453,7 +78449,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 887,
+   "line": 888,
    "hash": "31aba84aaef268a4",
    "does": "A User ID or email for a ChitBridge business, or a name for a local customer -> we add them to the shop's customer list -> the new customer.",
    "errors": {
@@ -78597,7 +78593,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 966,
+   "line": 967,
    "hash": "035dcc95b8adf401",
    "does": "A customer id and a list of group names -> we replace that customer's groups with the cleaned names -> ok and the groups; not for API keys.",
    "errors": {
