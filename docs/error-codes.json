@@ -5999,9 +5999,20 @@
    "owner_area": "relationships",
    "since": "2026-10-22",
    "raised_by": [
+    "GET /api/books/todo",
+    "GET /api/chits/:chit_id",
+    "GET /health",
     "PATCH /api/relationships/customers/:id",
     "PATCH /api/relationships/suppliers/:id",
-    "POST /api/books/move-in/import"
+    "POST /api/books/check",
+    "POST /api/books/move-in/import",
+    "POST /api/books/outbox/retry",
+    "POST /api/chits/:chit_id/deliver-lines",
+    "POST /api/chits/send",
+    "POST /api/ctp/deliver",
+    "POST /api/relationships/suppliers",
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
+    "PUT /api/chits/:chit_id/status"
    ]
   },
   {
