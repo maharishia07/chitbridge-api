@@ -523,14 +523,11 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       }
     }
     if (req.identity.identity_type === 'actor') {
-      result.rows[0].identity_type = 'actor';
-      result.rows[0].hat = req.identity.hat || null;
-      result.rows[0].access_level = req.identity.access_level || null;
-      result.rows[0].whole_entity = req.identity.whole_entity === true;
-      result.rows[0].parent_entity_id = req.identity.parent_entity_id || null;
+      Object.assign(result.rows[0], { identity_type: 'actor', hat: req.identity.hat || null, access_level: req.identity.access_level || null, whole_entity: req.identity.whole_entity === true, parent_entity_id: req.identity.parent_entity_id || null });
     } else {
       result.rows[0].identity_type = 'entity';
     }
+    result.rows[0].seat = require('../lib/seat-abilities').seatOf(req); /* UX-221: what this seat may open on Home and in Accounts, from the SAME predicates the gates use */
     result.rows[0].is_practice = await require('../lib/people').practiceOf(auth.entityOf(req), req.identity.identity_id); /* walkfix 1119 (a): every seat reads whether its shop is a practice (the one rule, lib/people firmSql); null = unknown */
 
     /**
