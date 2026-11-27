@@ -342,8 +342,8 @@
    "key": "GET /api/crm/parties",
    "path": "/api/crm/parties",
    "mode": "offset",
-   "default": 500,
-   "max": 500,
+   "default": "crm.PAGE",
+   "max": "crm.PAGE",
    "unasked": "bounded"
   },
   {

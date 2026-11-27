@@ -108,8 +108,8 @@ for (const role of ['auditor', 'adviser']) {
 /* 7 ?q under a grant is no phone or e-mail oracle */
 const crm = require('../lib/crm');
 const planted = { display_name: 'Agro Mills', party_no: 'P-0001', phone: '+61 412 345 678', email: 'secret@example.com', user_id: 'agromills' };
-assert.strictEqual(crm.matchesQuery(planted, '412345678'), true, 'the shop itself still finds by phone');
-for (const probe of ['412345678', '+61412345678', 'secret@example.com', 'secret', 'agromills']) assert.strictEqual(crm.matchesQuery(planted, probe, true), false, 'under a grant ' + probe + ' finds nothing');
-assert.strictEqual(crm.matchesQuery(planted, 'agro', true), true);
-assert.strictEqual(crm.matchesQuery(planted, 'P-0001', true), true);
+assert.strictEqual(require('../lib/crm-firm-read').matchesQuery(planted, '412345678'), true, 'the shop itself still finds by phone');
+for (const probe of ['412345678', '+61412345678', 'secret@example.com', 'secret', 'agromills']) assert.strictEqual(require('../lib/crm-firm-read').matchesQuery(planted, probe, true), false, 'under a grant ' + probe + ' finds nothing');
+assert.strictEqual(require('../lib/crm-firm-read').matchesQuery(planted, 'agro', true), true);
+assert.strictEqual(require('../lib/crm-firm-read').matchesQuery(planted, 'P-0001', true), true);
 console.log('con-165-firm-reads-parties: ok');

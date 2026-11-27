@@ -15,6 +15,8 @@ const GUARDS_PART = [
   'policy-defaults.test.js', // MNT-47: what an entity that never opened Settings actually does
   'policy-set.test.js', // MNT-47: the units set policy flag
   'beckn-map.test.js', // MNT-47: Beckn/ONDC mapping and the boundary it must not cross
+  'con-165-firm-reads-parties.test.cjs', // CON-165: a firm seat under a books grant reads the client's parties cut to names, numbers, terms and dues (offline)
+  'crm-259-261-search-and-page.test.cjs', // CRM-259/261: the list's ?q search and its 500-row page with { total, page, limit, next } (offline over crm-stub)
   'crm-calls.test.cjs', // QA wave 2: the call desk: queue, outcomes, the follow-up the call answered is closed (a uuid; a non-uuid closes nothing)
   'csv.test.js', // QA wave 2: the CSV round trip - what comes out goes back in
   'csv-preflight.test.js', // QA wave 2: import preflight: every refusal named before a row is written

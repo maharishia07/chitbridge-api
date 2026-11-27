@@ -10,9 +10,7 @@
 // FLOW  auth → validate → schema check (lib/relationships-contract.js) → withEntity → lib/crm · lib/local-identity (the add/remove paths); a refusal → problem(req, res, spec): the old keys beside the Problem fields
 // CARD 11-crm-and-marketing/relationships-routes
 const { frag } = require('../lib/sql-frag'); /* a built SQL fragment is marked; a value is a $n parameter */
-const express = require('express');
-const grantFront = require('../middleware/books-grant'); /* CON-165: the two list GETs below are the party pickers a firm seat reads under a books grant */
-const grantView = require('../lib/party-grant-view');
+const express = require('express'), grantFront = require('../middleware/books-grant'), firm = require('../lib/crm-firm-read'); /* CON-165: the two list GETs below are the party pickers a firm seat reads under a books grant */
 const PL = require('../lib/page-limit'); /* LIM2: the ONE pager — asked = a page (server max), not asked = every row, as before */
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
@@ -365,8 +363,7 @@ router.get('/suppliers', grantFront, auth, ...checked('GET /suppliers'), async (
     /* ⭐ WHAT EACH SUPPLIER GIVES ME, ON THE LIST (Athi, 2026-09-06: "the customer knows without even clicking — special discount for you").
        Per supplier: their live offers scoped to a group I am in or to me by name (lib/customer-groups), by the supplier's own names and the
        engine's promise. Read in parallel; a supplier whose read fails simply shows no tag. A stranger gets [] everywhere. */
-    try {
-      if (req.acting_for_grant) throw new Error('grant'); /* CON-165: the offers a supplier gives are cut from a firm's answer: skip the reads */
+    try { if (req.acting_for_grant) throw new Error('grant'); /* CON-165: the offers a supplier gives are cut from a firm's answer: skip the reads */
       const cg = require('../lib/customer-groups');
       const cv = require('../lib/catalogue-view');
       const eng = require('../lib/offers-engine').CBOffers;
@@ -410,8 +407,7 @@ router.get('/suppliers', grantFront, auth, ...checked('GET /suppliers'), async (
     await partyFields.decorate(withEntity, owner, rows, 'supplier_entity_id', 'supplier');
     /* RAIL-146l: what the shop owes a supplier is purchase money - a login without can_see_costs gets null + cost_hidden (lib/dues-view R2), as on GET /dues and the CRM list; ONE can_see_costs read, the owner pays none */
     if (await require('../lib/cost').isCostBlind(req, owner)) rows.forEach(hideOwed);
-    const answer = Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
-    res.json(req.acting_for_grant ? grantView.cutRelations(answer, 'suppliers') : answer); /* CON-165: the cut picker rows */
+    res.json(firm.relationsFor(req, Object.assign({ count: rows.length }, PL.pageOut('suppliers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))), 'suppliers')); /* CON-165: the cut picker rows */
   } catch (err) {
     problem(req, res, failed(err, req, 'Get suppliers failed'));
   }
@@ -768,8 +764,7 @@ router.get('/customers', grantFront, auth, ...checked('GET /customers'), async (
     );
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
     rows.forEach((item) => { delete item.otp_contact; }); /* lens-sec 1129 (23b4c8830): the login phone is never a party's contact; decorate has used it for a minted party's phone above, the column itself is not sent */
-    const answer = Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX)));
-    res.json(req.acting_for_grant ? grantView.cutRelations(answer, 'customers') : answer); /* CON-165: a firm seat under a grant reads the cut picker rows */
+    res.json(firm.relationsFor(req, Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))), 'customers')); /* CON-165: a firm seat under a grant reads the cut picker rows */
   } catch (err) {
     problem(req, res, failed(err, req, 'Get customers failed'));
   }

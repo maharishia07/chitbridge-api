@@ -9,13 +9,13 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 219 | `list` | `amend.js` | list(entity_id, chit_id) — |
-| 207 | `rows` | `crm.js` | still in them: |
-| 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 220 | `list` | `amend.js` | list(entity_id, chit_id) — |
+| 208 | `rows` | `crm.js` | still in them: |
+| 193 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 182 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 146 | `answer` | `availability.js` | from March; then nearest. |
+| 147 | `answer` | `availability.js` | from March; then nearest. |
 | 144 | `item` | `bank-band.js` |  |
 | 131 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
@@ -56,13 +56,13 @@ of file each thing is; this says what already does the job.
 | 68 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 68 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
 | 67 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
+| 67 | `view` | `books-payables.js` | group: |
 | 67 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 67 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 66 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
-| 66 | `view` | `books-payables.js` | group: |
+| 66 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 65 | `body` | `books-acting.js` | a write's body: |
 | 65 | `named` | `bank-rec-log.js` | W15-71: |
-| 65 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 64 | `view` | `country-ready.js` |  |
 | 64 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
@@ -84,10 +84,10 @@ of file each thing is; this says what already does the job.
 | 50 | `open` | `cap-attention.js` | a count pressed: |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
+| 50 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 50 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 49 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 49 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
-| 49 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 49 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 48 | `shell` | `pick.js` |  |
 | 48 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
@@ -180,13 +180,14 @@ of file each thing is; this says what already does the job.
 | 26 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 25 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
-| 25 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 25 | `reply` | `private-flag.js` | Refused in words: |
 | 25 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 24 | `done` | `attach-ui.js` |  |
 | 24 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 24 | `receipt` | `books-events-batch.js` | the receipt: |
+| 24 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 24 | `update` | `folder-rules.js` |  |
+| 24 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 24 | `connectors` | `home-facts.js` | declare (said in words — |
 | 24 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
 | 24 | `report` | `raida.js` | register at the one moment it must not. |
@@ -201,7 +202,6 @@ of file each thing is; this says what already does the job.
 | 23 | `account` | `cap-settings.js` |  |
 | 23 | `said` | `cap-shop.js` |  |
 | 23 | `later` | `home2.js` | adopt once on the next frame, however many changes ask for it |
-| 23 | `parties` | `books-store-parties.js` | it started from identities with a WHERE over both outer joins, which read the whole platform's identities for  |
 | 23 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 23 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 23 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |

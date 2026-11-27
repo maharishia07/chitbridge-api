@@ -12,6 +12,7 @@
  */
 const INFRA = ['books-backfill.js', 'books-events-batch.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js', 'products-import-rows.js', 'products-media-guard.js',
   'books-return-gst-gap.js', /* FW-32 (1130, accW2): the tax-missing-on-sales sentence of a return box: reads the return's own boxes and the pack's rate, every sum and the percent go through books-money-ops (ACC-206): the parent books-period's class (infra), no rule of its own */
+  'crm-firm-read.js', 'party-grant-view.js', /* CON-165 / CRM-259/261 (1136): the party list's page and search, and the cut of what a firm seat reads under a books grant: key allow-lists and a text match, no money, tax or rule (parent: crm.js, infra) */
   'chit-bill-step.js' /* 1130 (foldreds): the bill's history step written once, lifted unchanged out of chit-move.js for its size: the parent's class (infra) */
 ];
 const PENDING = ['offrail-itc.js', 'tender-sum.js', 'books-bs-shape.js', 'chits-send-bill.js', 'tax-engine-line.js', 'tax-line-status.js', 'till-credit-note-money.js', 'bill-no.js', 'rail-invoice-number.js', 'credit-original.js', 'rcm-lines.js', 'clearance-gather.js'];
