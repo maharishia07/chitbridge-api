@@ -5859,8 +5859,7 @@ var CloudHost = {
   async bill(b){
     LAST_SERIES = null;
     var again = TAKEN_FOR && TAKEN_FOR.sig === billSig(b) ? TAKEN_FOR : null;
-    var no = again ? again.no : await nextNumber(undefined, false, b && b.at);
-    if (!again && await DB.exists('bills', no)) throw new Error('Bill number ' + no + ' is already used on this counter, so nothing was saved and nothing was changed. Press Save again: the counter takes the next number.');
+    var no = again ? again.no : await freeBillNumber(b && b.at);   /* CTR-DUPBILL: the first number this counter has not used */
     var bill = Object.assign({ no: no, at: again ? again.at : new Date().toISOString(), till: tillId(),
                                catalogue_version: S && S.version, series: again ? again.series : LAST_SERIES }, b);
     TAKEN_FOR = { sig: billSig(b), no: no, at: bill.at, series: bill.series };
@@ -6513,6 +6512,24 @@ async function takeLeased(peek){
   }
   leaseTidyAfter(drawn, now);
   return String(drawn.no).padStart(4, '0');
+}
+/** CTR-DUPBILL: the most numbers one Save may step over (a device whose own bill list is far ahead of its series) */
+var BILL_NO_SKIP_MAX = 500;
+/**
+ * ⭐ CTR-DUPBILL — THE NEXT FREE BILL NUMBER FOR THIS COUNTER. A number this device already holds is a number already issued, so the counter
+ * steps over it to the next one (each is written to the series before it is returned: never reused, and a number stepped over is one that exists,
+ * so the run has no gap). It was one number per press, so a device whose sequence was behind refused Save again and again. A store that answers
+ * 'used' for ever ends in the shopkeeper's words after BILL_NO_SKIP_MAX tries.
+ */
+async function freeBillNumber(at){
+  var no = null, last = null;
+  for (var tries = 0; tries < BILL_NO_SKIP_MAX; tries++) {
+    no = await nextNumber(undefined, false, at);
+    if (!(await DB.exists('bills', no))) return no;
+    if (no === last) break;      /* the series did not move: stepping again would never end */
+    last = no;
+  }
+  throw new Error('Bill number ' + no + ' is already used on this counter, so nothing was saved and nothing was changed. Press Save again: the counter takes the next number.');
 }
 async function nextNumber(kind, peek, at){
   if (leaseApplies(DOC_TAGS[kind] ? kind : '')) { var leased = await (peek ? takeLeased(true) : underSeriesLock(function(){ return takeLeased(false); })); if (leased) return leased; }
