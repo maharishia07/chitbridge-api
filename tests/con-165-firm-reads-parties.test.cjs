@@ -6,7 +6,9 @@
  * CARD 11-crm-and-marketing/crm-parties
  */
 'use strict';
-const assert = require('assert');
+const realAssert = require('assert');
+let checks = 0; /* the guard runner counts "N checks" a file prints: every assertion below is one */
+const assert = new Proxy(realAssert, { get: (target, name) => (typeof target[name] === 'function' ? (...args) => { checks++; return target[name](...args); } : target[name]) });
 process.env.NODE_ENV = 'test'; process.env.DATABASE_URL = ''; process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 const grant = require('../middleware/books-grant');
 const delegation = require('../lib/delegation');
@@ -113,3 +115,4 @@ for (const probe of ['412345678', '+61412345678', 'secret@example.com', 'secret'
 assert.strictEqual(require('../lib/crm-firm-read').matchesQuery(planted, 'agro', true), true);
 assert.strictEqual(require('../lib/crm-firm-read').matchesQuery(planted, 'P-0001', true), true);
 console.log('con-165-firm-reads-parties: ok');
+console.log(checks + ' checks');

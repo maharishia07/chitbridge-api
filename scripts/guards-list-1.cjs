@@ -9,6 +9,8 @@
  */
 'use strict';
 const GUARDS_PART = [
+  'con-165-firm-reads-parties.test.cjs', // CON-165: a firm seat under a books grant reads the client's parties cut to names, numbers, terms and dues (offline)
+  'crm-259-261-search-and-page.test.cjs', // CRM-259/261: the list's ?q search and its 500-row page with { total, page, limit, next } (offline over crm-stub)
   'reviews1-invoice-discount-dp.test.cjs', // reviews1 GF4: an invoice discount rounds in the invoice's own currency (JPY 0 dp)
   'reviews1-trace-batch-errors.test.cjs', // reviews1 EL F8: a lot recall rethrows a failed read, answers no rows only for a missing table or column
   'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
