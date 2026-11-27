@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 700,
+  "partial": 1,
+  "meets": 699,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -72,7 +72,7 @@
    },
    "paged_read": {
     "applies": 77,
-    "failing": 46
+    "failing": 45
    }
   },
   "resource_cap_causes": {},
@@ -8448,7 +8448,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 428,
-   "hash": "92012ff5c88a132d",
+   "hash": "e38f39361403d979",
    "does": "A date range and page in -> we read every journal entry posted in those days with its lines and the bill behind it -> a page of day-book entries.",
    "errors": {
     "count": 1,
@@ -8519,7 +8519,7 @@
     "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false,
-    "paged_read": false
+    "paged_read": true
    },
    "reported_applies": {
     "bfla_role_check": true,
@@ -8535,9 +8535,7 @@
    },
    "reported_causes": {
     "resource_cap": [],
-    "paged_read": [
-     "whole_when_unasked"
-    ],
+    "paged_read": [],
     "stale_write_refused_na": [
      "read"
     ]
@@ -8548,7 +8546,7 @@
      "mode": "keyset",
      "default": 100,
      "max": 500,
-     "unasked": "everything",
+     "unasked": "bounded",
      "via": "limitOf"
     }
    },
@@ -8556,10 +8554,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (reg700), diff since the last sign-off read per route (handler, validation chain, operation, contract), 13 machine columns true, stage2, route tests run on sit-root: RW3-11 (0713fcf3a): one additive key, timezone (the audited shop zone via books-hooks.zoneOf), already declared nullable in the closed output schema (api-output-shapes.json); no key, status or code removed; same chain, same gates (moneyReader, books on)",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "e38f39361403d979"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-books.js"
