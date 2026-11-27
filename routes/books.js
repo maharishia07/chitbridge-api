@@ -544,6 +544,27 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
   }
 });
 
+/** the statuses this door refuses with, by the code of lib/books-evidence-attach's answer (lib/attachments-contract words): the contract's declared statuses, written where the route reads them */
+function evidenceRefusal(refusal) {
+  const statuses = { ATTACHMENT_NOT_ENTRY_SEAT: { status: 403 }, ATTACHMENT_ENTRY_NOT_FOUND: { status: 404 }, BODY_TOO_LARGE: { status: 413 }, ATTACHMENT_TYPE_NOT_ALLOWED: { status: 415 }, ATTACHMENT_EMPTY: { status: 400 }, ATTACHMENT_ENTRY_NOT_READY: { status: 503 } };
+  return Object.assign({}, refusal, statuses[refusal.code]);
+}
+/**
+ * POST /evidence { entry_id, name, data_base64 } → { id, name, mime, size, entry_id, duplicate? } — a receipt on a posted entry of THESE books (FW2-03): the owner, an editor seat, or an adviser acting for a client under a live grant (X-Books-For: the file lands in the CLIENT's books).
+ * The seat, the type (by its first bytes), the size, the entry of this shop and the add-only rule are lib/books-evidence-attach.put, the same function POST /api/attachments reaches for the firm's own books; nothing is stored on a refusal.
+ */
+// @does An entry id and a file in -> we check the seat, the type by its bytes and that the entry is in these books -> the file kept beside the entry (add-only).
+router.post('/evidence', auth, noKey, editor, on, ...checked('POST /evidence'), async (req, res) => {
+  try {
+    const body = req.body || {};
+    if (!body.data_base64 || !body.name) return problem(req, res, { status: 400, ...require('../lib/attachments-contract').words.missingFields() });
+    const done = await require('../lib/books-evidence-attach').put(req, ctx(req), body);
+    if (done.refuse) return problem(req, res, evidenceRefusal(done.refuse));
+    res.json(done.ok);
+  } catch (err) {
+    problem(req, res, refusalOf(err, req));
+  }
+});
 /**
  * GET /evidence/:id → the file's bytes: a DOCUMENT file on a chit that is the source of an entry of THIS shop's books. The owner reads his own; a firm reads a member's through a live grant (X-Books-For, read only; the middleware logs the look and
  * refuses a revoked, expired or stranger caller with 403). Images and PDFs render inline, everything else downloads; never cached (a revoked grant must stop at once). A file that is not evidence answers 404 exactly as a file that is not there.

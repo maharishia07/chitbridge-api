@@ -12358,6 +12358,49 @@
         }
       }
     },
+    "POST /api/books/evidence": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "mime",
+          "size",
+          "entry_id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "mime": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "entry_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/books/evidence",
+        "body": {
+          "entry_id": "33333333-3333-4333-8333-333333333333",
+          "name": "receipt.png",
+          "data_base64": "iVBORw0KGgo="
+        }
+      }
+    },
     "POST /api/books/move-in/import": {
       "status": "200",
       "schema": {

@@ -319,6 +319,8 @@ const SF_READY = { schema: { hasTable: async () => true } }; /* the box's tables
 const SF_FILE = { id: PARTY, account_id: PARTY, label: '..1234', period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR', name: 'oct.csv', size: 120, mime: 'text/csv', kind: 'csv', source: 'owner', overlaps: false, by_name: 'Test shop', by_firm: null, for_client: false, added_at: DAY + 'T05:00:00.000Z', read_at: null, reads: 0 };
 const SF_LIST = { months: ['2026-10', '2026-11'], accounts: [{ account_id: PARTY, code: '1510', name: 'Bank', label: '..1234' }], cells: [{ account_id: PARTY, month: '2026-10', missing: false, file_ids: [PARTY] }, { account_id: PARTY, month: '2026-11', missing: true, file_ids: [] }], files: [SF_FILE], older: 0 };
 const SF_BODY = { account: '1510', name: 'oct.csv', text: 'a,b', sha256: 'a'.repeat(64), period_from: '2026-10-01', period_to: '2026-10-31', currency: 'INR' };
+const EV_BODY = { entry_id: ENTRY, name: 'receipt.png', data_base64: 'iVBORw0KGgo=' };
+const EV_REFUSES = (status, word) => ({ bea: { put: async () => ({ refuse: Object.assign({ status }, require(path.join(HERE, 'lib', 'attachments-contract')).words[word]()) }) } });
 const SF_ADD = (answer) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => answer } });
 const SF_REFUSES = (reason, code, status, more) => ({ brl: { accountIn: () => BANK_ACCOUNT }, bsf: { add: async () => { throw Object.assign(BSF.refuse(reason, code, status), more || {}); } } });
 const BOX_ROWS = [
@@ -335,7 +337,15 @@ const BOX_ROWS = [
   X('statement-file-already-in-box', 'POST /api/books/bank/statement-files', 409, { body: SF_BODY, patch: SF_REFUSES('Already in the box: this file is kept for 1 Oct 2026 to 31 Oct 2026.', 'ALREADY_IN_BOX', 409, { existing_id: PARTY }) }),
   X('statement-file-too-large', 'POST /api/books/bank/statement-files', 413, { body: SF_BODY, patch: SF_REFUSES('That file is over 6 MB, which is more than a statement should be.', 'FILE_TOO_LARGE', 413) }),
   X('statement-file-wrong-type', 'POST /api/books/bank/statement-files', 415, { body: SF_BODY, patch: SF_REFUSES('Only CSV, JSON or TXT statements can be kept here.', 'FILE_TYPE_NOT_KEPT', 415) }),
-  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) })
+  X('statement-file-not-kept', 'POST /api/books/bank/statement-files', 503, { body: SF_BODY, patch: SF_REFUSES('The file could not be kept. Nothing was added; try again.', 'FILE_NOT_KEPT', 503) }),
+  /* FW2-03: a receipt beside an entry of these books (the owner, an editor, or an adviser under a grant): lib/books-evidence-attach.put answers { ok } or { refuse } in the attachments contract's words */
+  X('evidence-attached', 'POST /api/books/evidence', 200, { body: EV_BODY, patch: { bea: { put: async () => ({ ok: { id: PARTY, name: 'receipt.png', mime: 'image/png', size: 48, entry_id: ENTRY } }) } } }),
+  X('evidence-seat', 'POST /api/books/evidence', 403, { body: EV_BODY, patch: EV_REFUSES(403, 'notEntrySeat') }),
+  X('evidence-entry-not-here', 'POST /api/books/evidence', 404, { body: EV_BODY, patch: EV_REFUSES(404, 'entryNotFound') }),
+  X('evidence-too-large', 'POST /api/books/evidence', 413, { body: EV_BODY, patch: EV_REFUSES(413, 'tooLarge') }),
+  X('evidence-wrong-type', 'POST /api/books/evidence', 415, { body: EV_BODY, patch: EV_REFUSES(415, 'typeNotAllowed') }),
+  X('evidence-not-ready', 'POST /api/books/evidence', 503, { body: EV_BODY, patch: EV_REFUSES(503, 'entryNotReady') }),
+  X('evidence-fields-missing', 'POST /api/books/evidence', 400, { body: { entry_id: ENTRY, mime: 'image/png' } })
 ];
 const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('returns-ready', 'GET /api/books/returns', 200, RETURN_READY),
@@ -468,7 +478,7 @@ function scenariosOf(routes) {
 /** a scenario that needs a row the stand-in db cannot make swaps one library function for its answer, then puts the real one back */
 function applyPatch(patch) {
   const lib = (name) => require(path.join(HERE, 'lib', name));
-  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema'), backfill: lib('books-backfill') };
+  const modules = { opening: lib('books-opening'), books: lib('books'), store: lib('books-store'), cashflow: lib('books-cashflow'), fxr: lib('fx-rates'), brl: lib('bank-rec-log'), period: lib('books-period'), movein: lib('move-in-proof'), manual: lib('books-manual'), hooks: lib('books-hooks'), terms: lib('finance-terms'), pack: lib('books-pack'), recurring: lib('books-recurring'), taxcopy: lib('tax-copy'), cost: lib('cost'), todo: lib('books-todo'), evidence: lib('books-evidence'), partybills: lib('books-party-bills'), storage: lib('storage'), bsf: lib('bank-statement-file'), bsp: lib('bank-statement-page'), bankopen: lib('bank-open'), schema: lib('schema'), backfill: lib('books-backfill'), bea: lib('books-evidence-attach') };
   const undo = [];
   Object.keys(patch || {}).forEach((which) => Object.keys(patch[which]).forEach((name) => {
     undo.push([modules[which], name, modules[which][name]]);

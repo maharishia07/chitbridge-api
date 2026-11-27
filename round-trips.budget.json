@@ -973,6 +973,14 @@
       "status": 200,
       "registered_only": true
     },
+    "POST /api/books/evidence": {
+      "file": "books.js",
+      "trips": 12,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "basis": "FW2-03 hand count by reading the code path (no run): the ledger gate (setting, country), the entry-columns probe, the entry-in-these-books read, the byte store insert with its table probe, the exact-copy read; the offline stub reaches a 422 floor; live measure on sit-in pending"
+    },
     "POST /api/chits/hand-over-all": {
       "file": "chits-holds.js",
       "trips": 4,

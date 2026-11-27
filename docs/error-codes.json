@@ -759,6 +759,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -1076,7 +1077,9 @@
    "hint": "Attach the right receipt beside it.",
    "owner_area": "attachments",
    "since": "2026-11-20",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_EMPTY",
@@ -1086,7 +1089,9 @@
    "hint": "Choose a file that is not empty.",
    "owner_area": "attachments",
    "since": "2026-10-23",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_ENTRY_NOT_FOUND",
@@ -1096,7 +1101,9 @@
    "hint": "Open the entry from the Day book and try again.",
    "owner_area": "attachments",
    "since": "2026-11-20",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_ENTRY_NOT_READY",
@@ -1106,7 +1113,9 @@
    "hint": "Try again after the update has been applied.",
    "owner_area": "attachments",
    "since": "2026-11-20",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_FIELDS_MISSING",
@@ -1116,7 +1125,9 @@
    "hint": "Choose the chit and the file again, then send.",
    "owner_area": "attachments",
    "since": "2026-10-23",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_NOT_A_PARTICIPANT",
@@ -1126,7 +1137,9 @@
    "hint": "Open a chit you are part of and try again.",
    "owner_area": "attachments",
    "since": "2026-10-23",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_NOT_ENTRY_SEAT",
@@ -1136,7 +1149,9 @@
    "hint": "Ask the owner, or leave a Query on the entry.",
    "owner_area": "attachments",
    "since": "2026-11-20",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "ATTACHMENT_TYPE_NOT_ALLOWED",
@@ -1146,7 +1161,9 @@
    "hint": "Save the photo as JPEG or PNG, or use a PDF, and try again.",
    "owner_area": "attachments",
    "since": "2026-11-20",
-   "raised_by": []
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
   },
   {
    "code": "AUTO_TOKEN",
@@ -1675,6 +1692,7 @@
     "GET /api/tax/ledger",
     "PATCH /api/books/payments/:id",
     "POST /api/books-actions/:id/accept",
+    "POST /api/books/evidence",
     "POST /api/books/gst/pay",
     "POST /api/books/payments",
     "POST /api/books/payments/:id/confirm",
@@ -1836,6 +1854,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -1993,6 +2012,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -2597,6 +2617,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -2754,6 +2775,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -4357,6 +4379,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -5428,6 +5451,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -7828,6 +7852,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -8849,6 +8874,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -10650,6 +10676,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -11231,6 +11258,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -11371,6 +11399,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -11563,6 +11592,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -12416,6 +12446,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -14449,6 +14480,7 @@
     "POST /api/books/compare/snapshots",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -15041,6 +15073,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",
@@ -16167,6 +16200,7 @@
     "POST /api/books/entries/:id/reverse",
     "POST /api/books/events",
     "POST /api/books/events/batch",
+    "POST /api/books/evidence",
     "POST /api/books/fx-rates",
     "POST /api/books/fx-rates/import",
     "POST /api/books/fx-revalue",

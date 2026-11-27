@@ -4174,6 +4174,15 @@
     "why": "not reached: the caller's own id answered 404 too"
    }
   },
+  "POST /api/books/evidence": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "GET /api/books/evidence/:id": {
    "output_allowlist": {
     "pass": false,

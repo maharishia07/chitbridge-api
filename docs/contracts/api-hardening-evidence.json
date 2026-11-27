@@ -1567,6 +1567,9 @@
   "POST /api/books/accounts": {
    "strict_input": true
   },
+  "POST /api/books/evidence": {
+   "strict_input": true
+  },
   "GET /api/books/dues": {
    "output_allowlist": true
   },

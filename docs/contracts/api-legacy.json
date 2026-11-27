@@ -78807,6 +78807,322 @@
      }
     }
    ]
+  },
+  "POST /api/books/evidence": {
+   "answers": [
+    {
+     "scenario": "key-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Sign in to use the ledger.",
+      "message": "Sign in to use the ledger.",
+      "type": "https://chitbridge.com/problems/sign_in_for_ledger",
+      "title": "Sign in as a person",
+      "status": 403,
+      "code": "SIGN_IN_FOR_LEDGER",
+      "detail": "Sign in to use the ledger.",
+      "hint": "A counter or device key cannot use the ledger.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required",
+      "type": "https://chitbridge.com/problems/attachment_fields_missing",
+      "title": "File details missing",
+      "status": 400,
+      "code": "ATTACHMENT_FIELDS_MISSING",
+      "detail": "chit_id, name and data_base64 are required",
+      "hint": "Choose the chit and the file again, then send.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required",
+      "type": "https://chitbridge.com/problems/attachment_fields_missing",
+      "title": "File details missing",
+      "status": 400,
+      "code": "ATTACHMENT_FIELDS_MISSING",
+      "detail": "chit_id, name and data_base64 are required",
+      "hint": "Choose the chit and the file again, then send.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "viewer-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Your access is view-only. You can read this chit but not change it.",
+      "message": "Your access is view-only. You can read this chit but not change it.",
+      "why": "read_only",
+      "type": "https://chitbridge.com/problems/read_only",
+      "title": "View only",
+      "status": 403,
+      "code": "READ_ONLY",
+      "detail": "Your access is view-only. You can read this chit but not change it.",
+      "hint": "Ask the owner for edit access.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "ledger-off",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "type": "https://chitbridge.com/problems/ledger_off",
+      "title": "Ledger switched off",
+      "status": 404,
+      "code": "LEDGER_OFF",
+      "detail": "This shop has not switched the ledger on.",
+      "hint": "The owner can switch it on.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Failed",
+      "message": "Something went wrong — please try again.",
+      "type": "https://chitbridge.com/problems/internal",
+      "title": "Something went wrong",
+      "status": 500,
+      "code": "INTERNAL",
+      "detail": "Something went wrong on our side.",
+      "hint": "If it keeps happening, tell us the request id.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required",
+      "type": "https://chitbridge.com/problems/attachment_fields_missing",
+      "title": "File details missing",
+      "status": 400,
+      "code": "ATTACHMENT_FIELDS_MISSING",
+      "detail": "chit_id, name and data_base64 are required",
+      "hint": "Choose the chit and the file again, then send.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required",
+      "type": "https://chitbridge.com/problems/attachment_fields_missing",
+      "title": "File details missing",
+      "status": 400,
+      "code": "ATTACHMENT_FIELDS_MISSING",
+      "detail": "chit_id, name and data_base64 are required",
+      "hint": "Choose the chit and the file again, then send.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "evidence-seat",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "message": "Only the owner or a seat that can edit may attach a receipt to an entry. A viewer or auditor can ask for one with a Query.",
+      "type": "https://chitbridge.com/problems/attachment_not_entry_seat",
+      "title": "Cannot attach a receipt",
+      "status": 403,
+      "code": "ATTACHMENT_NOT_ENTRY_SEAT",
+      "detail": "Only the owner or a seat that can edit may attach a receipt to an entry. A viewer or auditor can ask for one with a Query.",
+      "hint": "Ask the owner, or leave a Query on the entry.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "message": "Only the owner or a seat that can edit may attach a receipt to an entry. A viewer or auditor can ask for one with a Query.",
+      "type": "https://chitbridge.com/problems/attachment_not_entry_seat",
+      "title": "Cannot attach a receipt",
+      "status": 403,
+      "code": "ATTACHMENT_NOT_ENTRY_SEAT",
+      "detail": "Only the owner or a seat that can edit may attach a receipt to an entry. A viewer or auditor can ask for one with a Query.",
+      "hint": "Ask the owner, or leave a Query on the entry.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "evidence-entry-not-here",
+     "status": 404,
+     "body_keys": {
+      "error": "Not found",
+      "message": "No such entry in these books.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_found",
+      "title": "No such entry",
+      "status": 404,
+      "code": "ATTACHMENT_ENTRY_NOT_FOUND",
+      "detail": "No such entry in these books.",
+      "hint": "Open the entry from the Day book and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not found",
+      "message": "No such entry in these books.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_found",
+      "title": "No such entry",
+      "status": 404,
+      "code": "ATTACHMENT_ENTRY_NOT_FOUND",
+      "detail": "No such entry in these books.",
+      "hint": "Open the entry from the Day book and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "evidence-too-large",
+     "status": 413,
+     "body_keys": {
+      "error": "Too large",
+      "message": "Max 6 MB per file",
+      "type": "https://chitbridge.com/problems/body_too_large",
+      "title": "Too large",
+      "status": 413,
+      "code": "BODY_TOO_LARGE",
+      "detail": "Max 6 MB per file",
+      "hint": "Send less at a time.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Too large",
+      "message": "Max 6 MB per file",
+      "type": "https://chitbridge.com/problems/body_too_large",
+      "title": "Too large",
+      "status": 413,
+      "code": "BODY_TOO_LARGE",
+      "detail": "Max 6 MB per file",
+      "hint": "Send less at a time.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "evidence-wrong-type",
+     "status": 415,
+     "body_keys": {
+      "error": "Unsupported file",
+      "message": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "type": "https://chitbridge.com/problems/attachment_type_not_allowed",
+      "title": "File type not accepted",
+      "status": 415,
+      "code": "ATTACHMENT_TYPE_NOT_ALLOWED",
+      "detail": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "hint": "Save the photo as JPEG or PNG, or use a PDF, and try again.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Unsupported file",
+      "message": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "type": "https://chitbridge.com/problems/attachment_type_not_allowed",
+      "title": "File type not accepted",
+      "status": 415,
+      "code": "ATTACHMENT_TYPE_NOT_ALLOWED",
+      "detail": "Only a JPEG, PNG or PDF can be attached. A photo in another format (HEIC) must be saved as JPEG first.",
+      "hint": "Save the photo as JPEG or PNG, or use a PDF, and try again.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "evidence-not-ready",
+     "status": 503,
+     "body_keys": {
+      "error": "Not ready",
+      "message": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_ready",
+      "title": "Receipts not switched on",
+      "status": 503,
+      "code": "ATTACHMENT_ENTRY_NOT_READY",
+      "detail": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "hint": "Try again after the update has been applied.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Not ready",
+      "message": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "type": "https://chitbridge.com/problems/attachment_entry_not_ready",
+      "title": "Receipts not switched on",
+      "status": 503,
+      "code": "ATTACHMENT_ENTRY_NOT_READY",
+      "detail": "Receipts on entries are not switched on for this database yet. Nothing was attached; the books are unchanged.",
+      "hint": "Try again after the update has been applied.",
+      "request_id": "req-test"
+     }
+    },
+    {
+     "scenario": "evidence-fields-missing",
+     "status": 400,
+     "body_keys": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required",
+      "type": "https://chitbridge.com/problems/attachment_fields_missing",
+      "title": "File details missing",
+      "status": 400,
+      "code": "ATTACHMENT_FIELDS_MISSING",
+      "detail": "chit_id, name and data_base64 are required",
+      "hint": "Choose the chit and the file again, then send.",
+      "request_id": "req-test"
+     },
+     "fixture": {
+      "error": "Bad request",
+      "message": "chit_id, name and data_base64 are required",
+      "type": "https://chitbridge.com/problems/attachment_fields_missing",
+      "title": "File details missing",
+      "status": 400,
+      "code": "ATTACHMENT_FIELDS_MISSING",
+      "detail": "chit_id, name and data_base64 are required",
+      "hint": "Choose the chit and the file again, then send.",
+      "request_id": "req-test"
+     }
+    }
+   ]
   }
  },
  "global": {
