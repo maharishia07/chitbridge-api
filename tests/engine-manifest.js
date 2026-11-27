@@ -540,7 +540,7 @@ const INFRA_LIBS = [
    * ⚠️ The freeze writes business_json.invoice on a chit copy — a record OF the chit, not a change to what a chit
    * means: the lines, parties and status it reads are untouched. That is the line between INFRA and ENGINE here.
    */
-  'tax-lines.js',          // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
+  'tax-lines.js', 'gstr-refusal.js',        // rate on the line at send · INV-01 for a copy · the month's ledger · GSTR shapes
   'tax-shelf.js',          // one reader of slabs (own + governed) · categories · face
   'tax-copy.js', 'schedule.js', 'slab-cites.js',           // my copy as a tax record; freeze at completed; ledger over my copies
   /* INFRA, THE SAME TEST (2026-10-02): `issued-invoice.js` holds only the CHECK that compares the server's recompute with
