@@ -41,8 +41,8 @@ of file each thing is; this says what already does the job.
 | 82 | `count` | `money-check.js` | the count /health reads |
 | 81 | `rows` | `cap-settings.js` |  |
 | 80 | `items` | `books-store.js` | PERF1: |
+| 80 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 80 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
-| 79 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 78 | `failed` | `service.js` | what every catch answers: |
 | 77 | `toast` | `cb-words.js` |  |
 | 77 | `record` | `access-events.js` |  |
@@ -67,10 +67,10 @@ of file each thing is; this says what already does the job.
 | 64 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 62 | `facts` | `bill-steps.js` | MY state_log — |
+| 59 | `note` | `dbwatch.js` |  |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
 | 58 | `lines` | `cart.js` |  |
 | 58 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
-| 58 | `note` | `dbwatch.js` |  |
 | 57 | `sheet` | `cap-employees.js` |  |
 | 57 | `account` | `home-facts.js` | OMITTED: |
 | 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
