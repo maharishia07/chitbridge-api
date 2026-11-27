@@ -5,8 +5,8 @@
   "routes": 701,
   "no_does": 1,
   "not_started": 0,
-  "partial": 2,
-  "meets": 699,
+  "partial": 4,
+  "meets": 697,
   "columns": {
    "strict_input": {
     "applies": 360,
@@ -2978,7 +2978,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 479,
+   "line": 482,
    "hash": "683aa6ccd46c28b5",
    "does": "A supplier id from the owner -> we hide that supplier from the lists, keeping chits and history -> a removed message; owner only.",
    "errors": {
@@ -33691,8 +33691,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 723,
-   "hash": "58b9c1e4f72c982e",
+   "line": 726,
+   "hash": "cebcefae7ee5e691",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
     "count": 0,
@@ -33796,10 +33796,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash and shape moved by lens-sec 23b4c8830: otp_contact (the login phone) is deleted from every row after partyFields.decorate used it for a minted party's phone; the web reads phone first; same statuses.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "cebcefae7ee5e691"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -33827,7 +33828,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 788,
+   "line": 792,
    "hash": "7c3134ca129680fe",
    "does": "A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.",
    "errors": {
@@ -33960,7 +33961,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 715,
+   "line": 718,
    "hash": "e85807898c5889e2",
    "does": "Nothing but the signed-in shop -> we read the customer group names it has made -> the group names.",
    "errors": {
@@ -34088,7 +34089,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1054,
+   "line": 1058,
    "hash": "afebf4d8f77fd1b3",
    "does": "Optional since date -> we list every business the shop has traded with, from the chits, so none needs adding first -> counterparties to score.",
    "errors": {
@@ -34212,7 +34213,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 1067,
+   "line": 1071,
    "hash": "00f435ab5f1dde1d",
    "does": "A counterparty id and optional since date -> we score how they trade with us from the shared chit copies and the shop's overdue policy -> their scorecard, or not-found.",
    "errors": {
@@ -34337,8 +34338,8 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 346,
-   "hash": "a0891d21f5e92c94",
+   "line": 348,
+   "hash": "d7add44ba3e07bc6",
    "does": "Nothing but the signed-in shop -> we list its suppliers with what each publicly shares and whether they have a catalogue -> the suppliers.",
    "errors": {
     "count": 0,
@@ -34443,10 +34444,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-14 PR#1228 (CAT-247, engines v1.92.0 adopt, head 2fb943a3): handler read: ctx.timezone is named by the server (lib/offers-live shopZoneFor, which calls crm-followups.zoneOfShop and books-hooks.zoneOf, no second reader; read only when an offer has a window), not a caller key; suppliers reads i.timezone on the row already fetched and drops supplier_timezone before the answer; no key, status, code or refusal changed; 13 columns true; cat-247-offer-window-zone 10 checks green",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d7add44ba3e07bc6"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "cap-admin.js",
@@ -34478,7 +34480,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 654,
+   "line": 657,
    "hash": "34ea3d3a80a87da1",
    "does": "A supplier id from the shop's own list -> we read that supplier's catalogue columns and products for drafting an order -> the catalogue, or not-on-your-list.",
    "errors": {
@@ -34613,7 +34615,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 526,
+   "line": 529,
    "hash": "35dc2f6490074d69",
    "does": "A search word of two letters or more -> we look across the catalogues of the shop's own suppliers -> which suppliers stock it and the matching items.",
    "errors": {
@@ -44424,7 +44426,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 983,
+   "line": 987,
    "hash": "dd576f3429fe253d",
    "does": "A customer id and a segment override or party fields -> we save the change on the shop's side -> the updated customer.",
    "errors": {
@@ -44556,7 +44558,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 436,
+   "line": 439,
    "hash": "8376a88466eb5d16",
    "does": "A supplier id and the owner's own fields (nickname, category, notes, preferred) -> we save them on the shop's side only, never on the supplier -> the updated supplier.",
    "errors": {
@@ -78451,7 +78453,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 883,
+   "line": 887,
    "hash": "31aba84aaef268a4",
    "does": "A User ID or email for a ChitBridge business, or a name for a local customer -> we add them to the shop's customer list -> the new customer.",
    "errors": {
@@ -78595,7 +78597,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 962,
+   "line": 966,
    "hash": "035dcc95b8adf401",
    "does": "A customer id and a list of group names -> we replace that customer's groups with the cleaned names -> ok and the groups; not for API keys.",
    "errors": {
@@ -78728,7 +78730,7 @@
    "owner_area": "relationships",
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
-   "line": 218,
+   "line": 220,
    "hash": "185964d5d98cd842",
    "does": "A supplier's User ID, bridge id or a local name with kind and notes -> we add them to the shop's supplier list without asking them -> the new supplier.",
    "errors": {

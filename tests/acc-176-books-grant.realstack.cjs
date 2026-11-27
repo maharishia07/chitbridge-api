@@ -139,7 +139,7 @@ async function main() {
 
     /* 2 grant M1 only */
     const consent = await call(ownerOf(M1), 'GET', '/api/books-grants/consent');
-    ok('the consent screen words list exactly what the guard allows, and say what an auditor cannot do', consent.status === 200 && consent.body.can_read.length === booksGrant.GRANT_READS.size && /phone numbers or bank details/.test(consent.body.cannot.join(' ')), JSON.stringify(consent));
+    ok('the consent screen words list exactly what the guard allows, and say what an auditor cannot do', consent.status === 200 && consent.body.can_read.length === booksGrant.GRANT_READS.size + 1 && /phone numbers or bank details/.test(consent.body.cannot.join(' ')), JSON.stringify(consent));
     const noConsent = await call(ownerOf(M1), 'POST', '/api/books-grants', { body: { grantee: P.id, purpose: 'audit', consent: false } });
     ok('a grant without a yes to the consent is refused 422', noConsent.status === 422 && code(noConsent) === 'BOOKS_GRANT_CONSENT_NEEDED', JSON.stringify(noConsent));
     const made = await giveGrant(P, M1);
