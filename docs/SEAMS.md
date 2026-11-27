@@ -9,13 +9,13 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 220 | `list` | `amend.js` | list(entity_id, chit_id) — |
+| 221 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 207 | `rows` | `crm.js` | still in them: |
 | 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 183 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
-| 145 | `answer` | `availability.js` | from March; then nearest. |
+| 146 | `answer` | `availability.js` | from March; then nearest. |
 | 144 | `item` | `bank-band.js` |  |
 | 131 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
@@ -40,8 +40,8 @@ of file each thing is; this says what already does the job.
 | 82 | `read` | `books-grant-drill.js` |  |
 | 82 | `count` | `money-check.js` | the count /health reads |
 | 81 | `rows` | `cap-settings.js` |  |
+| 80 | `items` | `books-store.js` | PERF1: |
 | 80 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
-| 79 | `items` | `books-store.js` | PERF1: |
 | 79 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 78 | `failed` | `service.js` | what every catch answers: |
 | 77 | `toast` | `cb-words.js` |  |
@@ -81,10 +81,10 @@ of file each thing is; this says what already does the job.
 | 52 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 51 | `gate` | `country-setup.js` | gate(h, entity): |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
+| 51 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 50 | `open` | `cap-attention.js` | a count pressed: |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
-| 50 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
 | 49 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 49 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 49 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
@@ -189,7 +189,6 @@ of file each thing is; this says what already does the job.
 | 24 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 24 | `connectors` | `home-facts.js` | declare (said in words — |
 | 24 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
-| 24 | `report` | `raida.js` | register at the one moment it must not. |
 | 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
 | 24 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 24 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
@@ -202,6 +201,7 @@ of file each thing is; this says what already does the job.
 | 23 | `later` | `home2.js` | adopt once on the next frame, however many changes ask for it |
 | 23 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
 | 23 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
+| 23 | `report` | `raida.js` | register at the one moment it must not. |
 | 23 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 23 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |

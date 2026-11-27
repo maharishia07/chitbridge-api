@@ -418,8 +418,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       'plan',
       'params_override'
     ]);
-    const _tzCol = _cols.timezone;
-    const _supCol = _cols.supplies;
+    const _tzCol = _cols.timezone, _supCol = _cols.supplies;
     /**
      * ⭐⭐ THREE MORE COLUMNS OFF THE SAME ROW, PROBED — and they used to be TWO EXTRA ROUND TRIPS.
      *
@@ -470,7 +469,8 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
                  A correlated subselect rather than a second round trip — this route is already on the slow
                  path Athi measured at 9.3s to open a chit, and an extra query for a label is not affordable. */
-              (SELECT p.user_id FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS parent_user_id
+              (SELECT p.user_id FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS parent_user_id,
+              (SELECT json_build_object('display_name', p.display_name, 'gstn', p.gstn, 'address', p.address) FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS shop /* UX-217: the shop's facts beside a seat's own row, same trip; null for an entity */
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
     );
