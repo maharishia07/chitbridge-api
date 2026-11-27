@@ -5,8 +5,8 @@
   "routes": 701,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 700,
+  "partial": 0,
+  "meets": 701,
   "columns": {
    "strict_input": {
     "applies": 360,
@@ -50964,7 +50964,7 @@
    "owner_agent": "unassigned",
    "file": "routes/books-evidence.js",
    "line": 30,
-   "hash": "a5abe7969f41da11",
+   "hash": "fe4d936549aa33a4",
    "does": "An entry id and a file in -> we check the seat, the type by its bytes and that the entry is in these books -> the file kept beside the entry (add-only).",
    "errors": {
     "count": 1,
@@ -51073,13 +51073,13 @@
     }
    },
    "human": {
-    "names_clear": null,
-    "sentence_plain": null,
-    "backward_compatible": null,
-    "signed_off_by_date": null,
-    "lifecycle": null
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-27 batch 1132 first sign-off (new route), whole route read: routes/books-evidence.js (chain auth, noKey, editor, on, schemaValidate(operationFor)), lib/books-contract POST /evidence (body entry_id,name,mime,data_base64 strict; 200 {id,name,mime,size,entry_id,duplicate?}; declared 400,403,404,413,415,503), 13 machine columns true (foreign_id_404 n/a: the entry id is a body id and a foreign entry answers the one 404 ATTACHMENT_ENTRY_NOT_FOUND), 8 error scenarios tested, every code registered with its shopkeeper sentence; fixed in this review: the 400 for a missing file said chit_id and The chit (the chits door words) - now its own registered code ATTACHMENT_ENTRY_FIELDS_MISSING naming entry_id, legacy frozen to match; adviser door only under a live grant (middleware/books-grant ADVISER_DOORS), seat rule is owner area cb-accounting, not signed here.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {

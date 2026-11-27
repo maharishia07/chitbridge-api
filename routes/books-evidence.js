@@ -30,7 +30,7 @@ function evidenceRefusal(refusal) {
 router.post('/evidence', auth, noKey, editor, on, schemaValidate(operationFor(ROUTE)), async (req, res) => {
   try {
     const body = req.body || {};
-    if (!body.data_base64 || !body.name) return problem(req, res, { status: 400, ...require('../lib/attachments-contract').words.missingFields() });
+    if (!body.data_base64 || !body.name) return problem(req, res, { status: 400, ...require('../lib/attachments-contract').words.entryFieldsMissing() });
     const done = await require('../lib/books-evidence-attach').put(req, auth.entityOf(req), body);
     if (done.refuse) return problem(req, res, evidenceRefusal(done.refuse));
     res.json(done.ok);

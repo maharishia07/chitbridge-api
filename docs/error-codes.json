@@ -1094,6 +1094,18 @@
    ]
   },
   {
+   "code": "ATTACHMENT_ENTRY_FIELDS_MISSING",
+   "status": "400",
+   "title": "Receipt details missing",
+   "shopkeeper": "The entry, the file's name or the file itself was left out.",
+   "hint": "Open the entry from the Day book, choose the file again, then send.",
+   "owner_area": "attachments",
+   "since": "2026-11-27",
+   "raised_by": [
+    "POST /api/books/evidence"
+   ]
+  },
+  {
    "code": "ATTACHMENT_ENTRY_NOT_FOUND",
    "status": "404",
    "title": "No such entry",
