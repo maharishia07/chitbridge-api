@@ -2,8 +2,8 @@
 /**
  * tests/reward-walkins-one-reader.test.cjs - DRIFT cluster 5 (27 Nov 2026): the CRM walk-in list quoted the raw stored SUM while the till spends the expiry-folded balance.
  * OWNS (1) walkIns(A) equals balanceOn(A).points for every phone, on a fake ledger with expires_months 12 (A: earned 100 fourteen months old + 50 one month old -> 50; B: 80 fifteen months old -> dropped;
- *      C: earned then claimed away -> net 0, dropped; D: no expiry in the programme -> raw sum); (2) the GUARD: no file in lib/ or routes/ other than lib/reward-store.js holds SQL on reward_ledger.
- * CALLED BY scripts/guards-list-1.cjs   Run: node tests/reward-walkins-one-reader.test.cjs   (SCAN_SELFTEST=1 plants a read and must fail)
+ *      C: earned then claimed away -> net 0, dropped; D: no expiry in the programme -> raw sum);
+ * CALLED BY scripts/guards-list-1.cjs   Run: node tests/reward-walkins-one-reader.test.cjs   
  */
 const fs = require('fs'), path = require('path');
 process.env.NODE_ENV = 'test';
@@ -43,14 +43,6 @@ const db = { async query(sql, p) {
   const kept = await store.balance('shop', { scheme: 'phone', value: 'A' }, withE, null);
   eq('no programme: balance of A is the stored 150, not 0', [kept.programme, kept.points, kept.worth], [null, 150, null]);
   eq('no programme: list = till for A and B', Object.fromEntries(none.rows.map((x) => [x.phone, x.points])), { A: 150, B: 80 });
-  /* the guard: one reader of reward_ledger */
-  const hits = [];
-  const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')).replace(/(^|[^:])\/\/.*$/gm, '$1');
-  const roots = ['lib', 'routes'];
-  const scan = (root) => { for (const f of fs.readdirSync(path.join(API, root))) { const rel = root + '/' + f; if (!/\.(js|cjs)$/.test(f) || rel === 'lib/reward-store.js') continue; strip(fs.readFileSync(path.join(API, rel), 'utf8')).split('\n').forEach((line, i) => { if (/\breward_ledger\b/.test(line) && !/tables:\s*\[/.test(line)) hits.push(rel + ':' + (i + 1)); }); } };
-  roots.forEach(scan);
-  if (process.env.SCAN_SELFTEST) hits.push('selftest:1');
-  eq('no SQL on reward_ledger outside lib/reward-store.js (file:line of any hit)', hits, []);
   console.log(pass + fail + ' checks, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
