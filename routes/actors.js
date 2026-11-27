@@ -26,7 +26,7 @@ const empCode = require('../lib/employee-code'); // M02: the one place an employ
 /** The e-mail on file for an employee (identities.email), or '' — a read that can never fail the request. */
 const actorEmail = async (id) => {
   try {
-    const r = await db('SELECT email FROM identities WHERE identity_id = $1', [id]);
+    const r = await boundRead(db, id, 'SELECT email FROM identities WHERE identity_id = $1', [id]);
     return (r.rows[0] && r.rows[0].email) || '';
   } catch (e) {
     logger.fellBack('actors actorEmail: the read failed — left blank', e);
@@ -59,6 +59,7 @@ const emailWriteCap = require('../lib/rate-limit').rateLimit({
    People screen). Before it, delegate and settings had no check at all and the others refused a person by an accidental 404. */
 const people = require('../lib/people'); // PP-03b: stateOf, the one reader of on · away · off
 const ownerWrite = require('../lib/owner').ownerOnly(people.OWNER_ONLY);
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 /* PEOPLE-EMAIL (SEC2): identities.email is UNIQUE across every sign-in (000_baseline_part2.sql identities_email_key), so the
    owner's own address on a staff row collides. Said in words with a code — never "Key taken", never a 500 (the answer is words.emailTaken, lib/actors-contract.js). */
 const emailTaken = (err) => !!(err && err.code === '23505' && /email/i.test(String(err.constraint || err.detail || '')));
@@ -97,7 +98,7 @@ async function emailRefusal(entity_id, email) {
 async function loginIdFor(actor_key, req) {
   let handle = null;
   try {
-    const r = await db('SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
+    const r = await boundRead(db, req.identity.identity_id, 'SELECT user_id FROM identities WHERE identity_id = $1', [req.identity.identity_id]);
     handle = r.rows[0] && r.rows[0].user_id;
   } catch (e) {
     logger.fellBack(
@@ -348,7 +349,7 @@ router.post(
        */
       let entity_row = null;
       try {
-        const _u = await db('SELECT user_id, display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
+        const _u = await boundRead(db, entity_id, 'SELECT user_id, display_name, bridge_id FROM identities WHERE identity_id = $1', [entity_id]);
         entity_row = _u.rows[0] || null;
         if (entity_row) entity_handle = entity_row.user_id || entity_row.display_name || entity_handle;
       } catch (e) {
@@ -1236,9 +1237,9 @@ async function coverConflict(actor_id, subject, youre) {
     return refusal(
       `${youre} covering ${deps.map((item) => item.display_name).join(', ')} subject ${deps.length > 1 ? 'are' : 'is'} away — ${subject.other ? 'they' : 'you'} can't go off until they're back.`
     );
-  const covered = (await db(`SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
+  const covered = (await boundRead(db, actor_id, `SELECT delegate_actor_id FROM identities WHERE identity_id = $1`, [actor_id])).rows[0];
   if (!covered || !covered.delegate_actor_id) return null;
-  const cover = (await db(`SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [covered.delegate_actor_id])).rows[0];
+  const cover = (await boundRead(db, covered.delegate_actor_id, `SELECT display_name, break_status FROM identities WHERE identity_id = $1`, [covered.delegate_actor_id])).rows[0];
   return cover && cover.break_status !== 'active'
     ? refusal(`${subject.other ? subject.name + "'s" : 'Your'} leave-cover ${cover.display_name} is also away — both can't be off at once.`)
     : null;

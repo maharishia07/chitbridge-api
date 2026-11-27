@@ -302,6 +302,7 @@ const GUARDS_PART = [
   'limits.test.cjs', // E01: 9 MB on a non-upload route -> 413 BODY_TOO_LARGE; 30 s request deadline -> 503 REQUEST_TIMEOUT (late answer swallowed); 57014 -> 503 STATEMENT_TIMEOUT; parsers after id+logger
   'request-log.test.cjs',
   'request-log-keys.test.cjs', // ERR-14: seat and route on the request line, no e-mail; // E07: request id minted (uuid) or kept (plain token), echoed and on the log line; every line JSON with entity/person/bytes; slow query -> one line, fingerprint only, no SQL text; /health db + version
+  'request-log-refusal-code.test.cjs', // ERR-14 part 3: a refusal sent with the route's own res.json({code}) still names its code on the request line; body untouched; a handler's own code kept
   'signin-contact.test.cjs', // M14: sign in by a MOBILE or an E-MAIL — verified contact (M18 reader) / own sign-in e-mail / customer contact -> the stored id behind the scenes; several -> 409 CHOOSE_IDENTITY; unverified opens nothing; old doors byte-identical
   'signin-enumeration.test.cjs', // SEC-139: before a secret is proven an unknown account, a known one sent no secret and a wrong secret get ONE answer (and about the same time) on actors/login, entities/verify, signin/verify; no CHOOSE_IDENTITY list at verify; check-login one constant answer
   'sec-desk-why-and-verify-trips.test.cjs', // SEC-139 class + S8: a routing fault gives route.why one fixed sentence (no exception text in preview or raise); login/verify answers unknown, wrong, locked and expired alike with the same DB round trips
@@ -313,6 +314,7 @@ const GUARDS_PART = [
   'sec-130r-party-contact.test.cjs', // ⭐ SEC-130 residual: a party e-mail lives in party_contact (per shop, not unique): the same address in two shops answers alike, no email_held, RLS text, b840 predicate = isMinted, sign-in never reads it
   'sec-130-minted-email-signin.test.cjs', // ⭐⭐ SEC-130 (P0): a party a shop minted is not an account — no sign-in by its e-mail, ~ handle or name; real accounts unchanged
   'f13-creator-edit.test.cjs',
+  'sec-199-identities-wholerow.test.cjs', /* SEC-199: the whole-row identities read ratchet */
   'sec-185-identities-sweep.test.cjs', /* F13: the one creator-edit rule, the b909 text, the refusal in words | */ // ⭐⭐ SEC-185 B: the identities sweep ratchet, the held migration RUN-2026-11-14-b860 (policies, header, not in the chain), the bound-read doors, no fallback in signin-lookup
   'signin-provider.test.cjs', // ⭐⭐ SEC-112 P0: provider sign-in — registry, stand-in rule, claim checks (S2/S3/S4), migrations b878-b880, user-id suggestions, start + callback against oauth2-mock-server (needs the dev dependency: CI installs it; absent outside CI = section D skipped, said)
   'sec-75-entity-schemas.test.cjs', // ⭐⭐ SEC-75: entity_schemas + schema_fields — the widened sweep ratchet and its break checks, the two held RUN files (b861 doors, b862 policies), the boot check, one defaultSchemaId, bound readers, the freeze through the definer, T8

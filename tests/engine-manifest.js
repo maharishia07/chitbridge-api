@@ -106,7 +106,7 @@ const TIER_B = [
  * somebody lifted it out, so adding one is a decision about the package, not about an import.
  */
 const ALLOWED_FOR_ENGINE = new Set(['../db', './money', './regional', './container', './versionref',
-                                    './handle', './bridgeid', './units', 'crypto']);
+                                    './handle', './bridgeid', './units', 'crypto', './bound-read' /* SEC-198: the one reader of an identities row under its own binding (regional reads the shop's currency/country) */]);
 
 /**
  * EVERY lib/ file must be classified. This was the first version's real hole: it named 6 files and said NOTHING
@@ -338,10 +338,12 @@ const INFRA_LIBS = [
   'service-contract.js',
   /* PAY-FIX C3: the one advisory-lock statement (reward balances and the books' party rows take it) — database plumbing, not a rule. (2026-10-15) */
   'xact-lock.js',
-  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture; SEC-185: bound-read.js reads an identities row under its own binding — plumbing, not rules of the platform. */
-  'db-role.js', 'bound-read.js',
+  /* SEC-FIX2: does the app's database role bypass RLS (boot check) — hosting posture; SEC-185: bound-read.js reads an identities row under its own binding — plumbing, not rules of the platform; SEC-198: platform-count.js is the one door for a count across shops (an ops definer call). */
+  'db-role.js', 'bound-read.js', 'platform-count.js',
   /* PERF1: the one page-size clamp every list route reads (a default, a server-side maximum) — plumbing, not a rule of the platform. (2026-10-14) */
   'page-limit.js',
+  /* PERF1 paged reads (26 Nov): paged-read.js reads a route's source to fill column 21 of the API register, list-allowance.js names the reads that are one record, a summary or a fixed list, with the reason — build-time register plumbing, not a rule of the platform. */
+  'paged-read.js', 'list-allowance.js',
   /* HX1: where this installation is reached from outside (PUBLIC_API_BASE / PUBLIC_WEB_BASE) — hosting config, not a rule. (2026-10-13) */
   'public-base.js',
   /* the field ledger's repo-reading helper (migration columns, form inputs, readers of a not-used field) — a build-time

@@ -30,6 +30,7 @@ const owner = require('../lib/owner');
 const auth = require('../middleware/auth');
 const { endedStatus } = require('../lib/business-status');
 const { query } = require('../db');
+const iddoc = require('../lib/iddoc-verify');
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const WORDS = Object.freeze({
@@ -206,8 +207,8 @@ async function ownLinkOf(req, shop, id) {
   return (await links.listOf(shop, identityIdOf(req))).find((row) => String(row.link_id).toLowerCase() === id.toLowerCase()) || null;
 }
 
-/** a PIN, or a verified address a code can reach: the person still has a way in after the unlink */
-const hasOtherWayIn = (person) => !!person.pin_hash || (!!person.email && person.status === 'active');
+/** a PIN, a verified address a code can reach, or a phone document proved by a code (N6; ASVS V2.5, NIST 800-63B 6.1.2): the person still has a way in after the unlink */
+const hasOtherWayIn = async (person, identityId) => !!person.pin_hash || (!!person.email && person.status === 'active') || iddoc.hasVerifiedPhone(query, identityId);
 
 /* DELETE /provider/links/:link_id — own link only; re-proof; not the last way in; not an enforced provider for staff */
 async function unlink(req, res) {
@@ -221,7 +222,7 @@ async function unlink(req, res) {
   const { person } = proven;
   const flags = await flagsOf(shop);
   if (flags.signin_required === ownLink.provider && !owner.isOwner(req)) return refuse(req, res, 403, 'LINK_ENFORCED');
-  if (!hasOtherWayIn(person)) return refuse(req, res, 409, 'LAST_WAY_IN');
+  if (!(await hasOtherWayIn(person, identityIdOf(req)))) return refuse(req, res, 409, 'LAST_WAY_IN');
   const done = await links.remove(shop, identityIdOf(req), ownLink.link_id);
   if (!done.removed) return refuse(req, res, 404, 'LINK_NOT_FOUND');
   audit(req, shop, identityIdOf(req), 'unlink', ownLink.provider, null, done.link);

@@ -53,6 +53,7 @@ const { schemaValidate } = require('../middleware/validate'); // S9: the body is
 const contract = require('../lib/ctp-contract');
 const { MANIFEST_OPERATION, DELIVER_OPERATION, QUERY_OPERATION, ENVELOPE_REFUSAL, QUERY_REFUSAL, MANIFEST_FAILED, STORE_FAILED, QUERY_FAILED } = contract;
 const { namesItsAnswer, refusalTo, readsVersion } = require('../lib/ctp-guards'); /* the door helpers (answer allow-list, peer-word refusal, version gate) */
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 
 /* ⚠️ its own limiter. This door is open to the internet and is not covered by the session limiters. */
 const ctpLimiter = rateLimit({
@@ -201,7 +202,7 @@ async function localParties(ctx) {
   const stub = await remoteParty.stubFor({ bridge_id: sender, display_name: (env.from || {}).display_name || copy.sender_entity_display_name, installation_key: senderKey, domain: peer.domain, owner: to.identity_id });
   if (!stub.ok) return { refusal: { status: stub.status, code: stub.code, why: stub.why } };
   const recipients = Array.isArray(copy.all_recipients) ? copy.all_recipients : [];
-  const toRow = await query('SELECT bridge_id FROM identities WHERE identity_id = $1', [to.identity_id]);
+  const toRow = await boundRead(query, to.identity_id, 'SELECT bridge_id FROM identities WHERE identity_id = $1', [to.identity_id]);
   const toBridge = toRow.rows[0] && toRow.rows[0].bridge_id;
   const others = await remoteParty.holdersOf(recipients.map((entry) => entry && entry.bridge_id));
   return { header: remoteParty.localizeParties({ all_recipients: recipients }, { senderId: stub.identity_id, senderBridge: sender, toId: to.identity_id, toBridge, others }) };

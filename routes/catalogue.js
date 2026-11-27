@@ -43,6 +43,7 @@ const sellablePrice = require('../lib/sellable-price'); // CAT-318/324: when a s
 const genBridge = require('../lib/bridgeid').generateBridgeId;
 // Customer (storefront) OTP: issued and spent by lib/otp.js (SH-OTP1) — a fixed customer code on a LOCAL stack only, CSPRNG elsewhere.
 const devOtp = require('../lib/dev-otp'); // ONE guarded place for every fixed test OTP — see lib/dev-otp.js
+const { boundRead } = require('../lib/bound-read'); /* SEC-198: the identities read runs under its own id's binding */
 const cleanPhone = (p) => String(p || '').replace(/[^0-9+]/g, '');
 
 // F2 — dual-channel customer identifier: the customer gives EXACTLY ONE of phone OR email. '@' present => email
@@ -490,7 +491,7 @@ async function repriceAgainstCatalogue(entity_id, rawItems, oi) {
 /** N3/AE-F-10: today as the ISO day in the shop's own zone (country-setup.clockOf); nothing stated -> UTC. Stored text never holds a formatted date. */
 async function shopDatePhrase(identityId) {
   const countrySetup = require('../lib/country-setup');
-  const row = (await query('SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
+  const row = (await boundRead(query, identityId, 'SELECT country, timezone FROM identities WHERE identity_id = $1', [identityId])).rows[0];
   return countrySetup.isoDayOf(new Date(), countrySetup.clockOf(row));
 }
 /* ONE shop row and ONE "is it a live shop" test, shared by the handle read and the by-id read (SEC-126).
@@ -1995,7 +1996,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
   }
   if (!owner_id) return decoyEnquiryReads(viewer); /* SEC-129: an unknown item does the reads a hidden one does, so the time says nothing */
   if (owner_id === viewer) return { ok: true, owner_id }; // your own product
-  const ent = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
+  const ent = await boundRead(query, owner_id, 'SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [owner_id]);
   if (!ent.rows[0]) return { ok: false };
   const view = await publicViewFor(ent.rows[0], { viewer }).catch(logger.orElse('catalogue enquiryLimitCheck: failed — answered with nothing', null));
   /* ⭐ SEC-129: the SHOP being enquirable is not enough — THIS item must be one its storefront shows this viewer (private, over-cap, unavailable and network-only items are not), or a 201 versus a 404 tells a stranger the item id exists (the same rule as SEC-126) */
@@ -2003,7 +2004,7 @@ const enquiryLimitCheck = async (viewer, item_id) => {
 };
 /** SEC-129 · decoyEnquiryReads(viewer) → { ok:false } after the same two reads (the shop row, then its public view) a hidden item of a real shop costs; the caller's own shop stands in, the result is thrown away */
 async function decoyEnquiryReads(viewer) {
-  const standIn = await query('SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [viewer]);
+  const standIn = await boundRead(query, viewer, 'SELECT identity_id, bridge_id, plan, params_override, catalogue_visibility FROM identities WHERE identity_id = $1', [viewer]);
   if (standIn.rows[0]) await publicViewFor(standIn.rows[0], { viewer }).catch(logger.orElse('catalogue enquiry decoy: the view failed — nothing to say', null));
   return { ok: false };
 }

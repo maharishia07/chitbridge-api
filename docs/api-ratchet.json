@@ -26,7 +26,8 @@
   "resource_cap": 0,
   "audit_logged": 353,
   "stale_write_refused": 62,
-  "documented_example": 698
+  "documented_example": 698,
+  "paged_read": 46
  },
  "debt": []
 }
