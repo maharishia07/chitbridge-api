@@ -71,8 +71,8 @@
     "failing": 698
    },
    "paged_read": {
-    "applies": 77,
-    "failing": 46
+    "applies": 78,
+    "failing": 47
    }
   },
   "resource_cap_causes": {},
@@ -38892,7 +38892,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3798,
+   "line": 3816,
    "hash": "7b07db7aedc656d3",
    "does": "Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.",
    "errors": {
@@ -39020,8 +39020,8 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3531,
-   "hash": "13e313233f2183a5",
-   "does": "Nothing in, a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.",
+   "hash": "54854e387f323fb3",
+   "does": "Nothing in (or a starter list asked by ?rows), a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has, and for a list asked by ?rows whether it is unpriced and its rows -> the starting points.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -39082,7 +39082,7 @@
     "audit_logged": true,
     "stale_write_refused": true,
     "documented_example": false,
-    "paged_read": true
+    "paged_read": false
    },
    "reported_applies": {
     "bfla_role_check": false,
@@ -39094,30 +39094,33 @@
     "audit_logged": false,
     "stale_write_refused": false,
     "documented_example": true,
-    "paged_read": false
+    "paged_read": true
    },
    "reported_causes": {
     "resource_cap": [],
-    "paged_read": [],
+    "paged_read": [
+     "no_server_max",
+     "whole_when_unasked"
+    ],
     "stale_write_refused_na": [
      "read"
     ]
    },
    "reported_facts": {
     "paged_read": {
-     "kind": "single",
+     "kind": "list",
      "mode": "none",
      "default": null,
      "max": null,
-     "unasked": "n/a",
-     "via": "no rows answered"
+     "unasked": "everything",
+     "via": "rows answered, no paging"
     }
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+    "signed_off_by_date": "cb-api 2026-11-27 batch/api-1134 (re-sign after api #1402 CAT-344: optional ?rows=<key> adds unpriced+rows, no-rows answer unchanged, 13 columns read yes, shape keys added by hand, @does names ?rows, rows are the static starter list so no paging, no business change)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39273,7 +39276,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4178,
+   "line": 4196,
    "hash": "6188ec56258d1181",
    "does": "An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.",
    "errors": {
@@ -39535,7 +39538,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4009,
+   "line": 4027,
    "hash": "4cc02b7049e1cf09",
    "does": "Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.",
    "errors": {
@@ -40722,7 +40725,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3600,
+   "line": 3618,
    "hash": "105f7e770bec40b9",
    "does": "Optional period, compare and page in -> we roll the counters' bills into the day, week or month, or the trend against last year -> the takings summary.",
    "errors": {
@@ -40853,7 +40856,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3978,
+   "line": 3996,
    "hash": "750f4ada473ad2b1",
    "does": "Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.",
    "errors": {
@@ -84913,7 +84916,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4049,
+   "line": 4067,
    "hash": "8e1f08ad996388b1",
    "does": "A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.",
    "errors": {
@@ -85985,7 +85988,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4111,
+   "line": 4129,
    "hash": "8a112e94e9427f75",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {

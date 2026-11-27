@@ -3527,7 +3527,7 @@ function catalogueAddedWords(added, refusedCount) {
 }
 
 /** ⭐ what a counter may start from — the trades, their outcomes, and what the axiom actually is */
-// @does Nothing in, a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.
+// @does Nothing in (or a starter list asked by ?rows), a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has, and for a list asked by ?rows whether it is unpriced and its rows -> the starting points.
 router.get('/catalogue/blueprints', auth, auth.requireScope('till'), ...checked('GET /catalogue/blueprints'), async (req, res) => {
   try {
     const blueprints = require('../lib/catalogue-blueprint');
