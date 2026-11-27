@@ -145,7 +145,7 @@ function make() {
   stub('lib/select', { rows: async (owner, sel) => data.chits.filter((c) => c.counterparty_id === sel.counterparty_id) });
   stub('lib/policy', { get: async () => ({ overdue_days: 7 }) });
   /* the store's ONE claim path (T1-FINREW): the engine's claim over the stand-in balance; both halves recorded as one write */
-  stub('lib/reward-store', { balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, holderFrom: () => null,
+  stub('lib/reward-store', { walkIns: async (h, owner) => ({ rows: data.walk.filter((r) => r.owner === owner).map((r) => ({ phone: r.phone, points: Number(r.points), last_at: r.last_at })), truncated: false, negative: 0 }), balance: async () => data.points || { programme: null, points: 0, worth: 0, entries: [] }, holderFrom: () => null,
     programme: async () => (data.points && data.points.programme) || null,
     claim: async (o, from, to, ref, prog) => { const c = require(path.join(API, 'lib', 'rewards')).claim(data.points || { points: 0 }, from, to, ref);
       if (!c.ok) return { ok: false, why: c.why, points: 0 }; c.entries.forEach((e) => data.appended.push({ owner: o, holder: e.holder, entry: e, def: prog.definition_id })); return { ok: true, points: c.points }; } });

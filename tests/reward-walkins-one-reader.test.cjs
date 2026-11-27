@@ -1,14 +1,14 @@
 'use strict';
 /**
- * tests/reward-walkins-one-reader.test.cjs - DRIFT cluster 5 (27 Nov 2026): the CRM walk-in list quoted the raw stored SUM while the till spends the expiry-folded balance.
- * OWNS (1) walkIns(A) equals balanceOn(A).points for every phone, on a fake ledger with expires_months 12 (A: earned 100 fourteen months old + 50 one month old -> 50; B: 80 fifteen months old -> dropped;
- *      C: earned then claimed away -> net 0, dropped; D: no expiry in the programme -> raw sum);
- * CALLED BY scripts/guards-list-1.cjs   Run: node tests/reward-walkins-one-reader.test.cjs   
+ * tests/reward-walkins-one-reader.test.cjs - DRIFT cluster 5 (27-28 Nov 2026): the CRM walk-in list quoted the raw stored SUM while the till spends the expiry-folded balance; and a programme that stopped zeroed the till.
+ * OWNS walkIns(db) equals balanceOn(A).points for every phone, on a fake ledger with expires_months 12 (A: earned 100 fourteen months old + 50 one month old -> 50; B: 80 fifteen months old -> dropped; C: earned then claimed away
+ *      -> net 0, dropped), in four states of the programme: LIVE, LIVE without expiry (stored sums), NEVER RAN (stored sums), ENDED/PAUSED (the expiry term stays: A 50, B dropped; DECISIONS 5d9ed0f7). The one-reader guard is
+ *      tests/one-reader-tables.test.cjs (docs/one-reader/reward_ledger.json).
+ * CALLED BY scripts/guards-list-1.cjs   Run: node tests/reward-walkins-one-reader.test.cjs
  */
-const fs = require('fs'), path = require('path');
+const path = require('path');
 process.env.NODE_ENV = 'test';
-const API = path.join(__dirname, '..');
-const store = require(path.join(API, 'lib', 'reward-store'));
+const store = require(path.join(__dirname, '..', 'lib', 'reward-store'));
 let pass = 0, fail = 0;
 const eq = (name, got, want) => { const ok = JSON.stringify(got) === JSON.stringify(want); ok ? pass++ : fail++; console.log((ok ? '   ok   ' : '   FAIL ') + name + (ok ? '' : '  got ' + JSON.stringify(got) + ' want ' + JSON.stringify(want))); };
 const months = (n) => new Date(Date.now() - n * 30.5 * 864e5).toISOString();
@@ -19,39 +19,44 @@ const ledger = [
   { holder_value: 'C', points: 40, why: 'earned', ref: 'c1', note: null, at: months(2) },
   { holder_value: 'C', points: -40, why: 'claimed', ref: 'c2', note: null, at: months(1) }
 ];
-let TERMS = null; /* the newest reward definition's rules when no programme is live (a paused / ended programme) */
+/* the world: RULES = the newest definition that ever ran; LIVE = it is live now (programme() answers it) */
+let RULES = null, LIVE = false;
+const rulesRow = () => (RULES ? { definition_id: 'd1', name: 'Points', rules: RULES } : null);
+const byHolder = () => { const g = {}; for (const x of ledger) { const k = x.holder_value; g[k] = g[k] || { phone: k, points: 0, last_at: x.at, list: [] }; g[k].points += x.points; if (x.at > g[k].last_at) g[k].last_at = x.at; g[k].list.push(x); } return g; };
 const db = { async query(sql, p) {
-  if (/FROM definition d JOIN definition_version/.test(sql)) return /d.status = 'live'/.test(sql) ? { rows: [] } : { rows: TERMS ? [{ definition_id: 'd1', name: 'Points', rules: TERMS }] : [] };
-  if (/GROUP BY holder_value/.test(sql)) { const g = {}; for (const x of ledger) { const k = x.holder_value; g[k] = g[k] || { phone: k, points: 0, last_at: x.at }; g[k].points += x.points; if (x.at > g[k].last_at) g[k].last_at = x.at; } return { rows: Object.values(g).filter((x) => x.points > 0).sort((a, b) => (a.last_at < b.last_at ? 1 : -1)) }; }
-  if (/holder_value = ANY/.test(sql)) return { rows: ledger.filter((x) => p[1].includes(x.holder_value)).sort((a, b) => (a.holder_value === b.holder_value ? (a.at < b.at ? 1 : -1) : a.holder_value < b.holder_value ? -1 : 1)) };
+  if (/WITH t AS/.test(sql)) { /* walkIns: ONE statement */
+    const expiry = RULES && Number(RULES.expires_months) > 0;
+    return { rows: Object.values(byHolder()).filter((x) => x.points > 0).sort((a, b) => (a.last_at < b.last_at ? 1 : -1)).map((x) => ({ phone: x.phone, points: x.points, last_at: x.last_at, rules: RULES, entries: expiry ? x.list.slice().sort((a, b) => (a.at < b.at ? 1 : -1)) : null })) };
+  }
+  if (/ORDER BY \(d\.status = 'live'\) DESC/.test(sql)) return { rows: rulesRow() ? [rulesRow()] : [] }; /* termsOf */
+  if (/d\.status = 'live'/.test(sql) && /FROM definition d JOIN definition_version/.test(sql)) return { rows: LIVE && rulesRow() ? [rulesRow()] : [] }; /* programme() */
   if (/FROM reward_ledger/.test(sql)) { const mine = ledger.filter((x) => x.holder_value === p[2]).sort((a, b) => (a.at < b.at ? 1 : -1)); const total = mine.reduce((t, x) => t + x.points, 0); return { rows: mine.slice(0, p[3] == null ? undefined : p[3]).map((x) => ({ ...x, total })) }; }
   return { rows: [] };
 } };
+const withE = async (_e, fn) => fn(db);
+const list = async () => Object.fromEntries((await store.walkIns(db, 'shop')).rows.map((x) => [x.phone, x.points]));
+const till = async (ph) => (await store.balance('shop', { scheme: 'phone', value: ph }, withE)).points;
 (async () => {
-  const prog = { expires_months: 12 };
-  const w = await store.walkIns(db, 'shop', prog);
-  const by = Object.fromEntries(w.rows.map((x) => [x.phone, x.points]));
-  for (const ph of ['A', 'B', 'C']) {
-    const till = (await store.balanceOn(db, 'shop', { scheme: 'phone', value: ph }, prog)).points;
-    eq('walk-in list = till balance for ' + ph, by[ph] || 0, till > 0 ? till : 0);
-  }
-  eq('A quotes 50 (the 100 lapsed)', by.A, 50);
-  eq('B (all lapsed) is not listed', 'B' in by, false);
-  eq('C (claimed away) is not listed', 'C' in by, false);
-  const none = await store.walkIns(db, 'shop', { expires_months: 0 });
-  eq('no expiry declared: stored sums as before', Object.fromEntries(none.rows.map((x) => [x.phone, x.points])), { A: 150, B: 80 });
-  /* a given point is a promise (DECISIONS 28 Nov): no live programme -> the holder still holds the stored balance, in the list and at the till, never 0 */
-  const withE = async (_e, fn) => fn(db);
-  const kept = await store.balance('shop', { scheme: 'phone', value: 'A' }, withE, null);
-  eq('never ran a programme: balance of A is the stored 150, not 0', [kept.programme, kept.points, kept.worth], [null, 150, null]);
-  /* PAUSED / ENDED programme: the expiry term is part of the promise (DECISIONS 5d9ed0f7): A still 50, B 0 and not listed - what can be spent that day, never the stored sum */
-  TERMS = { expires_months: 12 };
-  const paused = await store.termsOf('shop', withE);
-  const wp = await store.walkIns(db, 'shop', paused);
-  for (const ph of ['A', 'B']) eq('paused programme: list = till for ' + ph, Object.fromEntries(wp.rows.map((x) => [x.phone, x.points]))[ph] || 0, Math.max(0, (await store.balance('shop', { scheme: 'phone', value: ph }, withE, null)).points));
-  eq('paused programme: A holds 50, B is not listed', [Object.fromEntries(wp.rows.map((x) => [x.phone, x.points])).A, wp.rows.some((x) => x.phone === 'B')], [50, false]);
-  eq('paused programme: no new earning side effect, programme answer is null', (await store.balance('shop', { scheme: 'phone', value: 'A' }, withE, null)).programme, null);
-  TERMS = null;
+  /* 1. LIVE programme, expires 12 months */
+  RULES = { expires_months: 12 }; LIVE = true;
+  let by = await list();
+  for (const ph of ['A', 'B', 'C']) eq('live: walk-in list = till for ' + ph, by[ph] || 0, Math.max(0, await till(ph)));
+  eq('live: A quotes 50 (the 100 lapsed)', by.A, 50);
+  eq('live: B (all lapsed) and C (claimed away) are not listed', ['B' in by, 'C' in by], [false, false]);
+  /* 2. LIVE, no expiry declared: the stored sums */
+  RULES = { expires_months: 0 };
+  eq('live, no expiry: stored sums', await list(), { A: 150, B: 80 });
+  /* 3. NEVER RAN a programme: the holder still holds the stored balance, never 0 */
+  RULES = null; LIVE = false;
+  const kept = await store.balance('shop', { scheme: 'phone', value: 'A' }, withE);
+  eq('never ran: balance of A is the stored 150, programme null, worth null', [kept.programme, kept.points, kept.worth], [null, 150, null]);
+  eq('never ran: list = stored sums', await list(), { A: 150, B: 80 });
+  /* 4. ENDED / PAUSED: no NEW earning, but the expiry term is part of the promise (DECISIONS 5d9ed0f7): A still 50, B 0 and not listed */
+  RULES = { expires_months: 12 }; LIVE = false;
+  by = await list();
+  eq('ended: A holds 50 in the list, B and C not listed', [by.A, 'B' in by, 'C' in by], [50, false, false]);
+  for (const ph of ['A', 'B']) eq('ended: list = till for ' + ph, by[ph] || 0, Math.max(0, await till(ph)));
+  eq('ended: the till answers programme null (held, not redeemable), points 50', [(await store.balance('shop', { scheme: 'phone', value: 'A' }, withE)).programme, await till('A')], [null, 50]);
   console.log(pass + fail + ' checks, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
 })();
