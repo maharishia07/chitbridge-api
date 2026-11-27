@@ -179,179 +179,41 @@ function mintWith(transport, place) {
       }
       throw new Error('unexpected sql ' + sql);
     };
-    return { rows, placed, q };
-  }
-  const known = { ok: true, local: false, installation_key: 'sit-au', endpoint: 'https://au/api/ctp/deliver', domain: 'au.example' };
-  const RP = () => load('lib/remote-party.js', { '../db': { query: async () => { throw new Error('no db'); } } });
-  const deps = (w, extra) =>
-    Object.assign(
-      {
-        query: w.q,
-        resolveAddress: async () => known,
-        ask: async () => ({ ok: true, found: true, bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty', installation_key: 'sit-au', sells_outside: true })
-      },
-      extra || {}
-    );
-
-  await t('RAIL-101: bridge_id@domain makes ONE local row, placed on the remote installation, address computed (no domain copied)', async () => {
-    const w = world();
-    const got = await RP().adopt('owner-1', 'CBSQRH9ASH@au.example', deps(w));
-    assert.ok(got.party && got.created === true, JSON.stringify(got));
-    assert.strictEqual(got.party.address, 'CBSQRH9ASH@au.example');
-    assert.deepStrictEqual(w.placed, [[got.party.identity_id, 'sit-au']]);
-    assert.ok(!('domain' in w.rows[1]), 'the domain must not be stored on the party row');
-  });
-
-  await t('RAIL-101: adding the same address again reuses the row', async () => {
-    const w = world();
-    await RP().adopt('owner-1', 'CBSQRH9ASH@au.example', deps(w));
-    const again = await RP().adopt('owner-1', 'CBSQRH9ASH@au.example', deps(w));
-    assert.strictEqual(again.created, false);
-    assert.strictEqual(w.rows.length, 2);
-  });
-
-  await t('RAIL-101: a pasted shared link (or a scanned QR) is accepted like a typed address', async () => {
-    const w = world();
-    let asked = null;
-    const got = await RP().adopt(
-      'owner-1',
-      'https://au.example/shop.html?s=qa-rish-pty',
-      deps(w, {
-        ask: async (target, want) => {
-          asked = { target, want };
-          return { ok: true, found: true, bridge_id: 'CBSQRH9ASH', display_name: 'QA Rish Pty', installation_key: 'sit-au', sells_outside: true };
-        }
-      })
-    );
-    assert.ok(got.party, JSON.stringify(got));
-    assert.deepStrictEqual(asked.target, { domain: 'au.example', bridge_id: 'qa-rish-pty' });
-    assert.strictEqual(asked.want.want, 'resolve');
-  });
-
-  await t('RAIL-101: far end unreachable -> 502, nothing written', async () => {
-    const w = world();
-    const got = await RP().adopt('owner-1', 'CBSQRH9ASH@au.example', deps(w, { ask: async () => ({ ok: false, why: 'could not reach https://au/api/ctp/query: timed out' }) }));
-    assert.strictEqual(got.error.status, 502);
-    assert.ok(/timed out/.test(got.error.message) && /Nothing was added/.test(got.error.message));
-    assert.strictEqual(w.rows.length, 1);
-  });
-
-  await t('RAIL-101: far end says no such business -> 404 in its words, nothing written', async () => {
-    const w = world();
-    const got = await RP().adopt('owner-1', 'CBGHOST001@au.example', deps(w, { ask: async () => ({ ok: true, found: false, why: 'no business here called CBGHOST001' }) }));
-    assert.strictEqual(got.error.status, 404);
-    assert.ok(/au\.example says: no business here called CBGHOST001/.test(got.error.message));
-    assert.strictEqual(w.rows.length, 1);
-  });
-
-  await t('RAIL-101: a domain we do not deal with -> 404 for an id, nothing asked or written', async () => {
-    const w = world();
-    const got = await RP().adopt(
-      'owner-1',
-      'CBSQRH9ASH@stranger.example',
-      deps(w, {
-        resolveAddress: async () => ({ ok: false, why: 'no installation we deal with answers for stranger.example' }),
-        ask: async () => {
-          throw new Error('must not ask');
-        }
-      })
-    );
-    assert.strictEqual(got.error.status, 404);
-    assert.strictEqual(w.rows.length, 1);
-  });
-
-  await t('RAIL-101: an e-mail is NOT an address (falls through to the e-mail lookup); a bare id is local', async () => {
-    const w = world();
-    const d = deps(w, { resolveAddress: async () => ({ ok: false, why: 'x' }) });
-    const mail = await RP().adopt('owner-1', 'owner@shop.example.com', d);
-    assert.deepStrictEqual(mail, { local: true, bridge: 'owner@shop.example.com' });
-    const bare = await RP().adopt('owner-1', 'CBSQRH9ASH', d);
-    assert.deepStrictEqual(bare, { local: true, bridge: 'CBSQRH9ASH' });
-  });
-
-  await t('RAIL-101: the same id held HERE by another business -> 409 CTP_ADDRESS_CLASH, never linked to a stranger', async () => {
-    const w = world();
-    w.rows.push({ identity_id: 'other', bridge_id: 'CBSQRH9ASH', display_name: 'Someone Else', inst: 'sit-in' });
-    const got = await RP().adopt('owner-1', 'CBSQRH9ASH@au.example', deps(w));
-    assert.strictEqual(got.error.status, 409);
-    assert.strictEqual(got.error.code, 'CTP_ADDRESS_CLASH');
-  });
-
-  /* â”€â”€ RAIL-104 â”€â”€ the manifest cache: a failure is short, a rotated key is re-read once */
-  const directory = (served) => {
-    const dir = load('lib/ctpdirectory.js', { './safe-url': { assertPublicHttps: async () => ({ ok: true }) } });
-    global.fetch = async () => {
-      const next = served.shift();
-      if (next === 'down') throw Object.assign(new Error('refused'), { name: 'TypeError' });
-      /* RAIL-140 c (main): the manifest body is read through its stream, capped in bytes, so the stand-in serves a body reader */
-      const bytes = Buffer.from(JSON.stringify({ ctp: '1', installation_key: 'sit-au', public_key: next }));
-      let given = false;
-      return { ok: true, status: 200, body: { getReader: () => ({ read: async () => (given ? { done: true } : ((given = true), { done: false, value: bytes })), cancel: async () => {} }) } };
-    };
-    return dir;
-  };
-  const realNow = Date.now;
-  const atTime = (ms) => {
-    Date.now = () => ms;
-  };
-
-  await t('RAIL-104: a failed manifest read is retried after seconds, not kept for 15 minutes', async () => {
-    /* RAIL-115: a first read that is refused is read once more, so the peer is down for BOTH reads of the first delivery */
-    const dir = directory(['down', 'down', 'KEY-A']);
-    try {
-      atTime(1000000);
-      const first = await dir.publicKeyFor('au.example', 'sit-au');
-      assert.strictEqual(first.ok, false);
-      atTime(1000000 + 5000);
-      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au')).ok, false, 'within seconds the failure may be reused');
-      atTime(1000000 + dir.FAILURE_TTL_MS + 1000);
-      const later = await dir.publicKeyFor('au.example', 'sit-au');
-      assert.ok(later.ok && later.public_key === 'KEY-A', 'the peer is back; the next delivery must find it');
-    } finally {
-      Date.now = realNow;
-    }
-  });
-
-  await t('RAIL-104: a key that stopped verifying is re-read once (throttled), so a rotation heals itself', async () => {
-    const dir = directory(['KEY-OLD', 'KEY-NEW']);
-    try {
-      atTime(2000000);
-      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au')).public_key, 'KEY-OLD');
-      atTime(2000000 + 1000);
-      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au', { fresh: true })).public_key, 'KEY-OLD', 'a re-read a second after the last one is refused (no dial per bad envelope)');
-      atTime(2000000 + dir.REREAD_MIN_MS + 1000);
-      assert.strictEqual((await dir.publicKeyFor('au.example', 'sit-au', { fresh: true })).public_key, 'KEY-NEW');
-    } finally {
-      Date.now = realNow;
-    }
-  });
-
-  await t('RAIL-104: the receiving door tries the published key once more before it refuses a signature', async () => {
-    const src = require('fs').readFileSync(root('routes/ctp.js'), 'utf8');
-    assert.ok(/signature did not verify[\s\S]{0,400}fresh: true/.test(src));
-  });
-
-  /* sit/run6: RAIL-105's alreadyHeld (a unique-key fault read after the write) is replaced on main by RAIL-138 c deliverOnce (our copy read BEFORE the write); the behaviour it protected is pinned on deliverOnce */
-  await t('RAIL-105: the same chit sent twice is accepted as a repeat (nothing written), a chit id held by another sender is not', async () => {
-    const S1 = 'a1000000-0000-4000-8000-000000000001', S2 = 'a2000000-0000-4000-8000-000000000002';
-    let written = 0;
-    const held = (rows) => ({ '../db': { query: async () => ({ rows: [] }), withEntity: async (id, fn) => fn({ query: async () => ({ rows }) }) }, '../lib/mint': { deliver: async () => { written++; } } });
-    const opened = { chit_id: 'c1', header: { sender_entity_id: S1 } };
-    const copyOf = { sender_entity_id: S1 };
-    assert.deepStrictEqual(await load('routes/ctp.js', held([{ sender_entity_id: S1 }])).deliverOnce(opened, copyOf, 'sit-au', 'r1'), { repeat: true });
-    assert.strictEqual(written, 0, 'a repeat writes nothing');
-    const other = await load('routes/ctp.js', held([{ sender_entity_id: S2 }])).deliverOnce(opened, copyOf, 'sit-au', 'r1');
-    assert.ok(other.refusal && other.refusal.code === 'CTP_CHIT_ID_TAKEN' && other.refusal.status === 409, JSON.stringify(other));
-    assert.deepStrictEqual(await load('routes/ctp.js', held([])).deliverOnce(opened, copyOf, 'sit-au', 'r1'), { repeat: false });
-    assert.strictEqual(written + 0, 1, 'a chit not held yet is written once');
-  });
-
-  await t('RAIL-101: the add-supplier route calls the existing seam (no parallel route)', async () => {
-    const src = require('fs').readFileSync(root('routes/relationships.js'), 'utf8');
-    assert.ok(/require\('\.\.\/lib\/remote-party'\)\.adopt/.test(src));
-    assert.ok(!/router\.post\(\s*'\/suppliers\/remote/.test(src));
-  });
-
-  console.log('\n' + pass + ' passed, ' + fail + ' failed');
-  process.exit(fail ? 1 : 0);
-})();
+    return { rows, ©;Êi¿\Îu‡§ 8ñZfDúD‚?s/È=ŸÑ¹yØüÇá~…eÕJ°óâtâ0W‘¦´÷óä"Iut¾³Èúh¬fmXa0/¯¦ü=©‘fÊÊtv§B¹]5IWÊÑ4!êØpo~¤§õOØ¿ñş"ĞWÎ<Ş»œ¢•ÂßL³”/Q¤M.Û2Rï<`Îy@åÇİÑ•¤÷+[ŞvURÅåâÙxä¦Dw• ¯['«0Q¾U®°àbşŠ á\–tğ‘ğJMOO6’£N è±ºğXÖGC5LgË7~¦8(ü(Ò(Uƒ›D¾5å–Ë/Ä±Íb"¥Xr'iZªp$§Ÿ×ÜÙ½ÆìúÏP0FÔ¤=Å¼%™=‹,±§B":nÄ0“/Šåä1kûÎV`1‘¶BëCíwëuĞ	ÌKÂfa½¦ëìãKùÿíZüŠQµõ¨4Ù‰¦‰H‹ë§dO-(‚éqØ:²!%‰l-s‹á9OB6\‡ÓÒ;ş^<9°1ãCO5“c,}8ÓäMÃ-HÇÎ
+Tà<¾àƒ–;9¹äKaÇßÒ5*š.[Vxs-=;sÓü.}†}lV«W•§g€«l—Å¨êÇDÈb>¯¢GÖĞ;ç†{WVWÓÙpxÈ ñßESnõÍf)ÎÄÌünş!ñ-Š&ÈÄ‡'À-ÛÃcN<…7Ec‡ò¡}xQcq°ÑFı¼˜V	»‹/êÈ=ÎÀÖÆBæ*Zè˜µXŸ=ü0#äÔ[WEÕÍ½Ÿ#ùÈ¢-`k8ÛÛ`nT0].ÏŞK¤Ç… ¤a«ší{]ş^•Ïñ“#¿œ·6[tp£Nm…{/å÷éıO>p(Gî—C¡Î^¥1·!ã_°BLıÉ¤Q„ÄîïügŒØÂè\O²ÒZ&F—L nã7\Ü>ù	xË…ÿ(ÜÑ¸eá~“ä³sn¡ti‡…©É,·Z¾"íƒŞ÷ôn¦÷®’5 	 §Uñ2yáÇ“›£¶S!dH¢lT\ÕÄ…å›Ğu¬Ÿ'2`ÚL«VÆ¸ûñiv>Ó¢†à•¤0ç‰"%Ù”şp4GşCıPŠi™j0¿a‰†+–`ú†o™_Í—ü1ÃYÃC›™“Ñï­¼¼h.áªzğªß“S_È¾ñ×½,SÎ È$‰ÑûM Ş \)!t¦;‰vQIOäê£ì¥ŒUeå§«ÄRPº6ÊÖm¯R#ß±-z¯5!nÛ(j Şl·~Ñsè+ÃìJïû²·Tˆx(µè)ÊâãH×Î‰‚ŞØî‡‡k˜©¥\çk;¡ªnF,7?q=9ö¢ëHÇUY†F7AH¶Æ…Ğm:",‰”ıC…N0>u<;š—+ËgÚ—üßÓ±ùZ9lmUç7"PìŞ°EºğB\"ÉÂhú0à¢;–ç–õÁ.–²%Tv^ıdµt~Ø«o³ûæÒyîQı‚’ÂEvÔ*ª™À	v·0Êûï®¤/ ß!à¶ÅY}ËÇT Ê‚zz‹ÎD­¾|s×½p×‘>ˆŒºQ˜™l :¾ê!¡ÀâÛpXèTfeOR¸ùÍgØlÜ<ÖªàÔ¯_0ƒ¡ºhÛ¶Î`
+_ M“°Fç¨S©%_‰u•ŠÁ’Üäâ×RJ”ÑR‰sâóQLŒŸ‚kÁÇ«=ÖÒµ‹*x2µx\ß&›Ä6òÜhC¿A,7†]’ÑdvWÖòÌ\_´I˜Øï|q)Å"ôcÂ§(f4‹ğM\W xvP÷k¥Èj6qjsFŒ­m?[MLhAıLJ«O®iŒ)-42éó¹3e¢øßúpÎyƒ0Šîàp+Ï ×6Ì¥
+Nä=çsòhØàæ	§¾³„‘õA€®oÂø†jsOÙÓ#Q86y®ñ”qÈ,©Öƒ™š³VÑ‘âİ]Å@PÁ»=5ÃÁ/0Ä¹ŞÆ Ÿ%‡5Îu+İ VßÔû¾·’ÖLqör¡ŞOåÃAtãe+$Xäíå5ìøèŞÇù>şgfÎ¹Ì|SqIF\šÃÎiÓ4,FEøN4tèùoúä ;[İÀ×AÜÅ!J×‘Hõ®ñ;¿¥ŞáÆª‰®±¹Á2%·ºº†^ña£h>ÛÅÙ×¼Ú0¸ımÚågË7Àâ^ÔÙìæ×˜œÛ3¥†Ş{vÉÁÌ›İ—óiä•Ä ¾¿kãÑR•a­#|<”Ü(W-oT¤ë~dÒGHEÚ¯üQ³\×›c;sÀĞA£¢ŸC]BµM
+>…6	Øjà$G»¯¦	ó“.*Ë°õŸ,dV“/ßëBİv»iªve»GJŸq_ânØ–Ì¾ó¬=é“WAñ{]´a}ÇvJ*`Ù»£9ÒbÜıir¯ŒvÍ~ÂÃÁ#s¯ÔXGëŒ¿Å·ãF¸3~H{¬şkI—•”>jy@G†DÍh_I‹7BÁ)-DQû—\ Œ ÌVéÁĞÛ«¼‰kû2s¼~Æş·ÌÚÜÔîôP›ÃeÜ$š}ğm« q©—¹~¨%ØE°@gı¥òp?İ¡JS-VşÆ˜©ûyÊ` TÁ‰ƒÁkÛ‡‹oë•ƒ?Ç
+Õ³Í°AX´á3Gäö·êp‹Îº0ÿE¤pPÖ¡NÑcá:¡ÙìuASã™B‹D¹…p>5u&’0…¦¶N‚•Äˆò[á[¡ÏÕÇM[<X,sn|
+ÌJïü3{¹QH(ƒ,j:÷Œ´5çP`ÿÆ“×4â´˜¡c?Õ|\]Ìä*WW'®tÉ®U²ñrÅ±ÊÌ™†1cHÚêÙèì°Jı'…8fşêßzÄÉ3¹5Ñ‚÷Vdë½’kW51èJ,!”±^(„t7&º>[çìMÉ‡	K¥Ô“•Î+ãŸ{wºãb Øqæ(yñ 
+ÙÂz¬½ËPHi
+½Ä².D?f˜!¶´–Ç‡GÑ)À=u·`“lÆ¨xû¨Ë…‹öÄ®úMMÔjÏ¬CnPñÑÖµ3Ô‡İâ<š¦%Àô	§~f¾Ä}ºRĞç‡ä’#¼%ØÆ$0)¹×&£¼elL¬Ö›Úo¦£+Pƒáée~;’ldú¶½şˆ'J9GßZ«@€³Çbá³V`,5 ¹—Üöã .)N¦±	v«ßoÇ„‰Åfk”©[)çh3L_¨s­`ûhõù¡]ÓïïÂ‰=Ç‹¹r"ñ¶{8=æ´ÄŸµóª¼ï¦*E-ı}GI©Ë¾‰ÍáÎè/ÔÖB/`]kt-ôñÿ¥lTô±ÿ¬*\’Ô¬’ÎºXŠ¿-dÉ«Ú2½êêëÓ
+Bre{…vï0tV( #BÕ¤ó‚øc¿šÑOT^V¡¤`+ÀR«É“'‘  ;Ùúåƒ»ddÃÆ¡Ê?É2}”±^™>e0 ,?å¼Ê_ƒèh¹Œ¨‰ë°xÊGÂğ¶)"GA-4‹†e°w&~¸¬'¦¹2óMÇ…âGÄo‘ xwË"`S™TÊÈæøbX÷Û¢?­/òd5m
+Š‚QÜT”Îç…ä½Yû–şÓ)·÷:B½Ø+Ì)‡fvİMÆ˜Åõr„BçV5Ûy¾:,ƒl›+<l1!&›yä^¥Èeã|ù7M¯°ÎEHÇñ%(pœîT–§ĞÃ‹d3Of8‚-Òò\÷8<B{b\²&WÅêÛäñ}ì1TH&²í_éZÚ·B]Æß×$”/Ø‘‰AM0uÀRS’ôLe5‚ıJ	WÌm”êw˜hO`šDÏü?¯ÒìÙÚr®¸\«v¸ZçJŠ«Øèƒè\{I(œ>†³bU&Ã9"Iyú+n¾n“[¼´e¬
+5ÌHıibBDY]¯Ï¬ÒÔÈkDá”'õÌr6ºw8ë¦7F0‹;ëCKbÖ~°qF¸gíÛÂ­Äd&¿BÿÌ©NéÀ)%Ã˜°ƒ-»	ú§jíé¤±õ†ïztúûTìîÇ»[ô„í¦C`]q÷‰„îÄĞÆ>/Nf¨º²ñ	µpKÃĞ®6‡W¸ÔŸÊš²	,~ºüäE^ô€¢ßkß¾›!À0m×`b%“áEÆ&UuGo!](”&ÁrtãûoS˜˜EeSœ1Wqdèât¤´ép£Ë\|€ÇÛ¼’Ú¢MŸ"¨$èÎìJ<._AÊ QÁ¹ ".ÃĞgÅ"¥Aó±=;ŸÜÑ1nÜÖ\üÏ(Ÿ8¥@ ôW0½°éqk£•0Ü]ç´¡è£ŸäğßjD£}¶‰ÂºJ)4¿\3Å…¤â
+—+ğÌ´ÈPSŞIhË£ƒ!½5MÕ‡C²+çc½±‚TI×Úî,`ËŒj"zƒÔTöÑAËò”(gQ®ë !·›û«ÌyCúÖ°L`aC'çºâDæç”(³ò}È"ÆLabcôiL( p\êÊZt²äøğev¢ú® TM BÌÙV^b'$Ô¤¯s²˜WK¸·¢úc#$Yô=úaY—ÃÊ¹¹éá!æNG5Ğø1ÿ¯I4Â ñrƒ3Ùş{ ]ˆ [<_8ö€\è:@õ+¶@÷–iß­„àJÈqD.YÈÛÀ¶d4½ItÔ}¤ObÃKÜ®F_µ>vÔhîcá´şhß„°7cˆ„çØ;C¼m‘í5y†=Ê@+ÖÛu„#>ƒ8QÙ¬ËÉ…É7†˜Ê‰0O¯)S¹Föx‰³ÜP¶å6Ô„GÊË9
+°é<=„E÷´ÏËşsA?NÜzÑ°ø²u?·˜}ä½r&a<Ú˜ä¥6]ÍßŠHšÜ÷lª™Y„jœ[éÉ©£ÄyŞw'ùU@1È/¯<µ’?1O=9ŸÑ!Ïg&Óägäí×	æmãŒ‡sÿ¸ÿüb\€boÎÍXAâg¾9;¨£‚£!\­ƒój"œä|üõNX»˜ÕNëå®62Ş”ÃœÒä«İŒ!º/…Æ®åÈ¹¨|Ù¾!ÖÀ‹Ó¥_ò$!VxÅ
+¡9¤0Ò®ğ@„fğ¥S „ÃŠŠé¬‰#OrŒÎdÖ?(HJò€DTØ°8Ü¤b)àq…n`«¡ş±Çg¤úœm+0eF¢­=à‘˜[);Of2*£¹Q^ù’•6ã:áUç“Ñ¡[I!¬Ec¬sĞ÷°‘€èuƒ_óÃ2ê1|8Z›İ| Ôáö¤‹ºè/´Èü]È—•F/ßÄºâÄX¹ïXbÊ¦K£)\7
+3q’€;U;‘‹ÏüÍxë“ó”(põíŞ¸‚GåÓ†v#ú­LÀñÉ
+7BÉR76ëºFà&¸ßüÃ™¶Â6C¾O"UĞeÁéÙ£Y„œçJD½— ú£SÚ¡&Tü
+éD1l?™IÿVœrÌ|ªËiËå.³»Äópÿ®sÕçº&€“ê—‚Za¸®wäLC·²µ)iaõ[ósAæpiD¨éŞ` x¸¡‚}¦kwúq,ïÂ>{<li¹Ô‡«Ùy'e@*l‡1!.yWµdÆE„¾NeÓ¹MÉÆ%Ê‹èP³zÑÈÍQdÖ±¯70”Ã#Œ ÑŞ!‹i(?Ì€F8Î[4ÓV›Û7Z7·Í*‹¬™Äl’\,˜\šíkÉ¤‚µå‰÷Ù˜‰s÷µ‹á©MHšS>
+@[Åg¦J®41Î¸'—~VD8ñh³d¹-B“ª²±KÏÕƒ86#
+ÜAnßha±´dz~	àœ¤Œ¥ã—e©ÀˆÔÔæiG-r®¤?u)cıÓ›ásK®C€ş*l9ˆ¥VŒø¸ÓÛéZq44·˜HjÓ•ÔéÁÌÜJL¬¤\¾xÿï-`ƒ0TJ’ï/È7äïaS¼¸H9ÒÚàqbÜÜÆñÖ3=‚M"Uñ¾ÒÁE¡ö?8eCD¥„ú§§ÅO¼¯ÇX·Ò"¥‡R••œ¹<ıV¬^œgÊdW?Rín^ÜrR Ì¼Ä©:-¾Œ›D{œ»Ê)yïÒ™›R"ô˜–Z«ªëqñ.’õ—\k È„¶l‰uvİEv ¸ëÄL€×-°“(Œz5ru$PĞ[`³¥ªş•s#”Vr0hT ³ª™°HÅ–!1†'Û±Ò…Ñd‰‡ÉáKĞrù–ÎïÎíÅ,é/ì£,+É5ä®Ô9Ô¶Ü\4ƒ¹]ı¦iÎpMÂnk:Î$3ÚEşù¦º(o^ßÑÊæuç¼±ÇÒ"›Oâ`Ãë©* qšì¸(gà›‘YQ+;MCjGó£2ÍğÃ@üò¡h‡‡u1•Vú>„w©Nèd$Ø’ŒxŒ•Á%L‚µ8Õ¢wFû“ÄµhÆ]c©Œ¨IqÇ³pè¨‰E£`o}g_Kšñ6çÃûïQ§59Ò$‚Çô;Ç«¸œ<²<šwF{]ÎFLf"5_O$ez&X%*EÔäà2	9Ì5
++E=ŒP_f ’~×Ä4™ºWı¢o>¬Ë—³³×²‰•5y†Ç?Ä‹ñ¢9ÀÀ<0N+°O’Æ®{¾fÅ`|_¼Wûá’Õ.á6½ZV0u^–(Z¹’Š‘ª2×·÷zaª©n>÷|NÙ¢<üÃóä´¿À÷€äÌğöİ³2¶Œø†L”ÇÊxZg­ÍÎ¯a.+kÔi†nƒ1&#î!Œ jÆ¼ùL™/‡g¥±xÙ‡º:$@¼¬}N:¤z3Q¹Ú²ÁåØ2EÀgë˜…úvİÎA^‡.XÜÜOåm‚¿˜Ó“'£‡Die¶‹p5¨p{â	H*­AÛÆ[&Ûÿ@öğ½ØEFıÖV^Rr„Hö™Sİ»n†ë%”^(È\Ô«¸åé»êF Òİhdñù­ºş÷vÕöúkÎÚğı'{Ñög®‡ßğ&+¥@wÏZérĞÕ9çD‡Q‚!ˆ­©ÆşöMóøGè‚‚™ùg¿ºQQ¬æJËX5Ój
+	³”c	r¼,´ı»>Ù£®İ‚CÓOkÔÑäN#zÂ3è(ıÒˆ¦f.Ò!ŸpÓV¿4vnğ£–b§TY’Ã†”c]¾~ƒè0ÅŒË8˜~}•0Ã¨”2Ùs9â9v×½ä,rôÙ¤ş<”°²~_Ş:şßH²ÄHTÊb?êÕø¤\vô46#æ|%‘”5ãœ¶ v˜¢nçÌİßq7ØôwB`óê%T'«H£şkmí|d¡?õ¦İŞº7„J’·Bæ_ªuøƒŞúÚ¢©¢Qøs;rX²‡ß À	‘´ˆmu†*cL¢êÃßru)¢ü|İ*n$ŞôÎ><‘Åœ8e¹­ËÎ¢¾ES¦ÄpÉ ^oI„Ë×ù9éfŒ&²U=•”şÑ×íüà´öüÀºGÔ÷o~Æ°dKFÂ‘§åCgt`3®KL…\Õ°Ö`)RÙÔ!9„bâ1üîŞï÷Æ6Ò'õ‹D¤«ïFQì´¬J°wñÄ‚Ó»°'çDÒfÒv\÷8Sõ2ÛGBöŸùkÖ—4•­i$°­Éí¢Æ,NFu„Ê÷a³7t¶T•Kd0ÛƒÍ¥—&u`ÿ ¦¡nâF}8n…Ô¼ÊÄ>‡²Ë¦¶u™+í±¾·JST¼k·
+7<ı¡ş6^t+lÄ4²bk†ÀT]yB+€ˆ*½û†·Îœã4üB6å*ŸX……œûXqÃ¬èÈgÇ¯Ãyv‰Û'fc5 ”eµwıœ3Ğ÷²ş¨›Ò~ïÙb§Ø…æ>ÈlmëTpß3ÓÉ¡ršÁ.¿Ú%rú.ŠU"Jm}¸Õ7ëBL€òÁtÚ	Õl¼™À‚á4àşrm
+ÇÑkQ‹•˜nPÒÒıš7Y¦õ&…W.(”ÜEEeö×DX$˜Æõ¾<½ÂÒtæAfÿ í©Ad	pVœûk!Õ‘şƒŸU
+vs÷ã*~ óŸØ)“W£XyM‰“Bu˜c¿#Q•2aW:=€Ï3°5µÇi¾'Õ¼,„àğ¡ğí›·ËÓ¦ÊPK³¶Ëµ“©guWÍä¹BˆGée%;`›€ØÕĞ%8JØ†¯û™›Ç„­ƒüÇ£¬rÒ×º¬Û][—3>5èfIâ0@ŒÏ}òê oßkƒ<g÷şgÄàth† wœ:xÇ
+òlEôlŸ.íc¼„F=£\ŞÅ%H
+Æ’Á`dÎ˜äİş$û°Û8•«†ğÚ)56ù}|{_Õñ¦X‘ù_än”}ç‰61éöÇ5]'’©ü\©¾8™óºğ®c/wô¤›ªØÔ‡‘l)¦Lj×Qñqs/U¢ha-QfSİûˆ†}8íbÍã€¯/2ĞG4\-ó›¸wœ'>ñˆø
+S|—6±ÍC=Ï¾‚¾G:KdöH°Ã¢U¶		İ¹oöÿÈ5 –Œ´jæq[³‚Wf%MÔ¸f=k/“ñëûšC+Î£´Z÷ºĞfi‚·3r®}ÄÔtcwÆÛZ’šBpÃ¯½í<Ë÷LîÎ=›¢§OÀXCú~j¡Ù4°ßú<Dx_(th®K-„pHŒªšp¡¸Ò¹
+á¹h`û¥u~…ù6”[¥f*50÷Àª¾^s”¾†ïv&ø£¡M±ÛTÃ²²
+åÊ„äÍZÎ–0í‹ÕŸ})ÌÊÁÅ=‹3½—ƒÑïñêY-a~oGı,Æö§¼ ayøAèZMù 0Ã]Ã`¢Iy:U‰C®çtL¯i™/ÂİÀ˜éEÍjJ¦½Ç%È²?CÎm¶dû$Áí Æ‹‡uƒä¨—5­èQP7.Xw>æCÏÄnÇ{ºµ=ğ¯±['îBöZñOv$cğÊ•î~*Ûƒ(ÁE!,ÍÏ>ÉJEf`BılÏ1C:s2g4ùR"ª9}¦3cÏEÏ±èğvŞàZ©Ø«…ˆwbÍ™;`4–vC-'ºæôië9zO>û¸³©!ˆªo‹Õª†>À@ aª»ÁÏÊï":¹'Tëöœ¼ ¨ÁuœĞä·ò
+û|>Xïª‰àHïÄ´N-Ô;)lr"Õìj<Â…q	O ºájt±!cCN*I§9¨ÌÓÌüá¨ŠŞ®¢Ò_CTµ@¸LlÂHãË)ß…Œá+ÎWÄ|B(Š¸ï”H ¬à2Äí1‚€¦ØàÉSh¨T!«ièœ*"ÇWÇ„%QG³óïú83ß3ËJgŒ³„Zy©êÉò.ú¶…¦‹Şæ¬Æ+œÉ[¥.¿'„´¦S…$µÀüŸ”	bEwHÂ£Bî@„0ßÙ;<E2Fn´›¨hë!§á»I19-Â–—4ù™Ÿ<§4¼^×dÙñºKII0ûl{RWEæL„2ùw„ğj#Ÿ{0X¯ÍªA${#>ãzTu.òNÎ8*d)‡­KĞÜkƒ`ÀW&ü‰% “e1f{5hÛ±LÆ&4	’*¯:¸ï¯-ºBJ¤¯Ô_zî!È¶âàÇ0'ñ:Ãaƒ“]õÀ?|]Š‚Ãü9èt°3aª‰±¾Æ¡ÖMİs‡<‡ø1mOd5®Šà€m¢Yc¾Ô·’™šĞnºLNÂ>eV¯çEôº÷ÚàåÖ›¯<Äh)¤ç~E.m¤L…ÅwpABk¥Œ{9]HT)úÏ²Û^C	K!×	2²Âµ¼è´‘UyÕgêk¹é5.$’KcƒUåMkŸ0­¤¦ZÓ=v¦¸ûãüÑb›²pöµ>deQËaı¾ìSyQ:A}t‹ìW<éè»4|yÈYJo2 —Œš àVª÷ÜƒÄ‘èÕä,ó)»İĞGìš]éËŠîçàúš3U?×dµAug„	äåhæóİHwÉ›ç1ªÅB±|ãŸşB‘	Èo’ì_ef†Ñ¦ˆx‡#k÷ßwyVN„ZõÍù©“É•
+'Ïô®Fb€8¥ø¦7…ŞSë±„’1"èÓ“ÛL©¥+À)&ºÆÕ9çâj~ÏK7êtÄ*§XJ8M	Üûzåc-Ñ#ş µ9¡JrCãP‰›íXeMÔ‚òdˆ™‰è6œ½EÕ†…±âó_èKCãÓíñH›ÊN„×ÿİ,ï³'\sèõA6X6ÖÖ¾ÔbpI0ß%Ğ#}øŒ‹#}Õ½oĞúÔÔ;¿I° Ğ€ƒtüà|ÔPNÆšÍÃ-÷®Æj)ÜĞÇöVíİbdúÜ]|™6?OµÆñ®Í§ñÚîœ®†„w›ã½yZz=.Î’;­¢Hì ÅHstÊô§ºi‡J¡ríD,Î€F/cc¡}¥ã‡¯}¡V/]ˆÔ¶úP¸µD†ÓÎØ
+ÏÏUãØzœšd_R±ªÎ×“I,ëm›˜pAÃÉ;vqkÁ·*A’L2İÑzŸÄ*¯7‚=†[õ€;ö;ç¾ _ğiÙÂşa¨„ïQÀèQ/Säªe'N›ÿ¦Ø£ÍŞ›İuîî:Í˜Œ–$:	ÔO„XĞÿRå«-§d¯epÅ©CU9é}©:(ş»‡õ~YÆj  £Iá¤u]‘ Å6÷QÈ°-‰é¼ëß‚x¦¸Ñ-Ø2ç~~àY^× 	vu¾Ü¡(‚•&g…;&¿o\ôŞVä¶Ìœc¤#tpÙğ|bR‘¡š/ë¾bû¿Ö”»*ÌeÈ±6†^ÿØfø‰dD¿¤×ê?]ë)w0,a«yØôû&û
+2w!Œ³Çœtyì6cZçûª@…?ÀHÌ˜o„ax'ÎüğáPÔÁ)Úk,p\ˆN/¿io'ì1PJ"ËŠ´‘‚ä4Ã2È	ñ›tYÌ-[ãó§SüiKMeUŸœ½¤ë©Ì½wfìØÈMtuRïŞûE®“úæ]B’…‰Œ?ä £º§£]õ(¶+î~‹}ÛïÏb£cM0¬&{ğúoU›e9$—sAJÛ ì e~8û%Â%/ìĞğÉs,†Ã›v„fOÃ)ÀeÏ’×h‚kğŞXÍ‚_‚j ¥X}óG`aÆñ¾ßÎıqv˜Eõ®q#ÏQ:¼(ğSÕ²¤ÔL†c0ÂŸôäí§“ö¿Eª÷±8Äê#=ËÜÿæ£ÒŒ]ïj ±¯,OGx<=ö|nÔ(ö?N}<:w!%«tæ§°ÄıÊ#|ÈíŸQÎŞi.‚¨$ÒĞÛÇ¶pÚØ}Yµ¥´"ÖÜ¢h.dkd¸Ébí×\¿;c®QÛ¿¹c|Ì>TXl*¼éG¦ºp‹D?Áş¸‰•şçW8ò)Ÿyü™Íi—BÆä[t¡¼Î§Ç‹%¸³j5m¼©¸Íî,A@£v|Bø‹~:/3·rWT³Aö¢\˜ºz·Ä 3Á&$cvmı+™Î6"­ı/ßº„7UiuqP†$
+¬¦şÙĞ\O:V—Uë…g2œ§ÇWz¿ÿ¢i7IçÏù90³Ÿ3+,,aé$Ê`‘ Ñ;í£ø“fnà±¶	u£;ñd/i\¿	§‚Á_F¬HÚÑğêoË2øÅc£Y‹uùGSäŸoè'ìå®~ŞNK¼«€ıëü2öÎ›V3Œ
+Z‰íĞ½üßmçÔ<{/µB¦ñU?[œ‘÷CD7‰€ÄRû”V»³'{—;ğ=H·XoÄõ}²ğVë‚nMc÷Äô4à	«ËÑ±áN\Œ®®|`…äõğ²	PËf¹@ ‚Îj‡
+LşäÚ,?¥©û¯7ŠP#P¿€LjwMÖ‘™Z|İİ¾‘PgİÎ:W1ltnØgÏ”;]ùôb&­G'EiEÈÎ¶2ìÅU`ƒü8pà€åIÚ»ÅšËåG¼ÿa×â˜4íH&Y%«xÛÚgâr¾—FËœƒó„t5º¶Í‚UŞ…Ë“LŸP3•ÍWÌíV~‚ñ	4£=g?c`2t˜¿§ Ş(¡Q‰LQÕ¨2ØÕ 5:uk'=N	—N/‡C±­ì ‚RtZT(—-?«“…\ÓÖi(i
+Y[yjß¥b–M_9i¡©Œ ®bxô†èçöé->üÿNrÏ®hÆR”şÔ@v\CâÛÔ’|Ì©yàtz­ÖÑjÃÅ =Ø©š>ÜÌ§ÊxEÓ·oBàÊGÁú³&sf˜ZÃTË aõwgŠK
