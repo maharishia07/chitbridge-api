@@ -61,10 +61,10 @@ of file each thing is; this says what already does the job.
 | 66 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 65 | `body` | `books-acting.js` | a write's body: |
 | 65 | `named` | `bank-rec-log.js` | W15-71: |
+| 65 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 65 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 64 | `view` | `country-ready.js` |  |
 | 64 | `view` | `books-payables.js` | group: |
-| 64 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 62 | `facts` | `bill-steps.js` | MY state_log — |
 | 59 | `note` | `dbwatch.js` |  |
