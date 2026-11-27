@@ -44,5 +44,11 @@
       "date": "2026-11-28",
       "why": "reads the live grant's preset through liveGrantSql"
     }
-  ]
+  ],
+  "db_backstop": {
+    "migration": "migrations/b912_books_access_grant_state_view.sql",
+    "what": "security_invoker view books_access_grant_state (time half of the state on the database clock, SELECT only, caller RLS kept); base table keeps FORCE RLS + grant_read/insert/update policies",
+    "proof": "sit-ae2 28 Nov 2026: owner path 3 rows (expired/open/revoked), stranger shop 0 rows via the view and 0 raw, UPDATE through the view refused",
+    "prod": "Athi runs b912 (SIT first)"
+  }
 }
