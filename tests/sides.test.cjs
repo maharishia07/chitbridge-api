@@ -144,7 +144,7 @@ delete require.cache[require.resolve(path.join(API, 'lib', 'govresolve'))];
 let trips = 0, sent = [];
 const dbPath = require.resolve(path.join(API, 'db'));
 const realDb = require(dbPath);
-const present = (sql, params) => /FROM constitution/.test(sql) ? [{ constitution_key: 'hotel', version: '0.2' }] : /information_schema\.columns/.test(sql) ? (params[1] || []).map((c) => ({ column_name: c })) : /information_schema\.tables/.test(sql) ? [{ '?column?': 1 }] : [];
+const present = (sql, params) => /FROM constitution/.test(sql) ? [{ constitution_key: 'hotel', version: '0.2' }] : /information_schema\.columns/.test(sql) ? (params[1] || []).map((c) => ({ column_name: c })) : /information_schema\.tables/.test(sql) ? (Array.isArray(params[0]) ? params[0].map((t) => ({ table_name: t })) : [{ '?column?': 1 }]) : [];
 const rowsFor = (s) => {
   if (/FROM identities WHERE identity_id/.test(s)) return rows.me;
   if (/FROM boilerplate/.test(s)) return rows.bp;
