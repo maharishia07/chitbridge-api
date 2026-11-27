@@ -22,6 +22,7 @@ function fakeDb(opts) {
     if (/SELECT user_id, bridge_id FROM identities WHERE identity_id/.test(s)) return { rows: [{ user_id: 'testshop', bridge_id: 'BSHOP' }] };
     if (/FROM identities WHERE parent_entity_id = \$1 AND user_id LIKE \$2 AND lower\(btrim\(display_name\)\) = ANY/.test(s))
       return { rows: (o.have || []).map((name, i) => ({ identity_id: 'old-' + i, bridge_id: 'BO' + i, display_name: name, user_id: '~old' + i })) };
+    if (o.clash && /INSERT INTO identities .* unnest/.test(s)) { const e = new Error('duplicate key'); e.code = '23505'; throw e; }
     if (/INSERT INTO identities .* unnest/.test(s)) return { rows: params[2].map((name, i) => ({ identity_id: 'p' + (++n), bridge_id: params[1][i], display_name: name, user_id: params[3][i] })) };
     if (/INSERT INTO (customer_list|supplier_list) .* unnest/.test(s)) {
       const ids = params[2];
@@ -39,7 +40,6 @@ const ctx = { world: { listIds: [] }, by: 'u1' };
   const small = fakeDb(), big = fakeDb();
   const outSmall = await MI.apply(small.h, SHOP, file(people('customer', 1).concat(people('supplier', 1))), ctx);
   const outBig = await MI.apply(big.h, SHOP, file(people('customer', 40).concat(people('supplier', 40))), ctx);
-  if (process.env.SHOW) { console.log(small.log.map((x)=>x.s.slice(0,90)).join("\n")); console.log("-----"); console.log(big.log.map((x)=>x.s.slice(0,90)).join("\n")); }
   await t('every row is added', () => { assert.strictEqual(outSmall.added, 2); assert.strictEqual(outBig.added, 80, JSON.stringify(outBig)); });
   await t('⭐ the number of statements does not grow with the rows (2 rows and 80 rows ask the database the same number of times)', () => {
     assert.ok(big.log.length <= small.log.length, 'small ' + small.log.length + ' vs big ' + big.log.length);
@@ -61,6 +61,17 @@ const ctx = { world: { listIds: [] }, by: 'u1' };
   await t('an e-mail is written for the row that has one, and for no other', () => {
     const writes = mail.log.filter((x) => /party_contact/i.test(x.s) && /INSERT|UPDATE/i.test(x.s));
     assert.ok(writes.length <= 1, 'e-mail writes: ' + writes.length);
+  });
+  const clash = fakeDb({ clash: true });
+  let refused = null;
+  try { await MI.apply(clash.h, SHOP, file(people('customer', 3)), ctx); } catch (e) { refused = e; }
+  await t('a handle clash refuses the whole file in words (409, MOVE_IN_MINT_BUSY): nothing is imported, the transaction fails closed', () => {
+    assert.ok(refused && refused.refused, 'no refusal thrown');
+    assert.strictEqual(refused.status, 409); assert.strictEqual(refused.code, 'MOVE_IN_MINT_BUSY');
+    assert.ok(/^Nothing was imported/.test(refused.message), refused.message);
+  });
+  await t('after the refusal no list row is written (the refusal is never retried inside the set)', () => {
+    assert.strictEqual(clash.log.filter((x) => /INSERT INTO (customer_list|supplier_list)/.test(x.s)).length, 0);
   });
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
