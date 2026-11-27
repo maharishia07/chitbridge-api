@@ -12,21 +12,21 @@ of file each thing is; this says what already does the job.
 | 219 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 207 | `rows` | `crm.js` | still in them: |
 | 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 183 | `words` | `variant.browser.js` |  |
+| 182 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
-| 147 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 148 | `problem` | `problem.js` | problem(req, res, spec) — |
+| 145 | `answer` | `availability.js` | from March; then nearest. |
 | 144 | `item` | `bank-band.js` |  |
-| 144 | `answer` | `availability.js` | from March; then nearest. |
 | 131 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 112 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
-| 109 | `entry` | `books-store.js` |  |
+| 110 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 100 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
-| 91 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
+| 92 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 90 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 90 | `again` | `signin-ui.js` |  |
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -35,7 +35,7 @@ of file each thing is; this says what already does the job.
 | 87 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
 | 85 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
-| 84 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
+| 85 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 82 | `read` | `books-grant-drill.js` |  |
 | 82 | `count` | `money-check.js` | the count /health reads |
 | 81 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -73,7 +73,7 @@ of file each thing is; this says what already does the job.
 | 58 | `note` | `dbwatch.js` |  |
 | 57 | `sheet` | `cap-employees.js` |  |
 | 57 | `account` | `home-facts.js` | OMITTED: |
-| 55 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
+| 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 54 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 53 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 52 | `closeModal` | `app.html` |  |
@@ -100,7 +100,7 @@ of file each thing is; this says what already does the job.
 | 45 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 45 | `mine` | `crm.js` | `opt.removedOk`: |
 | 44 | `load` | `books-grant-view.js` |  |
-| 43 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
+| 44 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 42 | `changes` | `books-store.js` |  |
 | 42 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
@@ -166,6 +166,7 @@ of file each thing is; this says what already does the job.
 | 28 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 27 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 27 | `currency` | `ui-money.js` | the currency a money field uses: |
+| 27 | `refusalOf` | `bill-number-taken.js` | the refusal thrown as data: |
 | 27 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 27 | `network` | `mintuserid.js` | Delegated to `handle.child()`, which has owned the rule since 2026-08-07. |
 | 26 | `side` | `books-grant-reports.js` |  |
@@ -175,7 +176,6 @@ of file each thing is; this says what already does the job.
 | 26 | `check` | `network-app.js` |  |
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `textOf` | `bank-statement-file.js` | the file's text: |
-| 26 | `refusalOf` | `bill-number-taken.js` | the refusal thrown as data: |
 | 26 | `payment` | `books-store.js` |  |
 | 26 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 26 | `match` | `itemmatch.js` | actually state. |
@@ -184,6 +184,7 @@ of file each thing is; this says what already does the job.
 | 25 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 24 | `done` | `attach-ui.js` |  |
 | 24 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
+| 24 | `receipt` | `books-events-batch.js` | the receipt: |
 | 24 | `update` | `folder-rules.js` |  |
 | 24 | `people` | `home-facts.js` | the same three words (lib/people.stateOf) — |
 | 24 | `connectors` | `home-facts.js` | declare (said in words — |
@@ -208,4 +209,3 @@ of file each thing is; this says what already does the job.
 | 22 | `show` | `books-grant-drill.js` |  |
 | 22 | `country` | `cap-catalogue.js` | the shop's country, off its own record (the pack the chip's words come from) |
 | 22 | `chips` | `country-profiles.js` | words as chips; null when there are none |
-| 22 | `shows` | `edition.js` |  |

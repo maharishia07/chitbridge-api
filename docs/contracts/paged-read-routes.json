@@ -112,7 +112,7 @@
    "mode": "keyset",
    "default": 100,
    "max": 500,
-   "unasked": "everything"
+   "unasked": "bounded"
   },
   {
    "key": "GET /api/books/dues",

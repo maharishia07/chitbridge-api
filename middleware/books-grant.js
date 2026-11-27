@@ -65,7 +65,9 @@ const GRANT_HELD_BACK = {
  */
 const ADVISER_DOORS = new Set(['POST /api/books/preview', 'GET /api/books-actions', 'GET /api/books-actions/:id', 'POST /api/books-actions', 'POST /api/books-actions/:id/review', 'POST /api/books-actions/:id/return',
   /* l16 Statements box: an adviser may KEEP a statement file for the client (a file filed against an account and period; it writes no book row, the grant stamps the row), under the live grant row and X-Books-Role: adviser, whatever the posting policy: filing is not posting */
-  'POST /api/books/bank/statement-files']);
+  'POST /api/books/bank/statement-files',
+  /* FW2-03: an adviser may ATTACH a receipt to an entry of the client's books (a file beside the entry: no book row, no amount, add-only), as it may keep a statement file: filing is not posting. The door reads the seat again (lib/books-evidence-attach.mayAttach: a live adviser grant, an editor level; an auditor, a reviewer and a key never) */
+  'POST /api/books/evidence']);
 const ADVISER_TESTS = [...ADVISER_DOORS].map((door) => ({ door, test: new RegExp('^' + door.replace(/:[^/]+/g, '[^/]+') + '/?$') }));
 /**
  * THE OWNER'S READS THE ADVISER ALSO MAKES (Athi: the adviser acts from the owner's perspective): the books screen's own reads that the auditor's list holds back. Still held back from the adviser, each for its reason: party statements, payment

@@ -4,7 +4,7 @@
  * Proves, through real Express on the in-memory store (no database): ?limit is capped by the server (lib/page-limit) · the keyset
  * `next` walks every entry exactly once, in (date, entry no) order · a ledger page's running balance starts from the range's opening +
  * the lines before the cursor, so page 2's first balance follows page 1's last · the range's closing and Σ Dr / Σ Cr are the server's,
- * the same on every page and equal to the unpaged answer · ?entries= reads exactly those entries · no page asked = the whole range, as before.
+ * the same on every page and equal to the unpaged answer · ?entries= reads exactly those entries · no page asked = ONE default page (100, 1132), the whole range still reached by following next or limit=500 (the web loadAll).
  * Run: node tests/books-pages.test.cjs
  */
 'use strict';
@@ -53,7 +53,9 @@ const call = (port, p) => new Promise((done) => {
 
   /* ── the Day book ── */
   const whole = await q('/daybook' + R);
-  ok('no page asked → the whole range, as before (23 entries, no total/next)', whole.status === 200 && whole.body.entries.length === 23 && whole.body.total === undefined && whole.body.next === undefined, JSON.stringify(Object.keys(whole.body)));
+  ok('no page asked → ONE default page (1132: limit 100, page 1, total 23), here all 23 fit and next is null', whole.status === 200 && whole.body.entries.length === 23 && whole.body.limit === 100 && whole.body.page === 1 && whole.body.total === 23 && !whole.body.next, JSON.stringify(Object.keys(whole.body)));
+  const allAtOnce = await q('/daybook' + R + '&limit=500');
+  ok('the whole range is still reachable: limit=500 (the server maximum) answers all 23 in the same order as the default page', allAtOnce.status === 200 && allAtOnce.body.entries.length === 23 && allAtOnce.body.entries.map((e) => e.entry_no).join() === whole.body.entries.map((e) => e.entry_no).join(), String(allAtOnce.body.entries && allAtOnce.body.entries.length));
   const seen = []; let after = null, pages = 0, first = null;
   do {
     const r = await q('/daybook' + R + '&limit=5' + (after ? '&after=' + encodeURIComponent(after) : '') + '&page=' + (pages + 1));

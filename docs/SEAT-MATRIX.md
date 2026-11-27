@@ -35,6 +35,7 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `POST /payments` | Record a payment in or out, settling bills oldest first or as named | yes | money in | money in | - | door | - | auth > noKey > editor > payOut > onceOnly > on |
 | `GET /payments/:id/advice` | The payment advice for one payment: whether it may be sent or shared, and the words | yes | yes | yes | yes | - | - | auth > noKey > on |
 | `GET /bank/rail` | The rail leg of the bank reconciliation: the shop's payments over a range of at most 400 days | yes | yes | - | - | reads | - | auth > moneyReader > on |
+| `POST /evidence` | Attach a receipt (JPEG, PNG or PDF by its bytes, at most 6 MB, add-only) to a posted entry of these books: the owner, an editor seat, or an adviser under a live grant (in the client books); nothing is stored on a refusal | yes | yes | yes | - | door | - | (contract) noKey > editor > on |
 | `POST /bank/marks` | Record bank reconciliation steps (accept, undo, note, attach) on statement lines; insert-only, who and when set by the server (editor) | yes | yes | - | - | door | - | auth > noKey > editor > bankWriter > on |
 | `POST /bank/statements` | Sign off a bank reconciliation: the statement figures as the page carried them, with their currency and the file hash; insert-only (editor) | yes | yes | - | - | door | - | auth > noKey > editor > bankWriter > on > declaresStatuses |
 | `POST /bank/statement-files` | Keep a bank statement file against a bank account and its period (csv, json or txt, at most 6 MB); the sha256 of the UTF-8 text is recomputed; the same file twice is refused, a crossing period is kept and flagged (the owner, or an adviser under a live grant) | yes | yes | - | - | door | - | auth > noKey > editor > bankWriter > on |
@@ -108,4 +109,4 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /fx-revalue` | What revaluing the foreign balances at month end would post | yes | - | - | - | - | - | auth > noKey > on > owner |
 | `POST /fx-revalue` | Post the revaluation and its reversal (owner); idempotent | yes | - | - | - | - | - | auth > noKey > on > owner |
 
-101 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.
+102 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.

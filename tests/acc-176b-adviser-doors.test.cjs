@@ -45,11 +45,11 @@ const grantOf = (preset) => ({ grant_id: '44444444-4444-4444-8444-444444444444',
     const open = routes.filter((route) => !A.ADVISER_DOORS.has(route) && !ownerOnly.has(route));
     assert.deepStrictEqual(open, [], 'not classified: ' + open.join(', '));
     assert.ok(routes.length >= 6, 'the six doors exist');
-    for (const door of A.ADVISER_DOORS) assert.ok(routes.includes(door) || door === 'POST /api/books/preview' || door === 'POST /api/books/bank/statement-files', door + ' is not a real route'); /* the two doors outside books-actions: the server's own preview and the Statements box's add (a file kept, no book row) */
+    for (const door of A.ADVISER_DOORS) assert.ok(routes.includes(door) || door === 'POST /api/books/preview' || door === 'POST /api/books/bank/statement-files' || door === 'POST /api/books/evidence', door + ' is not a real route'); /* the two doors outside books-actions: the server's own preview and the Statements box's add (a file kept, no book row) */
   });
   await t('the adviser has no direct write on the books: only the server\'s own preview, and never the owner\'s accept', () => {
     const writes = [...A.ADVISER_DOORS].filter((door) => door.startsWith('POST ') && door.indexOf('/api/books/') === 5);
-    assert.deepStrictEqual(writes, ['POST /api/books/preview', 'POST /api/books/bank/statement-files']); /* the box's add keeps a FILE against an account and period (l16 Statements box); it writes no entry, no period, no party */
+    assert.deepStrictEqual(writes, ['POST /api/books/preview', 'POST /api/books/bank/statement-files', 'POST /api/books/evidence']); /* FW2-03: a receipt beside an entry is a file too, no book row; the box's add keeps a FILE against an account and period (l16 Statements box); it writes no entry, no period, no party */
     assert.strictEqual(A.adviserDoor('POST', MOUNT + '/3f2c9e1a-1111-4222-8333-444455556666/accept'), null);
     assert.strictEqual(A.adviserDoor('POST', '/api/books/entries'), null);
     assert.strictEqual(A.adviserDoor('POST', '/api/books/periods/2026-27/1/lock'), null);

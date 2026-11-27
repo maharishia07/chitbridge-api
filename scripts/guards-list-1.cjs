@@ -332,6 +332,7 @@ const GUARDS_PART = [
   'books-routes.test.cjs', // /api/books: 404 while off, owner-only writes, the shapes the Ledger screen reads
   'books-minor-exponent.test.cjs', // ACC-179: write-off · payment · opening · entries in the currency's own decimals (INR 2 · JPY 0 · KWD 3), INR unchanged
   'books-pages.test.cjs', // ⭐ PERF1: Day book + Ledger pages (keyset, server max, server totals) add up to the whole; lib/page-limit
+  'daybook-paged-1132.test.cjs', // enrolled 1132 (every-test-is-enrolled): GET /daybook answers one default page
   'testing-pages.test.cjs', // ⭐ T2-PAGING: the test board's five lists page (total · page · limit, lib/page-limit max); an old High is never cut
   'list-paging-guard.test.cjs', // ⭐ T2-PAGING ratchet: unpaged list GETs ≤ the frozen number (W1-PLAT: 0); every allowance has its reason
   'paged-read.test.cjs', // ⭐ PERF1 column 21: what a GET route does about the size of its answer (default, server max, keyset or offset, whole when nothing asked), from source text
