@@ -53404,7 +53404,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1718,
-   "hash": "56e50adebc2cb4be",
+   "hash": "634a19b9ec10e261",
    "does": "A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).",
    "errors": {
     "count": 1,
@@ -53515,7 +53515,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1413 batch 1137 re-sign (ACC-414), diff origin/main...HEAD read per route (routes/books.js answer line, lib/books.js writeStatus, lib/books-bill-ref.js heldBill), 13 machine columns true, stage2: the hold must name a real bill of this party by number or id (namedRef, the one reader Payables uses); an unknown or other-party ref now 404 BOOKS_NOT_FOUND, a hold on a bill with nothing open 400 BOOKS_BAD_REQUEST (release always allowed), both registered with shopkeeper sentences, one error shape, no raw text; the answer's against_ref now carries the bill id, the same key. The former 200 on an unknown ref was a defect (nothing was held). Web caller cap-finance-pay-held.js sends the Payables ref, which namedRef accepts; api-openapi-diff 0 breaking. Behaviour owner: cb-accounting (this PR is theirs; surface signed only).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
