@@ -373,6 +373,7 @@ const EXTRAS = [
   X('snapshot-for-a-tv', 'GET /api/till/snapshot', 200, { setup: { key: ['screen'] } }),
   X('snapshot-delta', 'GET /api/till/snapshot', 200, { url: '/api/till/snapshot?since=2026-10-01T00:00:00Z' }),
   X('snapshot-counter-key', 'GET /api/till/snapshot', 200, { setup: { key: ['till'] }, patch: [COUNTER_KEYS] }),
+  X('snapshot-bookkeeper-refused', 'GET /api/till/snapshot', 403, { setup: { who: Object.assign({}, STAFF, { hat: 'manager', whole_entity: true, can_see_costs: true }) } }),
   /* API-8 (till, writes): the SUCCESS side of every counter write and of the reads that had none, each over the real route with a stand-in db that answers the library's own statements;
      the nullable columns of the tables behind them are held as null in one scene and as a value in another */
   X('stock-set', 'POST /api/till/stock', 200, { body: { item_id: ITEM, status: 'unavailable' }, patch: [PATCH_ITEM({ name: 'Poori' })] }),

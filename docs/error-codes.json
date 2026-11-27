@@ -15476,6 +15476,16 @@
    ]
   },
   {
+   "code": "TILL_NOT_FOR_SEAT",
+   "status": "403",
+   "title": "Seat keeps the books, not the till",
+   "shopkeeper": "This seat keeps the books and does not ring sales. Ask the owner to add you as counter staff to use the till.",
+   "hint": "Ask the owner to add you as counter staff.",
+   "owner_area": "till",
+   "since": "2026-11-28",
+   "raised_by": []
+  },
+  {
    "code": "TILL_NO_COUNTER",
    "status": "403",
    "title": "Key holds no counter",
