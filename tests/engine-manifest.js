@@ -613,8 +613,7 @@ const ENGINE_OTHER = [
   'country-asks.js',          /* AE-F-03: the questions a pack puts at setup and the answers kept per shop - beside country-setup.js, the pack decides which questions exist */
   'tax-facts.js',             /* CMP-13: the owner's registration answer read one way, moved out of country-setup.js (same bucket as its parent) — infra, no rule of an engine */
   'assign-chit.js',           /* TA1 (14 Oct): the one writer of identities.current_task_count — a counter, no rule of its own; who takes a chit stays assign.js / the routes */
-  'move-in.js',               /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
-  'move-in-bulk.js',          /* CON-164 (1136): the contacts file as a set of statements — mints, lists and numbers through local-identity / party-fields; no rule of its own */
+  'move-in.js', 'move-in-bulk.js', /* move-in-bulk (CON-164): the contacts file as a set, no rule of its own; */ /* IM1: the Xero / QBO importer — plans purely, writes through books / party-fields / catalogue-write on the shop's handle */
   'move-in-gate.js',          /* move-in W1.1 (18 Oct): the country gate — reads engines country.moveInFor / fingerprint, refuses in words; no rule of its own */
   'move-in-proof.js',         /* move-in W1.10 (18 Oct): the match proof kept with the import (b765) — counts and shows, computes no money */
   'bank-rec-log.js',          /* FIN-70: the bank reconciliation record (b864): the page's step actions and signed statement figures stored and read back; no figure is computed here */
