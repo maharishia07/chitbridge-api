@@ -370,6 +370,7 @@ const GUARDS_PART = [
   'staffpick-seen.test.cjs', // STAFFPICK: a staff seat reaches its own clients and the unassigned
   'supply-kind-door.test.cjs', // supply kind: the door (AE/AU/IN) refuses a kind the pack does not define
   'supply-kind-in-gstr.test.cjs', // IN supply kind: GSTR-3B 3.1(c)/(e) and GSTR-1 Table 8 on the api path, the ask from 2027-01-01
+  'till-catalogue-door-gstfree-1133.test.cjs', // TILL-new-1: a GST-free item seeded through POST /api/till/catalogue keeps tax_kind; BAS G3 reads it
   'till-supply-kind.test.cjs', // a till return of a kinded line posts to its own kind ledger
   'products-supply-kind.test.cjs', // products POST/PATCH refuse a kind the pack does not define
   'in-f02-shop-gstin-state.test.cjs', // IN-F-02 a shop GSTIN opens with a state code
