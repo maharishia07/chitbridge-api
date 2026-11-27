@@ -38,7 +38,7 @@ eq('the books read two rows: GST-free 4.00 and 10% taxable 10.00', rows.map((r) 
 const posted = makePost('E', 0, { pack: R.packFor('AU') })({ type: 'walkin_day', ref: 'T', date: '2026-11-27', by_rate: rows, modes: { cash: 15 } });
 const at = (code) => posted.filter((l) => String(l.code || l.account) === code).map((l) => (l.cr_minor || 0) - (l.dr_minor || 0));
 eq('posts 4020 GST-free sales Cr 400 and GST (2200) Cr 100 only', [at('4020'), at('2200')], [[400], [100]]);
-const ledgerRows = posted.map((l) => ({ code: String(l.code || l.account), role: l.role, dr_minor: l.dr_minor || 0, cr_minor: l.cr_minor || 0 })).filter((r) => r.role);
+const ledgerRows = posted.map((l) => ({ code: String(l.code || l.account), role: l.account, dr_minor: l.dr_minor || 0, cr_minor: l.cr_minor || 0 })).filter((r) => r.role);
 const bas = GR.returnFor(R.packFor('AU'), '2026-Q2', ledgerRows, { simpler: false });
 const box = (c) => bas.boxes.find((b) => b.code === c).amount_minor;
 eq('BAS Q2: G3 picks the bread up (400); 1A is the latte\'s GST alone (100); G1 1500', [box('G3'), box('1A'), box('G1')], [400, 100, 1500]);
