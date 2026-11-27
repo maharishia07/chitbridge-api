@@ -5,8 +5,8 @@
   "routes": 700,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 699,
+  "partial": 2,
+  "meets": 698,
   "columns": {
    "strict_input": {
     "applies": 359,
@@ -77658,7 +77658,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2264,
-   "hash": "54c37b9e70c3bb77",
+   "hash": "352e19751c3c596a",
    "does": "A chosen list and ticked items -> we add those items to the shop's catalogue, skipping any it already has -> a summary of what was added and skipped.",
    "errors": {
     "count": 0,
@@ -77758,10 +77758,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: country-localised list cards; same body and keys.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "352e19751c3c596a"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "catalogue-lines.js"
    ],
