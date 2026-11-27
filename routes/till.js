@@ -3566,7 +3566,7 @@ async function unpricedRowsOf(blueprints, key, entity_id, limit) {
   const plan = blueprints.localised(key, await require('../lib/shop-country').shopCountryOf(entity_id));
   if (!plan.starter.length || plan.starter.some((row) => row.price != null)) return { unpriced: false };
   const rows = plan.starter.slice(0, limit).map((row) => ({ name: row.name, unit: row.unit || plan.defaultUnit, category: row.category || null }));
-  return Object.assign({ unpriced: true, rows: rows, total: plan.starter.length, limit: limit }, pageLimit.capOf({ asked: false, capped: false, max: limit }, rows.length, plan.starter.length));
+  return { unpriced: true, rows: rows, total: plan.starter.length, limit: limit };
 }
 
 /** one trade's card: its key, label, outcome, pin, how many products and units and categories it starts with, and a four-name sample */
