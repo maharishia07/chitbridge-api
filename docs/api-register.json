@@ -71,7 +71,7 @@
     "failing": 699
    },
    "paged_read": {
-    "applies": 77,
+    "applies": 78,
     "failing": 45
    }
   },
@@ -38890,7 +38890,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3798,
+   "line": 3818,
    "hash": "7b07db7aedc656d3",
    "does": "Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.",
    "errors": {
@@ -39018,8 +39018,8 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3531,
-   "hash": "13e313233f2183a5",
-   "does": "Nothing in, a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has -> the starting points.",
+   "hash": "78376500d644b5dc",
+   "does": "Nothing in (or a starter list asked by ?rows), a counter key or a shop sign-in -> we list the trades and starter catalogues a counter may begin from, and how many products the shop already has, and for a list asked by ?rows whether it is unpriced and its rows -> the starting points.",
    "errors": {
     "count": 0,
     "statuses": [
@@ -39092,7 +39092,7 @@
     "audit_logged": false,
     "stale_write_refused": false,
     "documented_example": true,
-    "paged_read": false
+    "paged_read": true
    },
    "reported_causes": {
     "resource_cap": [],
@@ -39103,19 +39103,19 @@
    },
    "reported_facts": {
     "paged_read": {
-     "kind": "single",
+     "kind": "list",
      "mode": "none",
-     "default": null,
-     "max": null,
-     "unasked": "n/a",
-     "via": "no rows answered"
+     "default": 500,
+     "max": 500,
+     "unasked": "bounded",
+     "via": "limitOf"
     }
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-27 batch 1134 PR#1403 re-sign, diff origin/main...438ac3c15 read for this route: optional ?rows=<key> (CAT-344/345) adds unpriced, rows, total and limit to the answer; no-rows answer unchanged; ?rows capped by the shared pageLimit.limitOf (default and max 500, longest list 216, clamps never 422), paged-read-routes.json row added; errors stay the 401/403/500 of failed(), no new code; shape keys total and limit were missing from api-output-shapes.json (closed shape) and were added by hand; only the static starter list is read, no behaviour change beyond the described; 13 machine columns true, stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -39271,7 +39271,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4178,
+   "line": 4198,
    "hash": "6188ec56258d1181",
    "does": "An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.",
    "errors": {
@@ -39533,7 +39533,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4009,
+   "line": 4029,
    "hash": "4cc02b7049e1cf09",
    "does": "Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.",
    "errors": {
@@ -40720,7 +40720,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3600,
+   "line": 3620,
    "hash": "105f7e770bec40b9",
    "does": "Optional period, compare and page in -> we roll the counters' bills into the day, week or month, or the trend against last year -> the takings summary.",
    "errors": {
@@ -40851,7 +40851,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3978,
+   "line": 3998,
    "hash": "750f4ada473ad2b1",
    "does": "Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.",
    "errors": {
@@ -77793,7 +77793,7 @@
    "owner_agent": "cb-catalogue",
    "file": "routes/products.js",
    "line": 2264,
-   "hash": "54c37b9e70c3bb77",
+   "hash": "352e19751c3c596a",
    "does": "A chosen list and ticked items -> we add those items to the shop's catalogue, skipping any it already has -> a summary of what was added and skipped.",
    "errors": {
     "count": 0,
@@ -77893,7 +77893,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: country-localised list cards; same body and keys.",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-27 batch 1134 PR#1403 re-sign, diff origin/main...438ac3c15 read for this route: the answer message only: photosNote(dropped, bp) also says the list photos were not copied when the starter list has any image (CAT-345: outside the home country pictures are removed before the strip counts them); same status, same keys, message already a string in the shape, no new code, input and writes unchanged; 13 machine columns true, stage2",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -85049,7 +85049,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4049,
+   "line": 4069,
    "hash": "8e1f08ad996388b1",
    "does": "A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.",
    "errors": {
@@ -86121,7 +86121,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4111,
+   "line": 4131,
    "hash": "8a112e94e9427f75",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {

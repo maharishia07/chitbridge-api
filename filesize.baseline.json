@@ -13,7 +13,7 @@
     "lib/books-store.js": 2158,
     "lib/books.js": 2366,
     "lib/capture.js": 703,
-    "lib/catalogue-blueprint.js": 1422,
+    "lib/catalogue-blueprint.js": 1433,
     "lib/catalogue-columns.js": 515,
     "lib/catalogue-view.js": 865,
     "lib/catalogue-write.js": 501,
@@ -66,7 +66,7 @@
     "routes/relationships.js": 1082,
     "routes/signin.js": 1016,
     "routes/testing.js": 4087,
-    "routes/till.js": 4203,
+    "routes/till.js": 4223,
     "scripts/seed-local.cjs": 704,
     "server.js": 595,
     "tests/api-problem-books.test.cjs": 769,
@@ -98,7 +98,7 @@
     "tools/live-trips.cjs": 581,
     "tools/sim-load.cjs": 883,
     "tools/tally-connector/promo.html": 1285,
-    "tools/tally-connector/till.html": 30300,
+    "tools/tally-connector/till.html": 30358,
     "tools/tally-connector/till.js": 1853
   }
 }

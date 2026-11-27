@@ -1,13 +1,13 @@
 'use strict';
 /**
- * OWNS      the text of the offline guard list for the tests that check enrolment by reading source: the entries of scripts/guards-list-1..3.cjs joined under one `const GUARDS = [ ... ];`.
+ * OWNS      the text of the offline guard list for the tests that check enrolment by reading source: the entries of scripts/guards-list-1..4.cjs joined under one `const GUARDS = [ ... ];`.
  * CALLED BY every-test-is-enrolled, junit-board, filesize-ratchet, readability-guard, junk-fuzz, sec-75-entity-schemas.
  * FLOW      the three part files ──▶ their entries only ──▶ one array text; a missing part throws (readFileSync), never an empty list
  * CARD      qa/offline-guards
  */
 const fs = require('fs');
 const path = require('path');
-const PARTS = ['guards-list-1.cjs', 'guards-list-2.cjs', 'guards-list-3.cjs'];
+const PARTS = ['guards-list-1.cjs', 'guards-list-2.cjs', 'guards-list-3.cjs', 'guards-list-4.cjs'];
 /** @returns {string} a comment line, 'const GUARDS = [' + every entry line of the three parts + '\n];' */
 function guardsListText() {
   const bodies = PARTS.map((part) => {

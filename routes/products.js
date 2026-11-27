@@ -2393,7 +2393,7 @@ router.post('/lists/adopt', auth, bulkLimiter, ...checked('POST /lists/adopt'), 
         (n === 1 ? '' : 's') +
         ' added' +
         (s ? ' \u00b7 ' + s + ' you already sell ' + (s === 1 ? 'was' : 'were') + ' left alone' : '') +
-        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + photosNote(stripped.dropped) +
+        (wantStatus === 'unavailable' ? ' \u00b7 off the shelf until you switch them on' : ' \u00b7 on sale now') + photosNote(stripped.dropped, bp) +
         '.'
     });
   } catch (e) {
