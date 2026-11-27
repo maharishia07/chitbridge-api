@@ -12,7 +12,7 @@ of file each thing is; this says what already does the job.
 | 219 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 207 | `rows` | `crm.js` | still in them: |
 | 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
-| 183 | `words` | `variant.browser.js` |  |
+| 184 | `words` | `variant.browser.js` |  |
 | 165 | `withEntity` | `books-hooks.js` |  |
 | 147 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 144 | `item` | `bank-band.js` |  |
