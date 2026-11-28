@@ -50,10 +50,15 @@ const ASOF = '2026-10-12';
   const kb = (ref) => K.bills.find((b) => b.ref === ref);
 
   /* ── ageing ── */
-  ok('bucket edges: 0→0_30 · 30→0_30 · 31→31_45 · 45→31_45 · 46→46_60 · 60→46_60 · 61→60_plus', [0, 30, 31, 45, 46, 60, 61].map(P.bucket).join() === '0_30,0_30,31_45,31_45,46_60,46_60,60_plus');
-  ok('Kumar ages bill by bill: K1 53 days (46-60) · K2 41 (31-45) · K3 7 (0-30)', kb('K1').age_days === 53 && kb('K1').bucket === '46_60' && kb('K2').bucket === '31_45' && kb('K3').bucket === '0_30'
-    && K.buckets['46_60'] === 3000000 && K.buckets['31_45'] === 5000000 && K.buckets['0_30'] === 2000000 && K.buckets['60_plus'] === 0, JSON.stringify(K.buckets));
-  ok('Sri\'s 103-day bill is 60+', S.buckets['60_plus'] === 1000000 && S.bills[0].age_days === 103, JSON.stringify(S.buckets));
+  /* RC11 (Athi 28 Nov): the default set is the ENGINE's due-date set for every country; India also gets the engine's 'msme' set (bill-date). Hand case, asOf 28 Nov: a bill dated 1 Oct, 30-day terms (due 31 Oct) */
+  const hc = P.view(Object.assign({}, base, { asOf: '2026-11-28', payable_items: [bill('H1', KUMAR, 100000, '2026-10-01', '2026-10-31')] })).by_party[KUMAR];
+  ok('hand case 1 Oct + 30 days at 28 Nov: due-date set d0_30 (28 days late) · MSME set 46_60 (58 days old) · same ₹1,000', hc.bills[0].bucket === 'd0_30' && hc.bills[0].bucket_msme === '46_60' && hc.buckets.d0_30 === 100000 && hc.buckets_msme['46_60'] === 100000 && hc.bills[0].age_days === 58, JSON.stringify([hc.bills[0], hc.buckets, hc.buckets_msme]));
+  const hcAu = P.view(Object.assign({}, base, { country: 'AU', asOf: '2026-11-28', payable_items: [bill('H1', KUMAR, 100000, '2026-10-01', '2026-10-31')] }));
+  ok('an Australian shop: the same bill is d0_30 by due date and carries NO MSME set (the pack names none: no sets.msme, buckets_msme or bucket_msme)', hcAu.by_party[KUMAR].bills[0].bucket === 'd0_30' && hcAu.sets.msme === undefined && hcAu.by_party[KUMAR].buckets_msme === undefined && hcAu.by_party[KUMAR].bills[0].bucket_msme === undefined, JSON.stringify(hcAu.sets));
+  ok('the sets carry the engines keys and the words made from its edges, server side', v.sets.due.keys.map((k) => k.key).join() === 'not_due,d0_30,d31_60,d61_90,d90_plus' && v.sets.msme.keys.map((k) => k.label).join() === '0–30 days,31–45 days,46–60 days,Over 60 days' && v.sets.due.keys[0].label === 'Not due yet', JSON.stringify(v.sets));
+  ok('Kumar by due date at 12 Oct: K1 23 days late d0_30 · K2, K3 not due; by bill date (MSME): K1 53 46_60 · K2 41 31_45 · K3 7 0_30', kb('K1').bucket === 'd0_30' && kb('K2').bucket === 'not_due' && kb('K3').bucket === 'not_due' && K.buckets.d0_30 === 3000000 && K.buckets.not_due === 7000000
+    && kb('K1').bucket_msme === '46_60' && kb('K2').bucket_msme === '31_45' && kb('K3').bucket_msme === '0_30' && K.buckets_msme['46_60'] === 3000000 && K.buckets_msme['31_45'] === 5000000 && K.buckets_msme['0_30'] === 2000000 && K.buckets_msme['60_plus'] === 0, JSON.stringify([K.buckets, K.buckets_msme]));
+  ok('Sri 103-day bill (due 31 Jul, 73 days late) is d61_90 by due date and 60_plus by bill date', S.buckets.d61_90 === 1000000 && S.buckets_msme['60_plus'] === 1000000 && S.bills[0].age_days === 103, JSON.stringify(S.buckets));
   ok('total = every open bill: ₹1,54,000', v.total_minor === 15400000 && K.total_minor === 10000000, String(v.total_minor));
 
   /* ── MSME day 45 ── */
@@ -134,7 +139,7 @@ const ASOF = '2026-10-12';
     const r = await q('GET', '/dues?side=supplier&finance=1');
     const rk = (r.body.parties || []).find((p) => p.party_id === KUMAR), rm = (r.body.parties || []).find((p) => p.party_id === MALA);
     ok('200: each supplier row carries `payable`; `payables.total_minor` = ₹51,000', r.status === 200 && rk && rk.payable && rm && rm.payable && r.body.payables && r.body.payables.total_minor === 5100000, r.status + ' ' + JSON.stringify(r.body).slice(0, 400));
-    ok('Kumar (Udyam): day 45 is 1 Oct, past → MSME at risk', rk.payable.msme && rk.payable.group === 'msme' && rk.payable.bills[0].msme_day45 === '2026-10-01' && rk.payable.bills[0].bucket === '31_45', JSON.stringify(rk.payable).slice(0, 300));
+    ok('Kumar (Udyam): day 45 is 1 Oct, past → MSME at risk', rk.payable.msme && rk.payable.group === 'msme' && rk.payable.bills[0].msme_day45 === '2026-10-01' && rk.payable.bills[0].bucket_msme === '31_45', JSON.stringify(rk.payable).slice(0, 300));
     ok('the Payables total agrees with the dues balance the route already sends (−₹51,000 owed)', r.body.total_minor === -5100000, String(r.body.total_minor));
     const off = rm.payable.early;
     ok('Mala\'s offer from HER terms: saves ₹600, the ready journal on the 4230 ledger', off && off.valid && off.save_minor === 60000 && off.record.ok && off.record.body.lines[1].cr_minor === 60000, JSON.stringify(off).slice(0, 300));

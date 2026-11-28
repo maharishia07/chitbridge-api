@@ -467,6 +467,7 @@ const GUARDS_PART = [
   'party-merge-target.test.cjs',
   'party-merge-guard-sql.test.cjs',
   'r58-no-sales-offer-on-receipt.test.js',
+  'one-ageing-set.test.cjs', // RC11: one ageing calc, two named sets, none outside the engine
   'books-payables.test.cjs', // MNT-47: CB FINANCE payables ageing, MSME day 45, early-pay offer
   'move-in.test.cjs', // MNT-47: move in from Xero / QuickBooks - guessed columns, dry run, write through the doors
   'move-proof.test.cjs', // D1 (1130): a moved route handler is proven the same code (verbatim, require path, declaration join, local rename) and every other change is refused
