@@ -1,6 +1,6 @@
 {
   "limit": 80,
-  "long_functions": 100,
+  "long_functions": 99,
   "worst_complexity": 101,
   "worst_at": "lib/tax-engine.browser.js determine_",
   "long": {
@@ -134,7 +134,6 @@
       "repriceAgainstCatalogue"
     ],
     "routes/chits.js": [
-      "GET /:chit_id",
       "GET /:chit_id",
       "GET /:chit_id/catalogue-overlay",
       "GET /inbox",
