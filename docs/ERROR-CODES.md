@@ -66,9 +66,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
 | BOOKS_FOR_READ_ONLY | 403 | Read only for a firm seat | Read only for a firm seat: a conversation or a client's parties can be read, not changed. Nothing was done. | Read it; ask the firm or the owner to make the change. | network | 2026-11-19 |
-||||||| 8e3d748ac
-| BOOKS_FOR_READ_ONLY | 403 | Read only for a firm seat | This conversation is open to an auditor or an adviser to read, not to write in. Nothing was done. | Read the thread; ask the firm or the owner to reply. | network | 2026-11-19 |
-| BOOKS_FOR_READ_ONLY | 403 | Read only for a firm seat | This conversation is open to an auditor or an adviser to read, not to write in. Nothing was done. | Read the thread; ask the firm or the owner to reply. | network | 2026-11-19 |
 | BOOKS_NOT_ON | 422 | Ledger not switched on | The ledger is not switched on for this shop yet. | Switch the ledger on first, then try again. | books | 2026-11-28 |
 | BOOKS_PACK_BACKWARD | 422 | Rules version not newer | This shop already reads the rules at that version or a newer one, so it cannot move back. | Pick a rules version newer than the one in use. | books | 2026-11-28 |
 | BOOKS_PACK_FROM | 422 | Start day not valid | The new rules can only start on the first day of a tax period. | Pick the first day of a tax period and try again. | books | 2026-11-28 |

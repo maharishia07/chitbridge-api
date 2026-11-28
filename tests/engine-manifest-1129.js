@@ -13,7 +13,6 @@
 const INFRA = ['books-backfill.js', 'books-events-batch.js', 'books-return-registration.js', 'credit-qty.js', 'import-rejects.js', 'network-invite-guard.js', 'party-credit.js', 'products-import-rows.js', 'products-media-guard.js',
   'books-return-gst-gap.js', /* FW-32 (1130, accW2): the tax-missing-on-sales sentence of a return box: reads the return's own boxes and the pack's rate, every sum and the percent go through books-money-ops (ACC-206): the parent books-period's class (infra), no rule of its own */
   'crm-firm-read.js', 'party-grant-view.js', /* CON-165 / CRM-259/261 (1136): the party list's page and search, and the cut of what a firm seat reads under a books grant: key allow-lists and a text match, no money, tax or rule (parent: crm.js, infra) */
-||||||| 159b4acb2
   'books-bad-debt.js', /* ACC-418 (1138): reads the GST and gross a named invoice's own posted lines hold (one store read) and hands them to the posting engine, which splits (engines posting-bad-debt); no arithmetic of its own: INFRA */
   'chit-bill-step.js' /* 1130 (foldreds): the bill's history step written once, lifted unchanged out of chit-move.js for its size: the parent's class (infra) */
 ];

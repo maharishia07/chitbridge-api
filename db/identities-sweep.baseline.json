@@ -1,11 +1,11 @@
 {
  "at": "2026-11-28",
- "open": 200,
+ "open": 202,
  "inTx": 124,
  "counts": {
-  "bound": 128,
+  "bound": 131,
   "in-tx": 124,
-  "open": 200,
+  "open": 202,
   "platform": 2,
   "job": 37
  },
