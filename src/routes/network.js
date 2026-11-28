@@ -180,7 +180,6 @@ router.get(
   '/asks',
   auth,
   ownerDecides,
-  checked('GET /asks'),
   h((req) => require('../../lib/connect-asks').asksOf(auth.entityOf(req)))
 );
 // @does A business address in the body (business owner only) -> we send ONE fixed e-mail inviting a firm that is not on ChitBridge, capped, and say whether it was delivered -> { sent, delivered, message }, nothing connects.
