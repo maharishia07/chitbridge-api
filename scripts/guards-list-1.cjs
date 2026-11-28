@@ -385,6 +385,8 @@ const GUARDS_PART = [
   'practice-cash-receivables-1129.test.cjs', // MONEY-01 A15 (1129): the practice list's cash_days reads receivables as well as payables
   'acc381-ledger-months.test.cjs', // ACC-381: GET /ledger/:account carries months (server totals per month, hand 30,000 / 20,500, a page keeps them, cost-blind nulls them)
   'acc-new-1-box9.test.cjs', // ⭐ l16-accfix ACC-new-1: VAT201 box 9 counts only entries that carried recoverable VAT (hand 750.00 vs 1,062.50), a reversal nets away; AU G11 unchanged
+  'one-figure.test.cjs', // ONE-FIGURE (28 Nov batch 1141): a guarded figure has ONE owning function (docs/one-figure/<figure>.json); SCAN_SELFTEST=1 bites
+  'one-figure-account-closing.test.cjs', // ONE-FIGURE RC5: ledger closing (paged or not) = sign-off figure = trial balance row, hand-computed, mutation red
   'walkd-goods-in-refused.test.cjs', // ⭐ WALK-D D-F-01..05: a goods-in with qty 0/-3/1e12, no or negative cost, a ghost product, no lot on a batch-kept item, an expired lot or a date not YYYY-MM-DD is 400 in words (BAD_QTY, BAD_PRICE, RECEIPT_*); FEFO skips expired lots
   'taxline-typed-line-1132.test.cjs', // ⭐ TAXLINE-1132: a line TYPED into a chit (Compose) answers a tax line in EVERY pack: rated at the pack standard rate (AU 10, AE 5) or refused in words (IN), never 0, never 'pack missing'
   'walkd-default-tax-rate.test.cjs', // ⭐ WALK-D D-F-08: a registered shop's new product carries the pack's standard rate (AU 10 → A$19.80 tax-in = GST 1.80); unregistered, IN, typed/slab/category left alone
