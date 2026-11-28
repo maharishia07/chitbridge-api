@@ -385,6 +385,7 @@ const GUARDS_PART = [
   'books-card-split.test.cjs', // ⭐ BB-04: a card settlement net of the acquirer's fee posts Dr bank · Dr bank charges · (Dr tax) · Cr card; refusals in words (needs the engines src: BOOKS_ENGINES_SRC or the sibling chitbridge-engines)
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
+  'one-figure-party-statement.test.cjs', // ONE-FIGURE RC12: the party statement's engine input is assembled once (books.partyStatement); the route calls it; golden from develop, mutation red
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
   'acc-new-4-year-gate.test.cjs', // ⭐ l16-accfix API-new-1 / CTY-new-1: the year-close refusal carries period_codes beside the labels (the code POST /gst/close takes); AE's gate fires without a stagger (every month covered by a closed tax period)
   'tax-lock-f4.test.cjs', // ⭐ F4 (1128): a month of a closed tax period opens only by the explicit amendment (amend_tax); a year reopen keeps the set-off periods locked
@@ -430,6 +431,7 @@ const GUARDS_PART = [
   'fin-books-doors-strict.test.cjs', // ⭐ MONEY W1 M6 (FIN-54/60/79/82/83/84/86): the books' payment and opening doors read minor units, direction, dates, party ids strictly; supplier rows carry balance_words
   'fin-ledger-guards.test.cjs', // ⭐ MONEY W2 M7b (FIN-88/92/100, CAT-127): repeated or open bill ref refused, an opening resent without client_ref is a replay, a loan instalment cannot exceed what the loan owes, a month pack needs a locked month
   'money-seat-guard.test.cjs', // ⭐ DRIFT 19b+35a: GET /kyb/risk amounts and GET /relationships/customers balances go through lib/money-seat.noMoney (the books' own gate); a new door to either fails
+  'party-statement-one-assembler.test.cjs', // ⭐ RC12: role null = the route's call = the named-role statement (closing 11800); no second assembler in the route
   'line-door-one-guard.test.cjs', // CTRY-134: one line-door guard (services.lineRefusal, widened: BAD_LINE and BAD_BOUND) on tax/compute, tax/rate, invoice/build, pricing/price, offers/evaluate
   'acc-311-journal-whole-minor.test.cjs', // ⭐ ACC-311: a manual journal entry with a fractional or over-ceiling minor amount is refused 422 BOOKS_REFUSED, nothing posted
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
