@@ -388,6 +388,7 @@ const GUARDS_PART = [
   'walkh-list-country.test.cjs', // enrolled by red1128 (walkh, was missing)
   'walkx-sample-country.test.cjs', // WALK-X X-F-01: AE/AU lists hold no India shelf or item
   'walkl-measure-credit-note-sign-1128.test.cjs', // L-F-08 (1128): a pile's money subtracts credit notes (measure.signedValue)
+  'seat-assign-one-rule.test.cjs', // DRIFT 9b: assign sent or received, ONE rule in lib/seat-abilities read by the sheet, the route and the worklist
   'walkn-counts-1129.test.cjs', // N-F-03/04 (1129): work counts only received work; a draft is not on the rail and does not bill an order
   'supplier-added-retry-1128.test.cjs', // ⭐ J-F-07 (1128): adding the supplier a waiting bill names posts the bill at once (afterSupplierAdded, both doors of POST /suppliers)
   'rail-service-bill-expense-1128.test.cjs', // ⭐ J-F-06 (1128): a service line on a rail invoice (SAC 99…) posts to an expense class, reverse charge riding the purchase_bill accepted for use; Purchases 0
