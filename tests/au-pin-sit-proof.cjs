@@ -25,7 +25,7 @@ const same = (a, b) => JSON.stringify([a['1A'], a['1B'], a['9']]) === JSON.strin
 const BILLED = '2026-08-14T10:00:00+10:00', RUN = 'pin' + (Date.now() % 1e9).toString(36);
 const rows = [[{ id: undefined, name: 'Pin item ' + RUN, unit: 'piece', price: 1000 }, 2]];
 const send = (shop, body) => j('/api/chits/send', { method: 'POST', token: shop.token, body });
-const wo = (shop, party, minor, ref, chit, date, path) => j(path || '/api/books/write-off', { method: 'POST', token: shop.token, body: { party_id: party, amount_minor: minor, reason: 'pin proof', client_ref: ref, against_ref: chit, date, into: 'bank' } });
+const wo = (shop, party, minor, ref, chit, date, path) => j(path || '/api/books/write-off', { method: 'POST', token: shop.token, body: { party_id: party, amount_minor: minor, reason: 'pin proof', client_ref: ref, against_ref: chit, date, ...(path ? { into: 'bank' } : {}) } });
 
 (async () => {
   console.log('\n== AU pack pin proof · phase ' + PHASE + ' · ' + H.API + ' ==');
