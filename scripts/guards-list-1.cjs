@@ -22,6 +22,7 @@ const GUARDS_PART = [
   'lv12-ai-skill-prototype-names.test.cjs', // LV-12: constructor / __proto__ / prototype are not skills (getSkill + POST /ai-draft, real route)
   'lv13-assist-container-gates.test.cjs', // LV-13: PUT /assist/container and /region-override are the owner's or a platform operator's; an ownerless container's override is the platform's
   'ak-f02-seat-gates.test.cjs', // AK-F-02: manager hat runs pack, FX and pays out; the counter seat records money in only (real Express, in-memory ledger)
+  'seat-home.test.cjs', // UX-221: what /me tells Home to hide = the gates' answers
   'seat-grant-text.test.cjs', // UX-222: a grant's promised abilities = the gates' answers (the text is written from the ability names)
   'ux217-me-shop-facts.test.cjs', // UX-217: a seat's GET /me carries the shop's name, tax number and address beside its own row
   'ak-f03-reopen-hard-month.test.cjs', // AK-F-03: the owner opens the newest hard-locked month with a reason (unlock and reopen), one audit row; an older month stays shut
