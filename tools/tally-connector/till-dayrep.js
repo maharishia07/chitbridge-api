@@ -3,7 +3,7 @@
  *
  * OWNER     cb-counter (the till)
  * RISK      money (the day's takings as the owner reads them)
- * OWNS      dayRepCount · dayRepRows (+ dayRepAddKinds · dayRepAddLines · dayRepAddRates · dayRepAddPays) · dayRepTable · dayRepSummary · dayRepOutByHow · dayRepSumOf ·
+ * OWNS      dayRepCount · dayRepTaxOf · dayRepRows (+ dayRepAddKinds · dayRepAddLines · dayRepAddRates · dayRepAddPays) · dayRepTable · dayRepSummary · dayRepOutByHow · dayRepSumOf ·
  *           dayRepPayTable · dayRepRateTable · dayRepKindTable · dayRepItemsTable · dayRepBillsTable · dayRepReturnsTable · dayRepExpensesTable · dayRepBusiestHour · dayRepFoot
  * CALLED BY till.html's dayReportHTML (the day report, [TILL-40]); loaded by <script src="/app/till-dayrep.js"> after the engines and before the page's main script
  * FLOW      the day's stored bills ──▶ dayRepRows (sums as issued) ──▶ the tables ──▶ dayReportHTML lays them out ──▶ screen or paper
@@ -108,12 +108,21 @@ function dayRepTable(title, cols, rows, foot){
         return '<td' + (cols[n] && cols[n].num ? ' class="num"' : '') + '>' + cell + '</td>'; }).join('') + '</tr></tfoot>' : '')
     + '</table></section>';
 }
+/**
+ * ⭐ DRIFT RC4 · THE DAY'S TAX: the books' figure (the server reads it off the journal, GET /api/till/summary day_tax) when it has arrived and is for THIS shop day;
+ * otherwise this counter's own sum, and the row SAYS so ("not yet synced"): the one place the sheet may add its bills' tax, never shown as the books' figure.
+ * Answers { tax, label } — the label always names the scope (critic: never swap one figure for the other under the same word).
+ */
+function dayRepTaxOf(booksTax, ownSum, today){
+  if (booksTax && typeof booksTax.tax === 'number' && booksTax.day === today) return { tax: booksTax.tax, label: 'Tax (whole shop, all counters, from the books)' };
+  return { tax: ownSum, label: 'Tax (this counter, not yet synced)' };
+}
 /** the day's first table — bills, items, average, offers, taxable, tax, Net sales. ⭐ TILL-B2: and the cash rounding the bills took (AU · MY,
     each bill's cash_round), so Net sales plus it is what "How the money moved" totals */
 function dayRepSummary(figures){
   var rounded = figures.bills.reduce(function(sum, bill){ return rmoney(sum + (Number(bill.cash_round) || 0)); }, 0);
   var rows = [['Bills', String(figures.count)], ['Items sold', String(figures.qty)], ['Average bill', figures.count ? money(rmoney(figures.total / figures.count)) : '\u2014'],
-    ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Sales before tax', money(figures.taxable)], ['Tax', money(figures.tax)]];
+    ['Taken off by offers', figures.saved ? '\u2212' + money(figures.saved) : money(0)], ['Sales before tax', money(figures.taxable)], [figures.taxLabel || 'Tax', money(figures.tax)]];
   /* U-F-02 · the returns line: sales before tax and Tax above are NET of these, so the sheet says what came off */
   var backs = figures.bills.filter(isReturnRow), backTaxable = backs.reduce(function(a, x){ return rmoney(a + Math.abs(Number(x.taxable) || 0)); }, 0),
       backTax = backs.reduce(function(a, x){ return rmoney(a + Math.abs(Number(x.tax) || 0)); }, 0);

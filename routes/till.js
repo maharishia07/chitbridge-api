@@ -3651,18 +3651,29 @@ async function periodSummary(entity_id, asked) {
   const { withEntity: nestedWithEntity } = require('../db');
   const statement = tillSummary.summaryStatement(entity_id, period, limit); /* lib/till-summary: the ONE copy of the statement (its follow-up, done) */
   /* ONE trip: the filed summaries and (day view) today's live bills ride the same transaction */
-  const { found, live } = await nestedWithEntity(entity_id, async (db) => {
+  const { found, live, booksTax } = await nestedWithEntity(entity_id, async (db) => {
     const filedRows = await db.query(statement.text, statement.params);
     const filedSums = filedRows.rows.map((row) => (row.business_json || {}).summary);
-    return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false, claims: [] } };
+    return { found: filedRows, live: period === 'day' ? await liveToday(db, entity_id, filedSums) : { summaries: [], capped: false, claims: [] }, booksTax: period === 'day' ? await dayTaxOrNull(db, entity_id) : null };
   });
   const filed = found.rows.map((row) => (row.business_json || {}).summary);
   const rows = rollup.acrossCounters(live.summaries.concat(filed)).slice(0, limit); /* a counter filed mid-day: its filed figure PLUS the later bills (liveToday) comes first and is the one kept */
   markLive(rows, live.summaries);
   const tillIds = filed.concat(live.summaries).map((sum) => ((sum || {}).till || {}).id);
   const answer = { period, rows, counters: Array.from(new Set(tillIds.filter(Boolean))).sort(), live_capped: live.capped };
+  if (booksTax) answer.day_tax = booksTax; /* DRIFT RC4: the books' tax for the shop day — the till's day report shows it (absent = not available: the till says "not yet synced") */
   if (live.claims.length) answer.summary_says_more = live.claims; /* AM-F-03: a filed day claiming more than its bills - shown, never believed (only present when there is one) */
   return answer;
+}
+
+/** the day's tax from the books, or null when the books cannot give it (never a failure of the summary: the till then labels its own figure) */
+async function dayTaxOrNull(db, entity_id) {
+  try {
+    return await require('../lib/till-summary').dayTax(db, entity_id, Date.now());
+  } catch (e) {
+    if (e && (e.code === '42P01' || e.code === '42703')) return null;
+    throw e;
+  }
 }
 
 /** a bill row as the rollup engine reads it: a credit note is negative with its refunds, a sale carries its payments (rollup.totals' shape) */

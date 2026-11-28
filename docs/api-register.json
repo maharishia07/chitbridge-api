@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 703,
+  "partial": 1,
+  "meets": 702,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -39011,7 +39011,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3818,
+   "line": 3829,
    "hash": "7b07db7aedc656d3",
    "does": "Optional days, page and counter in -> we read the shop's recent bills (newest first, capped at a page) for the day report -> a page of bills.",
    "errors": {
@@ -39392,7 +39392,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4198,
+   "line": 4209,
    "hash": "6188ec56258d1181",
    "does": "An engine name in -> we serve the vendored calculation or QR script the counter runs offline, never cached -> the JavaScript file, or not found.",
    "errors": {
@@ -39654,7 +39654,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4029,
+   "line": 4040,
    "hash": "4cc02b7049e1cf09",
    "does": "Optional days in, shop owner view not the counter's -> we line up what was ordered, received and charged on supplier orders, naming each difference -> the orders to match.",
    "errors": {
@@ -40844,7 +40844,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 3620,
-   "hash": "105f7e770bec40b9",
+   "hash": "60408a48b9412e46",
    "does": "Optional period, compare and page in -> we roll the counters' bills into the day, week or month, or the trend against last year -> the takings summary.",
    "errors": {
     "count": 0,
@@ -40943,10 +40943,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: handler hash unchanged in meaning, shape widened: AM-F-03 (1c043b152, walk AM) a filed day summary claiming more than its bills is read from the bills and the gap is told in summary_says_more (only present when there is one), AJ-F-08 inFiling counts a bill once; the new key is in the closed output shape and the contract; same statuses; the figure itself comes from lib/rollup (no second calculation).",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "60408a48b9412e46"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-mis-trend.js",
     "till.html"
@@ -40974,7 +40975,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 3998,
+   "line": 4009,
    "hash": "750f4ada473ad2b1",
    "does": "Optional kind (despatch or receive) and limit in -> we list the open orders still to send or receive, hiding cost from those who may not see it -> the counter's tasks.",
    "errors": {
@@ -85297,7 +85298,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4069,
+   "line": 4080,
    "hash": "8e1f08ad996388b1",
    "does": "A supplier's name for a product and the pack conversion in -> we add that name to our product so the next delivery matches by itself, changing nothing else -> the product's aliases.",
    "errors": {
@@ -86369,7 +86370,7 @@
    "owner_area": "till",
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
-   "line": 4131,
+   "line": 4142,
    "hash": "8a112e94e9427f75",
    "does": "A short recording in, signed in -> we turn it into text and drop the audio at once, never storing it, and fail softly -> the text, or ok false with a sentence.",
    "errors": {

@@ -1178,6 +1178,7 @@
       "reverses_entry_id": "00000000-0000-4000-8000-000000000118",
       "reversed_by": "MJ/2026-27/000003",
       "reversed_by_id": "00000000-0000-4000-8000-000000000119",
+      "sales_minor": 0,
       "source": {
        "chit_id": null,
        "ref": null,
@@ -4043,7 +4044,7 @@
   },
   "GET /api/till/summary": {
    "status": 200,
-   "note": "Day view only: with period=day a row with live:true includes today's bills not yet filed (a counter filed mid-day keeps its filed figure plus the later bills); live_capped says more bills may exist than were folded. Week, month and year rows are filed days only and never include today.",
+   "note": "Day view only: with period=day a row with live:true includes today's bills not yet filed (a counter filed mid-day keeps its filed figure plus the later bills); live_capped says more bills may exist than were folded. Week, month and year rows are filed days only and never include today. DRIFT RC4: the day view also answers day_tax { day, tax, currency, source: 'books' } (the shop day's output tax from the journal, major units) when the books are on and hold the day — absent otherwise; the till's day report shows it.",
    "example": {
     "period": "month",
     "rows": [

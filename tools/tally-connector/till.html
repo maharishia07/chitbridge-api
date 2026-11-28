@@ -5340,6 +5340,8 @@ var AgentHost = {
      different question; this one is "what has THIS counter done". */
   summary: function(period, n){ return fetch('/api/summary?period=' + encodeURIComponent(period) + '&n=' + (n || 12))
     .then(function(r){ return r.json(); }).catch(function(){ return { rows: [], offline: true }; }); },
+  /* DRIFT RC4: this PC's program has no line to the shop's books, so the day report says its own tax figure is not yet synced */
+  dayTax: function(){ return Promise.resolve(null); },
   printers: function(){ return fetch('/api/printers').then(function(r){ return r.json(); }).catch(function(){ return { printers: [] }; }); },
   setPrinter: function(p){ return fetch('/api/printer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).then(function(r){ return r.json(); }); },
   print: function(b){ return fetch('/api/print',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){ return r.json(); }).catch(function(e){ return { ok:false, why:e.message }; }); },
@@ -5417,6 +5419,18 @@ var CloudHost = {
       var j = await r.json();
       return { period: period, rows: (j && (j.rows || j.summaries)) || [], shopWide: true };
     } catch (e) { return { rows: [], offline: true }; }
+  },
+  /**
+   * ⭐ DRIFT RC4 · THE DAY'S TAX IS THE BOOKS', NOT A SUM OF THIS COUNTER'S BILLS: GET /api/till/summary?period=day answers day_tax { day, tax, currency } read off the journal.
+   * Offline, signed out, books off or an old api = null, and the day report then shows its own figure labelled "not yet synced" — never a second truth passed off as the first.
+   */
+  dayTax: async function(){
+    if (!this.cred()) return null;
+    try {
+      var r = await fetchBy(this.api + '/api/till/summary?period=day&limit=1', { headers: this.auth() });
+      var j = await r.json();
+      return j && j.day_tax && typeof j.day_tax.tax === 'number' ? j.day_tax : null;
+    } catch (e) { cbQuiet('dayTax:1', e); return null; }
   },
   async state(){
     var snap = await DB.get('snapshot');
@@ -10495,7 +10509,7 @@ function menuTodayBody(){
  * ⚠️ AND IT IS SALES, NOT STOCK. Said at the foot, in the same words the Today panel uses.
  */
 /* the day report's aggregation and table builders (dayRepRows · dayRepTable · dayRepSummary · dayRepPayTable … dayRepFoot) live in /app/till-dayrep.js; dayReportHTML below calls them */
-function dayReportHTML(bills){
+function dayReportHTML(bills, booksTax){
   /* ⚠️ THE COUNT IS OF SALES. The money nets by itself (a credit note or an expense is stored negative); the
    * count does not — [till expenses] joins the credit-note exclusion here for the identical reason. */
   var back = (bills || []).filter(isReturnRow);
@@ -10504,7 +10518,9 @@ function dayReportHTML(bills){
   var agg = dayRepRows(bills);
   var total = bills.reduce(function(a, b){ return rmoney(a + (Number(b.total) || 0)); }, 0);
   var taxable = bills.reduce(function(a, b){ return rmoney(a + (Number(b.taxable) || 0)); }, 0);
-  var tax = bills.reduce(function(a, b){ return rmoney(a + (Number(b.tax) || 0)); }, 0);
+  var taxHere = bills.reduce(function(a, b){ return rmoney(a + (Number(b.tax) || 0)); }, 0);
+  var taxSet = dayRepTaxOf(booksTax, taxHere, dayKeyOf(Date.now()));   /* DRIFT RC4: the books' day tax when it arrived, else this counter's own, labelled */
+  var tax = taxSet.tax;
   var saved = bills.reduce(function(a, b){ return rmoney(a + (Number(b.saved) || 0)); }, 0);
   var qty = Object.keys(agg.items).reduce(function(a, k){ return r2(a + agg.items[k].qty); }, 0);
   var head = dayRepHead();
@@ -10513,7 +10529,7 @@ function dayReportHTML(bills){
      printed "No sales yet today" and hid the Returns table beneath this line */
   if (!n && !back.length && !spent.length) return head + '<p class="drnone">No sales yet today. The day report fills itself as bills are made.</p>';
 
-  var summary = dayRepSummary({ bills: bills, count: n, qty: qty, total: total, saved: saved, taxable: taxable, tax: tax });
+  var summary = dayRepSummary({ bills: bills, count: n, qty: qty, total: total, saved: saved, taxable: taxable, tax: tax, taxLabel: taxSet.label });
   var pay = dayRepPayTable(agg, back, spent);
   var rate = dayRepRateTable(agg, taxable, tax);
   var byKind = dayRepKindTable(agg);
@@ -10549,11 +10565,15 @@ function dayRepHead(){
 }
 async function dayReport(){
   var d = document.getElementById('dayrep'); if (!d) return;
-  d.innerHTML = dayReportHTML(TODAY_BILLS || []);
+  d.innerHTML = dayReportHTML(TODAY_BILLS || [], null);
   if (d.showModal && !d.open) d.showModal();
   /* the read lands a moment later; the sheet is already up, and repaints itself in place */
   var bills = await todayBills();
-  d.innerHTML = dayReportHTML(bills || []);
+  d.innerHTML = dayReportHTML(bills || [], null);
+  /* DRIFT RC4: the books' day tax lands last (it is a call to the shop); the sheet repaints once with it. No answer = the sheet stays as drawn, its tax labelled */
+  var booksTax = null;
+  try { booksTax = (HOST && HOST.dayTax) ? await HOST.dayTax() : null; } catch (e) { cbQuiet('dayReport:tax', e); }
+  if (booksTax) d.innerHTML = dayReportHTML(bills || [], booksTax);
 }
 function dayReportClose(){ var d = document.getElementById('dayrep'); if (d && d.open) d.close(); }
 /** one action row, the same shape in every section */

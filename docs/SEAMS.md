@@ -19,7 +19,7 @@ of file each thing is; this says what already does the job.
 | 144 | `item` | `bank-band.js` |  |
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
-| 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 117 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 114 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -103,6 +103,7 @@ of file each thing is; this says what already does the job.
 | 44 | `load` | `books-grant-view.js` |  |
 | 43 | `changes` | `books-store.js` |  |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
+| 42 | `entries` | `books-store.js` |  |
 | 42 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 42 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 41 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
@@ -110,7 +111,6 @@ of file each thing is; this says what already does the job.
 | 41 | `money` | `cart.js` |  |
 | 41 | `guard` | `amend.js` | would disturb what has gone out. |
 | 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 41 | `entries` | `books-store.js` |  |
 | 40 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
