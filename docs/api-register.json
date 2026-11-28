@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 2,
-  "meets": 701,
+  "partial": 1,
+  "meets": 702,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -11823,11 +11823,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "00d7e24ee12bed47"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-28 PR#1460 stage2: diff read for lib/books-evidence.unsupportedIn (read through books-period-taxed.unsupportedInput into GET /returns as unsupported_input) and docs/contracts/api-output-shapes.json. The unsupported_input object gains integer-minor gross_minor (the claimed tax on entries with no tax invoice) and returned_minor (purchase returns' credit on the input-tax ledger, live entries only); tax_minor stays the box's part (gross less returned, never below 0, then capped at the box as before), so every old key keeps its name and meaning and only grows; the hand-added shape entry lists exactly the keys the function returns (count, tax_minor, gross_minor, returned_minor, from, to, currency, box) with the same number type as tax_minor, and this is the only place unsupported_input is in the shapes file; no new status, code or request key; money through the money-ops value type; 13 machine columns true. Business rule (what 1B says) belongs to accounting.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-period.js"
    ],
