@@ -2798,6 +2798,19 @@
    "grows": false,
    "exercised": true
   },
+  "GET /api/network/asks": {
+   "0": {
+    "trips": 1
+   },
+   "10": {
+    "trips": 1
+   },
+   "100": {
+    "trips": 1
+   },
+   "grows": false,
+   "exercised": true
+  },
   "GET /api/network/entities/:id/connections": {
    "0": {
     "trips": 0

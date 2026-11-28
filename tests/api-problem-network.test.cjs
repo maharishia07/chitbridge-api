@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * api-problem-network.test.cjs — API-4 sweep, the network: every answer of src/routes/network.js, routes/network-design.js and routes/connections.js (21 routes).
+ * api-problem-network.test.cjs — API-4 sweep, the network: every answer of src/routes/network.js, routes/network-design.js and routes/connections.js (23 routes).
  *
  * OWNS      the proof that each refusal of the network routes is a Problem body AND still carries the keys it answered before (docs/contracts/api-legacy.json, recorded from the code
  *           before the sweep), that no success answer moved (--compare against a capture of the code before), this file's rows of docs/contracts/api-error-tests.json (the statuses
@@ -134,7 +134,7 @@ function checkContractShape(routes) {
   const contract = contractModule();
   const operations = Object.keys(contract.OPERATIONS);
   check('every route the routers hold has an operation, and every operation a route (' + operations.length + ')', sameValue(operations.slice().sort(), Object.keys(routes).sort()), operations.filter((key) => !routes[key]));
-  check('the contract holds 21 operations: 12 tree, 7 design, 2 handshake', operations.length === 21 && operations.filter((key) => key.includes('/api/network/')).length === 12 && operations.filter((key) => key.includes('/api/network-design')).length === 7 && operations.filter((key) => key.includes('/api/connections')).length === 2, operations.length);
+  check('the contract holds 23 operations: 14 tree, 7 design, 2 handshake', operations.length === 23 && operations.filter((key) => key.includes('/api/network/')).length === 14 && operations.filter((key) => key.includes('/api/network-design')).length === 7 && operations.filter((key) => key.includes('/api/connections')).length === 2, operations.length);
   const respond = contract.OPERATIONS['PUT /api/connections/:id/respond'].requestBody.content['application/json'].schema;
   check('a body keeps its typed fields and its required list (the answer to a request is accept or reject)', sameValue(respond.required, ['action']) && respond.properties.action.type === 'string', respond);
   check('a malformed id is still a 404, never a 400: the path argument is plain text', contract.OPERATIONS['POST /api/network/connections/:id/approve'].parameters[0].schema.type === 'string' && !contract.OPERATIONS['POST /api/network/connections/:id/approve'].parameters[0].schema.pattern);
@@ -303,7 +303,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   check('a NUL byte in a name of the drawing is a 400 in words that say nothing of the database', savedJunk.length === 2 && savedJunk.every((key) => recording[key].status === 400 && /Type it again/.test(JSON.stringify(recording[key].body)) && !/byte sequence|Unicode escape|22021|22P05/.test(JSON.stringify(recording[key].body))), savedJunk.map((key) => recording[key]));
   const searchJunk = junkKeys.filter((key) => /availability/.test(key));
   check('a search for text holding a NUL byte answers as one that finds nothing: 200 with no degraded mark', searchJunk.length === 1 && searchJunk.every((key) => recording[key].status === 200 && recording[key].body && recording[key].body.degraded === undefined), searchJunk.map((key) => recording[key]));
-  check('the writes switched off answer 503 on all eight writes of the tree', Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).length === 8 && Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).every((key) => recording[key].status === 503));
+  check('the writes switched off answer 503 on all nine writes of the tree', Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).length === 9 && Object.keys(recording).filter((key) => key.endsWith('|writes-switched-off')).every((key) => recording[key].status === 503));
   const allowHeld = ALLOW.checkAllowList(recording, contractModule().OPERATIONS, check);
   const coverage = lab.coverageOf(tested);
   const onDisk = JSON.parse(fs.readFileSync(TESTED_FILE, 'utf8'));
