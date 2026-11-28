@@ -15,7 +15,7 @@ Words below are for the screen to say in the owner's own language; the api sends
 | `PATCH /api/books-grants/:id` `{ expires_at?, can_see_costs?, consent?, posting?, posting_cap_* }` | owner only | the grant | change end date, costs choice, who posts on a live grant |
 | `GET /api/books-grants/log` | owner only | `{ looks: [...], visits: [...] }` | draw `visits`, one row each; keep `looks` for the detail if needed |
 | `GET /api/facts/network` | signed in, not a key | Home card answer | the Home "Do first" card |
-| `GET /api/notifications` and `?count=1` | signed in | now carries `asks` | the bell |
+| `GET /api/notifications?count=1` | signed in | `{ count (includes asks), asks, total, seen_at }` | the bell dot and its pinned row |
 
 ## 2. The ask (each element of `to_me[]` and `by_me[]`)
 `edge_id` (use for Accept / Refuse / Cancel) · `kind` always `'firm'` today (branch on the code, never the words) · `i_am` `'shop'` or `'firm'` (the firm is ALWAYS the parent) · `name` · `bridge_id` · `country` (may be null) · `asked_at`.
@@ -36,9 +36,8 @@ Empty `to_me` and `by_me` for a staff seat is by design (the list is 403 for the
 Owner seat: `lines[0]` = `"N request(s) to connect"` with `tone: 'dn'` and `state: 'needs_you'` when something waits for the owner (count in `figures.requests`; `figures.waiting` = asks I made and wait on). Door: to the Network card in "Who can see my books" (the asks list). Nothing waiting: state `not_started`, `"No requests to connect"`. A staff seat reads 0 and no door.
 
 ## 5. The bell
-- `count` already INCLUDES the waiting requests (they are counted until answered, the watermark never clears them); `asks` is that part alone. The dot reads `count`.
-- The feed (`notifications[]`) has a pinned row per waiting request ABOVE the activity: `{ log_id: 'ca:<edge_id>', action: 'connect_ask', action_by_display_name: <firm name>, created_at: asked_at, edge_id, kind: 'firm', i_am: 'shop', bridge_id, country }`. rail-bell-rows must draw `connect_ask`: "<firm> asks to connect", tap goes to the card. These rows are not dismissable and not cleared by "seen".
-- A staff seat gets `asks: 0` and no rows.
+- `GET /api/notifications?count=1` (the badge poll) now answers `{ count, asks, total, seen_at }`: `count` ALREADY INCLUDES `asks` (the owner's waiting firm requests, counted until answered, never cleared by "seen"). The dot reads `count`. `asks` alone says how many are requests (the bell may label the first row from it). A staff seat or a key gets `asks: 0`.
+- The feed `GET /api/notifications` is UNCHANGED (no request rows, no extra trip on the feed): when `asks` > 0 the bell draws one pinned row "<N> request(s) to connect" at the top that opens the Network card, and the card's own `GET /api/network/asks` lists them (name, bridge id, country, Accept / Refuse). Speed rule: the asks count rides in the badge statement; the rows are read only when the owner opens the card.
 
 ## 6. Access I gave (UX-220)
 Per grant row, in the row's own detail so nothing is hidden at 1366 px: who (firm), role (`preset`), end date (`expires_at`), reason (`purpose`), `can_see_costs` yes/no, `posting` (who posts, adviser only).

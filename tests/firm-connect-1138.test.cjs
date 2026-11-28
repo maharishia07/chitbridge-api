@@ -27,6 +27,7 @@ const MUTANTS = {
   costs_confirm: ['lib/books-grant.js', 'input.can_see_costs === true && input.consent !== true', 'false'],
   visit_boundary: ['lib/books-visits.js', '> gapMs) open.push', '> gapMs * 2) open.push'],
   bell_owner: ['lib/connect-asks.js', 'if (!mayAnswer) return', 'if (false) return'],
+  bell_one_rule: ['lib/connect-asks.js', 'JOIN cb_edge e ON ${FIRM_EDGE_ON} WHERE me.bridge_id', "JOIN cb_edge e ON e.state = 'requested' WHERE me.bridge_id"],
   firms_only: ['lib/connect-asks.js', "AND e.type = '${FIRM_TYPE}'", ''],
   invite_address_cap: ['lib/firm-invite.js', 'if (counts.address >= limits.perAddressWeek)', 'if (false)']
 };
@@ -229,22 +230,15 @@ async function surfaceTests() {
   ok('home: the owner with one request reads "1 request to connect", tone dn, state needs_you', card.lines[0].text === '1 request to connect' && card.lines[0].tone === 'dn' && card.state === 'needs_you' && card.figures.requests === 1, JSON.stringify(card));
   const staffCard = await home.BUILD.network({ entity: 'o', req: staffReq });
   ok('home: a staff seat sees 0 requests (not started, no door)', staffCard.figures.requests === 0 && staffCard.state === 'not_started', JSON.stringify(staffCard));
-  /* the bell: the real bellOf over the real asksOf with a fake pool (the SQL's rows: one waiting request to me) */
-  const dbPath = require.resolve(path.join(API, 'src', 'db'));
-  const realDb = require(dbPath);
-  const originalQuery = realDb.pool.query;
-  realDb.pool.query = async () => ({ rows: [{ edge_id: 'e9', type: 'agency', asked_at: '2026-11-28T01:00:00Z', i_am_parent: false, by_me: false, name: 'Smith & Co', bridge_id: 'CBSMITH', country: 'AU' }] });
-  try {
-    const bellOwner = await realAsks.bellOf('o', true);
-    ok('bell: the owner\'s own count is the waiting requests and a feed row per request, pinned', bellOwner.count === 1 && bellOwner.rows[0].action === 'connect_ask' && bellOwner.rows[0].edge_id === 'e9' && bellOwner.rows[0].action_by_display_name === 'Smith & Co' && bellOwner.rows[0].i_am === 'shop');
-    const bellStaff = await realAsks.bellOf('o', false);
-    ok('bell: a staff seat gets 0 and no rows', bellStaff.count === 0 && bellStaff.rows.length === 0);
-    realDb.pool.query = async (sql) => { ok('asks: the one statement reads firm (agency) edges only; a brand\'s invitation is not in Home, the bell or the list', /e\.type = 'agency'/.test(sql)); return { rows: [] }; };
-    await realAsks.asksOf('o');
-    const roles = (row) => realAsks.asksOf('o').then(() => row);
-    void roles;
-  } finally { realDb.pool.query = originalQuery; }
-  ok('asks: the reader is exported for the route, the card and the bell', typeof realAsks.asksOf === 'function' && typeof realAsks.pendingCount === 'function' && typeof realAsks.bellOf === 'function');
+  /* the bell: its own count is a column of the badge statement (no extra trip), owner seat only, the same edge rule as the list */
+  ok('bell: a staff seat or a key gets no asks column at all', realAsks.badgeAsksSql(false) === '');
+  const column = realAsks.badgeAsksSql(true);
+  ok('bell: the owner badge carries the waiting firm requests as an asks column, counted by the SAME rule as the list (agency, requested, asked by the other side)', column.includes('AS asks') && column.includes("e.state = 'requested' AND e.type = 'agency'") && column.includes('requested_by, e.parent_id) <> me.id'), column);
+  const realDb = require(path.join(API, 'db'));
+  const originalQuery = realDb.query;
+  realDb.query = async (sql) => { ok('asks: the one statement reads firm (agency) edges only, a brand invitation is not in Home, the bell or the list', sql.includes("e.type = 'agency'")); return { rows: [] }; };
+  try { await realAsks.asksOf('o'); } finally { realDb.query = originalQuery; }
+  ok('asks: the reader is exported for the route, the card and the bell', typeof realAsks.asksOf === 'function' && typeof realAsks.pendingCount === 'function' && typeof realAsks.badgeAsksSql === 'function');
 }
 
 (async () => {

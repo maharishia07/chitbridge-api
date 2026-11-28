@@ -71,8 +71,6 @@ const FEED_FROM = `FROM state_log sl
           AND sl.created_at > now() - interval '${FEED_DAYS} days'
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
 
-/** the firm requests waiting for this caller's answer: only the OWNER seat has any (a staff seat and a key read none) */
-const askBell = (req, entityId) => connectAsks.bellOf(entityId, isOwner(req));
 /**
  * the badge answer: { count, total, seen_at } for ?count=1 (the route decides the person and the page; this only asks the one statement)
  * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
@@ -83,7 +81,7 @@ const askBell = (req, entityId) => connectAsks.bellOf(entityId, isOwner(req));
  * `limit` window, the same rule (newer than notif_seen_at, messages excluded). Same number, nothing else sent.
  * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
  */
-async function badgeOf(entity_id, caller_id, limit, internal) {
+async function badgeOf(entity_id, caller_id, limit, internal, mayAnswer) {
   /* the marks' news counts since the same watermark, inside this ONE statement (lib/mark-notices newsCte); without mark_notices (b870 not run) or if it fails, the count alone, as before */
   const countOf = (withNews) =>
     withEntity(entity_id, (db) =>
@@ -92,7 +90,7 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
      SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
             count(*)::int AS total,
-            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}
+            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}${connectAsks.badgeAsksSql(mayAnswer)}
        FROM (SELECT x.action, x.created_at
                FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
                      ${FEED_FROM}) x
@@ -112,7 +110,8 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
   }
   if (!counted) counted = await countOf(false);
   const r = counted.rows[0] || { count: 0, total: 0, seen_at: null };
-  return { count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at };
+  const asks = r.asks || 0; /* the owner's waiting firm requests: counted until answered, outside the watermark */
+  return { count: r.count + (r.news_fresh || 0) + asks, total: r.total + (r.news_total || 0), seen_at: r.seen_at, asks };
 }
 
 /** the feed page: the caller's newest events (one statement, the shared fragment FEED_FROM); the DISTINCT ON note inside says why it is wrapped */
@@ -178,11 +177,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
     const internal = privateFlag.mayUse(await privateFlag.rightsOf(req)); /* may this caller read the firm's notes? the bell's internal arm only runs when the notes' own right says so (the seat is on the identity: no read of its own) */
 
-    const asks = await askBell(req, entity_id); /* the firm requests that wait for the OWNER's answer: their own count, outside the watermark */
-    if (textOf(req.query.count, { trim: false }) === '1') {
-      const badge = await badgeOf(entity_id, caller_id, limit, internal); /* the badge's own question, in one statement (badgeOf) */
-      return res.json(Object.assign(badge, { count: badge.count + asks.count, asks: asks.count }));
-    }
+    if (textOf(req.query.count, { trim: false }) === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal, isOwner(req))); /* the badge's own question, in one statement (badgeOf); the owner's waiting requests ride in it */
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
@@ -225,10 +220,9 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      * drive the number.
      */
     const countable = (r) => r.action !== 'message_sent';
-    const activity = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    const feed = asks.rows.concat(activity).slice(0, limit); /* a request to connect stays pinned at the top until it is answered */
+    const feed = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
     const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length + news.filter((n) => !seen || new Date(n.created_at) > new Date(seen)).length;
-    res.json(Object.assign({ notifications: feed, count: fresh + asks.count, asks: asks.count, total: result.rows.length + news.length + asks.count, page: 1, limit, seen_at: seen }, warnings.length ? { warnings } : {}));
+    res.json(Object.assign({ notifications: feed, count: fresh, total: result.rows.length + news.length, page: 1, limit, seen_at: seen }, warnings.length ? { warnings } : {}));
   } catch (err) {
     console.error('Notifications error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to get notifications'));

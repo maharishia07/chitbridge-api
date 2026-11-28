@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 703,
+  "partial": 1,
+  "meets": 702,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -40,7 +40,7 @@
    },
    "parameterised_query": {
     "applies": 279,
-    "failing": 1
+    "failing": 2
    },
    "rate_limited": {
     "applies": 703,
@@ -31371,8 +31371,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 175,
-   "hash": "07ce32e49c7ae68e",
+   "line": 174,
+   "hash": "d01ee3c7fdf751ef",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
@@ -31431,7 +31431,7 @@
    "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
@@ -31474,10 +31474,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read: asks added to the feed and the badge (count includes waiting requests, asks is that part alone), closed shape updated with asks, staff or key reads asks 0, one extra statement on the wire (budget 9 to 10, trips unchanged at 3: the until-answered read), legacy keys kept in order; 13 columns pass",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "d01ee3c7fdf751ef"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "app.html",
     "rail-bell.js"
@@ -75867,7 +75868,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 298,
+   "line": 292,
    "hash": "8ca0946b1d787775",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -76005,7 +76006,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 246,
+   "line": 240,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {

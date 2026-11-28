@@ -115,7 +115,8 @@ const INFRA = [
   'practice-switch-audit.js', /* H-h1 (20 Nov): the access_events row of a moved practice switch, no posting or tax rule (INFRA) */
   'signin-ask-cap.js', /* gorilla 20 Nov: the per-account send cap on the sign-in code request, a limiter, no rule of the books (INFRA) */
   'work-client.js', /* W16: the client a practice job is for (reads of books_setting / identity under the client's own binding): the parent work-rows.js's class, plumbing, no rule of its own */
-  'own-limiters.js', /* column 16: the four own limiters split out of server.js: plumbing */
+  'own-limiters.js', /* column 16: the own limiters split out of server.js: plumbing */
+  'connect-asks.js', 'connect-caps.js', 'firm-invite.js', 'books-visits.js', 'home-facts-network.js', /* firm-connect-1138: who asked to connect and waits, the caps on asking, the fixed invite e-mail, the grouping of Who-looked into visits: plumbing between a screen and edge rows, no money or tax rule (INFRA) */
 ];
 const PENDING = [
   'books-opening.js',
