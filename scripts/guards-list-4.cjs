@@ -17,6 +17,7 @@ const GUARDS_PART = [
   'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
   'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
   'acc417-adjustments.test.cjs', // ACC-417: BAS rows split into adjustment and plain by the pack's event list
+  'au-box-tie.test.cjs', // batch 1138 hold: every AU BAS box ties to its drill (split_ok) on a same-period return, a bad debt and no adjustment; mutation with the adjustment rules on goes red
   'acc418-bad-debt.test.cjs', // ACC-418: the invoice a write-off / recovery names: its own GST, read from the posted tax lines
   'acc420-lodged-pin.test.cjs', // ACC-420: a lodged period read under another version = a loud receipt (one enforcer lodgedCheck)
   'acc420-setting-route.test.cjs', // ACC-420 / 1138 Finding 1: POST /api/books/setting CALLED live: a valid restamp 200, backward / non-period-start refused; drop the two contract keys = red
