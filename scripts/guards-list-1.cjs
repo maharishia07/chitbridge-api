@@ -416,6 +416,7 @@ const GUARDS_PART = [
   'cat-251-reprice-tiers.test.cjs', // ⭐ MONEY W1 M5 (CAT-251): reprice from the catalogue asks the one price reader (services.priceLine), so a tier is honoured: 20 kg -> 80.00, 5 kg -> 100.00
   'fin-books-doors-strict.test.cjs', // ⭐ MONEY W1 M6 (FIN-54/60/79/82/83/84/86): the books' payment and opening doors read minor units, direction, dates, party ids strictly; supplier rows carry balance_words
   'fin-ledger-guards.test.cjs', // ⭐ MONEY W2 M7b (FIN-88/92/100, CAT-127): repeated or open bill ref refused, an opening resent without client_ref is a replay, a loan instalment cannot exceed what the loan owes, a month pack needs a locked month
+  'money-seat-guard.test.cjs', // ⭐ DRIFT 19b+35a: GET /kyb/risk amounts and GET /relationships/customers balances go through lib/money-seat.noMoney (the books' own gate); a new door to either fails
   'line-door-one-guard.test.cjs', // CTRY-134: one line-door guard (services.lineRefusal, widened: BAD_LINE and BAD_BOUND) on tax/compute, tax/rate, invoice/build, pricing/price, offers/evaluate
   'acc-311-journal-whole-minor.test.cjs', // ⭐ ACC-311: a manual journal entry with a fractional or over-ceiling minor amount is refused 422 BOOKS_REFUSED, nothing posted
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines

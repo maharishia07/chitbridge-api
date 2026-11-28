@@ -763,6 +763,7 @@ router.get('/customers', grantFront, auth, ...checked('GET /customers'), async (
       Object.assign(item, { groups: Array.isArray(item.groups) ? item.groups : [] })
     );
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
+    if (await require('../lib/money-seat').noMoney(req)) rows.forEach(require('../lib/dues-view').noMoneyRow); /* drift 35a: what a customer owes is books money; the seat GET /dues refuses gets the list without it (null + cost_hidden), as GET /crm/parties */
     rows.forEach((item) => { delete item.otp_contact; }); /* lens-sec 1129 (23b4c8830): the login phone is never a party's contact; decorate has used it for a minted party's phone above, the column itself is not sent */
     res.json(firm.relationsFor(req, Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))), 'customers')); /* CON-165: a firm seat under a grant reads the cut picker rows */
   } catch (err) {

@@ -81,7 +81,7 @@ const NOT_A_PARTY_ID = 'That is not a party id.';
  */
 /* A2: `assign` = the server's verdict on the Assign button and the Unassigned bucket (the partner or a manager: lib/owner mayAt, the gate assign-bulk uses); the page reads no token */
 /** Y-F-05: true when the books' own read gate (routes/books gates.mayReadMoney: owner, in-house accountant, live grant, auditor) refuses this seat — dues are books money; lazy so crm.js loads without books.js */
-const noMoney = async (req) => !(await require('./books').gates.mayReadMoney(req));
+const { noMoney } = require('../lib/money-seat'); /* the one question, shared with GET /customers and GET /risk (drift 19b, 35a) */
 const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY), assign: require('../lib/owner').mayAt(req, 'manager') });
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, ...keyFence() });
