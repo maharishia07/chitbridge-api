@@ -1179,8 +1179,8 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
  * away by making the numbers agree. `counts: { billed: n }` is named that way so no screen can accidentally
  * print it as "chits sent".
  */
-// @does Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.
 const usageRead = require('../lib/usage-read');
+// @does Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.
 router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
     const shop = auth.entityOf(req); /* drift 15: the SHOP's ledger for every seat; an actor's own identity id was read here (605 for the owner, 0 for a cashier) */
