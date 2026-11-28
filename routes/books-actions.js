@@ -92,7 +92,7 @@ function rightStore(req, res, next) {
   return problem(req, res, { status: 409, code: 'STORE_MISMATCH', detail: 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.', legacy: { error: 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.', message: 'This page is open on another store than the one you are working in. Nothing was saved. Open the store again.' } });
 }
 /** the firm's person: the real caller (never the store's synthetic identity), the firm and the grant from the live look; `named` = a person's own sign-in (an actor of the firm), not the firm's owner sign-in */
-const firmActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name, firm_name: req.acting_firm_name, grant_id: req.acting_for_grant, firm_entity: req.realIdentity ? req.realIdentity.parent_entity_id || req.realIdentity.identity_id : null, named: !!req.realIdentity && req.realIdentity.identity_type === 'actor' });
+const firmActor = (req) => approval.firmActorOf(req); /* BB-P1-2: the ONE firm-person reader lives beside the proposing gate (lib/books-approval) */
 /** the caller of a queue or a read: the firm's person (tied to its grant) or the owner */
 const actorOf = (req) => (actingAdviser(req) ? firmActor(req) : ownerActor(req)); /* an auditor reads the whole store's record: no grant filter, as the owner */
 const ownerActor = (req) => ({ identity_id: req.identity.identity_id, name: req.identity.display_name });

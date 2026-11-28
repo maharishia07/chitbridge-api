@@ -275,6 +275,20 @@
    ]
   },
   {
+   "code": "ACTION_QUEUE_FULL",
+   "status": "429",
+   "title": "Too many waiting",
+   "shopkeeper": "Too many bank lines are waiting for the owner. Wait for the owner to accept or return some, then send the rest.",
+   "hint": "Ask the owner to work through the waiting lines.",
+   "owner_area": "network",
+   "since": "2026-11-28",
+   "raised_by": [
+    "POST /api/books-actions",
+    "POST /api/books/events",
+    "POST /api/books/events/batch"
+   ]
+  },
+  {
    "code": "ACTION_REVERSE_MANUAL_ONLY",
    "status": "422",
    "title": "Not for an adviser",

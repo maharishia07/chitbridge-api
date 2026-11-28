@@ -15,14 +15,14 @@ const auth = require('../middleware/auth');
 const { problem } = require('../lib/problem');
 const { refusalOf } = require('../lib/books-contract');
 const { postEventsBatch } = require('../lib/books-events-batch');
-const { noKey, ownerOrAccountant, on, checked, refuse } = require('./books').gates;
+const { noKey, ownerOrAccountantOrProposer, on, checked, refuse } = require('./books').gates;
 
 /**
  * POST /events/batch { events: [ { kind, ... } x 1..100 ] } → { posted, failed, results: [ { index, client_ref, ok, duplicate?, entry_no?, posting_date? | status, code, detail } ], ok, capability, request_id, written, held, refused }
  * the lines go through the SAME event writer as POST /events (each keeps its own client_ref, so a retry posts nothing twice); a refused line is named by index and the rest post.
  */
 // @does A list of up to 100 events in -> we post each one through the one event writer -> one result per line (owner or accountant).
-router.post('/events/batch', auth, noKey, ownerOrAccountant, on, ...checked('POST /events/batch'), async (req, res) => {
+router.post('/events/batch', auth, noKey, ownerOrAccountantOrProposer, on, ...checked('POST /events/batch'), require('../lib/books-approval').grantProposeGate(refusalOf), async (req, res) => {
   try {
     const entity = auth.entityOf(req);
     const batch = await postEventsBatch({
