@@ -2413,6 +2413,7 @@
       "end": "2025-09-30",
       "due": "2025-10-28",
       "ended": true,
+      "before_books": true,
       "stagger": 1,
       "due_rule": "the 28th day after the end of the Tax Period (ER Art. 64(1)); a weekend or national holiday moves it to the first business day after (RET §2.1) — a calendar decides that, not this file",
       "state": "open",
@@ -2514,6 +2515,7 @@
    "also_optional": [
     "period.closed",
     "period.state",
+    "periods[].before_books",
     "periods[].closed",
     "periods[].state"
    ]

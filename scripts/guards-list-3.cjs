@@ -471,6 +471,7 @@ const GUARDS_PART = [
   'accw2-gst-gap.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'rw2acc-basis.test.cjs', // RW2-04: each BAS box says its basis, one line says why two quarters differ
   'at0204-default-period.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
+  'bas-period-books-start-1138.test.cjs', // 1138 UX-226 A6: a period before the books start is never overdue nor the default BAS
   'finw2-earlier-tax.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'policy-words-1130.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
   'signoffw-till-chips.test.cjs', // sitclean 1130: enrolled (every-test-is-enrolled)
