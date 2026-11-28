@@ -1146,6 +1146,7 @@ router.post('/payments', auth, noKey, editor, payOut('body'), onceOnly, on, ...c
     const out = await withEntity(e, async (h) => {
       const who = await partyOf(h, e, party),
         name = who.name;
+      if (b.bank_line === true && direction === 'out' && !(allocations && allocations.length)) await require('../lib/bank-pay-needs').mustNameAccountOrBill(h, e, { party, amount_minor, currency: curOf(req) }); /* BB-P1-3: a bank line to a party with no account and no bill is asked, never posted on account */
       /* the duplicate rule runs INSIDE recordPayment (p.warn), after its gates (a replay answers first; a stranger or a bad date is a 422) */
       const rec = await B.recordPayment(h, e, {
         party_id: party,
