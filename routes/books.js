@@ -1732,7 +1732,7 @@ router.post('/parties/:id/dispute', auth, editor, on, ...checked('POST /parties/
       currency: curOf(req),
       by: byOf(req)
     });
-    const said = posted.ok && !posted.off ? { words: STATUS_WORDS[status], against_ref: String(b.against_ref) } : {}; /* the words ride only on a status the books wrote */
+    const said = posted.ok && !posted.off ? { words: STATUS_WORDS[status], against_ref: String(posted.against_ref || b.against_ref) } : {}; /* the words ride only on a status the books wrote */
     res.json({ ok: posted.ok, off: posted.off, status: posted.status, words: said.words, against_ref: said.against_ref });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
