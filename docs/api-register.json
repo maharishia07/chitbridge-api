@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 702,
+  "partial": 0,
+  "meets": 703,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -40943,11 +40943,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "60408a48b9412e46"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-28 PR#1458 stage2: diff read for routes/till.js periodSummary + dayTaxOrNull, lib/till-summary.dayTax, lib/books-store.soldByDay. GET /api/till/summary gains an optional day_tax object on period=day only (one books read, inside the same transaction: no extra trip; absent when the books cannot give it; 42P01/42703 only are swallowed, anything else reaches the route's own 500 problem); it is added to api-output-shapes.json and web-api.json; old keys unchanged, same statuses, doors and sentences; money in the till summary's own major units, as its siblings; 13 machine columns true. GET /api/books/daybook: sales_minor (integer minor, 0 default, Cr-Dr on a sales-role line) added to the entry; handler hash unmoved and its register row still 13/13, example added to web-api.json.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-mis-trend.js",
     "till.html"
