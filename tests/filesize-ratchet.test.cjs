@@ -27,7 +27,6 @@ const STAMP_WAIVERS = [
   { file: 'lib/books-period.js', max: 1871, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
   { file: 'lib/books-store.js', max: 2158, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
   { file: 'lib/identity-auth.js', max: 746, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'security growth in the 1130 batch' },
-  { file: 'lib/handle.js', max: 526, added: '2026-11-28', until: 'batch 1138 stamp', reason: 'O4: typedForm, the one display form of a sign-in name, lives in the grammar module' },
 ];
 let pass = 0, fail = 0;
 const t = (name, ok, why) => { if (ok) { pass++; console.log('  ok  ' + name); } else { fail++; console.log('  XX  ' + name + (why ? '\n        ' + why : '')); } };
