@@ -1,0 +1,10 @@
+{
+  "figure": "return-left-out",
+  "says": "What a BAS / VAT201 return leaves out of its boxes (the period's own set-off and tax-payment entries) has ONE reader. The box (movementsBetween) and the Ledger page's labelled line (returnReading) both call it.",
+  "covers": ["au.bas.1A", "au.bas.1B", "au.bas.G1", "au.bas.G2", "au.bas.G3", "au.bas.G4", "au.bas.G10", "au.bas.G11", "ae.vat201.box1", "ae.vat201.box9", "ae.vat201.box12", "ae.vat201.box13"],
+  "owner": "lib/books-period-taxed.js",
+  "owner_fn": "settledOf",
+  "allowed_elsewhere": ["lib/books-store.js"],
+  "forbidden": ["taxEntryLines"],
+  "decided": "2026-11-28 batch 1141 (Athi: unify, do not build). Box 9 / box 14 stay the period's own movement; the stored close and the live return are compared on their own readings, never merged."
+}
