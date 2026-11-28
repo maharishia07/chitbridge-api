@@ -14,13 +14,13 @@ of file each thing is; this says what already does the job.
 | 198 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 185 | `words` | `variant.browser.js` |  |
 | 166 | `withEntity` | `books-hooks.js` |  |
-| 152 | `answer` | `availability.js` | from March; then nearest. |
+| 151 | `answer` | `availability.js` | from March; then nearest. |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 144 | `item` | `bank-band.js` |  |
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
+| 116 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 115 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 103 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
@@ -33,8 +33,8 @@ of file each thing is; this says what already does the job.
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 88 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 87 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 86 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
-| 85 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 85 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 84 | `count` | `money-check.js` | the count /health reads |
 | 83 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -70,9 +70,9 @@ of file each thing is; this says what already does the job.
 | 61 | `note` | `dbwatch.js` |  |
 | 60 | `live` | `receivables.js` | the allocations that still count: |
 | 59 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
-| 59 | `account` | `home-facts.js` | OMITTED: |
 | 58 | `lines` | `cart.js` |  |
 | 58 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
+| 58 | `account` | `home-facts.js` | OMITTED: |
 | 57 | `sheet` | `cap-employees.js` |  |
 | 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 53 | `closeModal` | `app.html` |  |
@@ -93,11 +93,11 @@ of file each thing is; this says what already does the job.
 | 49 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 49 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `shell` | `pick.js` |  |
+| 47 | `mine` | `crm.js` | `opt.removedOk`: |
 | 46 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 46 | `sentence` | `one-person.js` |  |
 | 46 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 46 | `flags` | `cmdb.js` | the flags a record raises about itself — |
-| 46 | `mine` | `crm.js` | `opt.removedOk`: |
 | 45 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 45 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
 | 44 | `load` | `books-grant-view.js` |  |
@@ -112,11 +112,11 @@ of file each thing is; this says what already does the job.
 | 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 41 | `entries` | `books-store.js` |  |
 | 40 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
+| 40 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `says` | `adopt.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `ensureCap` | `app.html` |  |
 | 38 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 37 | `note` | `device-id.js` | note(where, problem) — |

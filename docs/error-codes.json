@@ -1639,6 +1639,29 @@
    ]
   },
   {
+   "code": "BANK_LINES_UNMATCHED",
+   "status": "409",
+   "title": "Statement lines still unmatched",
+   "shopkeeper": "Some lines of this bank statement are neither matched to your books nor explained, so the month was not signed off and nothing was saved.",
+   "hint": "Match, add or explain each line under Needs you on the Bank page, then sign off.",
+   "owner_area": "finance",
+   "since": "2026-11-28",
+   "raised_by": [
+    "GET /api/books/todo",
+    "GET /api/chits/:chit_id",
+    "GET /health",
+    "POST /api/books/bank/statements",
+    "POST /api/books/check",
+    "POST /api/books/outbox/retry",
+    "POST /api/chits/:chit_id/deliver-lines",
+    "POST /api/chits/send",
+    "POST /api/ctp/deliver",
+    "POST /api/relationships/suppliers",
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
+    "PUT /api/chits/:chit_id/status"
+   ]
+  },
+  {
    "code": "BILL_NOT_RECORDED",
    "status": "varies",
    "title": "Bill not recorded",

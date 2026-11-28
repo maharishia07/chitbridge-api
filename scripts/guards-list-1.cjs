@@ -178,7 +178,9 @@ const GUARDS_PART = [
   'acc-206-readers.test.cjs', // ACC-206 C2-C4: every reader of a bill total is built from counterBill.billTotalSql / pickOf; the beckn quote says 189 for the pre-2-Nov invoice
   'money-reader-scan.test.cjs', // ACC-206 G1: no raw read of the bill total outside the one pick; each named exception carries its reason (SCAN_SELFTEST=1 proves it bites)
   'one-reader-tables.test.cjs', // DRIFT exit bar 2+3 (28 Nov): one owning module per guarded table (docs/one-reader/<table>.json); SQL outside it fails unless dated waiver; raw state predicate never (SCAN_SELFTEST=1 bites)
+  'one-figure-cash.test.cjs', // ONE-FIGURE RC9: which ledgers ARE cash is typed once (lib/cash-roles.js); a second hand-typed list fails, mutation red
   'one-figure.test.cjs', // ONE-FIGURE (28 Nov batch 1141): a guarded figure has ONE owning function (docs/one-figure/<figure>.json); a second reader of what a return leaves out fails (SCAN_SELFTEST=1 bites)
+  'one-figure-dues.test.cjs', // ONE-FIGURE RC10: owed/owing (Home card = dues page, golden hand-computed) and the counter's per-customer balance = the dues engine; mutations red
   'one-figure-return-reading.test.cjs', // ONE-FIGURE RC1: BAS/VAT201 box = its drill = Ledger page movement minus the labelled left-out line, AU + AE, set-off fixture + mutation red
   'books-grant-list-gate-drift.test.cjs', // UX-218: the owner's list and the gate answer one grant state (stateOf); no second state rule in list()
   'reward-walkins-one-reader.test.cjs', // DRIFT cluster 5 (27 Nov): the walk-in list quotes what the till spends (reward-store.walkIns/foldOf); no SQL on reward_ledger outside reward-store (SCAN_SELFTEST=1 proves it bites)
@@ -432,6 +434,7 @@ const GUARDS_PART = [
   'fin-books-doors-strict.test.cjs', // ⭐ MONEY W1 M6 (FIN-54/60/79/82/83/84/86): the books' payment and opening doors read minor units, direction, dates, party ids strictly; supplier rows carry balance_words
   'fin-ledger-guards.test.cjs', // ⭐ MONEY W2 M7b (FIN-88/92/100, CAT-127): repeated or open bill ref refused, an opening resent without client_ref is a replay, a loan instalment cannot exceed what the loan owes, a month pack needs a locked month
   'money-seat-guard.test.cjs', // ⭐ DRIFT 19b+35a: GET /kyb/risk amounts and GET /relationships/customers balances go through lib/money-seat.noMoney (the books' own gate); a new door to either fails
+  'rail-bill-due-date.test.cjs', // ⭐ ACC-new-4: a rail supplier bill keeps the sender's terms due date (one reader, termsDueDate); Bean 7 Aug aged d31_60 at 30 Sep
   'line-door-one-guard.test.cjs', // CTRY-134: one line-door guard (services.lineRefusal, widened: BAD_LINE and BAD_BOUND) on tax/compute, tax/rate, invoice/build, pricing/price, offers/evaluate
   'acc-311-journal-whole-minor.test.cjs', // ⭐ ACC-311: a manual journal entry with a fractional or over-ceiling minor amount is refused 422 BOOKS_REFUSED, nothing posted
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
