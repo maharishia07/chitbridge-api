@@ -122,6 +122,8 @@ const call = (port, method, p, body) => new Promise((done) => {
   let said = ''; try { Returned.givenDay(helpers, {}, {}, orig, { owner: true, returned_on: '2026-10-01' }); } catch (e) { said = e.message; }
   ok('givenDay: a day before the entry is refused in words', /before the entry it reverses \(2026-10-12\)/.test(said), said);
   eq('markReturned: a receipt that is not a payment writes nothing', await Returned.markReturned(helpers, {}, SHOP, orig, '2026-10-20', null), 0);
+  const taken = await q('POST', '/loans', { ref: 'acct:9999', lender: 'X', amount_minor: 100, into: 'bank', date: '2026-10-28' });
+  ok('a taken loan cannot be named acct:... (it would collide with an opening loan)', taken.status >= 400 && /acct:/.test(JSON.stringify(taken.body)), JSON.stringify(taken.body));
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);

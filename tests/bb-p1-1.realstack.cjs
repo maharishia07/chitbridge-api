@@ -7,6 +7,7 @@
  *   CHQ-3  a second reverse: 409 ALREADY_REVERSED with posting_date 2026-10-20
  *   LOAN-1 opening balances 1 Jul 2026: Dr 1500 500000 / Cr 2000 300000 (a loan of 3,000.00) / Cr 3000 200000; GET /loans lists ref acct:2000 owing 300000; instalment 640.00 on 26 Oct = principal 60000 + interest 4000:
  *          Dr 2000 60000 / Dr 6150 4000 / Cr 1500 64000, no 2210 (interest input-taxed, principal out of scope); owing 240000; principal 250000 refused 422; after the instalment is reversed owing 300000 again
+ *   LOAN-3 an opening reversed and posted again leaves no phantom row (the reversal copies is_opening); a taken loan may not be named acct:...
  *   BRS    the engine's matcher (window 3 days): statement deposit 300.00 12/10, return 300.00 20/10, loan 640.00 26/10 against the bank ledger lines: 0 unmatched on both sides (0.00)
  * Run on a SIT box only (the harness refuses anything else): sh toolset/sit-realstack.sh <box> bb-p1-1.realstack.cjs
  * CARD 16-finance/bank-reconciliation-and-bank-rail
@@ -103,5 +104,21 @@ const bankLines = async (shop) => ok(await j('/api/books/ledger/1500?from=2026-1
     expect(sug.event && sug.event.type === 'cheque_dishonoured' && sug.event.reverses === receipt && sug.event.party === party, 'engine proposal ' + JSON.stringify(sug.event));
     expect(same((sug.entry.lines || []).map((l) => [l.code, l.dr_minor, l.cr_minor]), [['1300', 30000, 0], ['1500', 0, 30000]]), 'engine journal ' + JSON.stringify(sug.entry.lines));
   });
+  await kase('LOAN-3', 'an opening reversed and posted again (the reversal copies is_opening): no phantom negative loan row; ONE acct:2000 row owing 300000', async () => {
+    const T = await freshShop(RUN + 'r', 'Redgum', AU);
+    ok(await j('/api/books/enable', { method: 'POST', token: T.token }), 'books on');
+    const rows = [{ code: '1500', dr_minor: 500000 }, { code: '2000', cr_minor: 300000 }, { code: '3000', cr_minor: 200000 }];
+    const first = ok(await j('/api/books/opening', { method: 'POST', token: T.token, body: { date: '2026-07-01', client_ref: RUN + 'ro1', rows } }), 'opening').b;
+    const rev = await j('/api/books/entries/' + first.entry_id + '/reverse', { method: 'POST', token: T.token, body: { reason: 'wrong opening' } });
+    expect(rev.status === 200, say(rev));
+    const none = ok(await j('/api/books/loans', { token: T.token }), 'loans').b.loans || [];
+    expect(none.length === 0, 'a reversed opening left rows ' + JSON.stringify(none));
+    ok(await j('/api/books/opening', { method: 'POST', token: T.token, body: { date: '2026-07-01', client_ref: RUN + 'ro2', rows } }), 'opening again');
+    const again = ok(await j('/api/books/loans', { token: T.token }), 'loans').b.loans || [];
+    expect(again.length === 1 && again[0].ref === 'acct:2000' && Number(again[0].outstanding_minor) === 300000, 'listed ' + JSON.stringify(again));
+    const taken = await j('/api/books/loans', { method: 'POST', token: T.token, body: { ref: 'acct:2000', lender: 'X', amount_minor: 100, into: 'bank', date: '2026-10-28' } });
+    expect(taken.status >= 400 && /acct:/.test(JSON.stringify(taken.b)), 'a taken loan named acct: was accepted ' + say(taken));
+  });
+
   finish('bb-p1-1');
 })().catch((e) => { console.error('threw', e && e.stack || e); process.exitCode = 1; });
