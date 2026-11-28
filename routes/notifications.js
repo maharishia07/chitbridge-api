@@ -90,7 +90,7 @@ async function badgeOf(entity_id, caller_id, limit, internal, mayAnswer) {
      SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
             count(*)::int AS total,
-            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}${connectAsks.badgeAsksSql(mayAnswer)}
+            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}${frag(connectAsks.badgeAsksSql(mayAnswer))}
        FROM (SELECT x.action, x.created_at
                FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
                      ${FEED_FROM}) x

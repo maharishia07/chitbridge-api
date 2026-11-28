@@ -22,7 +22,7 @@ const path = require('path');
 const API = path.join(__dirname, '..');
 
 const net = require(path.join(API, 'src', 'services', 'network'));
-const { query } = require(path.join(API, 'db'));
+const { query, withEntity } = require(path.join(API, 'db'));
 const grants = require(path.join(API, 'lib', 'books-grant.js'));
 const asks = require(path.join(API, 'lib', 'connect-asks.js'));
 const { visitsOf } = require(path.join(API, 'lib', 'books-visits.js'));
@@ -89,7 +89,7 @@ async function costsTests(F, S) {
   if (await privileged('can_see_costs')) {
     const raised = await grants.change(S.id, S.id, given.grant_id, { can_see_costs: true, consent: true });
     ok('17 with consent the costs change is saved on the live grant', raised.can_see_costs === true);
-    const row = (await query(`SELECT can_see_costs FROM books_access_grant WHERE grant_id = $1`, [given.grant_id])).rows[0];
+    const row = (await withEntity(S.id, (tx) => tx.query('SELECT can_see_costs FROM books_access_grant WHERE grant_id = $1', [given.grant_id]))).rows[0]; /* the grantor's own binding: the row is row-secured */
     ok('18 the next read of the grant follows (the row says true)', row && row.can_see_costs === true);
     const ev = (await query(`SELECT before, after FROM access_events WHERE entity_id = $1 AND action = 'books_grant_changed' ORDER BY changed_at DESC LIMIT 1`, [S.id]).catch(() => ({ rows: [] }))).rows[0];
     ok('19 the log keeps before (false) and after (true)', !ev || (JSON.stringify(ev.before).includes('false') && JSON.stringify(ev.after).includes('true')), JSON.stringify(ev));
