@@ -460,7 +460,7 @@ const INFRA_LIBS = [
   'cost-write.js',         // RAIL-147: what a cost-blind co-assist may WRITE on a chit (the amend and reprice doors) — a gate over the shop's own permission, never a rule about what the chit means
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
-  'owner.js',              // is this request the owner — one test for every owner-only switch
+  'owner.js', 'seat-abilities.js', // is this request the owner — one test for every owner-only switch · what a grant's text may promise beside the decision (UX-222)
   'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
   'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
   'sellable-price.js',     // when a stored price cannot be sold (unset or negative): the one rule the order refusal and the till snapshot both read (CAT-318, CAT-324)

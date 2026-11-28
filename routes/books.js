@@ -677,7 +677,7 @@ router.get('/dues', auth, moneyReader, onDues, ...checked('GET /dues'), async (r
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
        not set — credit_limit_from null / interest_state 'not_set' (interest_minor null) is the code the screen paints "Not set" from. */
     const fin = req.query.finance === '1';
-    if (fin && !isOwner(req)) {
+    if (fin && !require('../lib/seat-abilities').mayDo('collections', req)) {
       const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.';
       return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: no, legacy: { error: no, message: no } });
     }
@@ -2607,10 +2607,10 @@ route('post', '/contra', (req, e, setting, body, by) => P().contra(e, setting, b
    never fetched, never assumed. Everyone who may read the books may read the rates (an auditor checks them); only the owner adds one or revalues. ── */
 const FXR = require('../lib/fx-rates');
 const FX_NOT_READY = FXR.WAITS.rates;
-const FX_OWNER_ONLY = 'Only the owner may add a rate.';
+const FX_OWNER_ONLY = 'Only the owner or the shop’s own accountant may add a rate.'; /* UX-222: DECISIONS 22 Nov item 5 — the manager-hat accountant sets FX rates (POST /fx-rates is ownerOrAccountant) */
 function fxMay(req, ready) {
   if (!ready) return { may: false, why: FX_NOT_READY };
-  return isOwner(req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
+  return require('../lib/seat-abilities').mayDo('fx_rates', req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
 }
 /** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
 // @does Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.

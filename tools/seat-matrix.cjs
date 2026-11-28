@@ -119,7 +119,7 @@ function render() {
   out.push('', rows.length + " routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.", '');
   return out.join('\n');
 }
-module.exports = { build, render, chainOf, SEATS };
+module.exports = { build, render, chainOf, cellOf, SEATS };
 
 if (require.main === module) {
   const file = path.join(root, 'docs', 'SEAT-MATRIX.md');
