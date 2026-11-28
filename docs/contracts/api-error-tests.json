@@ -2412,6 +2412,14 @@
   409,
   500
  ],
+ "POST /api/books/write-off/recover": [
+  400,
+  401,
+  403,
+  404,
+  409,
+  500
+ ],
  "POST /api/books/year/:fy/close": [
   401,
   403,

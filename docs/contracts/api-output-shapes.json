@@ -12866,6 +12866,58 @@
         }
       }
     },
+    "POST /api/books/write-off/recover": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "ok",
+          "entry_id",
+          "entry_no",
+          "posting_date"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "entry_id": {
+            "type": "string"
+          },
+          "entry_no": {
+            "type": "string"
+          },
+          "posting_date": {
+            "type": "string"
+          },
+          "doc_date": {
+            "type": "string"
+          },
+          "moved": {},
+          "lines": {
+            "type": "number"
+          },
+          "items": {
+            "type": "number"
+          },
+          "note": {},
+          "duplicate": {
+            "type": "boolean"
+          },
+          "off": {}
+        },
+        "additionalProperties": false
+      },
+      "observed": 2,
+      "open": [],
+      "example": {
+        "url": "/api/books/write-off/recover",
+        "body": {
+          "amount_minor": 9900,
+          "reason": "paid at last",
+          "into": "bank"
+        }
+      }
+    },
     "POST /api/books/year/:fy/reopen": {
       "status": "200",
       "schema": {

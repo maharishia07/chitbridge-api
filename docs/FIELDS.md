@@ -1741,3 +1741,14 @@ Pay expense on a one-tax country (UAE VAT, AU GST) carries two optional fields i
 | `skipped` | array | The codes the shop already held and the call left alone (a second run is safe, BK-11). |
 
 The five ride beside `items[]`. web `public/app/core.js` SIBS now lists them, so a screen that calls it through `api()` reads them instead of `undefined` (e2e/api-envelope.cjs). The empty owner-preview answer of `GET /api/catalogue/:bridge_id` is now built by `publicResponseFor`, the one public shape (byte-equal to before).
+
+## POST /api/books/write-off/recover · a written-off debt paid later (ACC-418, 2026-11-28)
+
+| Route | Key | Meaning |
+|---|---|---|
+| POST /write-off/recover body `amount_minor` | whole number above 0 | What came in, in the shop currency's smallest unit. `amount` (a number in whole currency) is the older spelling, read by the same strict reader. Not a whole number above nothing: 400 "How much?". |
+| POST /write-off/recover body `reason` | string | Why, in the owner's words. The engine refuses an empty one. |
+| POST /write-off/recover body `into` | account name, default `cash` | Where the money came in (`cash`, `bank`, a till mode). An unknown one is refused by the engine in words. |
+| POST /write-off/recover body `against_ref` | chit id or absent | The written-off invoice. With it, the GST inside the recovery is the share the invoice itself carried (read from its posted tax lines; the engine splits, the route never does); without it, or in a country with no bad-debt row, the whole amount goes back to bad debts and `note` says no GST was adjusted. |
+| POST /write-off/recover body `client_ref` | string or absent | The same recovery sent twice is one entry (`duplicate: true`); the same ref with another amount is 409 `EVENT_REF_REUSED`. |
+| POST /write-off/recover answer `note` | string or null | The posting's note plus, when no GST could be adjusted, the sentence that says so. |

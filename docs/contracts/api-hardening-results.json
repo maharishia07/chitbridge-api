@@ -4947,6 +4947,15 @@
     "why": "not reached: answered 404"
    }
   },
+  "POST /api/books/write-off/recover": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": false,
+    "why": "not reached: answered 404"
+   }
+  },
   "POST /api/flags/query": {
    "strict_input": {
     "pass": true

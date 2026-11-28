@@ -26,6 +26,7 @@ const STAMP_WAIVERS = [
   { file: 'lib/books-cashflow.js', max: 530, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
   { file: 'lib/books-period.js', max: 1871, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
   { file: 'lib/books-store.js', max: 2158, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'rw2acc growth in the 1130 batch' },
+  { file: 'tests/api-problem-books.test.cjs', max: 774, added: '2026-11-28', until: 'batch 1138 stamp', reason: 'ACC-418: the four sweep scenes of the recovery door POST /write-off/recover (its error_tests and legacy rows are written by this area test)' },
   { file: 'lib/identity-auth.js', max: 746, added: '2026-11-26', until: 'batch 1130 stamp', reason: 'security growth in the 1130 batch' },
 ];
 let pass = 0, fail = 0;

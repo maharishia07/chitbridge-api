@@ -3195,6 +3195,14 @@
       "status": 200,
       "basis": "live from sit-in 2026-11-06"
     },
+    "POST /api/books/write-off/recover": {
+      "file": "books-write-off-recover.js",
+      "trips": 1,
+      "wire": null,
+      "fired": true,
+      "status": 422,
+      "extra": true
+    },
     "POST /api/books/year/:fy/close": {
       "file": "books.js",
       "trips": 1,
