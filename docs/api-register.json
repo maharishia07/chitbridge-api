@@ -7626,7 +7626,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 890,
-   "hash": "8bcaea2e4297db09",
+   "hash": "5314c9ab21107e8c",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
     "count": 2,
@@ -7732,7 +7732,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: MONEY-01 (fold 4c6b09db2): the four reports refuse a cost-blind reader first (costBlindStops, REPORT_COST_BLIND_SAY, the existing 403 OWNER_ONLY path); answer shape unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign (AUDBS 9f9a3dc41), diff f9665a5bd...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: shown_as_at is now the day asked (asOf) instead of the day capped to the shop today; same key, same string date type, no new key, no status, error or auth change; the heading-day rule is an accounting-area behaviour the member meant (Xero, QuickBooks, MYOB heading), flagged to the coordinator.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12252,7 +12252,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 793,
-   "hash": "4d5d4cfaceb56f36",
+   "hash": "c86196b8310c4394",
    "does": "An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.",
    "errors": {
     "count": 2,
@@ -12361,7 +12361,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff 636f5d254..HEAD read for this route: cireds readability only, the transaction callback parameter h renamed handle at every use (5 lines), nothing else; same reads, same answer, doors, statuses and output shape; 13 machine columns true, stage2.",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign (AUDBS 9f9a3dc41), diff f9665a5bd...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: shown_as_at is now the day asked (asOf) instead of the day capped to the shop today; same key, same string date type, no new key, no status, error or auth change; the heading-day rule is an accounting-area behaviour the member meant (Xero, QuickBooks, MYOB heading), flagged to the coordinator.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
