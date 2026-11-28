@@ -13,7 +13,7 @@ let checks = 0;
 const ok = (name, got, want) => { assert.deepStrictEqual(got, want, name); checks++; console.log('   ok   ' + name); };
 const CHIT = '0a1b2c3d-0000-4000-8000-000000000001';
 const handle = (rows) => ({ query: async () => ({ rows }) });
-const PACK = { tax: { badDebt: { head: 'gst' } }, taxLedgers: { gst: { output: 'gst_collected', input: 'gst_paid' } } };
+const PACK = { tax: { scheme: 'GST', badDebt: { head: 'gst' } }, taxLedgers: { gst: { output: 'gst_collected', input: 'gst_paid' } } };
 const NO_ROW = { tax: {}, taxLedgers: PACK.taxLedgers };
 (async () => {
   const h99 = handle([{ chit_id: CHIT, role: 'gst_collected', minor: '-900' }, { chit_id: CHIT, role: 'debtors', minor: '9900' }]);

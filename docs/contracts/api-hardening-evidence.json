@@ -1724,6 +1724,9 @@
   "POST /api/books/evidence": {
    "strict_input": true
   },
+  "POST /api/books/write-off/recover": {
+   "strict_input": true
+  },
   "POST /api/flags/query": {
    "strict_input": true
   },

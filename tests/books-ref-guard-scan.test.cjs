@@ -46,10 +46,14 @@ function periodFindings(periodText) {
   }
   return out;
 }
-const routesText = fs.readFileSync(path.join(API, 'routes', 'books.js'), 'utf8'), periodText = fs.readFileSync(path.join(API, 'lib', 'books-period.js'), 'utf8');
+const routesText = ['books.js', 'books-write-off-recover.js'].map((name) => fs.readFileSync(path.join(API, 'routes', name), 'utf8')).join('
+'), /* ACC-418: the recovery door is its own file */ periodText = fs.readFileSync(path.join(API, 'lib', 'books-period.js'), 'utf8');
 ok('every route in routes/books.js that reads a client_ref is guarded or exempt with a reason', unguardedRoutes(routesText).length === 0, 'unguarded: ' + unguardedRoutes(routesText).join(', '));
 ok('the scan SEES the ref doors (guards and exemptions are not vacuous)', routeBlocks(routesText).filter((b) => /clientRef\(|client_ref/.test(b.text)).length >= 5);
-ok('mutation: the write-off door without its guard is reported', unguardedRoutes(routesText.replace(/guardOf\(entity, writeOff\)/, 'null')).indexOf('post /write-off') >= 0);
+/* ACC-418: both doors guard the event the engine will see (found.event, after the invoice's own GST is added) */
+const unguarded = unguardedRoutes(routesText.replace(/guardOf\(entity, found\.event\)/g, 'null'));
+ok('mutation: the write-off door without its guard is reported', unguarded.indexOf('post /write-off') >= 0);
+ok('mutation: the write-off recovery door without its guard is reported', unguarded.indexOf('post /write-off/recover') >= 0);
 const found = periodFindings(periodText);
 ok('postOwn guards by default (natural opts out)', found.defaultGuarded);
 ok('only the natural-key doors opt out of the guard', JSON.stringify(found.naturalIn.sort()) === JSON.stringify(NATURAL.slice().sort()), 'natural: ' + found.naturalIn.join(', '));

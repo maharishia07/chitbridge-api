@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 701,
+  "routes": 702,
   "no_does": 1,
   "not_started": 0,
   "partial": 0,
-  "meets": 701,
+  "meets": 702,
   "columns": {
    "strict_input": {
-    "applies": 360,
+    "applies": 361,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 701,
+    "applies": 702,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,7 +29,7 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 701,
+    "applies": 702,
     "failing": 0
    }
   },
@@ -43,32 +43,32 @@
     "failing": 1
    },
    "rate_limited": {
-    "applies": 701,
-    "failing": 519
+    "applies": 702,
+    "failing": 520
    },
    "role_matrix": {
-    "applies": 701,
-    "failing": 637
+    "applies": 702,
+    "failing": 638
    },
    "junk_fuzz": {
-    "applies": 701,
-    "failing": 60
+    "applies": 702,
+    "failing": 61
    },
    "resource_cap": {
-    "applies": 701,
+    "applies": 702,
     "failing": 0
    },
    "audit_logged": {
-    "applies": 408,
-    "failing": 354
+    "applies": 409,
+    "failing": 355
    },
    "stale_write_refused": {
     "applies": 64,
     "failing": 62
    },
    "documented_example": {
-    "applies": 701,
-    "failing": 699
+    "applies": 702,
+    "failing": 700
    },
    "paged_read": {
     "applies": 78,
@@ -55185,7 +55185,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1826,
-   "hash": "0d97b5dac25475ba",
+   "hash": "e8789ed58ca7d707",
    "does": "A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -55298,7 +55298,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-02/AX-F-07: a zero or negative write-off is a worded 400 BOOKS_BAD_REQUEST, and the posting passes the event-guard so a reused client_ref with a changed body is 409; both registered and declared; same shape.",
+    "signed_off_by_date": "cb-api 2026-11-28 batch 1138 re-sign (ACC-418, api #1424), diff origin/main...HEAD read for the route (handler, chain, operation, contract), 13 machine columns true, stage2: the handler now reads the named invoice through lib/books-bad-debt adjusted and hands the engine its own GST figures (the engine splits; the route computes nothing); the answer keys are unchanged (note may carry one more sentence: no GST was adjusted); statuses, validation chain, owner-only gate and client_ref guard unchanged; additive.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55306,6 +55306,139 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 4,
+    "wire": null,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
+   "key": "POST /api/books/write-off/recover",
+   "method": "POST",
+   "path": "/api/books/write-off/recover",
+   "owner_area": "books-write-off-recover",
+   "owner_agent": "cb-accounting",
+   "file": "routes/books-write-off-recover.js",
+   "line": 31,
+   "hash": "5b51f2ed774a8267",
+   "does": "An amount a written-off customer paid later and where it came in -> we post the recovery once per client_ref, the GST given back as the engine splits it -> the entry (owner only).",
+   "errors": {
+    "count": 1,
+    "statuses": [
+     400,
+     401,
+     403,
+     404,
+     409,
+     422,
+     500
+    ],
+    "codes": [
+     "OWNER_ONLY"
+    ]
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    403,
+    404,
+    409,
+    422,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false,
+    "role_matrix": false,
+    "junk_fuzz": false,
+    "resource_cap": true,
+    "audit_logged": false,
+    "stale_write_refused": true,
+    "documented_example": false,
+    "paged_read": true
+   },
+   "reported_applies": {
+    "bfla_role_check": false,
+    "parameterised_query": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
+    "resource_cap": true,
+    "audit_logged": true,
+    "stale_write_refused": false,
+    "documented_example": true,
+    "paged_read": false
+   },
+   "reported_causes": {
+    "resource_cap": [],
+    "paged_read": [],
+    "stale_write_refused_na": [
+     "create"
+    ]
+   },
+   "reported_facts": {
+    "paged_read": {
+     "kind": "n/a",
+     "mode": "none",
+     "default": null,
+     "max": null,
+     "unasked": "n/a",
+     "via": null
+    }
+   },
+   "human": {
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-28 batch 1138 first sign-off (new route, ACC-418), whole route read: routes/books-write-off-recover.js POST /write-off/recover (own file, mounted beside books.js; chain auth, owner, on, schemaValidate; same strict amount reader as the write-off door, one error shape, owner-only enforced HERE), lib/books-contract POST /write-off/recover (body amount_minor, amount, reason, into, date, against_ref, client_ref; 200 the entry; declared 400,401,403,404,409,422,500), 13 machine columns true, sweep scenes (posted, replayed, amount unnamed 400, reused ref 409) frozen in api-legacy, shape closed in api-output-shapes, idempotent by source_ref wr:<client_ref> + the event guard (409 EVENT_REF_REUSED on a changed amount), every code registered with its shopkeeper sentence and hint (BOOKS_BAD_REQUEST, BOOKS_REFUSED, EVENT_REF_REUSED, LEDGER_OFF, OWNER_ONLY), FIELDS.md rows added; the route posts the engine event write_off_recovery and computes no GST (tests/acc418-write-off-recover.test.cjs: 99.00 gives 90.00 + 9.00, 49.50 gives 45.00 + 4.50, run on engines #165; the figure checks wait for the adoption on an older engine); business rules are cb-accounting, not signed here.",
+    "lifecycle": "stable"
+   },
+   "status": "meets standard",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
     "wire": null,
     "screens": []
    },

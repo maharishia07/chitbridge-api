@@ -3028,6 +3028,9 @@
   "POST /api/books/evidence": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
+  },
+  "POST /api/books/write-off/recover": {
+   "output_allowlist": true
   }
  },
  "junk_fuzz": {

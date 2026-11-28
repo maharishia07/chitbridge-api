@@ -68,7 +68,7 @@ Object.entries(AREAS).forEach(([area, mount]) => {
     }
   });
 });
-check('the four areas declare 127 routes (120 + GET /books/depreciation/schedule + POST /books/year/:fy/reopen + POST /books/periods/:fy/:p/reopen, 9cfea0121; + GET and POST /books/backfill, walks P-F-02 and S2-F-07; + POST /books/events/batch, SPD bank Add; + POST /books/evidence, FW2-03 1132)', total === 127, total + ' routes');
+check('the four areas declare 128 routes (120 + GET /books/depreciation/schedule + POST /books/year/:fy/reopen + POST /books/periods/:fy/:p/reopen, 9cfea0121; + GET and POST /books/backfill, walks P-F-02 and S2-F-07; + POST /books/events/batch, SPD bank Add; + POST /books/evidence, FW2-03 1132; + POST /books/write-off/recover, ACC-418 1138)', total === 128, total + ' routes');
 check('a read-only seat is never declared for a write', Object.entries(AREAS).every(([area]) => Object.entries(require('../lib/' + area + '-contract').ROUTES).every(([key, row]) => key.startsWith('GET ') || row.seats.auditor !== 'read')));
 
 const evidence = JSON.parse(fs.readFileSync(EVIDENCE_FILE, 'utf8')).routes || {};
