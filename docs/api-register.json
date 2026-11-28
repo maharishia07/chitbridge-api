@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 703,
+  "partial": 1,
+  "meets": 702,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -9674,7 +9674,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 467,
-   "hash": "ceef096370c40217",
+   "hash": "3275cc0dfceca313",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
     "count": 1,
@@ -9788,10 +9788,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the closed success shape lists carried (object or null; set by the handler only for the retained-earnings account without a party: lib/books carriedLine, absent otherwise) added by hand: api-allowlist --from-recordings cannot run here; 13 columns true, no status or code change. All 13 machine columns read true on the register row.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3275cc0dfceca313"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
@@ -49307,7 +49308,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1311,
-   "hash": "b781a7e70f389295",
+   "hash": "f08571820898e41c",
    "does": "A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).",
    "errors": {
     "count": 3,
@@ -49423,7 +49424,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved with sign1129a's read of this route (WALK U U-F-01/02/03 bank-write seat, AM-F-04 STATEMENT_ALREADY_SIGNED 409, CURRENCY_MISMATCH 409, BOOKS_FIGURE_DIFFERS 409, 202 waiting when the period is held by a lock): status_codes was red because the 503 BOOKS_NOT_MIGRATED sits in the STATEMENT_FAULT_STATUS table, which the register cannot read: declaresStatuses([503]) added to the chain (a pass-through that refuses nothing); owner cb-finance for the figure rules, untouched.",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-28 PR#1456 stage2: diff read for lib/bank-rec-log.js unmatchedLinesRefused (called from appendStatement), lib/books-contract.js (rule maps BANK_LINES_UNMATCHED to the one coded 409; unmatched_lines added to the published body list, 409 already declared inline), routes/books.js comment, docs/ERROR-CODES.md and error-codes.json (BANK_LINES_UNMATCHED 409 with its shopkeeper sentence and next step). POST /api/books/bank/statements: new optional integer unmatched_lines, a count above 0 refused 409 in the one problem shape naming the count, negative refused 422, absent accepted (older web; HOLE named in the PR, owner finance); nothing stored on a refusal; success 201/202 answers, seats and gates unchanged; tests/ba-1129 covers 2, 1, 0 and -1; 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
