@@ -1,0 +1,12 @@
+{
+  "figure": "dues.party.balance (what one customer owes: the counter's per-customer balance and open bills)",
+  "owner": "lib/books-dues.js",
+  "owner_fn": "foldByParty",
+  "forbidden": ["foldDues"],
+  "allowed_elsewhere": [],
+  "covers": [
+    "The counter snapshot (routes/till.js) carries each customer's balance and open bills; the SQL (receivableBills) and the fold (foldByParty) live in books-dues.js beside the dues list. tests/one-figure-dues.test.cjs proves the party balance equals the dues engine's per-party outstanding on the same rows, and goes red when the receivable-only rule or the sum is changed.",
+    "The old name foldDues (the till's own fold) may not come back."
+  ],
+  "decided": "2026-11-28 drift exit RC10. A balance is the SUM of the party's receivable items; netting a receipt on account moves money between a party's bills, never between parties, so the counter's balance and the list's balance are one number."
+}

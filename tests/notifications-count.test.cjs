@@ -67,7 +67,7 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
 
   await ita('it answers the number and nothing else — no rows travel', async () => {
     const r = await call({ count: '1' });
-    assert.deepStrictEqual(Object.keys(r.body).sort(), ['count', 'seen_at', 'total']);
+    assert.deepStrictEqual(Object.keys(r.body).sort(), ['asks', 'count', 'seen_at', 'total']);
     assert.strictEqual(r.body.count, 3);
   });
 

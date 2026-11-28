@@ -17534,35 +17534,24 @@ function lineKey(item_id, mods){ return CBVariant.keyOf(item_id, mods); }
 function addItem(i, qty, mods){
   var n = Number(qty); if (!(n > 0)) n = 1;
   var key = lineKey(i.item_id, mods);
-  /* ⚠️ MERGED ON THE KEY, not the product: two dosas ordered differently are two lines, and pressing the same
-     key twice with the same choices is still one line of two. */
+  /* ⚠️ MERGED ON THE KEY, not the product: two dosas ordered differently are two lines; the same key and choices twice is one line of two. */
   var have = CART.filter(function(c){ return (c.key || c.item_id) === key; })[0];
   if (have) have.qty = r2(have.qty + n);
-  /* ⚠️ mrp TRAVELS WITH THE LINE (2026-09-10). The printed bill has to show it beside the rate — an Indian retail
-     invoice states MRP per item, and without it a customer cannot see what the price is a discount FROM. It is
-     copied at the moment of billing rather than looked up later: a bill is what was true when it was made. */
+  /* ⚠️ mrp TRAVELS WITH THE LINE (2026-09-10): the printed bill shows it beside the rate (an Indian retail invoice states MRP per item), copied at billing, never looked up later. */
   else CART.push({ key:key, item_id:i.item_id, name:i.name, unit:i.unit||'piece',
-                   /* ⚠️ THE CHOICES MOVE THE PRICE, and the moved price is what the line bills at — modAdd is
-                      added once here rather than being re-derived on every repaint, so a bill is what was true
-                      when it was made (the same rule mrp follows below). */
+                   /* ⚠️ THE CHOICES MOVE THE PRICE: modAdd is added once here, not re-derived on every repaint (the same rule mrp follows). */
                    price:rmoney((Number(i.price)||0) + modAdd(mods)), qty:n, hsn:i.hsn||null,
+                   /* ⭐ CAT-352: THE PRICING STRUCTURE TRAVELS WITH THE LINE (routes/till.js itemPricingCopy); lineOf() asks CBPricing about the cart line, so a tiered product rang at list without it. */
+                   pricing_kind:i.pricing_kind||null, pricing_tiers:i.pricing_tiers||null, pricing_amount:i.pricing_amount, pricing_min:i.pricing_min, pricing_max:i.pricing_max, pricing_def_name:i.pricing_def_name||null, mod_add:rmoney(modAdd(mods)),
                    mods:(mods && mods.length ? mods : null),
                    mrp:(Number(i.mrp) > 0 ? Number(i.mrp) : null),
                    /* ⭐ carried on the LINE as well as the bill: a reprint has to show which item needed it */
                    age:ageOf(i) || null,
-                   /**
-                    * ⭐⭐⭐ WHICH STATION MAKES IT, COPIED ONTO THE LINE ([TILL-178b]). The kitchen screen reads
-                    * lines, not products — and looking the product up later would be looking it up in a catalogue
-                    * that may have been refreshed since, which is the same argument mrp and age make above.
-                    * ⚠️ A shop with no stations leaves this null and nothing anywhere changes: one kitchen sees
-                    * everything, which is what a queue with no station filter already does.
-                    * [[feedback-the-data-decides-not-the-trade]]
-                    */
+                   /* ⭐⭐⭐ WHICH STATION MAKES IT, COPIED ONTO THE LINE ([TILL-178b]): the kitchen screen reads lines, not products (same argument as mrp and age). ⚠️ No stations = null, nothing changes: one kitchen sees everything. [[feedback-the-data-decides-not-the-trade]] */
                    station:i.station || null,
                    item_data:Object.assign({ name:i.name }, taxInputOf(i)) });
   /* ⭐ NO TAX RATE IS SAID WHERE IT IS SOLD (BF1), not found on the slip afterwards. The bill also carries the warning (billWarnHTML). */
-  /* ⚠️ M42 (walk 2026-10-10): this also wrote the footer line, which outlived the bill — after Park it still said
-     "Masala Dosa has no tax rate" over an empty bill. The bill's own row (billWarnHTML) says it, and clears with the bill. */
+  /* ⚠️ M42 (walk 2026-10-10): the footer line outlived the bill (after Park it still said "Masala Dosa has no tax rate"); the bill's own row (billWarnHTML) says it and clears with the bill. */
 }
 /* ⚠️ NEVER REPAINT FROM INSIDE THE EVENT THAT CAUSED IT. Rebuilding the bill while the browser is still finishing the blur behind a
    quantity change throws "the node to be removed is no longer a child of this node" — and the bill silently stops updating. */
@@ -18395,17 +18384,36 @@ function pricedAt(i, qty){
       pricing_def_name: i.pricing_def_name, price: list }, qty, list);
   } catch (_) { return { amount: list, kind: null, why: 'list price', tier: null, violation: null, list: list }; }
 }
+/** ⭐ CAT-340: a quantity break is the ITEM's (6 navy + 6 teal = 12): summed over the bill's lines of that product; a line not on the bill prices alone. */
+function itemQty(c){
+  var q = Number(c.qty) || 0;
+  return CART.indexOf(c) < 0 ? q : CART.reduce(function(t, x){ return String(x.item_id) === String(c.item_id) ? t + (Number(x.qty) || 0) : t; }, 0);
+}
+/** ⭐ CAT-347: THE VIEWER'S GROUPS from the customer chosen on the bill — the names lib/customer-groups.groupsOf builds ('customer:<id>', the segment, 'group:<name>'); a walk-in gets none. */
+function custGroupsNow(){
+  var el = document.getElementById('cname'), name = el ? String(el.value || '').trim().toLowerCase() : '', out = [];
+  var cust = name && ((S && S.customers) || []).filter(function(x){ return String(x.name || '').toLowerCase() === name; })[0];
+  if (!cust) return out; if (cust.identity_id) out.push('customer:' + cust.identity_id); if (cust.segment) out.push(String(cust.segment));
+  (Array.isArray(cust.groups) ? cust.groups : []).forEach(function(g){ out.push('group:' + g); });
+  return out;
+}
+/* ⚠️⚠️ THE PRICED UNIT, NOT THE LIST PRICE: a tiered product billed at list here while the storefront re-priced it. The choices' add-on (modAdd, added once at addItem) sits on top of a break or a fixed price. */
+function pricedUnitOf(c){
+  var pr = pricedAt(c, itemQty(c));
+  return (pr && (pr.tier || pr.kind === 'fixed') && Number(c.mod_add) > 0) ? Object.assign({}, pr, { amount: rmoney((Number(pr.amount) || 0) + Number(c.mod_add)) }) : pr;
+}
+/** the category names a line carries for the offer engine: the product's own (item_data) first, else the cart row's */
+function lineCategoriesOf(c, d){
+  var category = d.category || c.category;
+  return category ? [String(category)] : [];
+}
 function lineOf(c, n){
-  var d = c.item_data || {};
-  /* ⚠️⚠️ THE PRICED UNIT, NOT THE LIST PRICE. This is the first step of the line and the counter used to skip it,
-     so a tiered product billed at the list price here while the storefront re-priced it — the same goods at two
-     prices depending which door the customer came through. */
-  var pr = pricedAt(c, Number(c.qty) || 0);
+  var d = c.item_data || {}, pr = pricedUnitOf(c);
   return { key: (n == null ? (c.key || c.item_id) : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
            name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(pr.amount) || 0,
            priced: pr,
            category: d.category || c.category || null,
-           categories: (d.category || c.category) ? [String(d.category || c.category)] : [],
+           categories: lineCategoriesOf(c, d),
            /* a product the shop has taken OUT of an offer: item_data.offers_excluded, carried as the engine expects it */
            excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [] };
 }
@@ -18422,7 +18430,7 @@ function price(){
   var lines = CART.map(function(c){ return lineOf(c); });
   var ev = null;
   try { if (window.CBOffers && S && (S.offers||[]).length)
-    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:shopCur(), now:new Date().toISOString() } }); } catch(_){ ev = null; }
+    ev = CBOffers.evaluate({ lines:lines, offers:S.offers, ctx:{ currency:shopCur(), now:new Date().toISOString(), customer_groups:custGroupsNow() } }); } catch(_){ ev = null; }
   /* ⭐ kept for the totals, so "Saved" can name what it is made of rather than being a lump nobody can check */
   EV = ev;
   CART.forEach(function(c, n){ priceCartLine(c, n, lines, ev); });
@@ -18433,18 +18441,8 @@ function price(){
   if (inPlace) { for (var n = 0; n < CART.length && inPlace; n++) inPlace = paintCartRow(n); }
   if (!inPlace) paintCart();
   paintTotals();
-  /**
-   * ⚠️⚠️ THE KEYS CARRY THE COUNT TOO, so they have to be redrawn with the bill. Athi, 2026-09-18: *"when i
-   * touch the quick key, the item is coming in the screen, again touching count increases, but not on the
-   * image or quick key? when i move to the next item, that count shows the final one."* Exactly right: the
-   * badge is built by paintQuick() from the cart, and price() repainted the cart and the totals and left the
-   * keys alone — so the number only caught up when something ELSE happened to redraw them (choosing another
-   * row calls paintHits, which calls paintQuick). A key that has been pressed three times has to say three
-   * while the customer is still standing there.
-   * ⚠️ The library draws the badge, not this line — one renderer, so a tile style that shows the count
-   * differently keeps doing so. paintHits() already repaints the keys on every keystroke, so this costs
-   * nothing new.
-   */
+  /* ⚠️⚠️ THE KEYS CARRY THE COUNT TOO, so they are redrawn with the bill (Athi, 2026-09-18: the quick key's count lagged one touch behind). The library draws the badge, not this line — one renderer;
+     paintHits() already repaints the keys on every keystroke, so this costs nothing new. */
   try { paintQuick(); } catch (e) { cbQuiet('price:1', e); }
   /**
    * ⭐⭐⭐ R1 · THE ONE PLACE THE OPEN BILL IS KEPT. Every change to the lines ends here — addItem, setQty,

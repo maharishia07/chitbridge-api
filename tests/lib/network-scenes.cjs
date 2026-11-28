@@ -72,6 +72,12 @@ function extras(tools) {
     X('request-made', 'POST ' + at('/connections'), 200, { body: { childId: NODE.c }, setup: world() }),
     X('request-by-handle', 'POST ' + at('/connections'), 200, { body: { childHandle: 'shop-a.c' }, setup: world() }),
     N('request-body-a-list', 'POST ' + at('/connections'), 400, { body: [], setup: world() }),
+    /* firm-connect-1138: the owner's list of asks and the invitation to a firm not on ChitBridge yet (mail dormant offline: sent false, said in words, still a 200) */
+    N('asks-listed', 'GET ' + at('/asks'), 200, { setup: world() }),
+    N('firm-invite-not-delivered', 'POST ' + at('/firm-invites'), 200, { body: { email: 'firm@example.com' }, setup: world() }),
+    N('firm-invite-db-fails', 'POST ' + at('/firm-invites'), 500, { body: { email: 'firm2@example.com' }, setup: failing }),
+    N('firm-invite-bad-address', 'POST ' + at('/firm-invites'), 400, { body: { email: 'not-an-address' }, setup: world() }),
+    N('firm-invite-extra-key', 'POST ' + at('/firm-invites'), 400, { body: { email: 'firm@example.com', note: 'hello' }, setup: world() }),
     X('approve-unknown', 'POST ' + at('/connections/:id/approve'), 404, { url: edgeUrl('approve'), body: {}, setup: world() }),
     X('approve-stranger', 'POST ' + at('/connections/:id/approve'), 404, { url: edgeUrl('approve'), body: {}, setup: world(ASKED, { who: STRANGER }) }),
     X('approve-by-the-asker', 'POST ' + at('/connections/:id/approve'), 403, { url: edgeUrl('approve'), body: {}, setup: world(ASKED) }),

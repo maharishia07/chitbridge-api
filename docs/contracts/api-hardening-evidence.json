@@ -32,9 +32,6 @@
   "GET /api/entities/header": {
    "output_allowlist": true
   },
-  "GET /api/entities/sides": {
-   "output_allowlist": true
-  },
   "PATCH /api/entities/me/prefs/:kind": {
    "strict_input": true,
    "output_allowlist": true
@@ -1161,6 +1158,13 @@
   },
   "POST /api/network/connections": {
    "strict_input": true
+  },
+  "GET /api/network/asks": {
+   "output_allowlist": true
+  },
+  "POST /api/network/firm-invites": {
+   "strict_input": true,
+   "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
    "strict_input": true,

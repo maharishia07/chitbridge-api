@@ -355,7 +355,7 @@ const INFRA_LIBS = [
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
   'books-reconcile.js',
-  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
+  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'bank-pay-needs.js', /* BB-P1-3: a bank line to a party with no account or bill is asked: store-side door, no engine logic */ 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js', 'books-locked-wait.js', 'books-waiting-row.js', 'books-bill-order.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
@@ -456,11 +456,11 @@ const INFRA_LIBS = [
   'channels.js',           // channel binding lookup — plumbing for an inbound number
   'cost.js',               // arithmetic over line costs
   'cost-view.js',          // RAIL-146: what a cost-blind co-assist may READ of a chit — an answer-side filter over the shop's own permission, never a rule about what the chit means
-  'dues-view.js',          // RAIL-146i: what a cost-blind co-assist may READ of a party's dues (finance's R1-R6) — the same answer-side filter; the figures stay the books', nothing computed
+  'money-seat.js', 'dues-view.js', // money-seat: drift 19b/35a, the one lazy "does the books gate refuse this seat" question; dues-view: RAIL-146i: what a cost-blind co-assist may READ of a party's dues (finance's R1-R6) — the same answer-side filter; the figures stay the books', nothing computed
   'cost-write.js',         // RAIL-147: what a cost-blind co-assist may WRITE on a chit (the amend and reprice doors) — a gate over the shop's own permission, never a rule about what the chit means
   'folder-rules.js',       // filing rules evaluation — a router, not a rule-maker
   'people.js',             // P1: arranges what routes/actors.js and lib/access.js already decide into the Employees list — greys, decides nothing new
-  'owner.js',              // is this request the owner — one test for every owner-only switch
+  'owner.js', 'seat-abilities.js', // is this request the owner — one test for every owner-only switch · what a grant's text may promise beside the decision (UX-222)
   'product-categories.js', // QA-130: add or remove a category on a product as a set operation (nothing computed; the ids and names the single attach writes)
   'reference-store-lists.js', // CAT-124: which entity is the store of which starter list, and the rows read back for the Product Lab card (a read, nothing computed)
   'sellable-price.js',     // when a stored price cannot be sold (unset or negative): the one rule the order refusal and the till snapshot both read (CAT-318, CAT-324)
@@ -607,7 +607,7 @@ const ENGINE_OTHER = [
   'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js', 'country-setup-merge.js', 'country-setup-clean.js', 'csv-decisions.js', 'books-hooks-use.js', 'profile-payee.js', 'work-unbilled.js', /* batch 1126 size splits: part files of country-setup · books-hooks · profile · work-rows - parts of infra files, no rule of an engine */
-  'books-advice-in.js',       /* B-F-17: a received payment advice read as my receipt - split from books-hooks.js, the chit decides, the posting is recordChitPayment; infra, no rule of an engine */
+  'me-shop.js', 'party-phone.js', 'lead-may.js', 'books-advice-in.js', /* drift display 29/35b/21: me-shop, party-phone, lead-may are views over existing decisions, no engine rule; */ /* B-F-17: a received payment advice read as my receipt - split from books-hooks.js, the chit decides, the posting is recordChitPayment; infra, no rule of an engine */
   'books-moved-role.js',      /* F-66 (batch 1126): a ledger role handed back when the pack moved its code - chart bookkeeping of books.js, the pack's rule stays in the engine */
   'consent-counts.js',        /* A-F-58: the one count of who agreed to offers, beside consent-standing.js - rows and SQL, no money or tax */
   'country-asks.js',          /* AE-F-03: the questions a pack puts at setup and the answers kept per shop - beside country-setup.js, the pack decides which questions exist */

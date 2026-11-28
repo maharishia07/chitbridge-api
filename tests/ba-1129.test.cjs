@@ -71,6 +71,16 @@ const { check, world } = lab;
   check('BA-F-07 the same bank and books with 2,938.64 of listed items add up: stored, tied', a.status === 201 && stored() === 1 && tiedStored() === true, [a.status, a.text.slice(0, 200)]);
   a = await play('POST', '/api/books/bank/statements', Object.assign({}, STMT, { closing_bank_minor: 111111, closing_books_minor: 111111, difference_minor: 0 }));
   check('BA-F-07 equal figures, no items, difference 0: stored, tied', a.status === 201 && stored() === 1 && tiedStored() === true, [a.status, a.text.slice(0, 160)]);
+  /* ONE-FIGURE sign-off (28 Nov, walk A06): the compensating pair. Bank 1,111.11 = books 1,111.11, difference 0 would sign off; two statement lines still unmatched must refuse it */
+  const EQUAL = Object.assign({}, STMT, { closing_bank_minor: 111111, closing_books_minor: 111111, difference_minor: 0 });
+  a = await play('POST', '/api/books/bank/statements', Object.assign({}, EQUAL, { unmatched_lines: 2 }));
+  check('A06 two statement lines unmatched: refused 409 BANK_LINES_UNMATCHED in words with the count, nothing stored, though the figures agree', a.status === 409 && a.json.code === 'BANK_LINES_UNMATCHED' && /2 statement lines are neither matched/.test(a.text) && stored() === 0, [a.status, a.text.slice(0, 220)]);
+  a = await play('POST', '/api/books/bank/statements', Object.assign({}, EQUAL, { unmatched_lines: 1 }));
+  check('A06 one line says "1 statement line is" (the words follow the count)', a.status === 409 && /1 statement line is neither/.test(a.text) && stored() === 0, [a.status, a.text.slice(0, 160)]);
+  a = await play('POST', '/api/books/bank/statements', Object.assign({}, EQUAL, { unmatched_lines: 0 }));
+  check('A06 every line matched or explained (0): signed off, tied', a.status === 201 && stored() === 1 && tiedStored() === true, [a.status, a.text.slice(0, 160)]);
+  a = await play('POST', '/api/books/bank/statements', Object.assign({}, EQUAL, { unmatched_lines: -1 }));
+  check('A06 a negative count is refused, nothing stored', a.status === 422 && stored() === 0, [a.status, a.text.slice(0, 160)]);
   a = await play('POST', '/api/books/bank/statements', Object.assign({}, STMT, { closing_bank_minor: 110000, closing_books_minor: 111111, difference_minor: -1111 }));
   check('BA-F-07 a true unexplained remainder (bank 1,100.00, books 1,111.11, -11.11) is stored and NOT tied', a.status === 201 && stored() === 1 && tiedStored() === false, [a.status, a.text.slice(0, 160)]);
   a = await play('POST', '/api/books/bank/statements', Object.assign({}, STMT, { period_to: '2099-12-31', closing_bank_minor: 111111, closing_books_minor: 111111, difference_minor: 0 }));

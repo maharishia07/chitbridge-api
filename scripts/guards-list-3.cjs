@@ -409,6 +409,7 @@ const GUARDS_PART = [
   'lib-leaf-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'lib-opening-bills.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'lib-period-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'split-1138-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
   'api-fuzz500.test.cjs', // api-fuzz500 (junk-fuzz lane): a NUL byte, a 3000-char handle, a 20 KB field, a bad date reach every route over a stand-in db and answer a Problem, never a 5xx
@@ -492,5 +493,7 @@ const GUARDS_PART = [
   'homespeed-plan-once.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'w4acc-bas-wages-boxes.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'cat353-offer-scope-save.test.cjs', // CAT-353: an offer with an unreadable scope is refused at save
+  'home-facts-network.test.cjs', // firm-connect-1138: the Home network card, owner only
+  'firm-connect-1138.test.cjs', // firm-connect-1138 (UX-215/216/220): owner gates, direction pin, caps, fixed invite, costs consent, visits, Home card, bell; its --mutants mode is a CI step
 ];
 module.exports = { GUARDS_PART };

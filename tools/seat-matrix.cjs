@@ -38,6 +38,7 @@ const passes = (req) => ({
   payOut: () => owner.isOwner(req) || 'money in' /* 22 Nov item 5: the accountant seat records money in only */,
   openingGate: () => owner.isOwner(req) || 'unless the owner asks to approve',
   costBlindStops: () => owner.isOwner(req) || (req.identity && req.identity.can_see_costs === true) || 'needs the Sees costs flag',
+  tillSeller: () => require('../lib/seat-abilities').maySell(req) /* UX-226 A5: the till's snapshot door */,
   noKey: () => true,
   on: () => true,
   onDues: () => true,
@@ -119,7 +120,7 @@ function render() {
   out.push('', rows.length + " routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.", '');
   return out.join('\n');
 }
-module.exports = { build, render, chainOf, SEATS };
+module.exports = { build, render, chainOf, cellOf, SEATS };
 
 if (require.main === module) {
   const file = path.join(root, 'docs', 'SEAT-MATRIX.md');

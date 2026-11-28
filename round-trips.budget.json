@@ -1863,7 +1863,7 @@
     "GET /api/notifications": {
       "file": "notifications.js",
       "trips": 3,
-      "wire": 9,
+      "wire": 10,
       "fired": true,
       "status": 200
     },
@@ -5835,6 +5835,32 @@
       "fired": true,
       "status": 400,
       "why": "red1129: placeholder = the single door row; the batch posts up to 100 lines through the same writer (trips grow per line, measured on sit-in by measure.cjs MODE=batch)"
+    },
+    "GET /api/network/asks": {
+      "file": "network.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "static read 2026-11-28: one read of the waiting requests (lib/connect-asks), firm-connect-1138",
+      "registered_only": true,
+      "awaiting_client": {
+        "pr": "web firm-connect-1138 (the Network card in Who can see my books)",
+        "since": "2026-11-28"
+      }
+    },
+    "POST /api/network/firm-invites": {
+      "file": "network.js",
+      "trips": 1,
+      "wire": 1,
+      "fired": true,
+      "status": 200,
+      "basis": "static read 2026-11-28: one identities read for the inviter then the mail send; the offline stub cannot reach 200 (schema 400), firm-connect-1138",
+      "registered_only": true,
+      "awaiting_client": {
+        "pr": "web firm-connect-1138 (the Network card in Who can see my books)",
+        "since": "2026-11-28"
+      }
     }
   }
 }

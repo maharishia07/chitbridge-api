@@ -22,6 +22,10 @@ const GUARDS_PART = [
   'lv12-ai-skill-prototype-names.test.cjs', // LV-12: constructor / __proto__ / prototype are not skills (getSkill + POST /ai-draft, real route)
   'lv13-assist-container-gates.test.cjs', // LV-13: PUT /assist/container and /region-override are the owner's or a platform operator's; an ownerless container's override is the platform's
   'ak-f02-seat-gates.test.cjs', // AK-F-02: manager hat runs pack, FX and pays out; the counter seat records money in only (real Express, in-memory ledger)
+  'seat-home.test.cjs', // UX-221: what /me tells Home to hide = the gates' answers
+  'ux226a5-till-door.test.cjs', // UX-226 A5: the till's snapshot door refuses the Bookkeeper seat
+  'seat-grant-text.test.cjs', // UX-222: a grant's promised abilities = the gates' answers (the text is written from the ability names)
+  'ux217-me-shop-facts.test.cjs', // UX-217: a seat's GET /me carries the shop's name, tax number and address beside its own row
   'ak-f03-reopen-hard-month.test.cjs', // AK-F-03: the owner opens the newest hard-locked month with a reason (unlock and reopen), one audit row; an older month stays shut
   'identities-column-grant.test.cjs', // SEC-186 (21 Nov): every identities column added after b875 is granted to cb_app in the same or a later migration (b900 broke sign-in on a column-revoked DB)
   'b911-signin-link-bind.test.cjs', // GF-platform-01 M2 (22 Nov): b911 binds a provider link's identity to its entity; DB proof tests/b911-signin-link-bind.proof.sql
@@ -52,6 +56,9 @@ const GUARDS_PART = [
   'backup-guard.test.cjs', // ⭐⭐⭐ BKP1: no workflow uploads a plaintext dump; backup.sh refuses without a passphrase; the nightly is never in this public repo
   'pathfix-grants-list-columns.test.cjs', // wave 7b: GET /api/books-grants names its identities columns (no to_jsonb(i), no schema probe)
   'identities-no-whole-row.test.cjs', // SEC-186: no whole-row identities read (row JSON, star selects) - cb_app has column-level SELECT only
+  'drift-29-me-shop-row.test.cjs', // DRIFT 29: /me gives an actor the SHOP's clock/currency (parent row), not the person's
+  'drift-35b-party-phone.test.cjs', // DRIFT 35b: one party phone rule (party-fields.phoneOf), CRM list = customer list
+  'drift-21-lead-may.test.cjs', // DRIFT 21: lead.may carries the seat write verdict (viewer greyed, not offered then refused)
   'spin-scripts.test.cjs', // ⭐⭐ HX2: the cloud spin scripts — one env list (HOSTING.md), tagged, India by default, no secret printed
   'hosting-neutral.test.cjs', // ⭐⭐ HX1: the DB password goes only to configured URLs; SigV4 = AWS's examples; no platform host in shipped code
   'records-keeping.test.cjs', // ⭐⭐ CO3: the books' edit trail cannot be disabled (Rule 3(1)); no copy expires inside the 9-year records floor
@@ -171,6 +178,10 @@ const GUARDS_PART = [
   'acc-206-readers.test.cjs', // ACC-206 C2-C4: every reader of a bill total is built from counterBill.billTotalSql / pickOf; the beckn quote says 189 for the pre-2-Nov invoice
   'money-reader-scan.test.cjs', // ACC-206 G1: no raw read of the bill total outside the one pick; each named exception carries its reason (SCAN_SELFTEST=1 proves it bites)
   'one-reader-tables.test.cjs', // DRIFT exit bar 2+3 (28 Nov): one owning module per guarded table (docs/one-reader/<table>.json); SQL outside it fails unless dated waiver; raw state predicate never (SCAN_SELFTEST=1 bites)
+  'one-figure-cash.test.cjs', // ONE-FIGURE RC9: which ledgers ARE cash is typed once (lib/cash-roles.js); a second hand-typed list fails, mutation red
+  'one-figure.test.cjs', // ONE-FIGURE (28 Nov batch 1141): a guarded figure has ONE owning function (docs/one-figure/<figure>.json); a second reader of what a return leaves out fails (SCAN_SELFTEST=1 bites)
+  'one-figure-dues.test.cjs', // ONE-FIGURE RC10: owed/owing (Home card = dues page, golden hand-computed) and the counter's per-customer balance = the dues engine; mutations red
+  'one-figure-return-reading.test.cjs', // ONE-FIGURE RC1: BAS/VAT201 box = its drill = Ledger page movement minus the labelled left-out line, AU + AE, set-off fixture + mutation red
   'books-grant-list-gate-drift.test.cjs', // UX-218: the owner's list and the gate answer one grant state (stateOf); no second state rule in list()
   'reward-walkins-one-reader.test.cjs', // DRIFT cluster 5 (27 Nov): the walk-in list quotes what the till spends (reward-store.walkIns/foldOf); no SQL on reward_ledger outside reward-store (SCAN_SELFTEST=1 proves it bites)
   'cost-margin-basis.test.cjs', // ACC-206 C1: the owner's chit margin is on the taxable value, one case per matrix column (tests/lib/bill-total-fixtures.cjs)
@@ -308,6 +319,7 @@ const GUARDS_PART = [
      id, its shape, its separator, whether it can be sent to, and where the rule lives. It exists because the
      grammar used to live only in one file’s comments, and a document nothing checks becomes fiction. */
   'namespace.test.cjs',
+  'o4-typed-signin.test.cjs', // ⭐ O4: staff sign-in shown as typed (name@shop), never the stored .br / .cr
   /* ⭐⭐ MINT a user id and RESOLVE one — every combination in one place (lib/mintuserid.js), every reading in
      another (lib/resolveuserid.js). § 0 holds the customer form byte-identical to what production already
      stores: one character of drift and every returning customer becomes a second identity. */
@@ -372,6 +384,8 @@ const GUARDS_PART = [
   'books-past-years.test.cjs', // past years: a closed year opens read-only, can_close_if_lodged, period.state (past-years lane)
   'books-lodged-later.test.cjs', // past years: returns_lodged on an already closed year records the declaration, repeat idempotent (past-years lane)
   'past-years-auditor-party.test.cjs', // past years: the auditor party sees the closed years
+  'books-party-netzero.test.cjs', // ⭐ BB-P1-3: a bank line to a named supplier is ONE entry (kind bank_expense_supplier): party kept, expense + GST split, supplier nets to nil, reversal keeps it; needs the engines branch with the kind (BOOKS_ENGINES_SRC)
+  'books-bank-pay-needs.test.cjs', // ⭐ BB-P1-3: a money-out bank line with no account and no bill is asked (needs which_account / which_bill), never posted on account
   'books-card-split.test.cjs', // ⭐ BB-04: a card settlement net of the acquirer's fee posts Dr bank · Dr bank charges · (Dr tax) · Cr card; refusals in words (needs the engines src: BOOKS_ENGINES_SRC or the sibling chitbridge-engines)
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
@@ -421,6 +435,8 @@ const GUARDS_PART = [
   'cat-251-reprice-tiers.test.cjs', // ⭐ MONEY W1 M5 (CAT-251): reprice from the catalogue asks the one price reader (services.priceLine), so a tier is honoured: 20 kg -> 80.00, 5 kg -> 100.00
   'fin-books-doors-strict.test.cjs', // ⭐ MONEY W1 M6 (FIN-54/60/79/82/83/84/86): the books' payment and opening doors read minor units, direction, dates, party ids strictly; supplier rows carry balance_words
   'fin-ledger-guards.test.cjs', // ⭐ MONEY W2 M7b (FIN-88/92/100, CAT-127): repeated or open bill ref refused, an opening resent without client_ref is a replay, a loan instalment cannot exceed what the loan owes, a month pack needs a locked month
+  'money-seat-guard.test.cjs', // ⭐ DRIFT 19b+35a: GET /kyb/risk amounts and GET /relationships/customers balances go through lib/money-seat.noMoney (the books' own gate); a new door to either fails
+  'rail-bill-due-date.test.cjs', // ⭐ ACC-new-4: a rail supplier bill keeps the sender's terms due date (one reader, termsDueDate); Bean 7 Aug aged d31_60 at 30 Sep
   'line-door-one-guard.test.cjs', // CTRY-134: one line-door guard (services.lineRefusal, widened: BAD_LINE and BAD_BOUND) on tax/compute, tax/rate, invoice/build, pricing/price, offers/evaluate
   'acc-311-journal-whole-minor.test.cjs', // ⭐ ACC-311: a manual journal entry with a fractional or over-ceiling minor amount is refused 422 BOOKS_REFUSED, nothing posted
   'acc-225-gstr1-b2cl.test.cjs', // ⭐ ACC-225: ONE GSTR-1 builder (the adopted gst-returns.gstr1): an inter-state B2C bill over ₹1 lakh (Notfn 12/2024) lands in Table 5 b2cl, under it in b2cs; the old limit before Aug 2024; a large B2C credit note in cdnur; no second builder in tax-lines
@@ -477,5 +493,6 @@ const GUARDS_PART = [
   'assist-strict-input.test.cjs', // S33: CB Assist and catalogue-source write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'offers-products-strict-input.test.cjs', // S33: products and network-offers write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
   'connectors-strict-input.test.cjs', // S33: connector cockpit and integrations write bodies refuse an unknown key by name and still take every key a caller sends (API-30 bulk pass)
+  'till-pricing-1135.test.cjs', // CAT-352/347/340: the counter rings a tier break (12 x 50.00 = 600.00, GST 54.55), per ITEM not per line, and passes the chosen customer's groups (regular 36.00, walk-in 40.00)
 ];
 module.exports = { GUARDS_PART };

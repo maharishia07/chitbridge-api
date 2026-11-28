@@ -32,7 +32,7 @@ const pageLimit = require('../lib/page-limit'); /* LIM2: the ONE pager — asked
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer
-const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
+const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter, sellsOnly } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
@@ -67,7 +67,7 @@ const lotfields = require('../lib/lotfields');
 const units = require('../lib/units');
 /* ⭐ BOOKS v2: is this shop's ledger on (the hooks' one cached read), and the ledger's one reader of a `date` column */
 const booksHooks = require('../lib/books-hooks');
-const booksYmd = require('../lib/books-engines').ymd;
+const Dues = require('../lib/books-dues'); /* ONE-FIGURE RC10: what each customer owes is read by books-dues, the counter only carries it */
 const variantEngine = require('../lib/variant.browser.js'); /* the same shape-guard the Modifiers tab authors through */
 const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
@@ -167,7 +167,7 @@ const { holdsStockOf } = require('../lib/holds-stock'); /* M127: does this shop 
  * finished body to a counter, or its allow-listed cut to a TV; takeSnapshot below reads the shop in the order its comments explain.
  */
 // @does Optional since time in -> we read the shop's products, customers, suppliers and stock for a counter to hold offline, or a trimmed cut for a screen -> the snapshot.
-router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
+router.get('/snapshot', auth, sellsOnly, ...checked('GET /snapshot'), async (req, res) => {
   try {
     const taken = await takeSnapshot(req);
     const answer = taken.screen ? screenView(taken.body) : taken.body;
@@ -468,7 +468,7 @@ const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM part
  */
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at, ${require('../lib/customer-groups').SEGMENT_SQL_BASE.replace(/cl\./g, 'c.')} AS segment,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -573,7 +573,7 @@ async function readDeclared(entity_id) {
 /** the live offers this shop is running — the same rows the storefront and the chit read; a shop with no offers bills fine */
 async function readLiveOffers(entity_id) {
   try {
-    const live = await catalogueView.liveOffers({ entity_id, withEntity, viewer: null, groups: [], all: false });
+    const live = await catalogueView.liveOffers({ entity_id, withEntity, viewer: null, groups: [], all: true });
     return Array.isArray(live) ? live : (live && live.offers) || [];
   } catch (e) {
     log.fellBack('till GET /snapshot: the read failed — carried on without it', e);
@@ -613,7 +613,7 @@ async function readCustomers(entity_id, ownRead) {
     const found = await ownRead('customers'); /* OWN.customers — the name and number are on identities, see customersRead */
     const booksOn = await readBooksOn(ownRead);
     const { dues, duesCut } = booksOn && found.rows.some((x) => x.has_party_item) ? await readDues(entity_id) : { dues: { rows: [] }, duesCut: false };
-    const owed = foldDues(dues.rows);
+    const owed = Dues.foldByParty(dues.rows);
     result.booksOn = booksOn;
     result.customers = found.rows.map(customerRow(owed, booksOn, duesCut));
   } catch (e) {
@@ -655,21 +655,7 @@ async function readDues(entity_id) {
   let dues = { rows: [] },
     duesCut = false; /* SEC-SMALL: a snapshot over the cap says unknown, never a short sum */
   try {
-    dues = await withEntity(entity_id, (db) =>
-      db.query(
-        `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
-                    MIN(due_date) FILTER (WHERE ref_kind = 'bill') AS due_date,
-                    MIN(doc_date) FILTER (WHERE ref_kind = 'bill') AS doc_date,
-                    COALESCE((array_agg(status ORDER BY item_id DESC) FILTER (WHERE status IN ('disputed', 'undisputed')))[1] = 'disputed', false) AS disputed
-               FROM party_item
-              WHERE entity_id = $1 AND side = 'receivable'
-              GROUP BY party_id, against_ref
-             HAVING SUM(amount_minor) <> 0
-              ORDER BY MIN(due_date) FILTER (WHERE ref_kind = 'bill') NULLS LAST, against_ref
-              LIMIT $2`,
-        [entity_id, DELTA_CAP + 1]
-      )
-    );
+    dues = await withEntity(entity_id, (db) => Dues.receivableBills(db, entity_id, DELTA_CAP + 1));
     if (dues.rows.length > DELTA_CAP) {
       duesCut = true;
       dues = { rows: [] };
@@ -683,26 +669,6 @@ async function readDues(entity_id) {
     log.warn('till.snapshot.dues', { entity_id, why: String(e && e.message) });
   }
   return { dues, duesCut };
-}
-
-/** the open bills of each party, folded: { party_id → { balance_minor, open_bills[] } } (a bill is listed only while it is owed) */
-function foldDues(rows) {
-  const owed = {};
-  for (const due of rows) {
-    const key = String(due.party_id),
-      mine = owed[key] || (owed[key] = { balance_minor: 0, open_bills: [] });
-    mine.balance_minor += Number(due.balance_minor) || 0;
-    if (Number(due.balance_minor) > 0)
-      mine.open_bills.push({
-        ref: due.against_ref,
-        balance_minor: Number(due.balance_minor),
-        /* ⚠️ `date` columns, read by the ledger's ONE date reader — toISOString() was the day before, east of UTC (critic M8) */
-        due_date: booksYmd(due.due_date),
-        date: booksYmd(due.doc_date),
-        disputed: !!due.disputed
-      });
-  }
-  return owed;
 }
 
 /** a number out of a text column, or null when it is blank or not a number */
@@ -724,7 +690,7 @@ function customerRow(owed, booksOn, duesCut) {
 
 /** who the customer is: id, name, phone, groups, the rail entity (a business on the rail) and the buyer's GSTIN */
 function customerCore(x) {
-  const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] };
+  const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] }; if (x.segment) out.segment = String(x.segment); /* CAT-347: the segment an offer's "Only for" may name, so the counter can pass the chosen customer's groups */
   /* ⭐ present only for a business on the rail — absent = the bill stays the shop's own record (never sent) */
   if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
   /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */
