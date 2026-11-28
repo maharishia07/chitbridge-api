@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 222 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 214 | `rows` | `crm.js` | still in them: |
-| 197 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 198 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 185 | `words` | `variant.browser.js` |  |
 | 166 | `withEntity` | `books-hooks.js` |  |
 | 151 | `answer` | `availability.js` | from March; then nearest. |
@@ -20,7 +20,7 @@ of file each thing is; this says what already does the job.
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 114 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 115 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 103 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
@@ -33,8 +33,8 @@ of file each thing is; this says what already does the job.
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
 | 88 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 87 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
+| 86 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
-| 85 | `till` | `home-facts.js` | undefined then, and JSON leaves an undefined key out. |
 | 85 | `schemaValidate` | `validate.js` | options.legacy(errors, req) → the frozen body for the first failure (the request is there for a body that coun |
 | 84 | `count` | `money-check.js` | the count /health reads |
 | 83 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
@@ -56,9 +56,9 @@ of file each thing is; this says what already does the job.
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 69 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 69 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
+| 69 | `view` | `books-payables.js` | group: |
 | 68 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 68 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
-| 68 | `view` | `books-payables.js` | group: |
 | 67 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 66 | `named` | `bank-rec-log.js` | W15-71: |
 | 66 | `facts` | `bill-steps.js` | MY state_log — |
@@ -93,13 +93,13 @@ of file each thing is; this says what already does the job.
 | 49 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 49 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `shell` | `pick.js` |  |
+| 47 | `mine` | `crm.js` | `opt.removedOk`: |
 | 46 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 46 | `sentence` | `one-person.js` |  |
 | 46 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 46 | `flags` | `cmdb.js` | the flags a record raises about itself — |
 | 45 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 45 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 45 | `mine` | `crm.js` | `opt.removedOk`: |
 | 44 | `load` | `books-grant-view.js` |  |
 | 43 | `changes` | `books-store.js` |  |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -183,6 +183,7 @@ of file each thing is; this says what already does the job.
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 26 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
 | 25 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
+| 25 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 25 | `reply` | `private-flag.js` | Refused in words: |
 | 24 | `done` | `attach-ui.js` |  |
 | 24 | `counts` | `cap-flag.js` | function list(call, o) { return askFlag(call, 'flagsList', { query: |
@@ -204,7 +205,6 @@ of file each thing is; this says what already does the job.
 | 23 | `later` | `home2.js` | adopt once on the next frame, however many changes ask for it |
 | 23 | `round` | `convert.js` | round HALF UP at a fixed dp, not toFixed's binary surprise — |
 | 23 | `fallback` | `locale.browser.js` | XC-1119 (Athi 19 Nov): |
-| 23 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 23 | `report` | `raida.js` | register at the one moment it must not. |
 | 23 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
 | 23 | `heads` | `tax-lines.js` | The heads, summed. |

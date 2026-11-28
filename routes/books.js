@@ -523,7 +523,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
       await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
       markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
       if (markSide) for (const item of lines) item.mark = markSide.byId[String(item.entry_id)] || null;
-      if (a.role === 'retained' && !party) base.carried = await B.carriedLine(h, e, from); /* YE-F-04: the roll that opens it, named — a computed line, not an entry */
+      base.return_reading = await require('../lib/books-period-taxed').readingOf({ asked: req.query.reading, party }, h, e, a, { from, to, t, run, open }); /* ONE-FIGURE RC1: how the return reads this ledger (books-period-taxed, the owner) — the movement is carried: closing less opening */ if (a.role === 'retained' && !party) base.carried = await B.carriedLine(h, e, from); /* YE-F-04: the roll that opens it, named — a computed line, not an entry */
       base.chart_account = a; /* RAIL-146n: the reader's test (sales side or not); never in the answer */
       return t
         ? Object.assign(base, {
@@ -538,7 +538,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
     });
     if (!out) return refuse(req, res, 404, 'NOT_FOUND', 'Not found', 'No such ledger.');
     /* every root key named (the page keys are undefined on an unpaged read and leave the JSON): the output allow-list reads them here */
-    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, months: out.months, closing_minor: out.closing_minor, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }, { account: out.chart_account }));
+    res.json(await forBooksDoor(req, e, 'ledger', { currency: curOf(req), account: out.account, party: out.party, from: out.from, to: out.to, opening_minor: out.opening_minor, lines: out.lines, months: out.months, closing_minor: out.closing_minor, return_reading: out.return_reading, page_opening_minor: out.page_opening_minor, total: out.total, page: out.page, limit: out.limit, next: out.next, totals: out.totals, mark_actions: markSide ? markSide.actions : undefined, mark_vocabulary: markSide ? markSide.vocabulary : undefined }, { account: out.chart_account }));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }

@@ -1,0 +1,18 @@
+{
+ "figure": "lodged-changed-since-close",
+ "says": "A lodged period's net is the stored close (what was shown at the close). That the live return has moved since (a posting dated in the period, made after the close) has ONE reader. Box 9 / box 14 stay the period's own movement; gstPayableAt is what the ledgers owe now; none is merged with the stored net.",
+ "covers": [
+  "au.bas.9",
+  "ae.vat201.box14",
+  "x.tax.lodged_net"
+ ],
+ "owner": "lib/books-period-taxed.js",
+ "owner_fn": "changedSinceClose",
+ "allowed_elsewhere": [
+  "lib/books-store-late.js"
+ ],
+ "forbidden": [
+  "lateTaxEntries"
+ ],
+ "decided": "2026-11-28 batch 1141 (coordinator: build RC2 as decided). The close cannot be re-solved after it posts (its own set-off clears the balances), so late postings are read from created_at, never by a second closeFigures."
+}
