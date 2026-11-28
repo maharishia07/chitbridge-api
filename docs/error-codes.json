@@ -2519,6 +2519,8 @@
     "GET /api/books/todo",
     "GET /api/chits/:chit_id",
     "GET /health",
+    "POST /api/books-actions",
+    "POST /api/books-actions/:id/accept",
     "POST /api/books/assets/:id/dispose",
     "POST /api/books/bank/marks",
     "POST /api/books/bank/statement-files",
@@ -2528,6 +2530,7 @@
     "POST /api/books/compare/snapshots",
     "POST /api/books/entries",
     "POST /api/books/entries/:id/reverse",
+    "POST /api/books/events",
     "POST /api/books/events/batch",
     "POST /api/books/fx-revalue",
     "POST /api/books/money-check/resolve",
@@ -9986,6 +9989,42 @@
     "PUT /api/actors/:id/status",
     "PUT /api/actors/break",
     "PUT /api/actors/change-pin"
+   ]
+  },
+  {
+   "code": "NEEDS_WHICH_ACCOUNT",
+   "status": "422",
+   "title": "Say which account",
+   "shopkeeper": "This bank payment names a supplier but no bill and no account, so nothing was posted.",
+   "hint": "Say what the payment was for, or pick the bill it settles, then send it again.",
+   "owner_area": "accounting",
+   "since": "2026-11-28",
+   "raised_by": [
+    "POST /api/books-actions",
+    "POST /api/books-actions/:id/accept",
+    "POST /api/books/entries",
+    "POST /api/books/entries/:id/reverse",
+    "POST /api/books/events",
+    "POST /api/books/events/batch",
+    "POST /api/books/payments"
+   ]
+  },
+  {
+   "code": "NEEDS_WHICH_BILL",
+   "status": "422",
+   "title": "Confirm which bill",
+   "shopkeeper": "This payment is the same amount as an open bill of theirs, so nothing was posted until you say which it is.",
+   "hint": "Use that bill, say it is a new expense (not_this_bill), or say which account it is for, then send it again.",
+   "owner_area": "accounting",
+   "since": "2026-11-28",
+   "raised_by": [
+    "POST /api/books-actions",
+    "POST /api/books-actions/:id/accept",
+    "POST /api/books/entries",
+    "POST /api/books/entries/:id/reverse",
+    "POST /api/books/events",
+    "POST /api/books/events/batch",
+    "POST /api/books/payments"
    ]
   },
   {
