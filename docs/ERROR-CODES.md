@@ -92,6 +92,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ACTION_PARTY_NOT_IN_V1 | 422 | Not for an adviser | An adviser journal cannot name a customer, a supplier or a bill. The owner enters those. | Ask the owner to enter it. | network | 2026-11-14 |
 | ACTION_REF_OPEN | 409 | Already waiting | An action with this reference is already waiting. Open it from the queue. | Open the waiting action. | network | 2026-11-14 |
 | ACTION_REF_POSTED | 409 | Already posted | This reference already holds an entry. It is not prepared again. | Check the day book. | network | 2026-11-14 |
+| ACTION_QUEUE_FULL | 429 | Too many waiting | Too many bank lines are waiting for the owner. Wait for the owner to accept or return some, then send the rest. | Ask the owner to work through the waiting lines. | network | 2026-11-28 |
 | ACTION_CLOSED | 409 | Action already moved on | This action has already moved on. Open the queue again. | Open the queue again. | network | 2026-11-14 |
 | ACTION_NOT_ALLOWED | 403 | Access ended | This access has ended, so nothing was recorded. | Ask the owner of the books. | network | 2026-11-14 |
 | ACTION_SELF_REVIEW | 403 | A colleague must review | You prepared this, so a colleague has to review it. | Ask a colleague to review it. | network | 2026-11-14 |

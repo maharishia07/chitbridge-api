@@ -85,22 +85,27 @@ const adviserReadsExtra = (path) => EXTRA_TESTS.some((item) => item.test.test(pa
  */
 const ADVISER_BANK_READS = new Set(['GET /api/books/bank/log', 'GET /api/books/bank/rail', 'GET /api/books/bank/statement-files'/* the box's list; its file download (:id) is the auditor list's own GRANT_READS pattern, which the adviser reads too */]);
 const ADVISER_BANK_WRITES = new Set(['POST /api/books/bank/marks', 'POST /api/books/bank/statements', 'POST /api/books/events', 'POST /api/books/payments']);
-const BANK_EVENT_KINDS = ['expense', 'other_income', 'contra', 'tax_payment'];
+const { bankEventBody, bankLineBody } = require('../lib/books-bank-body'); /* BB-P1-2: the ONE bank-body test (kinds, foreign keys, the bank: ref) */
 const noSlash = (path) => (path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path);
 const bankRoute = (set, req) => set.has(req.method + ' ' + noSlash(fullPathOf(req)));
 const bankRead = (req) => bankRoute(ADVISER_BANK_READS, req);
 const bankWrite = (req) => bankRoute(ADVISER_BANK_WRITES, req);
-/* the writer resolves the kind and the ref from inner `event`/`type` too (lib/books-manual eventOf): a body that carries any of these keys is not the bank page's body and is refused whole */
-const FOREIGN_EVENT = ['event', 'type', 'lines', 'voucher_type', 'supplier', 'party', 'party_id', 'bill', 'against_ref', 'customer'];
+/**
+ * BB-P1-2 · THE PROPOSE DOORS: under posting = owner_approves the firm's bank lines become PROPOSED entries (the owner's queue), never posts. A SEPARATE set from ADVISER_BANK_WRITES on purpose: the batch must never be a direct-write door
+ * (a list has no top-level kind or ref, so the single-body test would pass it unseen). Each line of a batch passes bankEventBody; the batch body has no other key.
+ */
+const PROPOSE_DOORS = new Set(['POST /api/books/events', 'POST /api/books/events/batch']);
+const proposeDoor = (req) => bankRoute(PROPOSE_DOORS, req);
+const BATCH_MAX = 100;
+function proposeBodyOk(req) {
+  const body = req.body || {};
+  if (noSlash(fullPathOf(req)) !== '/api/books/events/batch') return bankEventBody(body);
+  return Object.keys(body).every((key) => key === 'events') && Array.isArray(body.events) && body.events.length >= 1 && body.events.length <= BATCH_MAX && body.events.every((line) => bankEventBody(line));
+}
 /** the bank page's payment body: an EXISTING party (never one to make), no cheque, no bill to settle against */
 function bankPaymentBody(body) {
   const hasChequeKey = Object.keys(body).some((key) => /^cheque/.test(key));
   return !!body.party_id && !body.party && !body.cheque && String(body.mode || '') !== 'cheque' && !hasChequeKey && !body.against_ref;
-}
-/** a bank line's body names its line (client_ref 'bank:…') and, for a locked month, only the one word the owner sends (if_locked next_open) */
-function bankLineBody(body) {
-  /* W15-85b: the accountant does the books for the owner, so the line in a locked month may be posted in the next open one (the same if_locked the owner sends; the entry is stamped with the firm and the grant like any adviser write). Only that word: any other value is not the bank page's body. Unlocking a month is NOT a door here: Reopen stays the owner's. */
-  return /^bank:[0-9a-z:_-]{1,75}$/i.test(String(body.client_ref || '')) && (body.if_locked === undefined || body.if_locked === 'next_open');
 }
 /** the bank page's own bodies only: an event is one of its four kinds, an event or a payment carries the line's client_ref 'bank:…' (so a journal, a drawing or a capital entry is never posted through here) */
 function bankWriteBody(req) {
@@ -109,8 +114,7 @@ function bankWriteBody(req) {
   const body = req.body || {};
   if (!bankLineBody(body)) return false;
   if (door === '/api/books/payments') return bankPaymentBody(body);
-  if (FOREIGN_EVENT.some((key) => body[key] !== undefined)) return false;
-  return BANK_EVENT_KINDS.includes(String(body.kind || ''));
+  return bankEventBody(body);
 }
 /** the adviser door a request is, or null */
 const adviserDoor = (method, fullPath) => (ADVISER_TESTS.find((item) => item.test.test(method + ' ' + fullPath)) || {}).door || null;
@@ -123,7 +127,10 @@ const EVIDENCE_PATHS = [/^[/]api[/]tax[/]gstr[/]?$/ /* M-F-02 (21 Nov): GSTR-1 /
 const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
 /** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */
-const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
+const proposeListed = (req) => proposeDoor(req) && proposeBodyOk(req);
+/** the bank doors an adviser may reach: the bank reads, a bank write with the Bank page's own body, a proposal with the Bank page's own body (BB-P1-2) */
+const bankListed = (req) => bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || proposeListed(req);
+const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankListed(req) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
 /** W4-03: the auditor's one file read: the kept statement loaded into the Bank page's reader (use=read, GET); the DOWNLOAD (use=download or none) stays held (MONEY-01 A6), and the grant's own log names the look */
 const statementReaderRead = (req) => req.method === 'GET' && filePattern(req.path) === '/bank/statement-files/:id/file' && !!req.query && req.query.use === 'read';
 const listedFor = (role, req) => (isPartyRead(req) ? true /* CON-165: the exact area path, GET only (isPartyRead): the look lists it for either role */ : isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req) || statementReaderRead(req));
@@ -249,7 +256,7 @@ async function decide(req) {
   const member = String(req.headers[HEADER] || '').trim();
   if (!grants.UUID.test(member)) return { bad: true };
   const role = grants.roleOf(roleNamed(req));
-  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.api_key && !req.identity.parent_entity_id, manager: require('../lib/owner').isManager(req), role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) || isPartyRead(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req), bank_write: bankWrite(req) /* the look checks the grant's posting policy for it */ };
+  const request = { actor: req.identity.identity_id, actor_name: req.identity.display_name, owner: !req.api_key && !req.identity.parent_entity_id, manager: require('../lib/owner').isManager(req), role: roleNamed(req), pattern: routeForLog(req.method, isMarks(req) || isPartyRead(req) ? fullPathOf(req) : req.path), method: isMarks(req) && markReadDoor(req) ? 'GET' : req.method /* a marks READ that carries ids in a body is a read */, listed: listedFor(role, req), query_shape: shapeOf(req), bank_propose: proposeDoor(req), bank_write: bankWrite(req) /* the look checks the grant's posting policy for it */ };
   return grants.look(entityOfReal(req.identity), member.toLowerCase(), request);
 }
 
@@ -271,6 +278,11 @@ function answerFailure(req, res, failure) {
   return refuse(req, res, 503, 'BOOKS_GRANT_LOG_UNAVAILABLE', 'We could not record this look at the books, so nothing was shown. Try again in a minute.');
 }
 
+/** BB-P1-2: under owner_approves the live grant row (lib/books-grant.bankPostingOutcome marked it) lets the firm PROPOSE a bank line: a NEW flag, never acting_bank_write, so no owner door admits it; the proposing gate (lib/books-approval.grantProposeGate) is terminal */
+function markProposal(req, verdict) {
+  const may = verdict.grant.preset === grants.ADVISER && verdict.grant.bank_propose === true && proposeDoor(req);
+  if (may && require('../lib/access').canEdit(req.identity)) req.acting_bank_propose = true;
+}
 /** the request, run as the grant says: the bank page's adviser writes flagged for the owner gates, an adviser's action doors in one normal transaction stamped with the grant, everything else READ ONLY */
 async function runStamped(req, next, verdict) {
   /* the bank page's writes under an adviser_posts grant: the OWNER gates of POST /events read this flag (set here from the live grant row, never from the request) */
@@ -278,6 +290,7 @@ async function runStamped(req, next, verdict) {
     req.acting_bank_write = true;
     await require('../lib/books-action').alertBankFirst(verdict.grant.grantor_entity, { identity_id: req.realIdentity.identity_id, name: req.realIdentity.display_name, firm_name: verdict.firm_name || null, grant_id: verdict.grant.grant_id }); /* the owner's record of the first bank write, before it is made */
   }
+  markProposal(req, verdict);
   /* an adviser's GET is read only like an auditor's; the action doors (POST) run in one normal transaction stamped with the grant: they write ONLY the action's own step, never the books */
   if (verdict.grant.preset === grants.ADVISER && req.method !== 'GET' && !(isMarks(req) && markReadDoor(req))) return reqctx.runActingFor(verdict.grant.grant_id, () => next(), { name: req.realIdentity.display_name, firm: verdict.firm_name || null });
   return reqctx.runReadOnly(() => next());
@@ -374,4 +387,4 @@ function refuseElsewhere(req, res, next) {
   return problem(req, res, { status: 403, code: 'BOOKS_FOR_NOT_HERE', detail: BOOKS_FOR_NOT_HERE, legacy: { error: BOOKS_FOR_NOT_HERE, message: BOOKS_FOR_NOT_HERE } });
 }
 
-module.exports = Object.assign(frontOf(require('./auth')), { isPartyRead, FILE_READS, bankWriteBody, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });
+module.exports = Object.assign(frontOf(require('./auth')), { isPartyRead, FILE_READS, bankWriteBody, proposeBodyOk, proposeDoor, listedFor, unclassifiedWrites, MARK_READ_DOORS, MARK_WRITE_DOORS, refuseElsewhere, frontOf, ROLE_HEADER, ADVISER_DOORS, ADVISER_EXTRA_READS, adviserDoor, GRANT_READS, GRANT_HELD_BACK, HEADER, mayUseGrant, mayReview, reviewRoles, seatKindOf, SEAT_CAPS, usableRoles, holdsSeat, syntheticOf, unclassifiedGets, listedPattern, routeForLog });

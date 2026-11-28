@@ -120,7 +120,7 @@ function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, code: 'SIGN_IN_FOR_LEDGER', detail: SAID.signIn, legacy: { error: SAID.signIn, message: SAID.signIn } });
   next();
 }
-const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
+const ownerOrAccountant = (req, res, next) => (isInHouseAccountant(req) || req.acting_bank_propose === true /* BB-P1-2: a firm's PROPOSAL (set by the grant front on POST /events and /events/batch only, from the live owner_approves row) passes to grantProposeGate, which is terminal */ ? next() : owner(req, res, next)); /* RC-7: events, entries and the opening are the owner's and the owner's own accountant's; every other `owner` door stays the owner's */
 const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: the seat gates live beside the owner-approves gate */
 function owner(req, res, next) {
   if (!isOwner(req) && !(req.method === 'GET' && req.identity && req.identity.acting_preset === 'adviser') && !req.acting_bank_write) /* l16: the bank page's writes under adviser_posts (middleware/books-grant, from the live grant row) */ return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: SAID.ownerOnly, legacy: { error: SAID.ownerOnly, message: SAID.ownerOnly } }); /* ACC-176b: the owner's READS are the adviser's too (acting_preset comes from the live grant row only; the grant front lets an adviser GET through only on its read list) */
@@ -1766,7 +1766,7 @@ router.post('/preview', auth, noKey, on, ...checked('POST /preview'), async (req
 });
 /** POST /events { event: kind, …fields, client_ref } → the entry (MJ/<fy>/<n>, its voucher type kept). The owner and the shop's Bookkeeper; the same client_ref answers the first entry, duplicate: true. SHOPBK-B: when the shop asked the owner to approve (policy_flags.books_owner_approves), the BOOKKEEPER's press answers 202 with the held action (nothing is posted; the owner accepts it in the queue); the owner's own post and the setting off are unchanged. */
 // @does A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).
-router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), require('../lib/books-approval').heldGate('event', refusalOf), async (req, res) => {
+router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), require('../lib/books-approval').grantProposeGate(refusalOf), require('../lib/books-approval').heldGate('event', refusalOf), async (req, res) => {
   try {
     const out = await M().post(ctx(req), req.books, req.body || {}, byOf(req));
     res.json({ kind: out.kind, ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note, warnings: out.warnings });
