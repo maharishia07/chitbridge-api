@@ -50822,7 +50822,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1769,
-   "hash": "d6198d021092437e",
+   "hash": "f63b2066de6dc7ea",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
     "count": 3,
@@ -50927,7 +50927,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: body gains tax_rate (listed); a stray tax key is refused in words through the existing refuse path, 422 declared.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1439 re-signed at 16228b10c, diff 5b4cc26d7..HEAD read (lib/bank-pay-needs askIfSupplierBill, books-bank-tax, books-contract), 13 machine columns true, stage2: hash moved because the closed body gains not_this_bill (listed in EVENT_BODY); on bank_expense_supplier an open bill of the same gross is asked 422 NEEDS_WHICH_BILL (code, needs, bill, bills beside error/message; row registered), not_this_bill true posts and notes the refs, a non-boolean is refused 422 in words, and on every other kind the key is refused not ignored; nothing is posted on the ask; the earlier bank_expense_supplier review (one entry, plain expense refused naming the kind) stands.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53671,7 +53671,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1133,
-   "hash": "8f171add7a618bab",
+   "hash": "c1a30e050bb97323",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
     "count": 3,
@@ -53785,7 +53785,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1439 BB-P1-3 (BB-P1-3 bank line to a named supplier), diff origin/main...HEAD read per route (handler, chain, lib), 13 machine columns true, stage2: hash moved with one added line (askIfBankLine); body gains bank_line (listed in the closed body, boolean, a non-boolean refused 422 in words); new 422 NEEDS_WHICH_ACCOUNT / NEEDS_WHICH_BILL carry code, needs, bill beside error and message through the books-contract RULES (coded 422), both registered with shopkeeper sentences; without bank_line, money in, or named allocations the route is unchanged (Dues door), nothing posted on a refusal.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54498,7 +54498,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1759,
-   "hash": "71782bfdea7433b2",
+   "hash": "b090c29e84b15e78",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -54602,7 +54602,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: answer gains needs (null or object) in the closed shape; refusals list adds tax_payment.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1439 re-signed at 16228b10c, diff 5b4cc26d7..HEAD read, 13 machine columns true, stage2: hash moved only because it shares the closed EVENT_BODY, which gains not_this_bill (listed); the preview writes nothing, and the same builder asks an open bill of the same gross with the registered 422 NEEDS_WHICH_BILL.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
