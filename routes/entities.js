@@ -391,22 +391,6 @@ router.get('/sides', auth, async (req, res) => {
   }
 });
 
-/**
- * DRIFT 29 (PROOF-2026-11-27 row 29): the SHOP's own settings come from the SHOP's identities row, never the person's. An actor (manager, cashier, view-only) is a
- * row of their own with no zone or currency, so the web fell back to the browser's clock and one chit read 06:43 for the owner and 08:13 for staff.
- * SHOP_SCOPED_COLS is the one list; shopRowOf reads it with the capabilities off the parent row (the read an actor already needed); shopScoped hands back only
- * the shop's values for an actor (an entity's own row IS the shop's). Guard: tests/drift-29-me-shop-row.test.cjs.
- */
-const SHOP_SCOPED_COLS = ['timezone', 'currency_code', 'country', 'gstn'];
-/** the parent (shop) row's capabilities and shop-scoped columns; the zone column only when the database has it (b176) */
-function shopRowOf(eid, hasTimezone) {
-  return boundRead(query, eid, `SELECT capabilities, ${SHOP_SCOPED_COLS.filter((k) => k !== 'timezone' || hasTimezone).join(', ')} FROM identities WHERE identity_id = $1`, [eid]);
-}
-/** the shop's values to lay over an actor's own row: { timezone, currency_code, country, gstn } as the parent has them; nothing for an entity */
-function shopScoped(shopRow, isActor) {
-  return isActor && shopRow ? Object.fromEntries(SHOP_SCOPED_COLS.filter((k) => k in shopRow).map((k) => [k, shopRow[k]])) : {};
-}
-
 // @does Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.
 router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
   try {
@@ -578,8 +562,8 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
        * capability list instead of their employer's, silently removing every capability-gated nav item. A round
        * trip saved by answering the wrong question is not a saving.
        */
-      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await shopRowOf(eid, _tzCol); /* DRIFT 29: an actor's answer carries the SHOP's zone/currency/country/GSTIN */
-      Object.assign(result.rows[0], shopScoped(c.rows[0], eid !== req.identity.identity_id));
+      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await require('../lib/me-shop').shopRowOf(eid, _tzCol); /* DRIFT 29: an actor's answer carries the SHOP's zone/currency/country/GSTIN */
+      Object.assign(result.rows[0], require('../lib/me-shop').shopScoped(c.rows[0], eid !== req.identity.identity_id));
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
       capabilities_debug =
         (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8) + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);

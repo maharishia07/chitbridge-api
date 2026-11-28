@@ -82,8 +82,6 @@ const NOT_A_PARTY_ID = 'That is not a party id.';
 /* A2: `assign` = the server's verdict on the Assign button and the Unassigned bucket (the partner or a manager: lib/owner mayAt, the gate assign-bulk uses); the page reads no token */
 /** Y-F-05: true when the books' own read gate (routes/books gates.mayReadMoney: owner, in-house accountant, live grant, auditor) refuses this seat — dues are books money; lazy so crm.js loads without books.js */
 const noMoney = async (req) => !(await require('./books').gates.mayReadMoney(req));
-/** the lead's "Move to…" may: b297 not run -> M.NOT_READY; else the same write verdict the stage POST refuses with (a viewer / commenter is greyed with the rail's sentence) */
-const leadMay = (ready, may) => (!ready ? { ok: false, why: M.NOT_READY } : may.write.may ? { ok: true } : { ok: false, code: may.write.code, why: may.write.why });
 const crmMay = (req) => ({ write: access.mayWrite(req), remove: ownerMay(req, REMOVE_WHY), assign: require('../lib/owner').mayAt(req, 'manager') });
 function noKey(req, res, next) {
   if (req.api_key) return problem(req, res, { status: 403, ...keyFence() });
@@ -187,7 +185,7 @@ router.get('/parties/:id', grantFront, auth, noKey, ...checked('GET /parties/:id
     if (rec.lead)
       rec.lead = Object.assign({}, rec.lead, {
         moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage),
-        may: leadMay(found.leads_ready, crmMay(req)) /* DRIFT 21: not migrated -> its sentence; else the seat's own write verdict (the POST refuses a viewer) */
+        may: require('../lib/lead-may').leadMay(found.leads_ready, crmMay(req)) /* DRIFT 21: not migrated -> its sentence; else the seat's own write verdict (the POST refuses a viewer) */
       });
     /* the bills: the dearer of the chit bills and the ledger bills (the same rule the record always used on a page of the timeline), now over the WHOLE history */
     rec.bills = { n: Math.max(chitBills.n, ledgerBills.n), last_at: [chitBills.last, ledgerBills.last].filter(Boolean).sort().pop() || null };
