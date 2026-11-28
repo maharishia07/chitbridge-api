@@ -3977,7 +3977,7 @@ function carryPricedFacts(_lines, _live) {
 }
 router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
 // @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
-router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
+router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
   const _wantTiming = textOf(req.query.timing, { trim: false }) === '1';
@@ -3992,7 +3992,9 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
-    const entity_id = entityId(req), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read; a blind actor's answer is reshaped LAST (lib/cost-view), the rows never */
+    const entity_id = entityId(req), blind = await cost.isCostBlind(req, entity_id);
+    const granted = !!req.acting_for_grant; /* SEC-117: a firm reading under X-Books-For: this chit only when it is the source of an entry of the granted books, READ ONLY, cut to books-evidence.SOURCE_KEEP */
+    if (granted && !(await withEntity(entity_id, (db) => require('../lib/books-evidence').isSourceOf(db, entity_id, chit_id)))) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* RAIL-146: ONE cost read; a blind actor's answer is reshaped LAST (lib/cost-view), the rows never */
 
     // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
     const data = await withEntity(entity_id, async (db) => {
@@ -4019,7 +4021,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 
       // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
       // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
-      if (req.identity.identity_type === 'actor') {
+      if (req.identity.identity_type === 'actor' && !granted) {
         // SAVEPOINT so a failure here (e.g. a missing table) can't poison the outer transaction and 500 the read.
         try {
           await db.query('SAVEPOINT mark_read');
@@ -4083,7 +4085,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
        * ⚠️ `NOT EXISTS (… WHERE read_at IS NOT NULL)` is exactly the old `!preCheck.rows[0]?.read_at`: no row
        * at all, or a row never read, both count as unread. A plain `read_at IS NULL` would miss the first case.
        */
-      await db.query(
+      if (!granted) await db.query(
         `WITH prev AS (SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2),
               upd  AS (UPDATE chit_status SET read_at = NOW()
                         WHERE chit_id = $1 AND entity_id = $2 RETURNING 1)
@@ -4161,7 +4163,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
      */
     const ONE_SHOT = `
       SELECT
-        (SELECT coalesce(json_agg(x), '[]'::json) FROM (SELECT * FROM chit_participants($2)) x)          AS participants,
+        ${granted ? "'[]'::json" : "(SELECT coalesce(json_agg(x), '[]'::json) FROM (SELECT * FROM chit_participants($2)) x)"} AS participants, /* SEC-117: a grant never calls the cross-entity function */
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
            SELECT amendment_id, line_index, line_id, seq, line, reason_code, reason, actor_name, created_at
              FROM chit_line_amendment WHERE entity_id = $1 AND chit_id = $2 ORDER BY line_index, seq) x)  AS amendments,
@@ -4241,11 +4243,11 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
 
     if (!bundle)
       bundle = await withEntity(entity_id, async (db) => {
-        const nestedParticipants = await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
+        const nestedParticipants = granted ? [] : await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
         /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
         const participants2 =
           nestedParticipants ||
-          (await trySavepoint(
+          (granted ? [] : await trySavepoint(
             db,
             (c) =>
               c
@@ -4386,7 +4388,8 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     /* RW1-27: a bill of mine says how much of it is already credited, so the sheet can grey "Credit note" with the reason (null when not judged: the button stays, the cap judges at send) */
     const _credit = textOf(req.query.with).split(',').includes('credit') ? await withEntity(entity_id, (db) => creditCap.creditedOf(db, entity_id, chit_id)).catch((e) => { cbLog.fellBack('chits GET /:chit_id: credited read failed, carried on without it', e); return null; }) : null; /* only on ?with=credit: the chit sheet's Credit note button asks, every other open of a chit stays at its round-trip budget (w4ctr) */
-    res.json(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
+    const answerOf = (full) => (granted ? require('../lib/books-evidence').sourceView(full) : full); /* SEC-117: under a grant the answer is cut to the allow-list LAST, after the cost-blind cut */
+    res.json(answerOf(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: costView.headerWithCurrency(data.header.rows[0]),
@@ -4435,7 +4438,7 @@ router.get('/:chit_id', auth, ...checked('GET /:chit_id'), async (req, res) => {
       /* ⚠️ b144 — SHARED, so this is present on BOTH copies. Each side sees its own claims and the other's,
          attributed; nothing is merged into one number. Totals are summed here, never stored. */
       line_delivery: whenFilled(_prog, Object.fromEntries), delivery_summary: whenFilled(_prog, deliverline.summarise)
-    }, blind, data.header.rows[0], entity_id, bundle, req.identity.identity_id));
+    }, blind, data.header.rows[0], entity_id, bundle, req.identity.identity_id)));
   } catch (err) {
     console.error('Chit detail error:', err.message);
     problem(req, res, failed(err, req, 'Failed to get chit'));
