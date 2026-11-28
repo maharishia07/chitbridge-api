@@ -548,8 +548,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     );
     // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
-    let capabilities = [];
-    let capabilities_debug = 'ok';
+    let capabilities = [], capabilities_debug = 'ok';
     try {
       const eid = auth.entityOf(req);
       /**
@@ -563,7 +562,8 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
        * capability list instead of their employer's, silently removing every capability-gated nav item. A round
        * trip saved by answering the wrong question is not a saving.
        */
-      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await boundRead(query, eid, 'SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
+      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await require('../lib/me-shop').shopRowOf(eid, _tzCol); /* DRIFT 29: an actor's answer carries the SHOP's zone/currency/country/GSTIN */
+      Object.assign(result.rows[0], require('../lib/me-shop').shopScoped(c.rows[0], eid !== req.identity.identity_id));
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
       capabilities_debug =
         (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8) + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);
