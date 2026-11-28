@@ -796,9 +796,9 @@ router.get('/customers/:id/rewards', auth, ...checked('GET /customers/:id/reward
     if (!b.programme)
       return res.json({
         programme: null,
-        points: 0,
+        points: b.points /* a given point is a promise: still held with no programme (Athi 28 Nov 2026) */,
         /* ⚠️ NOT AN ERROR AND NOT AN EMPTY BOX. Most shops run no programme; the pane says so plainly. */
-        says: 'This shop does not run a points programme.'
+        says: b.points ? 'Held, not redeemable until a programme runs. The points already given stay valid.' : 'This shop does not run a points programme.'
       });
     /**
      * ⭐⭐ worthOf IS THE INTERPRETATION, and it already existed — it says what the balance is worth in money, what
