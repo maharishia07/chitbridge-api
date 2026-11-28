@@ -19,6 +19,7 @@ schema.hasTable = async () => true; schema.hasColumn = async () => true;
 B.settingOf = async () => SETTING;
 B.ledgerCtx = async () => ({ s: SETTING, pack: B.packOf(SETTING), chart: [ACCOUNT] });
 B.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 150000, credit_minor: 0 }] });
+require('../lib/books-closing').closingAsAt = async (db, e, account, day) => { const row = (await B.trialBalance(db, e, day)).rows.find((x) => String(x.code) === String(account.code)); return row ? row.debit_minor - row.credit_minor : 0; }; /* RC5: the sign-off's books figure is books-closing; no database here, so the stand-in answers the trial-balance row this test stubs */
 let LOCKED = []; /* the month numbers that are hard-locked in the shop's year */
 store.periods = async (db, e, fy) => { const rows = [{ fiscal_year: fy, period: 0, status: 'open' }]; for (let p = 1; p <= 12; p++) rows.push({ fiscal_year: fy, period: p, status: LOCKED.includes(p) ? 'hard_locked' : 'open', start_date: fy + '-' + String(p).padStart(2, '0') + '-01', end_date: fy + '-' + String(p).padStart(2, '0') + '-28' }); return rows; };
 const rows = [];

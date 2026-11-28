@@ -39,6 +39,7 @@ const { check, world } = lab;
   store.accounts = async () => chart;
   B.ledgerCtx = async () => ({ pack: B.packOf(SETTING), country: 'IN' }); /* AM-F-05 (1129): a sign-off asks the entries' lock rule, which needs the pack to find the fiscal year */
   B.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 111111, credit_minor: 0 }, { code: '1400', debit_minor: 5000, credit_minor: 0 }] });
+  require('../lib/books-closing').closingAsAt = async (db, e, account, day) => { const row = (await B.trialBalance(db, e, day)).rows.find((x) => String(x.code) === String(account.code)); return row ? row.debit_minor - row.credit_minor : 0; }; /* RC5: the sign-off's books figure is books-closing; no database here, so the stand-in answers the trial-balance row this test stubs */
   const server = lab.appOf([{ mount: MOUNT, router: require(path.join(HERE, 'routes', 'books.js')) }]).listen(0);
   const port = server.address().port;
   let log = [];

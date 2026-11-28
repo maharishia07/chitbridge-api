@@ -45,6 +45,7 @@ const BOOKS = require(path.join(HERE, 'lib', 'books'));
 BOOKS.ledgerCtx = async () => ({ pack: BOOKS.packOf({ country: 'IN', fy_start_month: 4, functional_currency: 'INR', pack_version: '1' }) });
 BOOKS.ensureYear = async () => []; /* AM-F-05: the lock check reads the real period rows; proved in am-bank-twice.test.cjs */
 BOOKS.trialBalance = async () => ({ rows: [{ code: '1510', debit_minor: 150000, credit_minor: 0 }] });
+require(path.join(HERE, 'lib', 'books-closing')).closingAsAt = async () => 150000; /* RC5: the sign-off's books figure is the ONE closing reader (books-closing); no database here, so a stand-in answers what the trial balance row answered (150000) */
 
 /** the stand-in handle: the rows of bank_rec_log in order, and the posted bank entries the cross-check reads */
 function standIn(posted) {

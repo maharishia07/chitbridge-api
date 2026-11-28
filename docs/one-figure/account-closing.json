@@ -1,0 +1,10 @@
+{
+  "figure": "account-closing",
+  "says": "An account's closing on a range (the Ledger page's closing_minor, the Bank page's books balance, the figure a bank sign-off is checked against) has ONE reader: books-closing.closingOf. Nothing else sums a range of journal lines for a closing.",
+  "covers": ["stmt.tb.account_net"],
+  "owner": "lib/books-closing.js",
+  "owner_fn": "closingOf",
+  "allowed_elsewhere": ["lib/books-store.js", "lib/books-daybook.js", "routes/books.js"],
+  "forbidden": ["pageSums"],
+  "decided": "2026-11-28 batch 1141 (Athi: unify, do not build). routes/books.js keeps pageSums for the page's cursor sums (before_dr/before_cr, totals) and hands the whole-range sums to closingOf; the Day book's own totals stay in books-daybook.js. The trial balance (engine rows, all accounts at once) stays the TB view; the bank sign-off check no longer reads it for a single account."
+}

@@ -15,6 +15,7 @@ let pass = 0, fail = 0;
 const eq = (name, ok, say) => { ok ? pass++ : fail++; console.log((ok ? '   ok   ' : '   FAIL ') + name + (ok ? '' : '  ' + say)); };
 for (const f of fs.readdirSync(DIR).filter((x) => x.endsWith('.json'))) {
   const spec = JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8')), allowed = [spec.owner].concat(spec.allowed_elsewhere || []);
+  if (!spec.forbidden) continue; /* a signature-kind record (cash-roles, RC9) is read by its own test: one-figure-cash.test.cjs */
   const list = files.concat(process.env.SCAN_SELFTEST ? ['selftest.js'] : []), hits = [];
   for (const rel of list) {
     if (allowed.includes(rel)) continue;

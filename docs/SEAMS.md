@@ -11,7 +11,7 @@ of file each thing is; this says what already does the job.
 |---|---|---|---|
 | 222 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 214 | `rows` | `crm.js` | still in them: |
-| 198 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
+| 199 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 185 | `words` | `variant.browser.js` |  |
 | 166 | `withEntity` | `books-hooks.js` |  |
 | 151 | `answer` | `availability.js` | from March; then nearest. |
@@ -19,7 +19,7 @@ of file each thing is; this says what already does the job.
 | 144 | `item` | `bank-band.js` |  |
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
-| 116 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 117 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
@@ -59,9 +59,9 @@ of file each thing is; this says what already does the job.
 | 69 | `view` | `books-payables.js` | group: |
 | 68 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 68 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
+| 67 | `facts` | `bill-steps.js` | MY state_log — |
 | 67 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 66 | `named` | `bank-rec-log.js` | W15-71: |
-| 66 | `facts` | `bill-steps.js` | MY state_log — |
 | 66 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 65 | `body` | `books-acting.js` | a write's body: |
 | 65 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
@@ -70,9 +70,9 @@ of file each thing is; this says what already does the job.
 | 61 | `note` | `dbwatch.js` |  |
 | 60 | `live` | `receivables.js` | the allocations that still count: |
 | 59 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
+| 59 | `account` | `home-facts.js` | OMITTED: |
 | 58 | `lines` | `cart.js` |  |
 | 58 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
-| 58 | `account` | `home-facts.js` | OMITTED: |
 | 57 | `sheet` | `cap-employees.js` |  |
 | 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
 | 53 | `closeModal` | `app.html` |  |
@@ -85,12 +85,12 @@ of file each thing is; this says what already does the job.
 | 51 | `gate` | `country-setup.js` | gate(h, entity): |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `open` | `cap-attention.js` | a count pressed: |
+| 50 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 50 | `contractOf` | `contract-kit.js` | contractOf({ mount, routes, gateStatus, refusals?, refusalsWhen?, extension? }) → { OPERATIONS, operationFor(r |
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
 | 50 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 50 | `hold` | `orders.js` |  |
 | 50 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
-| 49 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 49 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `shell` | `pick.js` |  |
 | 47 | `mine` | `crm.js` | `opt.removedOk`: |
@@ -103,6 +103,7 @@ of file each thing is; this says what already does the job.
 | 44 | `load` | `books-grant-view.js` |  |
 | 43 | `changes` | `books-store.js` |  |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
+| 42 | `entries` | `books-store.js` |  |
 | 42 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 42 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 41 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
@@ -110,7 +111,6 @@ of file each thing is; this says what already does the job.
 | 41 | `money` | `cart.js` |  |
 | 41 | `guard` | `amend.js` | would disturb what has gone out. |
 | 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 41 | `entries` | `books-store.js` |  |
 | 40 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 40 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 39 | `modal` | `app.html` |  |

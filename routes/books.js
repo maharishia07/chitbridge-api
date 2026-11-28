@@ -518,7 +518,7 @@ router.get('/ledger/:account', auth, moneyReader, on, ...checked('GET /ledger/:a
         to,
         opening_minor: open,
         lines, months: LedgerMonths.bands(open, await LedgerMonths.monthSums(h, e, from, to, a.account_id, party, !!lo.period0)),
-        closing_minor: t ? open + t.dr - t.cr : run
+        closing_minor: await require('../lib/books-closing').closingOf(h, e, a, party, from, to, { currency: curOf(req), lo, sums: t || undefined }) /* RC5: the ONE closing */
       };
       await Evidence.attach(h, lines.map((x) => ({ item: x, chit_id: x.source && x.source.chit_id, ref: x.source && x.source.ref })), { flag: false });
       markSide = await marksIn(h, req, 'acc.audit', lines.map((item) => item.entry_id));
