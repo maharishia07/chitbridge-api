@@ -19,6 +19,7 @@ const GUARDS_PART = [
   'acc417-adjustments.test.cjs', // ACC-417: BAS rows split into adjustment and plain by the pack's event list
   'acc418-bad-debt.test.cjs', // ACC-418: the invoice a write-off / recovery names: its own GST, read from the posted tax lines
   'acc420-lodged-pin.test.cjs', // ACC-420: a lodged period read under another version = a loud receipt (one enforcer lodgedCheck)
+  'acc420-setting-route.test.cjs', // ACC-420 / 1138 Finding 1: POST /api/books/setting CALLED live: a valid restamp 200, backward / non-period-start refused; drop the two contract keys = red
   'au-pack-pin-1138.test.cjs', // pack pinning: a day reads under the version in force; restamp forward only, from a period start, audited
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];

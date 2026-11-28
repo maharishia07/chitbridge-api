@@ -23064,7 +23064,8 @@
           },
           "paid_note": {
             "type": "string"
-          }
+          },
+          "pack_mismatch": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -38895,7 +38896,8 @@
         "required": [
           "ok",
           "enabled",
-          "walkin_grain"
+          "walkin_grain",
+          "pack_version"
         ],
         "properties": {
           "ok": {
@@ -38906,7 +38908,8 @@
           },
           "walkin_grain": {
             "type": "string"
-          }
+          },
+          "pack_version": {}
         },
         "additionalProperties": false
       },
