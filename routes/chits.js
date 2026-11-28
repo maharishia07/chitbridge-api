@@ -15,7 +15,7 @@ const cbLog = require('../lib/logger');
 const { waiting } = require('../lib/not-migrated');
 const router = express.Router();
 const { safeErr } = require('../lib/respond');
-const railActions = require('../lib/rail-actions'); // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
+const seatAbilities = require('../lib/seat-abilities'); const railActions = require('../lib/rail-actions'); // DRIFT 9b: assignOn = the one rule of who may follow a paper up // ⭐ R01 — the rail engine: GET's `actions` and every rail route's refusal, one rule
 const disputeAudience = require('../lib/dispute-audience'); // RAIL-187 — who receives a dispute message (the roster, or the chit when wide); the file route uses the same
 const disputeMay = require('../lib/dispute-may'); // T3-DISPUTES-ASSIST — may I raise / resolve: the answer GET returns and the resolve route refuses with
 const { moveStatus, ringStatus } = require('../lib/chit-move'); // the ONE status writer and the bell of a move (lifted out of this route, LEAN-PLAN §8 #3): PUT /:chit_id/status and goods-in call it
@@ -5080,8 +5080,8 @@ router.post('/:chit_id/assign-lines', auth, ...checked('POST /:chit_id/assign-li
     /* Assign only on a chit I hold. Without this an id in the URL would file work against a document I am not
        party to — RLS would keep the row mine and harmless, but it would still be a record of someone else's job. */
     const held = await holdsCopy(entity_id, chit_id);
-    /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered) */
-    const _v = railActions.can({ held }, railActions.meOf(req), 'assign');
+    /* ⭐ R01 — the engine decides: I hold a copy (and the level, which the hat gate already answered). DRIFT 9b: seat-abilities.assignOn is that verdict for every door — a SENT paper is assignable as a received one */
+    const _v = seatAbilities.assignOn(held, railActions.meOf(req));
     if (!_v.ok) return problem(req, res, railSaid(railActions.ownCopyRefusalOf(_v)));
 
     const out = await assign.assign(entity_id, chit_id, req.body.edits || req.body, {

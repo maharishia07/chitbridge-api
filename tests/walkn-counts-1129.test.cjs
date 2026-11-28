@@ -36,8 +36,7 @@ const assign = require('../lib/assign');
 (async () => {
   await assign.byPerson('e1');
   const flat = sql.replace(/\s+/g, ' ');
-  t('the worklist leaves out invoices', () => assert.ok(/COALESCE\(h\.purpose, ''\) <> 'invoice'/.test(flat)));
-  t('the worklist keeps only what came to me (received), a firm job chit on its sent copy', () => assert.ok(/CASE WHEN COALESCE\(h\.is_job, false\) THEN h\.direction <> 'received' ELSE COALESCE\(h\.direction, 'received'\) = 'received' END/.test(flat)));
+  t('the worklist SQL keeps an assigned line, and an unassigned one only when it came to me (never an invoice)', () => assert.ok(flat.includes("AND (a.assignee_actor_id IS NOT NULL OR (COALESCE(h.purpose, '') <> 'invoice' AND (CASE WHEN COALESCE(h.is_job, false) THEN h.direction <> 'received' ELSE COALESCE(h.direction, 'received') = 'received' END)))")));
   t('the header lateral carries direction, purpose and the job mark', () => assert.ok(/role, direction, purpose, \(business_json \? 'job'\) AS is_job/.test(flat)));
   console.log('\n10 checks' + (fails ? ', ' + fails + ' FAILED' : ''));
   process.exit(fails ? 1 : 0);
