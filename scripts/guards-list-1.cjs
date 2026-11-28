@@ -172,7 +172,6 @@ const GUARDS_PART = [
   'money-reader-scan.test.cjs', // ACC-206 G1: no raw read of the bill total outside the one pick; each named exception carries its reason (SCAN_SELFTEST=1 proves it bites)
   'one-reader-tables.test.cjs', // DRIFT exit bar 2+3 (28 Nov): one owning module per guarded table (docs/one-reader/<table>.json); SQL outside it fails unless dated waiver; raw state predicate never (SCAN_SELFTEST=1 bites)
   'books-grant-list-gate-drift.test.cjs', // UX-218: the owner's list and the gate answer one grant state (stateOf); no second state rule in list()
-  'one-reader-tables.test.cjs', // DRIFT exit bar 2+3 (28 Nov): one owning module per guarded table (docs/one-reader/<table>.json); SQL outside it fails unless dated waiver (SCAN_SELFTEST=1 bites)
   'reward-walkins-one-reader.test.cjs', // DRIFT cluster 5 (27 Nov): the walk-in list quotes what the till spends (reward-store.walkIns/foldOf); no SQL on reward_ledger outside reward-store (SCAN_SELFTEST=1 proves it bites)
   'cost-margin-basis.test.cjs', // ACC-206 C1: the owner's chit margin is on the taxable value, one case per matrix column (tests/lib/bill-total-fixtures.cjs)
   'cur1-money-adopt.test.cjs', // CUR-1: the adopted money is the ISO 4217 value type (HUF 2, PTS and unlisted refused, mismatch 409), both copies
