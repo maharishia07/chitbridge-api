@@ -1352,8 +1352,6 @@ function statementFail(req, res, err) {
 }
 /** the writer's stamp from the SESSION and the live grant (never the body): { user, name, firm, grant_id } */
 const stampOfReq = (req) => Object.assign({ user: byOf(req), name: (req.identity && req.identity.display_name) || null, firm: null, grant_id: null }, actingOf(req) ? { firm: actingOf(req).firm, grant_id: actingOf(req).grant_id } : {});
-/** the statuses a bank statement file's own refusals answer with: the same file twice · over 6 MB · not a statement · the box not ready */
-const STATEMENT_BOX_STATUSES = [409, 413, 415, 503];
 /** POST /bank/statement-files { account, label?, period_from, period_to, currency, sha256, name, text } → 201 { file, overlaps: [{ id, name, period_from, period_to }], words } — the owner, or an adviser under a live grant (X-Books-Role: adviser). csv/json/txt, at most 6 MB; the sha256 is of the UTF-8 text and is recomputed here (HASH_MISMATCH); the same file on the same account is ALREADY_IN_BOX 409; a crossing period is stored with overlaps: true and the answer says so; another currency than the account's is CURRENCY_MISMATCH 409. */
 // @does A bank account, its period, the file's text and its sha256 in -> we keep the file against that account and period (duplicate refused, overlap flagged) -> the kept file.
 router.post('/bank/statement-files', auth, noKey, editor, bankWriter, on, ...checked('POST /bank/statement-files'), async (req, res) => {
@@ -1365,7 +1363,10 @@ router.post('/bank/statement-files', auth, noKey, editor, bankWriter, on, ...che
     res.status(201).json(await bankStatementFile.add(withEntity, e, account, curOf(req), body, stampOfReq(req)));
   } catch (err) {
     const box = bankStatementFile.verdictOf(err); /* the box's own refusals that are not a bad question, each with its status named here: the same file twice, a file over 6 MB, a type that is no statement, the box not ready or the file not kept */
-    if (box && STATEMENT_BOX_STATUSES.includes(box.status)) return problem(req, res, { status: box.status, ...statementBody(box) });
+    if (box && box.status === 409) return problem(req, res, { status: 409, ...statementBody(box) });
+    if (box && box.status === 413) return problem(req, res, { status: 413, ...statementBody(box) });
+    if (box && box.status === 415) return problem(req, res, { status: 415, ...statementBody(box) });
+    if (box && box.status === 503) return problem(req, res, { status: 503, ...statementBody(box) });
     statementFail(req, res, err);
   }
 });
