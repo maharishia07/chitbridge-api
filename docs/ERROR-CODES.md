@@ -836,4 +836,8 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | CREDIT_NOTE_REASON_MISSING | 422 | Credit note needs a reason | A credit note here must say why it is issued, so it was not sent. Nothing was saved. | Add a short reason, such as goods returned or price corrected, and send it again. | accounting | 2026-11-22 |
 | STANDARD_UNKNOWN | 422 | Standard not known | That standard or document is not one we know, so nothing was recorded. | Check the names against your readiness list and send it again. | rail | 2026-11-22 |
 | MOVE_IN_MINT_BUSY | 409 | Move in numbers busy | Nothing was imported: the numbers for the new contacts could not be taken just now. | Try the same file again. | connect | 2026-11-27 |
+| FIRM_DIRECTION | 409 | Connected the other way round | These two businesses are already connected the other way round: the firm is always the one that looks after the books. | Open your requests to see where it stands. | network | 2026-11-28 |
+| ASK_LIMIT | 429 | Too many requests to connect | You or that business have had a lot of requests to connect lately. | Wait for answers, or try again later. | network | 2026-11-28 |
+| ASK_COOLING_OFF | 429 | Refused a short while ago | That business refused your request a short while ago. | Try again a little later. | network | 2026-11-28 |
+| INVITE_LIMIT | 429 | Too many invitations | You have sent a lot of invitations, or that address was invited a short while ago. | Try again tomorrow, or wait a few days for that address. | network | 2026-11-28 |
 <!-- codes:end -->

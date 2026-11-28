@@ -41,6 +41,8 @@ router.param(
 );
 /** NET-55: deciding on a connection is the business's own act — never a co-assist's or a key's (build and reissue already say the same in network-design) */
 const ownerDecides = ownerOnly('Only the business owner can decide on a connection. Sign in as the business itself.');
+/** asking to connect is the business's own act too (a firm's staff or a key must not ask 150 shops in the firm's name) */
+const ownerAsks = ownerOnly('Only the business owner can ask to connect. Sign in as the business itself.');
 const h = (fn) => async (req, res) => {
   try {
     res.json(await fn(req));
@@ -160,6 +162,7 @@ router.get(
 router.post(
   '/connections',
   auth,
+  ownerAsks,
   gateWrite,
   checked('POST /connections'),
   namesOne,
@@ -171,6 +174,23 @@ router.post(
     );
     return net.edgeView(_told(out), net.EDGE_ASKED_KEYS);
   })
+);
+// @does Nothing in (business owner only) -> we read the requests to connect that wait for this business and the ones it asked, a firm always the parent -> { to_me, by_me }.
+router.get(
+  '/asks',
+  auth,
+  ownerDecides,
+  checked('GET /asks'),
+  h((req) => require('../../lib/connect-asks').asksOf(auth.entityOf(req)))
+);
+// @does A business address in the body (business owner only) -> we send ONE fixed e-mail inviting a firm that is not on ChitBridge, capped, and say whether it was delivered -> { sent, delivered, message }, nothing connects.
+router.post(
+  '/firm-invites',
+  auth,
+  ownerAsks,
+  gateWrite,
+  checked('POST /firm-invites'),
+  h((req) => require('../../lib/firm-invite').sendFirmInvite({ entityId: auth.entityOf(req), email: req.body.email }))
 );
 // @does A connection id in the address (business owner only) -> we approve that requested connection -> the connection now live.
 router.post(

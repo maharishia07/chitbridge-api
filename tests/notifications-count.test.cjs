@@ -67,7 +67,7 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
 
   await ita('it answers the number and nothing else — no rows travel', async () => {
     const r = await call({ count: '1' });
-    assert.deepStrictEqual(Object.keys(r.body).sort(), ['count', 'seen_at', 'total']);
+    assert.deepStrictEqual(Object.keys(r.body).sort(), ['asks', 'count', 'seen_at', 'total']);
     assert.strictEqual(r.body.count, 3);
   });
 
@@ -106,7 +106,7 @@ const norm = (s) => s.replace(/\s+/g, ' ').trim();
 
   await ita('without ?count=1 the feed is unchanged: rows, count, total, seen_at (+ the one pager\'s page · limit, LIM2)', async () => {
     const r = await call({});
-    assert.deepStrictEqual(Object.keys(r.body).sort(), ['count', 'limit', 'notifications', 'page', 'seen_at', 'total']);
+    assert.deepStrictEqual(Object.keys(r.body).sort(), ['asks', 'count', 'limit', 'notifications', 'page', 'seen_at', 'total']);
     assert.deepStrictEqual([r.body.page, r.body.limit], [1, 30]);
   });
 

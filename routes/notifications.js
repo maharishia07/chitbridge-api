@@ -16,6 +16,8 @@ const log = require('../lib/logger');
 const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const { isOwner } = require('../lib/owner'); // the one owner test: a firm request is the OWNER's to answer, never a staff seat's
+const connectAsks = require('../lib/connect-asks'); // the requests to connect that wait for this business (the bell's pinned rows and its until-answered count)
 const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
 const markNotices = require('../lib/mark-notices'); // the marks' news (a Query, a reply) beside the chit events
 const privateFlag = require('../lib/private-flag'); // the ONE right to read the firm's notes: the bell's internal arm asks it, never a second rule
@@ -69,6 +71,8 @@ const FEED_FROM = `FROM state_log sl
           AND sl.created_at > now() - interval '${FEED_DAYS} days'
         ORDER BY sl.chit_id, sl.action, sl.created_at DESC, sl.detail`;
 
+/** the firm requests waiting for this caller's answer: only the OWNER seat has any (a staff seat and a key read none) */
+const askBell = (req, entityId) => connectAsks.bellOf(entityId, isOwner(req));
 /**
  * the badge answer: { count, total, seen_at } for ?count=1 (the route decides the person and the page; this only asks the one statement)
  * ── ⭐⭐ ?count=1 — THE BADGE'S OWN QUESTION, IN ONE STATEMENT (2026-09-28, BACKLOG "THE BADGE COSTS A FULL
@@ -174,7 +178,11 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
     const internal = privateFlag.mayUse(await privateFlag.rightsOf(req)); /* may this caller read the firm's notes? the bell's internal arm only runs when the notes' own right says so (the seat is on the identity: no read of its own) */
 
-    if (textOf(req.query.count, { trim: false }) === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal)); /* the badge's own question, in one statement (badgeOf) */
+    const asks = await askBell(req, entity_id); /* the firm requests that wait for the OWNER's answer: their own count, outside the watermark */
+    if (textOf(req.query.count, { trim: false }) === '1') {
+      const badge = await badgeOf(entity_id, caller_id, limit, internal); /* the badge's own question, in one statement (badgeOf) */
+      return res.json(Object.assign(badge, { count: badge.count + asks.count, asks: asks.count }));
+    }
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
@@ -217,9 +225,10 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
      * drive the number.
      */
     const countable = (r) => r.action !== 'message_sent';
-    const feed = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, limit);
+    const activity = (await costView.feedRows(result.rows, entity_id, blind)).concat(news).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    const feed = asks.rows.concat(activity).slice(0, limit); /* a request to connect stays pinned at the top until it is answered */
     const fresh = (seen ? result.rows.filter((item) => new Date(item.created_at) > new Date(seen)) : result.rows).filter(countable).length + news.filter((n) => !seen || new Date(n.created_at) > new Date(seen)).length;
-    res.json(Object.assign({ notifications: feed, count: fresh, total: result.rows.length + news.length, page: 1, limit, seen_at: seen }, warnings.length ? { warnings } : {}));
+    res.json(Object.assign({ notifications: feed, count: fresh + asks.count, asks: asks.count, total: result.rows.length + news.length + asks.count, page: 1, limit, seen_at: seen }, warnings.length ? { warnings } : {}));
   } catch (err) {
     console.error('Notifications error:', err.message);
     problem(req, res, faultOf(err, req, 'Failed to get notifications'));
