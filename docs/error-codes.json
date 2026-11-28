@@ -907,6 +907,42 @@
    "raised_by": []
   },
   {
+   "code": "ASK_COOLING_OFF",
+   "status": "429",
+   "title": "Refused a short while ago",
+   "shopkeeper": "That business refused your request a short while ago.",
+   "hint": "Try again a little later.",
+   "owner_area": "network",
+   "since": "2026-11-28",
+   "raised_by": [
+    "GET /api/network-design/availability",
+    "POST /api/connections/request",
+    "POST /api/network-design/build",
+    "POST /api/network-design/reissue",
+    "POST /api/network-design/validate",
+    "PUT /api/connections/:id/respond",
+    "PUT /api/network-design"
+   ]
+  },
+  {
+   "code": "ASK_LIMIT",
+   "status": "429",
+   "title": "Too many requests to connect",
+   "shopkeeper": "You or that business have had a lot of requests to connect lately.",
+   "hint": "Wait for answers, or try again later.",
+   "owner_area": "network",
+   "since": "2026-11-28",
+   "raised_by": [
+    "GET /api/network-design/availability",
+    "POST /api/connections/request",
+    "POST /api/network-design/build",
+    "POST /api/network-design/reissue",
+    "POST /api/network-design/validate",
+    "PUT /api/connections/:id/respond",
+    "PUT /api/network-design"
+   ]
+  },
+  {
    "code": "ASSIGNEE_VIEW_ONLY",
    "status": "400",
    "title": "Cannot take a follow-up",
@@ -2265,6 +2301,7 @@
    "owner_area": "network",
    "since": "2026-11-14",
    "raised_by": [
+    "PATCH /api/books-grants/:id",
     "POST /api/books-grants"
    ]
   },
@@ -6522,6 +6559,24 @@
    ]
   },
   {
+   "code": "FIRM_DIRECTION",
+   "status": "409",
+   "title": "Connected the other way round",
+   "shopkeeper": "These two businesses are already connected the other way round: the firm is always the one that looks after the books.",
+   "hint": "Open your requests to see where it stands.",
+   "owner_area": "network",
+   "since": "2026-11-28",
+   "raised_by": [
+    "GET /api/network-design/availability",
+    "POST /api/connections/request",
+    "POST /api/network-design/build",
+    "POST /api/network-design/reissue",
+    "POST /api/network-design/validate",
+    "PUT /api/connections/:id/respond",
+    "PUT /api/network-design"
+   ]
+  },
+  {
    "code": "FLAGS_NOT_MIGRATED",
    "status": "503",
    "title": "Notes not switched on",
@@ -8375,6 +8430,24 @@
    "since": "2026-10-22",
    "raised_by": [
     "POST /api/keys"
+   ]
+  },
+  {
+   "code": "INVITE_LIMIT",
+   "status": "429",
+   "title": "Too many invitations",
+   "shopkeeper": "You have sent a lot of invitations, or that address was invited a short while ago.",
+   "hint": "Try again tomorrow, or wait a few days for that address.",
+   "owner_area": "network",
+   "since": "2026-11-28",
+   "raised_by": [
+    "GET /api/network-design/availability",
+    "POST /api/connections/request",
+    "POST /api/network-design/build",
+    "POST /api/network-design/reissue",
+    "POST /api/network-design/validate",
+    "PUT /api/connections/:id/respond",
+    "PUT /api/network-design"
    ]
   },
   {
@@ -12345,6 +12418,7 @@
     "GET /api/books/returns",
     "GET /api/books/status",
     "GET /api/crm/segments",
+    "GET /api/network-design/availability",
     "PATCH /api/actors/:id",
     "PATCH /api/books-grants/:id",
     "PATCH /api/books/recurring/:id",
@@ -12402,10 +12476,14 @@
     "POST /api/books/write-off",
     "POST /api/books/year/:fy/close",
     "POST /api/books/year/:fy/reopen",
+    "POST /api/connections/request",
     "POST /api/crm/privacy-requests/:id/answer",
     "POST /api/integrations/:actor_id/approve",
     "POST /api/integrations/profile",
     "POST /api/keys",
+    "POST /api/network-design/build",
+    "POST /api/network-design/reissue",
+    "POST /api/network-design/validate",
     "POST /api/network-offers/:id/release",
     "POST /api/network-offers/:id/withdraw",
     "POST /api/network-offers/catalogue/cancel",
@@ -12429,6 +12507,7 @@
     "PUT /api/folders/inventory/:code",
     "PUT /api/governance/country-setup",
     "PUT /api/governance/profile/vault",
+    "PUT /api/network-design",
     "PUT /api/network-offers/policy"
    ]
   },

@@ -492,5 +492,7 @@ const GUARDS_PART = [
   'homespeed-plan-once.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'w4acc-bas-wages-boxes.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'cat353-offer-scope-save.test.cjs', // CAT-353: an offer with an unreadable scope is refused at save
+  'home-facts-network.test.cjs', // firm-connect-1138: the Home network card, owner only
+  'firm-connect-1138.test.cjs', // firm-connect-1138 (UX-215/216/220): owner gates, direction pin, caps, fixed invite, costs consent, visits, Home card, bell; its --mutants mode is a CI step
 ];
 module.exports = { GUARDS_PART };

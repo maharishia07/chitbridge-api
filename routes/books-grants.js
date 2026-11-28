@@ -120,7 +120,8 @@ router.post('/:id/revoke', auth, noKey, memberOnly, declaresStatuses([503]), ...
 // @does Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).
 router.get('/log', auth, noKey, memberOnly, declaresStatuses([503]), ...contract.checked('GET /log'), async (req, res) => {
   try {
-    res.json({ looks: await grants.looks(entityOf(req), req.query || {}) });
+    const looks = await grants.looks(entityOf(req), req.query || {});
+    res.json({ looks, visits: require('../lib/books-visits').visitsOf(looks) }); /* one row per visit (a run within 30 minutes), the pages in its detail */
   } catch (err) {
     answer(req, res, err);
   }

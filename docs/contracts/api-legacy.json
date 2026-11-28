@@ -32412,14 +32412,22 @@
    "answers": [
     {
      "scenario": "staff-asks",
-     "status": 401,
+     "status": 403,
      "body_keys": {
-      "error": "sign in as a business first",
-      "code": "NO_ACTOR"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "message": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it."
      },
      "fixture": {
-      "error": "sign in as a business first",
-      "code": "NO_ACTOR"
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "message": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it."
      }
     },
     {
@@ -79146,6 +79154,148 @@
       "detail": "entry_id, name and data_base64 are required",
       "hint": "Open the entry from the Day book, choose the file again, then send.",
       "request_id": "req-test"
+     }
+    }
+   ]
+  },
+  "GET /api/network/asks": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "code": "TOKEN_MISSING",
+      "hint": "Sign in, then try again."
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "code": "TOKEN_MISSING",
+      "hint": "Sign in, then try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "message": "Only the business owner can decide on a connection. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 500,
+     "body_keys": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR",
+      "hint": "If it keeps happening, tell us the request id."
+     },
+     "fixture": {
+      "error": "Something went wrong — please try again.",
+      "code": "ERR",
+      "hint": "If it keeps happening, tell us the request id."
+     }
+    }
+   ]
+  },
+  "POST /api/network/firm-invites": {
+   "answers": [
+    {
+     "scenario": "signed-out",
+     "status": 401,
+     "body_keys": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "code": "TOKEN_MISSING",
+      "hint": "Sign in, then try again."
+     },
+     "fixture": {
+      "error": "Unauthorised",
+      "message": "No token provided",
+      "code": "TOKEN_MISSING",
+      "hint": "Sign in, then try again."
+     }
+    },
+    {
+     "scenario": "staff-asks",
+     "status": 403,
+     "body_keys": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "message": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it."
+     },
+     "fixture": {
+      "error": "Forbidden",
+      "code": "OWNER_ONLY",
+      "may": false,
+      "why": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "message": "Only the business owner can ask to connect. Sign in as the business itself.",
+      "hint": "Ask the owner of the shop to do it."
+     }
+    },
+    {
+     "scenario": "db-fails",
+     "status": 400,
+     "body_keys": {
+      "error": "email is needed.",
+      "code": "NETWORK_BAD_REQUEST",
+      "hint": "Read the sentence, fix it and try again.",
+      "field": "email"
+     },
+     "fixture": {
+      "error": "email is needed.",
+      "code": "NETWORK_BAD_REQUEST",
+      "hint": "Read the sentence, fix it and try again.",
+      "field": "email"
+     }
+    },
+    {
+     "scenario": "nothing-found",
+     "status": 400,
+     "body_keys": {
+      "error": "email is needed.",
+      "code": "NETWORK_BAD_REQUEST",
+      "hint": "Read the sentence, fix it and try again.",
+      "field": "email"
+     },
+     "fixture": {
+      "error": "email is needed.",
+      "code": "NETWORK_BAD_REQUEST",
+      "hint": "Read the sentence, fix it and try again.",
+      "field": "email"
+     }
+    },
+    {
+     "scenario": "writes-switched-off",
+     "status": 503,
+     "body_keys": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED",
+      "hint": "Try again later."
+     },
+     "fixture": {
+      "error": "Network editing disabled",
+      "message": "Network changes aren't available yet.",
+      "code": "NET_WRITE_DISABLED",
+      "hint": "Try again later."
      }
     }
    ]

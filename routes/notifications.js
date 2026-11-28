@@ -16,6 +16,8 @@ const log = require('../lib/logger');
 const auth = require('../middleware/auth');
 const billPrivacy = require('../lib/bill-privacy');
 const cost = require('../lib/cost'); // RAIL-146g: is this caller a co-assist without can_see_costs
+const { isOwner } = require('../lib/owner'); // the one owner test: a firm request is the OWNER's to answer, never a staff seat's
+const connectAsks = require('../lib/connect-asks'); // the requests to connect that wait for this business (the bell's pinned rows and its until-answered count)
 const costView = require('../lib/cost-view'); // RAIL-146g: the bell's rows for a blind reader
 const markNotices = require('../lib/mark-notices'); // the marks' news (a Query, a reply) beside the chit events
 const privateFlag = require('../lib/private-flag'); // the ONE right to read the firm's notes: the bell's internal arm asks it, never a second rule
@@ -79,7 +81,7 @@ const FEED_FROM = `FROM state_log sl
  * `limit` window, the same rule (newer than notif_seen_at, messages excluded). Same number, nothing else sent.
  * notif_seen_at is read through to_jsonb, so before b157 every row counts, exactly as the feed does.
  */
-async function badgeOf(entity_id, caller_id, limit, internal) {
+async function badgeOf(entity_id, caller_id, limit, internal, mayAnswer) {
   /* the marks' news counts since the same watermark, inside this ONE statement (lib/mark-notices newsCte); without mark_notices (b870 not run) or if it fails, the count alone, as before */
   const countOf = (withNews) =>
     withEntity(entity_id, (db) =>
@@ -88,7 +90,7 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
      SELECT count(*) FILTER (WHERE d.action <> 'message_sent'
                                AND ((SELECT seen FROM me) IS NULL OR d.created_at > (SELECT seen FROM me)::timestamptz))::int AS count,
             count(*)::int AS total,
-            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}
+            (SELECT seen FROM me) AS seen_at${frag(withNews ? ', ' + markNotices.newsColumns('(SELECT seen FROM me)') : '')}${frag(connectAsks.badgeAsksSql(mayAnswer))}
        FROM (SELECT x.action, x.created_at
                FROM (SELECT DISTINCT ON (sl.chit_id, sl.action, sl.created_at, sl.detail) sl.action, sl.created_at
                      ${FEED_FROM}) x
@@ -108,7 +110,8 @@ async function badgeOf(entity_id, caller_id, limit, internal) {
   }
   if (!counted) counted = await countOf(false);
   const r = counted.rows[0] || { count: 0, total: 0, seen_at: null };
-  return { count: r.count + (r.news_fresh || 0), total: r.total + (r.news_total || 0), seen_at: r.seen_at };
+  const asks = r.asks | 0; /* the owner's waiting firm requests: counted until answered, outside the watermark */
+  return { count: r.count + (r.news_fresh || 0) + asks, total: r.total + (r.news_total || 0), seen_at: r.seen_at, asks };
 }
 
 /** the feed page: the caller's newest events (one statement, the shared fragment FEED_FROM); the DISTINCT ON note inside says why it is wrapped */
@@ -174,7 +177,7 @@ router.get('/', auth, ...contract.checked('GET /'), async (req, res) => {
     const caller_id = req.identity.identity_id, /* the actor (or entity) actually making the call */ limit = PL.limitOf(req.query.limit, FEED_PAGE, FEED_MAX);
     const internal = privateFlag.mayUse(await privateFlag.rightsOf(req)); /* may this caller read the firm's notes? the bell's internal arm only runs when the notes' own right says so (the seat is on the identity: no read of its own) */
 
-    if (textOf(req.query.count, { trim: false }) === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal)); /* the badge's own question, in one statement (badgeOf) */
+    if (textOf(req.query.count, { trim: false }) === '1') return res.json(await badgeOf(entity_id, caller_id, limit, internal, isOwner(req))); /* the badge's own question, in one statement (badgeOf); the owner's waiting requests ride in it */
 
     const blind = await cost.isCostBlind(req, entity_id); /* RAIL-146g: ONE cost read; a blind actor's bell carries no purchase total (lib/cost-view) */
     // Entity-level "dispute team": an actor who receives ALL disputes for this entity,
