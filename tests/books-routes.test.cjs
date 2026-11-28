@@ -134,7 +134,10 @@ const call = (port, method, p, body, headers) => new Promise((done) => {
   const tbn = await q('GET', '/trial-balance');
   ok('…and /trial-balance with no asOf reads the same day', tbn.status === 200 && tbn.body.asOf === '2026-10-13', JSON.stringify(tbn.body).slice(0, 120));
   const tbf = await q('GET', '/trial-balance?asOf=2027-03-31'), tbp = await q('GET', '/trial-balance?asOf=2026-09-30');
-  ok('F5: a trial balance asked for the end of the year in progress carries shown_as_at = the shop day (the E1 rule), the figures still as asked', tbf.status === 200 && tbf.body.asOf === '2027-03-31' && tbf.body.shown_as_at === '2026-10-13', JSON.stringify(tbf.body).slice(0, 160));
+  /* AUDBS (28 Nov): the heading says the day the figures were read at — future days included, for the trial balance and the balance sheet alike (the date a seat picks is the date it is headed with; never today over figures of another day) */
+  const bsf = await q('GET', '/bs?asOf=2027-03-31');
+  ok('AUDBS: a trial balance asked for a future day is headed with that day: shown_as_at === asOf === 2027-03-31 (the shop day is 2026-10-13)', tbf.status === 200 && tbf.body.asOf === '2027-03-31' && tbf.body.shown_as_at === tbf.body.asOf, JSON.stringify(tbf.body).slice(0, 160));
+  ok('AUDBS: a balance sheet asked for a future day is headed with that day, its compare days a month and a year before THAT day', bsf.status === 200 && bsf.body.asOf === '2027-03-31' && bsf.body.shown_as_at === bsf.body.asOf && bsf.body.compare && bsf.body.compare.year !== undefined, JSON.stringify(bsf.body).slice(0, 200));
   ok('F5: a past as-at day is its own shown_as_at', tbp.status === 200 && tbp.body.shown_as_at === '2026-09-30', JSON.stringify(tbp.body).slice(0, 160));
   CLOCK.reset();
   const tb = await q('GET', '/trial-balance?asOf=2026-09-30');
