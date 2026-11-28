@@ -180,6 +180,7 @@ const GUARDS_PART = [
   'one-reader-tables.test.cjs', // DRIFT exit bar 2+3 (28 Nov): one owning module per guarded table (docs/one-reader/<table>.json); SQL outside it fails unless dated waiver; raw state predicate never (SCAN_SELFTEST=1 bites)
   'one-figure.test.cjs', // ONE-FIGURE (28 Nov batch 1141): a guarded figure has ONE owning function (docs/one-figure/<figure>.json); a second reader of what a return leaves out fails (SCAN_SELFTEST=1 bites)
   'one-figure-return-reading.test.cjs', // ONE-FIGURE RC1: BAS/VAT201 box = its drill = Ledger page movement minus the labelled left-out line, AU + AE, set-off fixture + mutation red
+  'drift7-bas-claim-tie.test.cjs', // DRIFT 7: BAS 1B sentence = its entries = the box, hand 15.00 + 60.00 - 30.00 = 45.00 (claimed 75.00, returned 30.00), mutation red
   'books-grant-list-gate-drift.test.cjs', // UX-218: the owner's list and the gate answer one grant state (stateOf); no second state rule in list()
   'reward-walkins-one-reader.test.cjs', // DRIFT cluster 5 (27 Nov): the walk-in list quotes what the till spends (reward-store.walkIns/foldOf); no SQL on reward_ledger outside reward-store (SCAN_SELFTEST=1 proves it bites)
   'cost-margin-basis.test.cjs', // ACC-206 C1: the owner's chit margin is on the taxable value, one case per matrix column (tests/lib/bill-total-fixtures.cjs)

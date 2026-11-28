@@ -1,0 +1,10 @@
+{
+  "figure": "bas-input-claim",
+  "says": "The credit claimed with no tax invoice on a return (the sentence under 1B: how many purchases, how much claimed, how much given back by purchase returns, the box's part) has ONE reader: books-evidence.unsupportedIn. The drill (See them) is the Day book's same flag; nothing else counts the flagged purchases.",
+  "covers": ["bas.1b.unsupported_input"],
+  "owner": "lib/books-evidence.js",
+  "owner_fn": "unsupportedIn",
+  "allowed_elsewhere": ["lib/books-period-taxed.js"],
+  "forbidden": ["unsupportedIn"],
+  "decided": "2026-11-28 DRIFT 7 (walk R4 P2-5): the sentence said 45.00 from 2 purchases while See them listed 75.00 - the 30.00 purchase return that sits in the same box was not said. The claim now carries gross_minor (what the entries add up to), returned_minor (the purchase returns' credit on the input-tax ledger) and tax_minor = gross - returned (never above the box)."
+}

@@ -5452,6 +5452,12 @@
               "tax_minor": {
                 "type": "number"
               },
+              "gross_minor": {
+                "type": "number"
+              },
+              "returned_minor": {
+                "type": "number"
+              },
               "from": {
                 "type": "string"
               },
