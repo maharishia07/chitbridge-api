@@ -50681,7 +50681,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1812,
-   "hash": "a64661483355a474",
+   "hash": "0cd41366a6a60954",
    "does": "An entry id and a reason in -> we post its reversal and reopen the bills it settled, refusing a second reversal -> the reversal entry (the owner and the shop's Bookkeeper; held for the owner's OK when the shop asked).",
    "errors": {
     "count": 3,
@@ -50788,7 +50788,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1442 (BB-P1-1) re-sign, diff origin/main...HEAD read for this route (handler, validation chain, operation, contract, books-contract.js ROUTES row): 13 machine columns true, stage2: body gains optional date (the day the bank returned a cheque; dateQ-parsed so a bad day is the registered 400 DATE_INVALID, a locked month refuses), listed in the body keys (strict_input true); the 409 ALREADY_REVERSED body gains posting_date (additive, in the web-api.json example); no new code, same statuses; additive and backward compatible. Business rules (cheque return, locked month) belong to books/cb-accounting, not read for correctness here.",
     "lifecycle": "stable"
    },
    "status": "meets standard",

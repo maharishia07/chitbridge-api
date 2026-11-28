@@ -1812,10 +1812,10 @@ router.post('/entries', auth, ownerOrAccountant, on, ...checked('POST /entries')
 router.post('/entries/:id/reverse', auth, ownerOrAccountant, on, ...checked('POST /entries/:id/reverse'), LiveBill.refuseLiveBill, require('../lib/books-approval').heldGate('reverse', refusalOf), async (req, res) => {
   try {
     if (!UUID.test(String(req.params.id))) return refuse(req, res, 404, 'NOT_FOUND', 'Not found');
-    const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason });
+    const r = await B.reverseEntry(null, ctx(req), String(req.params.id), { by: byOf(req), reason: (req.body || {}).reason, date: (req.body || {}).date ? dateQ((req.body || {}).date, today(req)) : undefined /* BB-P1-1: the day the bank returned a cheque; none = the original's month, as before */ });
     if (r && r.duplicate) {
       const m = 'This entry was already reversed by ' + r.entry_no + '.';
-      return problem(req, res, { status: 409, code: 'ALREADY_REVERSED', detail: m, legacy: { error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id } });
+      return problem(req, res, { status: 409, code: 'ALREADY_REVERSED', detail: m, legacy: { error: 'Already reversed', message: m, entry_no: r.entry_no, entry_id: r.entry_id, posting_date: r.posting_date || null } });
     }
     res.json({ ok: r.ok, off: r.off, entry_id: r.entry_id, entry_no: r.entry_no, posting_date: r.posting_date, moved: r.moved, reverses: r.reverses, reverses_entry_id: r.reverses_entry_id, items: r.items, reopened: r.reopened, words: r.words });
   } catch (err) {

@@ -97,9 +97,9 @@ of file each thing is; this says what already does the job.
 | 46 | `sentence` | `one-person.js` |  |
 | 46 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
 | 46 | `flags` | `cmdb.js` | the flags a record raises about itself — |
+| 46 | `mine` | `crm.js` | `opt.removedOk`: |
 | 45 | `order` | `cap-iddocs.js` | var LIST = null; |
 | 45 | `done` | `dayopen.js` | what the morning settled, in one sentence, for the moment it finishes |
-| 45 | `mine` | `crm.js` | `opt.removedOk`: |
 | 44 | `load` | `books-grant-view.js` |  |
 | 43 | `changes` | `books-store.js` |  |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
@@ -168,6 +168,7 @@ of file each thing is; this says what already does the job.
 | 28 | `chart` | `fx-rates.js` |  |
 | 27 | `currency` | `ui-money.js` | the currency a money field uses: |
 | 27 | `refusalOf` | `bill-number-taken.js` | the refusal thrown as data: |
+| 27 | `payment` | `books-store.js` |  |
 | 27 | `plan` | `crm-leads.js` | versus new is the owner's decision (docs/critique/CRM-247-248.md), never made here. |
 | 27 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 26 | `side` | `books-grant-reports.js` |  |
@@ -178,7 +179,6 @@ of file each thing is; this says what already does the job.
 | 26 | `label` | `screen-id.js` |  |
 | 26 | `textOf` | `bank-statement-file.js` | the file's text: |
 | 26 | `receipt` | `books-events-batch.js` | the receipt: |
-| 26 | `payment` | `books-store.js` |  |
 | 26 | `assist` | `home-facts.js` | The library is the platform's, not the shop's, so it is read without a shop context. |
 | 26 | `match` | `itemmatch.js` | actually state. |
 | 26 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |

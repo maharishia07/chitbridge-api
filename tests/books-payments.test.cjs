@@ -507,7 +507,7 @@ const codes = (r) => (r.body.warnings || []).map((w) => w.code).sort();
       && JSON.stringify(rev.body.reopened) === JSON.stringify([{ against_ref: BILL('m'), bill_no: 'VS-0020' }, { against_ref: BILL('n'), bill_no: 'VS-0021' }]), JSON.stringify(rev.body));
     eq('…the words a screen paints', rev.body.words, 'Reversed ' + payNo + ' — ₹1,500 — by ' + rev.body.entry_no + '. Reopened 2 bills (VS-0020, VS-0021).');
     console.log('          store calls for POST /entries/:id/reverse: ' + trips.length + ' (' + trips.join(' ') + ')');
-    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 16 store calls for a 2-bill payment (14 + the loan-instalment guard read, loanEntriesWithRepayments, dcf6e4421, + the client_ref lock lockSourceRef, 50a95e7bb R12a: each one statement in the same transaction)', trips.length <= 16 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
+    ok('the reverse route runs in ONE withEntity (one transaction) and never a per-row read: ≤ 17 store calls for a 2-bill payment (14 + the loan-instalment guard read, loanEntriesWithRepayments, dcf6e4421, + the cheque read of BB-P1-1 (markChequeReturned: ONE payment read, a cash or bank receipt stops there) + the client_ref lock lockSourceRef, 50a95e7bb R12a: each one statement in the same transaction)', trips.length <= 17 && trips.filter((k) => k === 'items').length <= 1, trips.length + ': ' + trips.join(' '));
     /* ⭐ never edited, only mirrored */
     ok('the original entry is byte-for-byte what it was', JSON.stringify(await X.store.entry(X.db, SHOP, entryId)) === before);
     const mirror = await X.store.entry(X.db, SHOP, rev.body.entry_id), orig = JSON.parse(before);
