@@ -103,6 +103,15 @@ const call = (port, method, p, body) => new Promise((done) => {
   const again = await q('POST', door, { principal_minor: 440000, from: 'bank', date: '2026-10-28', client_ref: 'rest2' });
   ok('after that instalment is reversed the balance is back: the same 4,400.00 is accepted again', again.status === 200, JSON.stringify(again.body));
   eq('an account that is not a loan account is 404', (await q('POST', '/loans/' + encodeURIComponent('acct:' + bank.code) + '/emi', { principal_minor: 100, from: 'bank', date: '2026-10-28', client_ref: 'x' })).status, 404);
+  /* the module's own rules, alone: a day only for a person's reversal, refused in words before the receipt; a non-cheque source writes nothing */
+  const Returned = require(path.join(H.API, 'lib', 'books-cheque-return'));
+  const helpers = { isoDay: (d) => String(d).slice(0, 10), typedDate: () => {}, refuse: (words) => new Error(words), S: {}, E: {} };
+  const orig = { posting_date: '2026-10-12', source_ref: 'bill:1' };
+  eq('givenDay: no day given, or not a person reversal, is null (the original month)', [Returned.givenDay(helpers, {}, {}, orig, { owner: true }), Returned.givenDay(helpers, {}, {}, orig, { returned_on: '2026-10-20' })], [null, null]);
+  eq('givenDay: a person reversal on 20 Oct is that day', Returned.givenDay(helpers, {}, {}, orig, { owner: true, returned_on: '2026-10-20' }), '2026-10-20');
+  let said = ''; try { Returned.givenDay(helpers, {}, {}, orig, { owner: true, returned_on: '2026-10-01' }); } catch (e) { said = e.message; }
+  ok('givenDay: a day before the entry is refused in words', /before the entry it reverses \(2026-10-12\)/.test(said), said);
+  eq('markReturned: a receipt that is not a payment writes nothing', await Returned.markReturned(helpers, {}, SHOP, orig, '2026-10-20', null), 0);
   srv.close();
   console.log('\n' + pass + ' passed, ' + fail + ' failed');
   process.exit(fail ? 1 : 0);
