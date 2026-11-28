@@ -40,7 +40,7 @@ const bankLines = async (shop) => ok(await j('/api/books/ledger/1500?from=2026-1
   let payId = null, receipt = null, reversal = null;
   const before = await tb(S);
 
-  await kase('CHQ-1', 'cheque 300.00 cleared: Dr 1500 30000 / Cr 1300 30000; the real ledger line carries event_type payment_received and the party', async () => {
+  await kase('CHQ-1', 'cheque 300.00 cleared: Dr 1500 30000 / Cr 1300 30000; the real bank ledger line carries event_type payment_received, the debtors line of the same entry names the party', async () => {
     const rec = ok(await j('/api/books/payments', { method: 'POST', token: S.token, body: { party_id: party, direction: 'in', amount_minor: 30000, currency: 'AUD', mode: 'cheque', cheque_no: '000123', received_at: '2026-10-12', allocate: 'none', client_ref: RUN + 'c1' } }), 'record').b;
     payId = rec.payment && rec.payment.payment_id;
     ok(await j('/api/books/cheques/' + payId + '/status', { method: 'POST', token: S.token, body: { status: 'deposited', date: '2026-10-12' } }), 'deposited');
@@ -49,7 +49,10 @@ const bankLines = async (shop) => ok(await j('/api/books/ledger/1500?from=2026-1
     expect(!!receipt, 'no entry ' + JSON.stringify(clr).slice(0, 200));
     expect(same(delta(before, await tb(S)), { 1300: -30000, 1500: 30000 }), 'books ' + JSON.stringify(delta(before, await tb(S))));
     const line = (await bankLines(S)).find((l) => l.entry_id === receipt);
-    expect(line && line.event_type === 'payment_received' && line.party_id === party && Number(line.dr_minor) === 30000, 'ledger line ' + JSON.stringify(line));
+    expect(line && line.event_type === 'payment_received' && Number(line.dr_minor) === 30000 && !line.reversed_by, 'bank ledger line ' + JSON.stringify(line));
+    const debtors = ok(await j('/api/books/ledger/debtors?from=2026-10-01&to=2026-10-31', { token: S.token }), 'debtors ledger').b.lines || [];
+    const named = debtors.find((l) => l.entry_id === receipt);
+    expect(named && named.party_id === party && Number(named.cr_minor) === 30000, 'the party is on the DEBTORS line (the bank line has none; the web joins them by entry_id): ' + JSON.stringify(named));
   });
 
   await kase('CHQ-2', 'returned 20 Oct: reversal dated 2026-10-20, books net 0, the cheque reads bounced', async () => {
