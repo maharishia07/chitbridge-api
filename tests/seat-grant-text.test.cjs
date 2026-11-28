@@ -43,5 +43,19 @@ check(preset.why === abilities.whyOf(preset.does, preset.stays), 'the grant sent
 const owner = { api_key: null, identity: { identity_type: 'entity' } };
 const counter = matrix.SEATS.find((s) => s.key === 'counter').req;
 [owner, seat, counter].forEach((req) => check(abilities.mayDo('fx_rates', req) === (matrix.cellOf(['ownerOrAccountant'], req) === true), 'fx_rates: the screen flag and the POST gate answer alike'));
+/* UX-219: every OTHER role line is written by canOf from ability names, and each name agrees with the preset's own facts and the gates */
+const seatOfPreset = (x) => ({ api_key: null, identity: { identity_type: 'actor', parent_entity_id: 'shop', hat: x.hat || 'act', access_level: x.level, whole_entity: x.whole_entity, can_see_costs: x.can_see_costs } });
+const levels = (names) => names.map((name) => abilities.EVERYDAY[name].level);
+access.PRESETS.concat(access.PRACTICE_PRESETS).filter((x) => x.can).forEach((x) => {
+  check(x.why === abilities.canOf(x.can, x.cannot).text, x.key + ': the role sentence is written by canOf from the names, not typed');
+  const writes = access.canEdit(seatOfPreset(x).identity);
+  check(levels(x.can).includes('write') === writes, x.key + ': what it can change agrees with the editor level');
+  check(levels(x.cannot).includes('write') === !writes, x.key + ': what it cannot change agrees with the editor level');
+  if (x.can.includes('read_money')) check(x.can_see_costs === true, x.key + ': says money and costs but the seat does not see costs');
+  if (x.cannot.includes('costs')) check(x.can_see_costs === false, x.key + ': says no cost prices but the seat sees costs');
+  if (x.can.includes('read_all') || x.can.includes('records_all')) check(x.whole_entity === true, x.key + ': says every branch but the seat is one branch');
+  if (x.cannot.includes('books')) check(matrix.cellOf(chains['GET /pl'], seatOfPreset(x)) !== true, x.key + ': says no books but the money gate lets the seat through');
+  check(!/node|hat|chit|rail|five/i.test(x.why), x.key + ': no developer words in the owner sentence');
+});
 console.log('\n  ' + (passed + failed) + ' checks, ' + failed + ' failed');
 process.exit(failed ? 1 : 0);
