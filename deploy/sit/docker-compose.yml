@@ -44,6 +44,8 @@ services:
       - "443:443/udp"
     volumes:
       - ./sit/Caddyfile:/etc/caddy/Caddyfile:ro
+      # video host (/videos/*): a host folder, outside every container and every deploy; publish-videos.sh in the docs repo fills it
+      - /srv/videos:/srv/videos:ro
       - caddydata:/data
       - caddyconfig:/config
     depends_on: [api, web, ask]

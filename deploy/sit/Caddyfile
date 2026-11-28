@@ -40,6 +40,16 @@
 		respond `window.CB_API = window.CB_API || "https://{host}";` 200
 	}
 
+	# the video host: static files from /srv/videos on the HOST (compose mounts it read-only), so a deploy or a level never touches them.
+	# Range requests and video/mp4 come from file_server; index.html is the player page (toolset/video/publish-videos.sh writes it).
+	redir /videos /videos/ 308
+	handle /videos/* {
+		root * /srv
+		header X-Content-Type-Options nosniff
+		header Cache-Control "public, max-age=300"
+		file_server
+	}
+
 	handle {
 		# vercel.json sent these on the live site; the web's nginx image does not
 		header X-Content-Type-Options nosniff
