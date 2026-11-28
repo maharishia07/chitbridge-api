@@ -31,8 +31,8 @@
     "convert": "1.96.0",
     "accounts-packs": "1.79.0",
     "receivables": "1.110.0",
-    "posting-voucher": "1.98.0",
-    "posting": "1.110.0",
+    "posting-voucher": "1.110.99",
+    "posting": "1.110.99",
     "ledger-read": "1.107.0",
     "ledger": "1.110.0",
     "bookpack": "1.110.0",
@@ -43,7 +43,7 @@
     "pack-kit": "1.110.0",
     "reg-in": "1.110.0",
     "reg-au-movein": "1.98.0",
-    "reg-au": "1.110.10",
+    "reg-au": "1.110.99",
     "reg-ae-law": "1.102.0",
     "reg-ae": "1.110.2",
     "reg-sg": "1.110.0",
@@ -55,7 +55,9 @@
     "chart": "1.102.0",
     "tax-export": "1.99.0",
     "reg-in-bank": "1.99.0",
-    "reg-in-movein": "1.110.0"
+    "reg-in-movein": "1.110.0",
+    "reg-au-adjust": "1.110.99",
+    "posting-bad-debt": "1.110.99"
   },
   "adopt": {
     "money": [
@@ -227,6 +229,12 @@
     ],
     "reg-in-movein": [
       "lib/reg-in-movein.js"
+    ],
+    "reg-au-adjust": [
+      "lib/reg-au-adjust.js"
+    ],
+    "posting-bad-debt": [
+      "lib/posting-bad-debt.js"
     ]
   },
   "bundles": {
@@ -236,6 +244,7 @@
       "reg-in-movein",
       "reg-in",
       "reg-au-movein",
+      "reg-au-adjust",
       "reg-au",
       "reg-ae-law",
       "reg-ae",
@@ -282,8 +291,8 @@
     "convert": "55ecf63631a76502f85b36bb33f14432176ff014a64654b8548d2fd1503947eb",
     "accounts-packs": "08ee7a753735b46bd480582cf2035e88f4f676f0442ddf585c279616a9c3775a",
     "receivables": "7f67dc31811065841385460b4c669edbe6feca3760ce1fb8f849c499ef10dfea",
-    "posting-voucher": "968a8885ddd0246ffe5460945570febc7f04ebf00fd3ad3e1c2442698a129578",
-    "posting": "c8ac75edd215fc8010076294817adca763ecdb44bcf702b40fe71f148793cee4",
+    "posting-voucher": "dc3baca04bf62c23dbd4d124f0b6d7a510b5b5489ffdca2801721b5a04e3f9dc",
+    "posting": "cad0a282cc60d89443775249b2fc7e9e3c1e9454b73c9bf7325c2c7b8394aa53",
     "ledger-read": "174730caf1016487c37d7194f7266ef5274c22281988ca6cb4f1d0ca3583099e",
     "ledger": "1f22a8f34b36ce63b3a0a6a6d1016c67113b4afd91c9e8c010e7edff8cf183b7",
     "bookpack": "8517804b461ec9e331531124e7884bc34a863696a0926113aa6044b1a636c0b2",
@@ -294,7 +303,7 @@
     "pack-kit": "c79d1df0f27b99e4de296f088457c8f9b5e4a9152c160a930e1d814d56069dda",
     "reg-in": "99013df77145a74749504046133531cbf1f00a95ef3dec458b32bb6a3ee95afc",
     "reg-au-movein": "d7e729a109ab07919f92f8391ed9d6bcf3b9450b51991d911917e5198e2832ae",
-    "reg-au": "ea450e226fd7f825411bd4b7495e6e4d5f2595a9270df085fb11cbd02c3ddff1",
+    "reg-au": "bb480e2e7e776b7864e32c2ea5d25d375085dfe1ccc0dd1b2ae82c3f39aecb2d",
     "reg-ae-law": "6b09f4a26d61b7f6f10d14def453db83a43e4e2551663c9c453c78f6e9a248a2",
     "reg-ae": "8350125427d4f2efb5e798c250fe4f9be249c40f3edabafacda0bccbd293dba9",
     "reg-sg": "fb23b745ef13258f54bf9c72f38c397e28e3c4f7d461094587f39bbded8883bd",
@@ -306,6 +315,8 @@
     "chart": "773addbd1d30077c569572b410c9aefb708ce0e2d1e2e83dc383ae4abffe20b4",
     "tax-export": "7883098c12bfcb9587df4130d4a92b676f36ab3f72943d0fdb030ed5f56b68ee",
     "reg-in-bank": "c388d77f0d28f176c01d42168aca2678213e32d6770873e61b61b0bd91f7f8f8",
-    "reg-in-movein": "9152fdb8e3248df22e0eb57392ed488b3d025df5cd26e9e5a59574603dbc65a6"
+    "reg-in-movein": "9152fdb8e3248df22e0eb57392ed488b3d025df5cd26e9e5a59574603dbc65a6",
+    "reg-au-adjust": "60fc3f90fa2ec0776650b75f4e0118322f2937ebdddb16c068962d92f9b083d7",
+    "posting-bad-debt": "b1a8a35f1e6b94561a9977e28e1afe1c9804a77a32e3c088a1142dd313590d62"
   }
 }
