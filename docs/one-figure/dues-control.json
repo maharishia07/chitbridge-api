@@ -1,0 +1,12 @@
+{
+  "figure": "dues.receivable.total + dues.payable.total (the books' standing owed to you / you owe)",
+  "owner": "lib/books-dues.js",
+  "owner_fn": "controlTotals",
+  "forbidden": ["accountNet"],
+  "allowed_elsewhere": ["lib/books-store.js", "lib/books-nightly.js", "lib/bookpack.js"],
+  "covers": [
+    "The Home Finance card (To collect / To pay) reads the debtors and creditors control accounts ONLY through books-dues.controlTotals; the dues list, the Overview tiles and the trial-balance control line (books-dues.controlOf) sit in the same file.",
+    "books-store.js defines accountNet; books-nightly.js is the nightly control check (not a displayed figure); bookpack.js only has a local variable of that name."
+  ],
+  "decided": "2026-11-28 drift exit RC10 (Athi: all drift fixed tonight). The ledger is the books' truth; the party list is tied to it by controlOf and a difference is SHOWN (tb_control), never recomputed away."
+}

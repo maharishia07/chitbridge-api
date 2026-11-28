@@ -70,7 +70,7 @@ ok('deltaPage runs for a delta AND a full read (no `if (since)` around it)', !/i
 ok('the answer says its limit beside more · at · total', /limit: DELTA_CAP,/.test(snap));
 ok('no bare LIMIT 20000 is left in the snapshot route', !/LIMIT 20000/.test(snap.replace(/\/\*[\s\S]*?\*\//g, '')), 'a silent cap remains');
 ok('the dues aggregate reads one past the cap and, cut, sends balances as UNKNOWN (absent) with a warn line',
-  /LIMIT \$2`,\s*\[entity_id, DELTA_CAP \+ 1\]/.test(snap) && /dues\.rows\.length > DELTA_CAP/.test(snap) && /duesCut = true;\s*dues = \{ rows: \[\] \}/.test(snap)
+  /Dues\.receivableBills\(db, entity_id, DELTA_CAP \+ 1\)/.test(snap) /* RC10: the SQL moved to books-dues.receivableBills, `LIMIT $2` there */ && /LIMIT \$2/.test(require('fs').readFileSync(require('path').join(__dirname, '..', 'lib', 'books-dues.js'), 'utf8')) && /dues\.rows\.length > DELTA_CAP/.test(snap) && /duesCut = true;\s*dues = \{ rows: \[\] \}/.test(snap)
   && /warn\('till\.snapshot\.dues\.cut'/.test(snap) && /x\.has_party_item && !duesCut\)/.test(snap));
 
 /* ⭐ and the counter follows: the master reads a snapshot in parts to its end before comparing it with total or storing it */
