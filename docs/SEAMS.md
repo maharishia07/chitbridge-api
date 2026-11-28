@@ -23,7 +23,7 @@ of file each thing is; this says what already does the job.
 | 112 | `entry` | `books-store.js` |  |
 | 112 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
-| 102 | `next` | `dayopen.js` | the next thing to do — |
+| 103 | `next` | `dayopen.js` | the next thing to do — |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 101 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 94 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |

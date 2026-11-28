@@ -32,7 +32,7 @@ const pageLimit = require('../lib/page-limit'); /* LIM2: the ONE pager — asked
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer
-const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
+const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter, sellsOnly } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
@@ -167,7 +167,7 @@ const { holdsStockOf } = require('../lib/holds-stock'); /* M127: does this shop 
  * finished body to a counter, or its allow-listed cut to a TV; takeSnapshot below reads the shop in the order its comments explain.
  */
 // @does Optional since time in -> we read the shop's products, customers, suppliers and stock for a counter to hold offline, or a trimmed cut for a screen -> the snapshot.
-router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
+router.get('/snapshot', auth, sellsOnly, ...checked('GET /snapshot'), async (req, res) => {
   try {
     const taken = await takeSnapshot(req);
     const answer = taken.screen ? screenView(taken.body) : taken.body;

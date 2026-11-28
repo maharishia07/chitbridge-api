@@ -644,6 +644,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | TILL_BAD_REQUEST | 400 | Counter request not valid | The counter sent something that is missing or not right. | Check what was entered and try again. | till | 2026-10-23 |
 | TILL_CLAIM_MISMATCH | 400 | Bill from another phone | This bill was made on another phone. | Send it from the phone that made it. | holder | 2026-10-23 |
 | TILL_NO_COUNTER | 403 | Key holds no counter | This key is not holding a counter. | Open the counter on this PC first. | till | 2026-10-23 |
+| TILL_NOT_FOR_SEAT | 403 | Seat keeps the books, not the till | This seat keeps the books and does not ring sales. Ask the owner to add you as counter staff to use the till. | Ask the owner to add you as counter staff. | till | 2026-11-28 |
 | TILL_NO_TAX_SCHEME | 409 | Shop charges no tax | This shop charges no tax, so no rate is needed. | If that is wrong, check the registration in Country setup. | till | 2026-10-24 |
 | TILL_RATE_OWNER_ONLY | 403 | Owner or manager sets the rate | Only the owner or a manager can set a tax rate. | Ask them to set it once; the sale goes on. | till | 2026-10-24 |
 | TILL_RECHECK_UNAVAILABLE | 503 | Prices could not be checked | The prices could not be checked just now. Nothing was changed; the bill uses the prices on screen. | Finish the bill, or check again in a moment. | till | 2026-11-08 |
