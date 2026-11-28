@@ -18421,19 +18421,29 @@ function custGroupsNow(){
   (Array.isArray(cust.groups) ? cust.groups : []).forEach(function(g){ out.push('group:' + g); });
   return out;
 }
-function lineOf(c, n){
-  var d = c.item_data || {};
+/** the unit price this line is billed at: the priced unit at its quantity (a tier re-prices the product), the choices' add-on on top of a break or a fixed price */
+function pricedUnitOf(c){
   /* ⚠️⚠️ THE PRICED UNIT, NOT THE LIST PRICE. This is the first step of the line and the counter used to skip it,
      so a tiered product billed at the list price here while the storefront re-priced it — the same goods at two
      prices depending which door the customer came through. */
   var pr = pricedAt(c, itemQty(c));
   /* the choices move the price (modAdd, added once at addItem): a break re-prices the PRODUCT, the choices still add on top */
   if (pr && (pr.tier || pr.kind === 'fixed') && Number(c.mod_add) > 0) pr = Object.assign({}, pr, { amount: rmoney((Number(pr.amount) || 0) + Number(c.mod_add)) });
+  return pr;
+}
+/** the category names a line carries for the offer engine: the product's own (item_data) first, else the cart row's */
+function lineCategoriesOf(c, d){
+  var category = d.category || c.category;
+  return category ? [String(category)] : [];
+}
+function lineOf(c, n){
+  var d = c.item_data || {};
+  var pr = pricedUnitOf(c);
   return { key: (n == null ? (c.key || c.item_id) : String(n)), item_id: c.item_id, sku: c.code || d.code || null,
            name: c.name, unit: c.unit, qty: Number(c.qty) || 0, unitPrice: Number(pr.amount) || 0,
            priced: pr,
            category: d.category || c.category || null,
-           categories: (d.category || c.category) ? [String(d.category || c.category)] : [],
+           categories: lineCategoriesOf(c, d),
            /* a product the shop has taken OUT of an offer: item_data.offers_excluded, carried as the engine expects it */
            excluded: Array.isArray(d.offers_excluded) ? d.offers_excluded.map(String) : [] };
 }

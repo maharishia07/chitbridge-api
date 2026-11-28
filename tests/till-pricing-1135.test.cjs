@@ -26,7 +26,7 @@ function fnText(src, sig) {
   return src.slice(at, end + 2);
 }
 const LIFT = ['var QUIET_MAX = 200, QUIET = [];', 'function cbQuiet(', 'function billMoney(', 'function stateOfTaxId(', 'function billWhen(', 'function billStopMoney(', 'function noDayMoney(', 'function dayInZone(', 'function tzOpt(', 'function shopTz(',
-  'function taxIncluded(', 'function taxInputOf(', 'function lineOf(', 'function pricedAt(', 'function price(', 'function priceCartLine(', 'function stampTaxRate(', 'function custGroupsNow(', 'function itemQty(', 'function addItem(', 'function lineKey(', 'function moneyOf(', 'function moneyStop('];
+  'function taxIncluded(', 'function taxInputOf(', 'function lineOf(', 'function pricedUnitOf(', 'function lineCategoriesOf(', 'function pricedAt(', 'function price(', 'function priceCartLine(', 'function stampTaxRate(', 'function custGroupsNow(', 'function itemQty(', 'function addItem(', 'function lineKey(', 'function moneyOf(', 'function moneyStop('];
 const SLAB10 = { definition_id: 'gst-10', kind: 'tax', name: 'GST 10%', rate: 10 };
 const PAINT = { item_id: 'P', name: 'Paint 4L', price: 60, unit: 'piece', gst_rate: 10, pricing_kind: 'tiered', pricing_def_name: 'Paint breaks', pricing_tiers: [{ qty: 4, price: 55 }, { qty: 10, price: 50 }] };
 const PRIMER = { item_id: 'R', name: 'Primer', price: 40, unit: 'piece', gst_rate: 10 };
