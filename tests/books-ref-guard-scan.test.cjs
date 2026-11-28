@@ -46,8 +46,7 @@ function periodFindings(periodText) {
   }
   return out;
 }
-const routesText = ['books.js', 'books-write-off-recover.js'].map((name) => fs.readFileSync(path.join(API, 'routes', name), 'utf8')).join('
-'), /* ACC-418: the recovery door is its own file */ periodText = fs.readFileSync(path.join(API, 'lib', 'books-period.js'), 'utf8');
+const routesText = ['books.js', 'books-write-off-recover.js'].map((name) => fs.readFileSync(path.join(API, 'routes', name), 'utf8')).join('\n'), /* ACC-418: the recovery door is its own file */ periodText = fs.readFileSync(path.join(API, 'lib', 'books-period.js'), 'utf8');
 ok('every route in routes/books.js that reads a client_ref is guarded or exempt with a reason', unguardedRoutes(routesText).length === 0, 'unguarded: ' + unguardedRoutes(routesText).join(', '));
 ok('the scan SEES the ref doors (guards and exemptions are not vacuous)', routeBlocks(routesText).filter((b) => /clientRef\(|client_ref/.test(b.text)).length >= 5);
 /* ACC-418: both doors guard the event the engine will see (found.event, after the invoice's own GST is added) */
