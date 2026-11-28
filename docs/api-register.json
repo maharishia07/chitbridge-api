@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 0,
-  "meets": 703,
+  "partial": 2,
+  "meets": 701,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -9674,7 +9674,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 467,
-   "hash": "ceef096370c40217",
+   "hash": "3275cc0dfceca313",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
     "count": 1,
@@ -9788,10 +9788,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-21 sign1128b batch 1128 PR#1394: the closed success shape lists carried (object or null; set by the handler only for the retained-earnings account without a party: lib/books carriedLine, absent otherwise) added by hand: api-allowlist --from-recordings cannot run here; 13 columns true, no status or code change. All 13 machine columns read true on the register row.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "3275cc0dfceca313"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
@@ -11716,7 +11717,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2561,
-   "hash": "df27cf1505b65079",
+   "hash": "00d7e24ee12bed47",
    "does": "A tax period in -> we read the shop's own return (BAS or VAT201) from the posted books, India answering from the rail instead -> the return, for the owner or the shop's auditor.",
    "errors": {
     "count": 1,
@@ -11822,10 +11823,11 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixGreyAU 2766f3dfd (needs registration for a shop with no registration) and walk AC AC-F-02 (movedByLockNotes adds notes for months moved by a lock); the RETURN_FROM_RAIL answer moved verbatim into returnFromRailAnswer (readability 75348b0b6); notes is an existing open key, no new status.",
-    "lifecycle": "stable"
+    "signed_off_by_date": null,
+    "lifecycle": "stable",
+    "stale_since": "00d7e24ee12bed47"
    },
-   "status": "meets standard",
+   "status": "partial",
    "callers": [
     "cap-period.js"
    ],
