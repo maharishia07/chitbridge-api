@@ -4917,6 +4917,7 @@
     "message": "This entry was already reversed by MJ/2026-27/000008.",
     "entry_no": "MJ/2026-27/000008",
     "entry_id": "00000000-0000-4000-8000-000000000134",
+    "posting_date": "2026-10-02",
     "type": "https://chitbridge.com/problems/already_reversed",
     "title": "Already reversed",
     "status": 409,

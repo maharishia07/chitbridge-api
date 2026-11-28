@@ -337,10 +337,10 @@ function create() {
       if (db && db.heldLocks) db.heldLocks.push(release); else release();
     },
     async lockTaxHeads() {} /* ACC-275: the same — the race is proved on real Postgres (tests/acc-275-gst-replay-truth.realstack.cjs) */,
-    async loanOutstanding(db, e, ref, roles) {
-      const mine = T.entries.filter((x) => x.entity_id === e && (x.source_ref === 'loan:' + ref || (String(x.source_ref || '').indexOf('emi:' + ref + ':') === 0 && String(x.source_ref).slice(('emi:' + ref + ':').length).indexOf(':') < 0)) && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
-      const lines = T.lines.filter((l) => mine.some((x) => x.entry_id === l.entry_id) && roles.indexOf((T.accounts.find((a) => a.account_id === l.account_id) || {}).role) >= 0);
-      const currencies = Array.from(new Set(lines.map((l) => l.currency)));
+    async loanOutstanding(db, e, ref, roles) { /* BB-P1-1: 'acct:<code>' = a loan of the opening balances: that account's opening lines + its own emi:acct:<code>:<ref> instalments (SQL twin: loanBalances, proved on real Postgres) */
+      const acctCode = String(ref).indexOf('acct:') === 0 ? String(ref).slice(5) : null, isOpening = (x) => !!x.is_opening && !/^(loan|emi):/.test(String(x.source_ref || '')), roleOf = (l) => T.accounts.find((a) => a.account_id === l.account_id) || {};
+      const mine = T.entries.filter((x) => x.entity_id === e && ((acctCode && isOpening(x)) || x.source_ref === 'loan:' + ref || (String(x.source_ref || '').indexOf('emi:' + ref + ':') === 0 && String(x.source_ref).slice(('emi:' + ref + ':').length).indexOf(':') < 0)) && !T.entries.some((y) => y.entity_id === e && y.reverses_entry_id === x.entry_id));
+      const lines = T.lines.filter((l) => mine.some((x) => x.entry_id === l.entry_id) && roles.indexOf(roleOf(l).role) >= 0 && (!acctCode || !isOpening(mine.find((x) => x.entry_id === l.entry_id)) || String(roleOf(l).code) === acctCode)), currencies = Array.from(new Set(lines.map((l) => l.currency)));
       return { minor: lines.reduce((total, l) => total + Number(l.cr_minor || 0) - Number(l.dr_minor || 0), 0), currency: currencies.length > 1 ? '*mixed*' : currencies[0] || null };
     },
     /* the in-memory twin of loanEntriesWithRepayments (the SQL, with loanRefSql, is proved on real Postgres): a loan: entry nobody reversed that holds a live emi:<ref>:<its ref> */
