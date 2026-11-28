@@ -2,11 +2,11 @@
 /**
  * tests/au-pin-sit-proof.cjs — PROOF ONLY (scratch/au-pin-proof-1138, never merged): the AU write-off, recovery and BAS cases on a SIT box, before and after the pack pin.
  * Runs ON the box inside the api container (tests/lib/run-target.cjs: production refused). STATE=/tmp/pin-state.json carries the shops between phases (copied out and in by the launcher).
- * Hand figures (AUD minor): invoice 2 x 1000.00 + 10% = 220,000 (GST 20,000) dated 2026-08-14; write-off #1 110,000 (pack 1.0.0: all to bad debts, no GST);
- * after the restamp: write-off #2 55,000 = GST 55,000 x 20,000 / 220,000 = 5,000 (decreasing, BAS 1B); recovery 22,000 = GST 2,000 (increasing, BAS 1A).
- *   p1  before: shop A (closed Q1) and A2 (open Q1) on 1.0.0: BAS Q1 = 1A 20,000 · 1B 0 · 9 = 20,000
+ * Hand figures (AUD minor): invoice 2 x 1000.00 GST-inclusive = 200,000 (GST 200,000/11 = 18,182) dated 2026-08-14; write-off #1 110,000 (pack 1.0.0: all to bad debts, no GST);
+ * after the restamp: write-off #2 55,000 = GST 55,000 x 18,182 / 200,000 = 5,000.05 -> 5,000 (decreasing, BAS 1B); recovery 22,000 = GST 2,000.02 -> 2,000 (increasing, BAS 1A).
+ *   p1  before: shop A (closed Q1) and A2 (open Q1) on 1.0.0: BAS Q1 = 1A 18,182 · 1B 0 · 9 = 18,182
  *   p2  after the deploy + b914 backfill, no restamp: the same boxes (stamped 1.0.0)
- *   p3  restamp: A from 2026-10-01 (Q1 closed, frozen): same boxes; A2 from 2026-07-01 (Q1 open): write-off #2 and the recovery, then 1A 22,000 · 1B 5,000 · 9 = 17,000
+ *   p3  restamp: A from 2026-10-01 (Q1 closed, frozen): same boxes; A2 from 2026-07-01 (Q1 open): write-off #2 and the recovery, then 1A 20,182 · 1B 5,000 · 9 = 15,182
  */
 const fs = require('fs');
 const H = require('./lib/truth-harness.cjs');
@@ -33,7 +33,7 @@ const wo = (shop, party, minor, ref, chit, date, path) => j(path || '/api/books/
     const B = await freshShop(RUN + 'b', 'Pin B', AU);
     ok(await j('/api/books/enable', { method: 'POST', token: B.token }), 'B books on');
     for (const tag of ['a', 'a2']) {
-      await kase('p1-' + tag, 'shop ' + tag + ': invoice 2,200.00 (GST 200.00) on 2026-08-14, write-off 1,100.00, BAS Q1 on 1.0.0', async () => {
+      await kase('p1-' + tag, 'shop ' + tag + ': invoice 2,000.00 incl GST 181.82 on 2026-08-14, write-off 1,100.00, BAS Q1 on 1.0.0', async () => {
         const S = await freshShop(RUN + tag, 'Pin ' + tag, AU);
         ok(await j('/api/books/enable', { method: 'POST', token: S.token }), 'books on');
         const body = invoice(RUN + tag + '-inv', rows, { to: B.bridge, billedAt: BILLED });
@@ -49,7 +49,7 @@ const wo = (shop, party, minor, ref, chit, date, path) => j(path || '/api/books/
         const w = await wo(S, party, 110000, RUN + tag + '-wo1', chit, '2026-09-10');
         expect(w.status === 200, 'write-off #1: ' + w.status + ' ' + JSON.stringify(w.b).slice(0, 200));
         const boxes = await bas(S);
-        expect(boxes['1'] === 20000 && boxes['2'] === 0 && boxes['9'] === 20000, 'hand 1A 20000 · 1B 0 · 9 20000, got ' + JSON.stringify(boxes));
+        expect(boxes['1'] === 18182 && boxes['2'] === 0 && boxes['9'] === 18182, 'hand 1A 18182 · 1B 0 · 9 18182, got ' + JSON.stringify(boxes));
         let closed = null;
         if (tag === 'a') { const c = await j('/api/books/gst/close', { method: 'POST', token: S.token, body: { period: '2026-Q1' } }); expect(c.status === 200, 'close Q1: ' + c.status + ' ' + JSON.stringify(c.b).slice(0, 200)); closed = true; }
         st.shops[tag] = { email: RUN + tag + '@test.chitbridge', chit, party, boxes, closed, entity: S.entity, name: S.name };
@@ -80,7 +80,7 @@ const wo = (shop, party, minor, ref, chit, date, path) => j(path || '/api/books/
       expect(back.status >= 400 && back.status < 500 && odd.status >= 400 && odd.status < 500, 'back ' + back.status + ' odd ' + odd.status);
       return back.status + '/' + odd.status + ' ' + String(back.b.code || back.b.type) + ' ' + String(odd.b.code || odd.b.type);
     });
-    await kase('p3-a2', 'A2 (Q1 open): restamp from 2026-07-01, write-off #2 splits GST 50.00, recovery 220.00 splits 20.00; BAS Q1 = 1A 22,000 · 1B 5,000 · 9 17,000', async () => {
+    await kase('p3-a2', 'A2 (Q1 open): restamp from 2026-07-01, write-off #2 splits GST 50.00, recovery 220.00 splits 20.00 (rounded half-up); BAS Q1 = 1A 20,182 · 1B 5,000 · 9 15,182', async () => {
       const S = { token: await login(a2.email) };
       const r = await j('/api/books/setting', { method: 'POST', token: S.token, body: { pack_version: '1.0.1', pack_from: '2026-07-01' } });
       expect(r.status === 200, 'restamp: ' + r.status + ' ' + JSON.stringify(r.b).slice(0, 240));
@@ -89,7 +89,7 @@ const wo = (shop, party, minor, ref, chit, date, path) => j(path || '/api/books/
       const rec = await wo(S, a2.party, 22000, RUN + '-rec', a2.chit, '2026-09-14', '/api/books/write-off/recover');
       expect(rec.status === 200, 'recovery: ' + rec.status + ' ' + JSON.stringify(rec.b).slice(0, 240));
       const now = await bas(S);
-      expect(now['1'] === 22000 && now['2'] === 5000 && now['9'] === 17000, 'hand 1A 22000 · 1B 5000 · 9 17000, engine ' + JSON.stringify(now));
+      expect(now['1'] === 20182 && now['2'] === 5000 && now['9'] === 15182, 'hand 1A 20182 · 1B 5000 · 9 15182, engine ' + JSON.stringify(now));
       return JSON.stringify(now);
     });
   }
