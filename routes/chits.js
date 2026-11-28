@@ -3975,9 +3975,112 @@ function carryPricedFacts(_lines, _live) {
     cbLog.fellBack('chits GET /:chit_id: failed — carried on without it', e);
   }
 }
+/** the actor's own "read" mark on a chit; best-effort, and NEVER written for a grant (a firm reading a client's source document under X-Books-For: the request is read only, SEC-117) */
+async function markRead(db, req, chit_id) {
+  if (req.acting_for_grant) return;
+  // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
+  // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
+  if (req.identity.identity_type === 'actor') {
+    // SAVEPOINT so a failure here (e.g. a missing table) can't poison the outer transaction and 500 the read.
+    try {
+      await db.query('SAVEPOINT mark_read');
+      await db.query(
+        `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
+         ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
+        [chit_id, req.identity.identity_id]
+      );
+      await db.query('RELEASE SAVEPOINT mark_read');
+    } catch (e) {
+      console.error('mark-read skipped:', e.message);
+      try {
+        await db.query('ROLLBACK TO SAVEPOINT mark_read');
+      } catch (rollbackError) {
+        cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', rollbackError);
+      }
+    }
+  }
+
+}
+/** the "first opened" stamp and its log row, in one statement; never written for a grant (SEC-117) */
+async function firstOpened(db, req, chit_id, entity_id) {
+  if (req.acting_for_grant) return;
+  /**
+   * ⭐ THE OLD VALUE AND THE NEW ONE, IN ONE STATEMENT. This read `read_at` and then immediately
+   * overwrote it — two round trips to learn one fact ("was this already read?") and set one column.
+   *
+   * ⚠️ THE CTE IS WHAT MAKES IT CORRECT, not a trick: every sub-statement of a data-modifying statement
+   * sees the SAME SNAPSHOT, taken before the UPDATE, so `prev` returns the value as it was. Reading
+   * `RETURNING read_at` instead would return NOW() and every chit would look like it had always been read
+   * — the log entry for "first opened" would never be written again.
+   *
+   * ⚠️ No row at all still means unread: an entity with no `chit_status` row has never opened it, which is
+   * exactly what the old `!preCheck.rows[0]?.read_at` said.
+   */
+  /**
+   * ⭐ AND THE "FIRST OPENED" LOG ROW RIDES IN THE SAME STATEMENT. Three round trips became one: read the
+   * old `read_at`, stamp the new one, and write the log line only if this was the first open.
+   *
+   * ⚠️ `upd` IS DELIBERATELY UNREFERENCED. A data-modifying CTE always executes whether or not anything
+   * selects from it, so the stamp happens regardless — while making the INSERT depend on it would suppress
+   * the log row for an entity that has no `chit_status` row yet, which the old code logged.
+   *
+   * ⚠️ `NOT EXISTS (… WHERE read_at IS NOT NULL)` is exactly the old `!preCheck.rows[0]?.read_at`: no row
+   * at all, or a row never read, both count as unread. A plain `read_at IS NULL` would miss the first case.
+   */
+  await db.query(
+    `WITH prev AS (SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2),
+          upd  AS (UPDATE chit_status SET read_at = NOW()
+                    WHERE chit_id = $1 AND entity_id = $2 RETURNING 1)
+     INSERT INTO state_log
+       (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
+     SELECT $1, $2, 'read', $2, $3, 'Chit opened and read'
+      WHERE NOT EXISTS (SELECT 1 FROM prev WHERE read_at IS NOT NULL)`,
+    [chit_id, entity_id, req.identity.display_name]
+  );
+}
+/** who holds a copy of the chit (the b50 function, else the self-scoped fallback); NEVER read for a grant: the cross-entity panel is not a source document (SEC-117) */
+async function participantsRows(db, req, chit_id) {
+  if (req.acting_for_grant) return [];
+  const viaFunction = await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
+  /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
+  return (
+    viaFunction ||
+    (await trySavepoint(
+      db,
+      (c) =>
+        c
+          .query(
+            `SELECT cs.entity_id, cs.current_status, cs.read_at,
+                cs.assigned_to_actor_display_name, cs.updated_at,
+                i.display_name, i.bridge_id
+           FROM chit_status cs
+           JOIN identities i ON i.identity_id = cs.entity_id
+          WHERE cs.chit_id = $1`,
+            [chit_id]
+          )
+          .then((reply) => reply.rows),
+      []
+    ))
+  );
+}
+/** SEC-117 · middleware of GET /:chit_id, after auth: under a grant (X-Books-For) this chit is read only when it is the source of an entry of the granted books (books-evidence.isSourceOf, the one enforcer), else the one 404, before anything of the chit is read; no grant, no effect */
+async function sourceLinked(req, res, next) {
+  if (!req.acting_for_grant) return next();
+  const entity_id = entityId(req);
+  try {
+    if (await withEntity(entity_id, (db) => require('../lib/books-evidence').isSourceOf(db, entity_id, req.params.chit_id))) return next();
+  } catch (e) {
+    return next(e);
+  }
+  return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') });
+}
+/** SEC-117: the answer under a grant is cut to the allow-list (books-evidence.sourceView), LAST; otherwise untouched */
+const cutForGrant = (req, answer) => (req.acting_for_grant ? require('../lib/books-evidence').sourceView(answer) : answer);
+/** SEC-117: the participants column of the one-shot read: a grant never calls the cross-entity function */
+const participantsColumn = (req) => (req.acting_for_grant ? "'[]'::json" : "(SELECT coalesce(json_agg(x), '[]'::json) FROM (SELECT * FROM chit_participants($2)) x)");
 router.use(require('./chits-holds')); /* ASSIGN-NET L11 + L9: GET /holds, /my-work, POST /hand-over-all (static paths: BEFORE /:chit_id) */
 // @does A chit id in -> we read your own copy with its lines, status, history and who holds it, and mark it read for you -> the full chit, with cost hidden from actors who may not see costs.
-router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('GET /:chit_id'), async (req, res) => {
+router.get('/:chit_id', require('../middleware/books-grant'), auth, sourceLinked, ...checked('GET /:chit_id'), async (req, res) => {
   /* ⚠️ THE CLOCK STARTS AT THE TOP. It used to start after the main read, so ~2.8s of a 9s request sat in an
      'unaccounted' bucket — the largest single slice, invisible because the first mark measured nothing. */
   const _wantTiming = textOf(req.query.timing, { trim: false }) === '1';
@@ -3992,9 +4095,7 @@ router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('
   try {
     const chit_id = req.params.chit_id;
     // Actors use parent entity's id — chit_header and chit_status are entity-keyed
-    const entity_id = entityId(req), blind = await cost.isCostBlind(req, entity_id);
-    const granted = !!req.acting_for_grant; /* SEC-117: a firm reading under X-Books-For: this chit only when it is the source of an entry of the granted books, READ ONLY, cut to books-evidence.SOURCE_KEEP */
-    if (granted && !(await withEntity(entity_id, (db) => require('../lib/books-evidence').isSourceOf(db, entity_id, chit_id)))) return problem(req, res, { status: 404, ...said({ error: 'Not found', message: 'Chit not found or you do not have access' }, 'NOT_FOUND') }); /* RAIL-146: ONE cost read; a blind actor's answer is reshaped LAST (lib/cost-view), the rows never */
+    const entity_id = entityId(req), blind = await cost.isCostBlind(req, entity_id); /* RAIL-146: ONE cost read; a blind actor's answer is reshaped LAST (lib/cost-view), the rows never */
 
     // B1 RLS: everything here is the caller's OWN copy -> withEntity(me).
     const data = await withEntity(entity_id, async (db) => {
@@ -4019,27 +4120,7 @@ router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('
       const _draft = participation.rows.find((item) => item.role === 'Draft');
       if (_draft && _draft.created_by_actor_id !== req.identity.identity_id) return { notFound: true };
 
-      // Per-actor read: opening the chit marks it read for THIS actor (clears its unread flag).
-      // Best-effort — never let read-tracking break the chit view (chit_reads is not RLS-scoped).
-      if (req.identity.identity_type === 'actor' && !granted) {
-        // SAVEPOINT so a failure here (e.g. a missing table) can't poison the outer transaction and 500 the read.
-        try {
-          await db.query('SAVEPOINT mark_read');
-          await db.query(
-            `INSERT INTO chit_reads (chit_id, actor_id, read_at) VALUES ($1, $2, NOW())
-             ON CONFLICT (chit_id, actor_id) DO UPDATE SET read_at = NOW()`,
-            [chit_id, req.identity.identity_id]
-          );
-          await db.query('RELEASE SAVEPOINT mark_read');
-        } catch (e) {
-          console.error('mark-read skipped:', e.message);
-          try {
-            await db.query('ROLLBACK TO SAVEPOINT mark_read');
-          } catch (rollbackError) {
-            cbLog.fellBack('chits GET /:chit_id: the read failed — carried on without it', rollbackError);
-          }
-        }
-      }
+      await markRead(db, req, chit_id);
 
       // (the header was read above — the participation check and this are the same row)
 
@@ -4062,39 +4143,7 @@ router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('
         [chit_id, entity_id]
       );
 
-      /**
-       * ⭐ THE OLD VALUE AND THE NEW ONE, IN ONE STATEMENT. This read `read_at` and then immediately
-       * overwrote it — two round trips to learn one fact ("was this already read?") and set one column.
-       *
-       * ⚠️ THE CTE IS WHAT MAKES IT CORRECT, not a trick: every sub-statement of a data-modifying statement
-       * sees the SAME SNAPSHOT, taken before the UPDATE, so `prev` returns the value as it was. Reading
-       * `RETURNING read_at` instead would return NOW() and every chit would look like it had always been read
-       * — the log entry for "first opened" would never be written again.
-       *
-       * ⚠️ No row at all still means unread: an entity with no `chit_status` row has never opened it, which is
-       * exactly what the old `!preCheck.rows[0]?.read_at` said.
-       */
-      /**
-       * ⭐ AND THE "FIRST OPENED" LOG ROW RIDES IN THE SAME STATEMENT. Three round trips became one: read the
-       * old `read_at`, stamp the new one, and write the log line only if this was the first open.
-       *
-       * ⚠️ `upd` IS DELIBERATELY UNREFERENCED. A data-modifying CTE always executes whether or not anything
-       * selects from it, so the stamp happens regardless — while making the INSERT depend on it would suppress
-       * the log row for an entity that has no `chit_status` row yet, which the old code logged.
-       *
-       * ⚠️ `NOT EXISTS (… WHERE read_at IS NOT NULL)` is exactly the old `!preCheck.rows[0]?.read_at`: no row
-       * at all, or a row never read, both count as unread. A plain `read_at IS NULL` would miss the first case.
-       */
-      if (!granted) await db.query(
-        `WITH prev AS (SELECT read_at FROM chit_status WHERE chit_id = $1 AND entity_id = $2),
-              upd  AS (UPDATE chit_status SET read_at = NOW()
-                        WHERE chit_id = $1 AND entity_id = $2 RETURNING 1)
-         INSERT INTO state_log
-           (chit_id, entity_id, action, action_by_identity_id, action_by_display_name, detail)
-         SELECT $1, $2, 'read', $2, $3, 'Chit opened and read'
-          WHERE NOT EXISTS (SELECT 1 FROM prev WHERE read_at IS NOT NULL)`,
-        [chit_id, entity_id, req.identity.display_name]
-      );
+      await firstOpened(db, req, chit_id, entity_id);
 
       /* (the "first opened" log row is written by the statement above, in the same round trip) */
       return { header, detail, log: nestedLog };
@@ -4163,7 +4212,7 @@ router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('
      */
     const ONE_SHOT = `
       SELECT
-        ${granted ? "'[]'::json" : "(SELECT coalesce(json_agg(x), '[]'::json) FROM (SELECT * FROM chit_participants($2)) x)"} AS participants, /* SEC-117: a grant never calls the cross-entity function */
+        ${participantsColumn(req)} AS participants,
         (SELECT coalesce(json_agg(x), '[]'::json) FROM (
            SELECT amendment_id, line_index, line_id, seq, line, reason_code, reason, actor_name, created_at
              FROM chit_line_amendment WHERE entity_id = $1 AND chit_id = $2 ORDER BY line_index, seq) x)  AS amendments,
@@ -4243,26 +4292,7 @@ router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('
 
     if (!bundle)
       bundle = await withEntity(entity_id, async (db) => {
-        const nestedParticipants = granted ? [] : await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants($1)`, [chit_id]).then((reply) => reply.rows), null);
-        /* The b50 fallback, still scoped to self under FORCE — a degraded panel, never a leak. */
-        const participants2 =
-          nestedParticipants ||
-          (granted ? [] : await trySavepoint(
-            db,
-            (c) =>
-              c
-                .query(
-                  `SELECT cs.entity_id, cs.current_status, cs.read_at,
-                cs.assigned_to_actor_display_name, cs.updated_at,
-                i.display_name, i.bridge_id
-           FROM chit_status cs
-           JOIN identities i ON i.identity_id = cs.entity_id
-          WHERE cs.chit_id = $1`,
-                  [chit_id]
-                )
-                .then((reply) => reply.rows),
-            []
-          ));
+        const participants2 = await participantsRows(db, req, chit_id);
 
         const nestedAmd = await trySavepoint(db, () => amend.list(entity_id, chit_id, db), { amendments: [], migrated: false });
         const rows = _lines0 ? await trySavepoint(db, () => amend.readLines(entity_id, chit_id, db), null) : null;
@@ -4388,8 +4418,7 @@ router.get('/:chit_id', require('../middleware/books-grant'), auth, ...checked('
     const _doc = FOLDER_INV.docOf(data.header.rows[0], entity_id);
     /* RW1-27: a bill of mine says how much of it is already credited, so the sheet can grey "Credit note" with the reason (null when not judged: the button stays, the cap judges at send) */
     const _credit = textOf(req.query.with).split(',').includes('credit') ? await withEntity(entity_id, (db) => creditCap.creditedOf(db, entity_id, chit_id)).catch((e) => { cbLog.fellBack('chits GET /:chit_id: credited read failed, carried on without it', e); return null; }) : null; /* only on ?with=credit: the chit sheet's Credit note button asks, every other open of a chit stays at its round-trip budget (w4ctr) */
-    const answerOf = (full) => (granted ? require('../lib/books-evidence').sourceView(full) : full); /* SEC-117: under a grant the answer is cut to the allow-list LAST, after the cost-blind cut */
-    res.json(answerOf(costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
+    res.json(cutForGrant(req, costView.chitAnswer({ /* RAIL-146 LAST: a cost-blind co-assist reads a COPY of this answer with the cost gone, see lib/cost-view; the actions and docOf above read the real header */
       _timing: _wantTiming ? _T : undefined /* S34: only on ?timing=1 */,
       ...ctpReturn.markOf(await unconfirmedOf(entity_id, chit_id)), // RAIL-106: ctp_unconfirmed — a change of mine the party on another installation has not confirmed yet
       header: costView.headerWithCurrency(data.header.rows[0]),

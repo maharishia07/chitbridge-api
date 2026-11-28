@@ -2,7 +2,7 @@
 // @type: unit
 /**
  * sec-117-auditor-source-chit.test.cjs — P1-3 (28 Nov 2026): a books READ grant (X-Books-For) reads the SOURCE DOCUMENT of an entry of the granted books, and nothing else.
- * OWNS the proof of books-evidence.isSourceOf / sourceView / sourceOfSql, the evidence path in middleware/books-grant.js, and the grant branch of routes/chits.js GET /:chit_id (the route guard is a source scan with its own mutation).
+ * OWNS the proof of books-evidence.isSourceOf / sourceView / sourceOfSql, the evidence path in middleware/books-grant.js, and the grant branch of routes/chits.js GET /:chit_id (the route guard is a source scan with its own mutations).
  * CALLED BY CI. No database, no network. CARD 04-network/ACC-176-AUDITOR-GRANT
  */
 'use strict';
@@ -50,23 +50,26 @@ const fake = (log) => ({ query: async (sql, params) => { log.push({ sql, params 
   for (const p of ['/api/chits', '/api/chits/drafts', '/api/chits/holds', '/api/chits/my-work', '/api/chits/unread', '/api/chits/' + LINKED + '/costs', '/api/chits/' + LINKED + '/status', '/api/chits/' + LINKED + '/reprice']) { const o = run(p, 'GET'); assert.strictEqual(o.next, false, p + ' stays closed'); assert.ok(JSON.stringify(o.body).includes('BOOKS_FOR_NOT_HERE'), p); }
 
   /* the route guard: ONE check that reads the source of routes/chits.js; each mutation below must make it fail */
-  const text = fs.readFileSync(path.join(__dirname, '..', 'routes', 'chits.js'), 'utf8');
+  const text = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')); /* the chits route's one list of files (tests/chits-files) */
+  const NO_GRANT = 'async function HELPER) {\n  if (req.acting_for_grant) return';
+  const HELPERS = ['markRead(db, req, chit_id', 'firstOpened(db, req, chit_id, entity_id', 'participantsRows(db, req, chit_id'];
   function routeGuard(src) {
     const at = src.indexOf("router.get('/:chit_id', ");
     assert.ok(at > 0, 'the route');
     const body = src.slice(at, src.indexOf("router.post('/:chit_id/reprice'", at));
-    assert.ok(/^router\.get\('\/:chit_id', require\('\.\.\/middleware\/books-grant'\), auth,/.test(body), 'the grant front is in front of auth');
-    assert.ok(/if \(granted && !\(await withEntity\(entity_id, \(db\) => require\('\.\.\/lib\/books-evidence'\)\.isSourceOf\(db, entity_id, chit_id\)\)\)\) return problem\(req, res, \{ status: 404/.test(body), 'the link check refuses with the 404');
-    assert.ok(body.indexOf('isSourceOf(') < body.indexOf('FROM chit_header'), 'before the first read of the chit');
-    assert.ok(/if \(!granted\) await db\.query\(\s*`WITH prev AS/.test(body), 'the first-opened write is skipped under a grant');
-    assert.ok(/identity_type === 'actor' && !granted/.test(body), 'the mark-read write is skipped under a grant');
-    assert.ok(body.includes("${granted ? \"'[]'::json\"") && body.includes('granted ? [] : await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants'), 'the cross-entity participants function is never called under a grant');
-    assert.ok(/answerOf\(costView\.chitAnswer\(/.test(body), 'the answer is cut last');
+    assert.ok(body.startsWith("router.get('/:chit_id', require('../middleware/books-grant'), auth, sourceLinked, "), 'the link check is a middleware before the handler: nothing of the chit is read before it');
+    const link = src.slice(src.indexOf('async function sourceLinked'), src.indexOf('const cutForGrant'));
+    assert.ok(link.includes('if (!req.acting_for_grant) return next();') && link.includes("require('../lib/books-evidence').isSourceOf(db, entity_id, req.params.chit_id))) return next();") && /return problem\(req, res, \{ status: 404/.test(link), 'only a linked chit passes; every other answer is the one 404');
+    assert.ok(body.includes('await markRead(db, req, chit_id);') && body.includes('await firstOpened(db, req, chit_id, entity_id);') && body.includes('await participantsRows(db, req, chit_id)'), 'the writes and the cross-entity read go through the helpers');
+    for (const helper of HELPERS) assert.ok(src.includes(NO_GRANT.replace('HELPER', helper)), helper + ') does nothing under a grant');
+    assert.ok(body.includes('${participantsColumn(req)} AS participants') && src.includes('const participantsColumn = (req) => (req.acting_for_grant ? "\'[]\'::json"'), 'the one-shot read never calls the participants function under a grant');
+    assert.ok(body.includes('res.json(cutForGrant(req, costView.chitAnswer(') && src.includes("(req.acting_for_grant ? require('../lib/books-evidence').sourceView(answer) : answer)"), 'the answer is cut LAST');
   }
   routeGuard(text);
-  assert.throws(() => routeGuard(text.replace('isSourceOf(db, entity_id, chit_id)', 'true || 0')), 'MUTATION: dropping the link check goes red');
-  assert.throws(() => routeGuard(text.replace("identity_type === 'actor' && !granted", "identity_type === 'actor'")), 'MUTATION: letting a grant write mark-read goes red');
-  assert.throws(() => routeGuard(text.replace('granted ? [] : await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants', 'await trySavepoint(db, (c) => c.query(`SELECT * FROM chit_participants')), 'MUTATION: calling the participants function goes red');
+  assert.throws(() => routeGuard(text.replace('isSourceOf(db, entity_id, req.params.chit_id)', 'true')), 'MUTATION: dropping the link check goes red');
+  assert.throws(() => routeGuard(text.replace('sourceLinked, ...checked', '...checked')), 'MUTATION: taking the middleware off goes red');
+  assert.throws(() => routeGuard(text.replace('res.json(cutForGrant(req, ', 'res.json((')), 'MUTATION: answering the whole chit goes red');
+  for (const helper of HELPERS) assert.throws(() => routeGuard(text.replace(NO_GRANT.replace('HELPER', helper), NO_GRANT.replace('HELPER', helper).replace('req.acting_for_grant', 'false'))), 'MUTATION: ' + helper + ') acting under a grant goes red');
   const evText = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-evidence.js'), 'utf8');
   assert.ok((evText.match(/FROM journal_entry j WHERE j\.entity_id = \$\{entityParam\}/g) || []).length === 1 && evText.includes("sourceOfSql('$2', 'a.chit_id')") && evText.includes("sourceOfSql('$1', '$2::uuid')"), 'ONE entry-to-chit SQL, read by isEvidence and isSourceOf');
   console.log('sec-117-auditor-source-chit: ok');
