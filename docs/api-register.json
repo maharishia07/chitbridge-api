@@ -5,12 +5,12 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 6,
-  "meets": 697,
+  "partial": 0,
+  "meets": 703,
   "columns": {
    "strict_input": {
     "applies": 361,
-    "failing": 1
+    "failing": 0
    },
    "output_allowlist": {
     "applies": 703,
@@ -21126,11 +21126,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d0092d77f99f1bc8"
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: answer gains seat (lib/seat-abilities.seatOf, UX-221) and shop (the parent identity facts, UX-217) inside the open entity object, and an actor seat now reads the SHOP timezone, currency, country and gstn (lib/me-shop, DRIFT 29); additive, no key removed, no status or auth change, legacy keys frozen; the shop-scoped overlay is a settings-area behaviour the member meant.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "avatar.js",
@@ -31956,11 +31955,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "15852cb2c5a9754f"
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: answer rows gain sign_in_as (handle.typedForm, O4; in the closed output shape) beside user_id; additive, same 401/422/500, same owner door.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-books.js",
@@ -33917,11 +33915,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "2e6bcf63d1612c3b"
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: a seat the books gate refuses (lib/money-seat.noMoney) gets balance null + cost_hidden:true on each row (drift 35a, same masking as GET /crm/parties), every row carries phone (lib/party-phone), otp_contact still deleted (merge resolution kept both statements); phone and cost_hidden are in the closed output shape; no status or auth change.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
@@ -34053,11 +34050,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "37f21ed952c608ef"
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1416 stage2: diff read (routes/till.js, relationships.js, crm.js, lib/reward-store.js balance); no-programme answer keeps its keys (programme null, points, entries/says), no new key, no status change, no error path; openapi-diff 0 breaking; 13 columns pass; raw-error 0; behaviour (held points, DECISIONS 5d9ed0f7) is the catalogue/counter owner's call",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-rewards.js"
    ],
@@ -59163,11 +59159,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "55824035434d9242"
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: the gate verdict now comes from seat-abilities.assignOn, which is the same railActions.can(held, me, assign) call and the same ownCopyRefusalOf refusal (DRIFT 9b); same 401/404/422, same body and answer.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-chit2.js",
     "cap-tasks.js",
@@ -75770,12 +75765,12 @@
    "columns": {
     "schema_in": true,
     "schema_out": true,
-    "missing_input_answer": false,
+    "missing_input_answer": true,
     "error_shape": true,
     "codes_registered": true,
     "error_tests": true,
     "status_codes": true,
-    "strict_input": false,
+    "strict_input": true,
     "output_allowlist": true,
     "foreign_id_404": true,
     "idempotent_money_write": true,
@@ -75849,7 +75844,7 @@
     "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: NEW route read: owner-only, write gate 503, strict one-key body { email } (contract pattern fixed: it was an unescaped string, so any address with the letter s was refused 400), cap 429 INVITE_LIMIT registered with sentence, answer { sent, delivered, message } closed, nothing connects, no stored id; 13 columns pass",
     "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [],
    "offline": "online-only",
    "round_trips": {
