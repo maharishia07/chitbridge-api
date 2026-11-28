@@ -1180,67 +1180,18 @@ router.patch('/:id/erase', auth, platformGate, ...checked('PATCH /:id/erase'), a
  * print it as "chits sent".
  */
 // @does Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.
+const usageRead = require('../lib/usage-read');
 router.get('/usage', auth, ...checked('GET /usage'), async (req, res) => {
   try {
-    const me = req.identity.identity_id;
+    const shop = auth.entityOf(req); /* drift 15: the SHOP's ledger for every seat; an actor's own identity id was read here (605 for the owner, 0 for a cashier) */
     /* BB-F-09: days is a whole number 1..365 or absent (30); abc, -1 and 999999 were answered 200 with a silently changed window */
     const asked = req.query.days;
     if (asked !== undefined && !(/^[0-9]+$/.test(String(asked)) && Number(asked) >= 1 && Number(asked) <= 365)) { const refusalWords = 'Days must be a whole number from 1 to 365.'; return problem(req, res, { status: 400, code: 'INVALID_INPUT', detail: refusalWords, legacy: { error: refusalWords, message: refusalWords } }); }
     const days = asked === undefined ? 30 : Number(asked);
 
-    const out = await withEntity(me, async (c) => {
-      /* Per day — the accumulation Athi asked about: "it is nothing but accumulation per day". */
-      const daily = await c.query(
-        `SELECT (created_at AT TIME ZONE 'UTC')::date AS day,
-                count(*)::int                          AS events,
-                COALESCE(sum(cost_usd), 0)::numeric(12,4) AS cost
-           FROM usage_ledger
-          WHERE entity_id = $1 AND created_at > now() - ($2 || ' days')::interval
-          GROUP BY 1 ORDER BY 1 DESC`,
-        [me, String(days)]
-      );
-
-      /* Per meter — what KIND of thing is costing. */
-      const byMeter = await c.query(
-        `SELECT meter,
-                count(*)::int                          AS events,
-                COALESCE(sum(quantity), 0)::bigint     AS quantity,
-                COALESCE(sum(cost_usd), 0)::numeric(12,4) AS cost
-           FROM usage_ledger
-          WHERE entity_id = $1 AND created_at > now() - ($2 || ' days')::interval
-          GROUP BY 1 ORDER BY cost DESC, events DESC`,
-        [me, String(days)]
-      );
-
-      /**
-       * The rows themselves. `detail` is the reference — for `chit.send` it is the chit id, so a row can always
-       * be walked back to the trade it charged for. `meta` carries the stamped rate and basis, which is what
-       * makes "why was this charged that?" answerable after the card has changed.
-       */
-      const recent = await c.query(
-        `SELECT meter, detail, quantity, cost_usd, meta, created_at
-           FROM usage_ledger
-          WHERE entity_id = $1
-          ORDER BY created_at DESC
-          LIMIT 100`,
-        [me]
-      );
-
-      return { daily: daily.rows, by_meter: byMeter.rows, recent: recent.rows };
-    });
-
-    const total = out.by_meter.reduce((sum, item) => sum + Number(item.cost || 0), 0);
-    res.json({
-      ok: true,
-      window_days: days,
-      /* Named for what it is. See the note above: this is the BILLED count. */
-      counts: { billed: out.by_meter.reduce((sum, item) => sum + Number(item.events || 0), 0) },
-      total_cost_usd: Math.round(total * 10000) / 10000,
-      rate_card: require('../lib/rates').CARD.id,
-      daily: out.daily,
-      by_meter: out.by_meter,
-      recent: out.recent
-    });
+    const hideMoney = await require('../lib/money-seat').noMoney(req); /* a seat the books refuse sees counts, never cost (cb-security to confirm the gate) */
+    const out = await withEntity(shop, (c) => usageRead.readUsage(c, shop, days, hideMoney));
+    res.json(usageRead.answerOf(out, days, hideMoney));
   } catch (err) {
     /* ⚠️ A missing table is not an error worth a 500 to the reader: b99 may not be applied in every environment. */
     if (/relation .*usage_ledger.* does not exist/i.test(String(err.message))) {
