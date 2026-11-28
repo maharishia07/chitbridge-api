@@ -16,6 +16,7 @@ const GUARDS_PART = [
   'ctr-dupbill-1133.test.cjs', // CTR-DUPBILL: a refused bill number steps to the next free one
   'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
   'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
+  'set87-registered-on.test.cjs', // SET-87: tax_registration.registered_on written by the one setup path (mergeTax_), validated, merge-patch
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };
