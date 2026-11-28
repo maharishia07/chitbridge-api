@@ -233,15 +233,15 @@ router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req
       b = req.body || {},
       s = req.books;
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : s.walkin_grain;
-    const enabled = b.enabled !== false;
+    const enabled = b.enabled !== false; let restamped = null;
     await withEntity(e, async (h) => {
-      await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain }));
+      await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain })); if (b.pack_version) restamped = await require('../lib/books-pack-pin').restampFor(h, e, s, b, byOf(req)); /* pack pinning: forward only, from a tax-period start, audited; periods already closed keep their version */
       if (grain !== s.walkin_grain)
         await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'walkin_grain', old: s.walkin_grain, new: grain });
       if (!enabled) await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'enabled', old: 'true', new: 'false' });
     });
     require('../lib/books-hooks').forget(e);
-    res.json({ ok: true, enabled, walkin_grain: grain });
+    res.json({ ok: true, enabled, walkin_grain: grain, pack_version: restamped });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /**
