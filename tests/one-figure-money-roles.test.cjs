@@ -2,6 +2,7 @@
  * one-figure-money-roles.test.cjs — ONE-FIGURE RC9 (Athi 28 Nov 2026, batch 1141): the ledger roles that are money are listed ONCE (lib/money-roles.js).
  * The value is UNCHANGED: each consumer's list equals the list it carried before this change (golden, written from the code BEFORE it moved).
  * A hand-kept copy anywhere in lib/ routes/ (a quoted 'cash' list with upi and card, in any order) fails; SCAN_SELFTEST=1 plants one and must fail.
+ * A hand-kept copy is refused by the build (it fails closed); a role outside the lists is never summed as money.
  * Run: node tests/one-figure-money-roles.test.cjs
  * OWNER cb-accounting · CALLS lib/money-roles
  */

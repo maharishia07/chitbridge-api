@@ -9,7 +9,7 @@ of file each thing is; this says what already does the job.
 
 | used by | name | defined in | what it is for |
 |---|---|---|---|
-| 222 | `list` | `amend.js` | list(entity_id, chit_id) — |
+| 223 | `list` | `amend.js` | list(entity_id, chit_id) — |
 | 214 | `rows` | `crm.js` | still in them: |
 | 197 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 185 | `words` | `variant.browser.js` |  |
@@ -20,7 +20,7 @@ of file each thing is; this says what already does the job.
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 114 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 115 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 103 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
