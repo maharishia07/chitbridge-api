@@ -1,0 +1,11 @@
+{
+  "figure": "cash.balance (which ledgers are cash: the cash view, the counter's takings, a tax settlement's money side, the receipts folder, the practice cash column)",
+  "owner": "lib/cash-roles.js",
+  "owner_fn": "CASH_ROLES",
+  "signature": "three or more of the roles cash, bank, upi, card typed side by side in one list",
+  "waivers": [
+    { "file": "lib/chits-input.js", "why": "PAYMENT_METHODS: the ways a customer can say they paid (adds 'other'), not which ledgers are cash", "date": "2026-11-28" },
+    { "file": "lib/reg-*.js and lib/tax-engine.browser.js", "why": "each country pack's list of payment methods (cash, card, paynow ...), data of the pack, not the cash ledgers", "date": "2026-11-28" }
+  ],
+  "decided": "2026-11-28 drift exit RC9. One module, lib/cash-roles.js; the engine's overdraft split (ledger R9) is presentation on the balance sheet and is not a second list."
+}

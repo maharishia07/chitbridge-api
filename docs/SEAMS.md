@@ -19,8 +19,8 @@ of file each thing is; this says what already does the job.
 | 144 | `item` | `bank-band.js` |  |
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
+| 116 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 115 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 103 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |

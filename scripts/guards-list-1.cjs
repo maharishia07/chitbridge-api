@@ -178,6 +178,7 @@ const GUARDS_PART = [
   'acc-206-readers.test.cjs', // ACC-206 C2-C4: every reader of a bill total is built from counterBill.billTotalSql / pickOf; the beckn quote says 189 for the pre-2-Nov invoice
   'money-reader-scan.test.cjs', // ACC-206 G1: no raw read of the bill total outside the one pick; each named exception carries its reason (SCAN_SELFTEST=1 proves it bites)
   'one-reader-tables.test.cjs', // DRIFT exit bar 2+3 (28 Nov): one owning module per guarded table (docs/one-reader/<table>.json); SQL outside it fails unless dated waiver; raw state predicate never (SCAN_SELFTEST=1 bites)
+  'one-figure-cash.test.cjs', // ONE-FIGURE RC9: which ledgers ARE cash is typed once (lib/cash-roles.js); a second hand-typed list fails, mutation red
   'one-figure.test.cjs', // ONE-FIGURE (28 Nov batch 1141): a guarded figure has ONE owning function (docs/one-figure/<figure>.json); a second reader of what a return leaves out fails (SCAN_SELFTEST=1 bites)
   'one-figure-dues.test.cjs', // ONE-FIGURE RC10: owed/owing (Home card = dues page, golden hand-computed) and the counter's per-customer balance = the dues engine; mutations red
   'one-figure-return-reading.test.cjs', // ONE-FIGURE RC1: BAS/VAT201 box = its drill = Ledger page movement minus the labelled left-out line, AU + AE, set-off fixture + mutation red
