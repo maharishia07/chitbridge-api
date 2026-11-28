@@ -1162,6 +1162,13 @@
   "POST /api/network/connections": {
    "strict_input": true
   },
+  "GET /api/network/asks": {
+   "output_allowlist": true
+  },
+  "POST /api/network/firm-invites": {
+   "strict_input": true,
+   "output_allowlist": true
+  },
   "POST /api/network/connections/:id/approve": {
    "strict_input": true,
    "foreign_id_404": true

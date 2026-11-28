@@ -6284,7 +6284,9 @@
    "hint": "Sign in, then try again.",
    "owner_area": "events",
    "since": "2026-10-23",
-   "raised_by": []
+   "raised_by": [
+    "GET /api/notifications"
+   ]
   },
   {
    "code": "EVENTS_TICKET_REFUSED",
@@ -6294,7 +6296,9 @@
    "hint": "Reload the page.",
    "owner_area": "events",
    "since": "2026-10-23",
-   "raised_by": []
+   "raised_by": [
+    "GET /api/notifications"
+   ]
   },
   {
    "code": "EVENT_REF_REUSED",
@@ -7798,6 +7802,7 @@
     "GET /api/marketing/came-back",
     "GET /api/network-design/availability",
     "GET /api/network-offers",
+    "GET /api/notifications",
     "GET /api/offers/kinds",
     "GET /api/offers/openapi.json",
     "GET /api/people",
@@ -8069,6 +8074,8 @@
     "POST /api/network-offers/catalogue/cancel",
     "POST /api/network-offers/catalogue/price",
     "POST /api/network-offers/catalogue/publish",
+    "POST /api/notifications/dismiss",
+    "POST /api/notifications/seen",
     "POST /api/offers/evaluate",
     "POST /api/offers/explain",
     "POST /api/pricing/price",
@@ -10328,7 +10335,9 @@
    "hint": "Try again after the next update.",
    "owner_area": "notifications",
    "since": "2026-11-07",
-   "raised_by": []
+   "raised_by": [
+    "GET /api/notifications"
+   ]
   },
   {
    "code": "NOTIF_NOTHING_TO_CLEAR",
@@ -10338,7 +10347,9 @@
    "hint": "Pick an item to clear, or choose clear all.",
    "owner_area": "notifications",
    "since": "2026-10-23",
-   "raised_by": []
+   "raised_by": [
+    "GET /api/notifications"
+   ]
   },
   {
    "code": "NOTIF_SEEN_NOT_MIGRATED",
@@ -10348,7 +10359,9 @@
    "hint": "Try again after the next update.",
    "owner_area": "notifications",
    "since": "2026-11-07",
-   "raised_by": []
+   "raised_by": [
+    "GET /api/notifications"
+   ]
   },
   {
    "code": "NOTIF_SEEN_UNREAD",
@@ -10358,7 +10371,9 @@
    "hint": "Open the bell again in a moment.",
    "owner_area": "notifications",
    "since": "2026-11-16",
-   "raised_by": []
+   "raised_by": [
+    "GET /api/notifications"
+   ]
   },
   {
    "code": "NOT_ALLOWED",
@@ -10641,6 +10656,7 @@
     "GET /api/marks/:thread_id/messages",
     "GET /api/network-design/availability",
     "GET /api/network-offers",
+    "GET /api/notifications",
     "GET /api/offers/kinds",
     "GET /api/offers/openapi.json",
     "GET /api/people",
@@ -10928,6 +10944,8 @@
     "POST /api/network-offers/catalogue/cancel",
     "POST /api/network-offers/catalogue/price",
     "POST /api/network-offers/catalogue/publish",
+    "POST /api/notifications/dismiss",
+    "POST /api/notifications/seen",
     "POST /api/offers/evaluate",
     "POST /api/offers/explain",
     "POST /api/pricing/price",
@@ -12255,6 +12273,7 @@
     "GET /api/books/returns",
     "GET /api/books/status",
     "GET /api/crm/segments",
+    "GET /api/network-design/availability",
     "PATCH /api/actors/:id",
     "PATCH /api/books-grants/:id",
     "PATCH /api/books/recurring/:id",
@@ -12312,10 +12331,14 @@
     "POST /api/books/write-off",
     "POST /api/books/year/:fy/close",
     "POST /api/books/year/:fy/reopen",
+    "POST /api/connections/request",
     "POST /api/crm/privacy-requests/:id/answer",
     "POST /api/integrations/:actor_id/approve",
     "POST /api/integrations/profile",
     "POST /api/keys",
+    "POST /api/network-design/build",
+    "POST /api/network-design/reissue",
+    "POST /api/network-design/validate",
     "POST /api/network-offers/:id/release",
     "POST /api/network-offers/:id/withdraw",
     "POST /api/network-offers/catalogue/cancel",
@@ -12339,6 +12362,7 @@
     "PUT /api/folders/inventory/:code",
     "PUT /api/governance/country-setup",
     "PUT /api/governance/profile/vault",
+    "PUT /api/network-design",
     "PUT /api/network-offers/policy"
    ]
   },

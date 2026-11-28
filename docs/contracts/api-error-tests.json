@@ -1277,6 +1277,11 @@
   500,
   503
  ],
+ "GET /api/network/asks": [
+  401,
+  403,
+  500
+ ],
  "GET /api/network/entities/:id/connections": [
   401,
   404,
@@ -3499,6 +3504,13 @@
   401,
   404,
   409,
+  500,
+  503
+ ],
+ "POST /api/network/firm-invites": [
+  400,
+  401,
+  403,
   500,
   503
  ],
