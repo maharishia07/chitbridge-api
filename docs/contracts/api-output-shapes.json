@@ -33332,7 +33332,10 @@
                         "type": "string"
                       },
                       "value": {
-                        "type": "number"
+                        "type": [
+                          "number",
+                          "null"
+                        ]
                       },
                       "pct": {
                         "type": "number"
@@ -33355,7 +33358,10 @@
                           "type": "string"
                         },
                         "value": {
-                          "type": "number"
+                          "type": [
+                            "number",
+                            "null"
+                          ]
                         },
                         "pct": {
                           "type": "number"
@@ -33384,7 +33390,10 @@
                           "type": "string"
                         },
                         "total": {
-                          "type": "number"
+                          "type": [
+                            "number",
+                            "null"
+                          ]
                         },
                         "chits": {
                           "type": "number"
@@ -33401,7 +33410,10 @@
                               "type": "string"
                             },
                             "value": {
-                              "type": "number"
+                              "type": [
+                                "number",
+                                "null"
+                              ]
                             },
                             "pct": {
                               "type": "number"
@@ -33424,7 +33436,10 @@
                                 "type": "string"
                               },
                               "value": {
-                                "type": "number"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               },
                               "pct": {
                                 "type": "number"
@@ -33455,6 +33470,9 @@
                     },
                     "additionalProperties": false,
                     "x-closed-by": "recordings"
+                  },
+                  "cost_hidden": {
+                    "type": "boolean"
                   }
                 },
                 "additionalProperties": false,
@@ -35235,6 +35253,9 @@
                     "string",
                     "null"
                   ]
+                },
+                "cost_hidden": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false,
