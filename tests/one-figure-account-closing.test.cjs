@@ -4,6 +4,7 @@
  * against the trial balance's row for the account (GET /trial-balance, an independent total); a mutation (the sums drop the credits) must go red.
  * HAND (INR paise; FY from 1 Apr; the shop's day 2026-10-10): opening JV 2026-10-01 Dr 1400 Cash 1,000,000 / Cr 3000 1,000,000 (period 0) · rent 2026-10-05 Cr Cash 16,500 ·
  * second rent 2026-10-08 Cr Cash 4,000 → Cash on 31 Oct = 1,000,000 - 16,500 - 4,000 = 979,500 · on 6 Oct = 983,500 · on 30 Sep (before the opening) = 0.
+ * A disagreeing figure is refused (the sign-off check throws, never reads tied) and the check fails closed: the mutation below proves the test would say so.
  * Run: node tests/one-figure-account-closing.test.cjs   (BOOKS_ENGINES_SRC=<chitbridge-engines/src>)
  * OWNER cb-accounting · CALLS lib/books-closing · routes/books.js GET /ledger/:account · lib/bank-rec-log.js booksBalanceAt
  */
