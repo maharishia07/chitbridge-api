@@ -16,7 +16,7 @@ on:
 #   strict = main and batch/*: every "committed = generated" check runs. regen = any other branch: CI regenerates the derived files itself and skips those equality checks,
 #   so two PRs that touch routes land in one batch with no regenerate round (the batch build regenerates once). Unset (a laptop) means strict. No test works the mode out itself.
 env:
-  CB_GENERATED: ${{ ((github.head_ref || github.ref_name) == 'main' || startsWith(github.head_ref || github.ref_name, 'batch/')) && 'strict' || 'regen' }}
+  CB_GENERATED: ${{ ((github.head_ref || github.ref_name) == 'main' || (github.head_ref || github.ref_name) == 'develop' || startsWith(github.head_ref || github.ref_name, 'batch/')) && 'strict' || 'regen' }}
 
 jobs:
   static:
@@ -59,7 +59,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: chitbridge-api
-          fetch-depth: 0     # READ-GUARD: tests/readability-guard.test.cjs diffs against origin/main (merge-base) — it needs the history
+          fetch-depth: 0     # READ-GUARD: tests/readability-guard.test.cjs diffs against origin/develop (merge-base) — it needs the history
       # ⭐ TWIN BRANCHES (13 Oct): a branch that also exists in chitbridge-web is tested against THAT web branch, not web main — so twin
       # PRs (same branch name in both repos, e.g. integrate/1013, round/<NAME>-<run>) check each other instead of deadlocking. Else: main.
       - name: Twin web branch?
@@ -71,7 +71,7 @@ jobs:
           case "$B" in batch/api-*) B="batch/web-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then
             echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: testing against chitbridge-web branch $B"
-          else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no twin: chitbridge-web main"; fi
+          else echo "ref=develop" >> "$GITHUB_OUTPUT"; echo "no twin: chitbridge-web main"; fi
       - uses: actions/checkout@v4
         with:
           repository: maharishia07/chitbridge-web
@@ -88,7 +88,7 @@ jobs:
           case "$B" in batch/api-*) B="batch/engines-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads "https://x-access-token:$T@github.com/maharishia07/chitbridge-engines" "$B" >/dev/null 2>&1; then
             echo "ref=$B" >> "$GITHUB_OUTPUT"; echo "twin: testing against chitbridge-engines branch $B"
-          else echo "ref=main" >> "$GITHUB_OUTPUT"; echo "no engines twin: chitbridge-engines main"; fi
+          else echo "ref=develop" >> "$GITHUB_OUTPUT"; echo "no engines twin: chitbridge-engines main"; fi
       - name: chitbridge-engines (private — only when the token is set)
         if: ${{ env.HAS_ENGINES_TOKEN == 'true' }}
         uses: actions/checkout@v4
@@ -122,7 +122,7 @@ jobs:
       # ⚠️ It never fails the build: no secret, no report or a refused post is a ::warning:: that names why.
       # ⚠️ main only — the board's "latest word" on a case is about main, not about somebody's branch.
       - name: post the guards to the test board
-        if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+        if: ${{ always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
         continue-on-error: true
         working-directory: chitbridge-api
         env:
@@ -146,6 +146,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # SEAMS_PR_BASE below diffs against the base branch
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -157,14 +159,46 @@ jobs:
           # the batch branches are named per repo (batch/api-<date> here, batch/web-<date> there): the twin of batch/api-X is batch/web-X
           case "$B" in batch/api-*) B="batch/web-${B#batch/api-}";; esac
           if [ -n "$B" ] && git ls-remote --exit-code --heads https://github.com/maharishia07/chitbridge-web "$B" >/dev/null 2>&1; then
-            echo "ref=$B" >> "$GITHUB_OUTPUT"; else echo "ref=main" >> "$GITHUB_OUTPUT"; fi
+            echo "ref=$B" >> "$GITHUB_OUTPUT"; else echo "ref=develop" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@v4
         with:
           repository: maharishia07/chitbridge-web
           ref: ${{ steps.twin.outputs.ref }}
           path: .side/chitbridge-web
       - name: docs/SEAMS.md has not drifted (node .side/chitbridge-web/tools/seams.cjs --check --repo api)
+        env:
+          SEAMS_PR_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || (github.ref_name != 'main' && github.ref_name != 'develop' && 'origin/develop') || '' }}
         run: node .side/chitbridge-web/tools/seams.cjs --check --repo api
+
+  seams-regen:
+    # develop only (push): docs/SEAMS.md is GENERATED and its user counts move whenever any PR merges. A pull request judges only the rows of the files it changes
+    # (SEAMS_PR_BASE, tools/seams.cjs), so this job keeps the rest true: it regenerates the file and commits it when stale. A push by GITHUB_TOKEN starts no new run.
+    # If develop's branch protection refuses the push, the step warns and the next PR that changes a row's file corrects it; nothing goes red.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-web
+          ref: develop
+          path: .side/chitbridge-web
+      - name: Regenerate docs/SEAMS.md
+        env:
+          SEAMS_ROOT_WEB: ${{ github.workspace }}/.side/chitbridge-web
+        run: node .side/chitbridge-web/tools/seams.cjs --write --repo api
+      - name: Commit it when it changed
+        continue-on-error: true
+        run: |
+          git diff --quiet -- docs/SEAMS.md && { echo "SEAMS.md is current"; exit 0; }
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/SEAMS.md; git commit -m "docs: regenerate SEAMS.md (develop, bot)"; git push origin HEAD:develop
 
   api-standard:
     # API-1 (API-STANDARD S15/S16, 22 Oct 2026): the API REGISTER equals what the code says, a route this PR adds or changes meets the standard, and the count of
@@ -193,8 +227,8 @@ jobs:
       - name: a feature PR carries no derived file (register, contract results, ratchet counts); the batch commits them once
         if: ${{ env.CB_GENERATED == 'regen' }}
         run: |
-          git fetch origin main --depth=1000 || true
-          node tools/generated-guard.cjs --base origin/main
+          git fetch origin develop --depth=1000 || true
+          node tools/generated-guard.cjs --base origin/develop
       - name: sign-offs file is one entry per line, sorted, no duplicate key (hand record; tools/hand-file-fix.cjs --fix lays it out)
         run: node tools/hand-file-fix.cjs --check signoffs
       - name: register equals the code (docs/API-REGISTER.md, api-register.json, ERROR-CODES.md); in regen mode only the checks that are not equality can fail
@@ -207,14 +241,14 @@ jobs:
         env:
           HOTFIX: ${{ contains(github.event.pull_request.labels.*.name, 'hotfix') }}
           # D3 (1130): a PR into a batch branch (a fix folding in) must have its own changed routes signed at their current hash; a PR into main is judged as before (the batch re-sign)
-          REQUIRE_SIGNED: ${{ github.event_name == 'pull_request' && github.base_ref != 'main' && github.base_ref != 'master' }}
+          REQUIRE_SIGNED: ${{ github.event_name == 'pull_request' && github.base_ref != 'main' && github.base_ref != 'develop' && github.base_ref != 'master' }}
         run: |
-          git fetch origin main --depth=1000 || true
+          git fetch origin develop --depth=1000 || true
           if [ "$REQUIRE_SIGNED" = "true" ]; then export CB_REQUIRE_SIGNED=1; fi
-          if [ "$HOTFIX" = "true" ]; then node tools/api-ratchet.cjs --base origin/main --hotfix; else node tools/api-ratchet.cjs --base origin/main; fi
+          if [ "$HOTFIX" = "true" ]; then node tools/api-ratchet.cjs --base origin/develop --hotfix; else node tools/api-ratchet.cjs --base origin/develop; fi
       - name: published OpenAPI, breaking changes against main (informational; a finding is read by cb-api, acknowledged in docs/contracts/api-breaking-ok.json; --strict fails)
         if: ${{ always() }}
-        run: node tools/api-openapi-diff.cjs --base origin/main || true
+        run: node tools/api-openapi-diff.cjs --base origin/develop || true
       - name: the register as an artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

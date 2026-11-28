@@ -2,14 +2,14 @@
 'use strict';
 /*
  * OWNS      the API ratchet (API-STANDARD S16): a route a PR adds or changes must meet the standard, and the count of routes not meeting it only goes down. Also docs/api-ratchet.json.
- * CALLED BY CI job api-standard (node tools/api-ratchet.cjs --base origin/main [--hotfix]) · by hand: --write after a route reaches a better status.
+ * CALLED BY CI job api-standard (node tools/api-ratchet.cjs --base origin/develop [--hotfix]) · by hand: --write after a route reaches a better status.
  * FLOW      base unpacked beside (git archive) ──▶ this tool's register generator over base and over head (--json) ──▶ diff by "METHOD path" ──▶ touched = new, or its hash differs
  *           ──▶ held routes must pass ──▶ counts compared with docs/api-ratchet.json on base ──▶ new codes registered ──▶ debt not expired ──▶ exit 1 on any failure
  * CARD      28-platform-and-operations/api-standard
  *
- *   node tools/api-ratchet.cjs --base origin/main     check (CI)
- *   node tools/api-ratchet.cjs --base origin/main --require-signed   D3 (batch 1130): also fail when a route this head adds or changes is not signed at its current hash (land kit; CI on a PR into a batch branch)
- *   node tools/api-ratchet.cjs --base origin/main --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
+ *   node tools/api-ratchet.cjs --base origin/develop     check (CI)
+ *   node tools/api-ratchet.cjs --base origin/develop --require-signed   D3 (batch 1130): also fail when a route this head adds or changes is not signed at its current hash (land kit; CI on a PR into a batch branch)
+ *   node tools/api-ratchet.cjs --base origin/develop --hotfix   a PR labelled hotfix: a touched route that does not meet may stay if the PR records a dated debt entry (14 days)
  *   node tools/api-ratchet.cjs --write --rebaseline   (only in the PR that switches the stage)                rewrite docs/api-ratchet.json from the head register (refuses to raise the count; --seed overrides for the first run)
  * RAW ERROR TEXT (Athi 23 Oct): rawErrorTextWrites() counts response writes (res.json / .send / .end) whose body holds an exception's own text (e.message, err.stack, String(e), `${e}`) outside safeErr()/problem(); logs are not response writes. The count may only go down (docs/api-ratchet.json raw_error_writes); a new one prints file:line.
  * Stage "1b" (ajv landed): a touched route of a brought-over file (HELD_FILES: routes/keys.js, routes/integrations.js, routes/books.js, routes/tax.js, routes/invoice.js, routes/ctp.js, routes/facts.js, routes/pricing.js, routes/repeat-supply.js, routes/work.js, routes/counters.js, src/routes/network.js, routes/network-design.js, routes/connections.js) must keep the seven core columns true and lose no hardening column it passed at the base (stage 2: the six hardening columns of S33-S38 are measured for every route and ratcheted by count); every other touched route is counted, not blocked. Stage "all" holds every route.
@@ -390,7 +390,7 @@ function main() {
   const head = registerOf(ROOT);
   if (flag('--write')) return writeRatchet(head);
   const ref = valueOf('--base');
-  if (!ref) throw new Error('--base <ref> is required (CI passes origin/main)');
+  if (!ref) throw new Error('--base <ref> is required (CI passes origin/develop)');
   const base = checkoutBase(ref);
   let problems;
   try {

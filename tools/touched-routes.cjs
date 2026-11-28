@@ -15,7 +15,7 @@
  * meet the standard today, so a hard rule would turn most open PRs red. `--strict` fails now. Regenerate the register first (node tools/api-register.cjs):
  * a route whose code moved but whose register row did not is not seen.
  *
- *   node tools/touched-routes.cjs [--base origin/main] [--md] [--strict] [--today YYYY-MM-DD]
+ *   node tools/touched-routes.cjs [--base origin/develop] [--md] [--strict] [--today YYYY-MM-DD]
  */
 const fs = require('fs');
 const path = require('path');
@@ -91,7 +91,7 @@ function main(argv) {
   const from = failFrom(typeof flag('web-tool') === 'string' ? flag('web-tool') : WEB_TOUCH_RULE);
   const mode = modeFor(typeof flag('today') === 'string' ? flag('today') : new Date().toISOString().slice(0, 10), flag('strict') ? 'fail' : undefined, from);
   if (mode === 'skip') return console.log('web tool not found: touch rule skipped'), 0;
-  const base = baseRegisterOf(String(flag('base') || 'origin/main'));
+  const base = baseRegisterOf(String(flag('base') || 'origin/develop'));
   if (!base) return console.log('base register unreadable: judgement skipped'), 0;
   const result = judge(base, head, mode);
   console.log(report(result));

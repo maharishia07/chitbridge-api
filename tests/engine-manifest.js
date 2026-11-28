@@ -355,7 +355,7 @@ const INFRA_LIBS = [
      and its pack assembler (books-pack: rows → CBBookPack → zip → storage). The rules are in the engines. (2026-09-29) */
   /* ACC-266: the 30-second reconciler is the nightly's frequent sibling — it finds unposted bills and hands each to postChit; no rule of its own (2026-11-07) */
   'books-reconcile.js',
-  'books-store.js', 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'bank-pay-needs.js', /* BB-P1-3: a bank line to a party with no account or bill is asked: store-side door, no engine logic */ 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
+  'books-store.js', 'books-store-late.js', /* ONE-FIGURE RC2: the one read of tax entries posted after a close: store-side, infra */ 'books-nightly.js', 'books-pack.js', 'books-assets.js', 'books-period.js', 'books-manual.js', 'books-bank-tax.js', 'bank-pay-needs.js', /* BB-P1-3: a bank line to a party with no account or bill is asked: store-side door, no engine logic */ 'books-year-past.js', 'books-year-reopen.js', 'ledger-months.js', /* ACC-381: the ledger's month bands, one SQL read, no rule of its own */ 'books-evidence-attach.js', /* 2026-11-20: store-side books doors (lock-date reopen, receipt on an entry): infra, no engine logic */
   /* [BOOKS v2] the repeating entries (b281 store + the daily sweep) and the To-do feed — SQL, the clock and counting; every figure is an engine's or the books' (2026-10-03) */
   'books-recurring.js', 'books-todo.js', 'books-fx-payment.js', 'books-waits.js', 'books-locked-wait.js', 'books-waiting-row.js', 'books-bill-order.js',
   /* [CB FINANCE F3] the cash position: gathers the five sources (one query each) and projects the engines' figures day by day — the dues are CBReceivables', the balance CBLedger's, GST CBPosting's set-off; the only rule of its own is "the first day below zero" (2026-10-12) */
@@ -641,7 +641,7 @@ const ENGINE_OTHER = [
      BAS1 (2026-10-12): reg-au · reg-ae at v1.39.0 (the BAS / VAT201 labels carry their ledger roles) */
   'regulation.js', 'reg-in.js', 'reg-au.js', 'reg-ae.js',
   /* engines v1.98.0: parts split out of the engines above for the file-size ceiling, ADOPTED with them (posting-voucher, reg-au-movein, reg-ae-law) */
-  'posting-voucher.js', 'reg-au-movein.js', 'reg-ae-law.js', 'tax-export.js', 'reg-in-bank.js',
+  'posting-voucher.js', 'reg-au-movein.js', 'reg-ae-law.js', 'tax-export.js', 'reg-in-bank.js', 'posting-bad-debt.js', 'reg-au-adjust.js', /* engines v1.110.x: bad-debt posting rules and AU GST adjustment members, adopted */
   /* R5 (2026-10-16): the shared country helpers and the country registry, adopted at v1.53.x */
   'pack-kit.js', 'country.js',
   /* the country packs added by the runbook (SG v1.54.0 · MY v1.55.0 · US v1.56.0 · JP v1.57.0) — RUNBOOK Q8 lists this step */

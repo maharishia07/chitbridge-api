@@ -49,7 +49,7 @@ function periodFindings(periodText) {
 const routesText = fs.readFileSync(path.join(API, 'routes', 'books.js'), 'utf8'), periodText = fs.readFileSync(path.join(API, 'lib', 'books-period.js'), 'utf8');
 ok('every route in routes/books.js that reads a client_ref is guarded or exempt with a reason', unguardedRoutes(routesText).length === 0, 'unguarded: ' + unguardedRoutes(routesText).join(', '));
 ok('the scan SEES the ref doors (guards and exemptions are not vacuous)', routeBlocks(routesText).filter((b) => /clientRef\(|client_ref/.test(b.text)).length >= 5);
-ok('mutation: the write-off door without its guard is reported', unguardedRoutes(routesText.replace(/guardOf\(entity, writeOff\)/, 'null')).indexOf('post /write-off') >= 0);
+ok('mutation: the write-off door without its guard is reported', unguardedRoutes(routesText.replace(/(router\.post\('\/write-off'[\s\S]*?)guardOf\(entity, found\.event\)/, '$1null')).indexOf('post /write-off') >= 0);
 const found = periodFindings(periodText);
 ok('postOwn guards by default (natural opts out)', found.defaultGuarded);
 ok('only the natural-key doors opt out of the guard', JSON.stringify(found.naturalIn.sort()) === JSON.stringify(NATURAL.slice().sort()), 'natural: ' + found.naturalIn.join(', '));

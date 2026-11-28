@@ -459,6 +459,7 @@ function liveCountRead(db, entity_id) {
  * as a walk-in (B2C, shop state, no buyer GSTIN). One answer, in the same query (no extra trip): the identity's own, else the party's
  * row of any pack's own tax-id word (tax-shelf.taxIdWordsOfPacks, pack order). party_tax_id is in the baseline (b274).
  */
+const SEGMENT_SQL_C = require('../lib/customer-groups').SEGMENT_SQL_BASE.replace(/cl\./g, 'c.'); /* the one segment expression, for the alias c (a constant, so the SQL is not built from a value) */
 const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM party_tax_id t WHERE t.owner_entity_id = $1 AND t.party_id = i.identity_id
                                   AND t.scheme = ANY($2::text[]) ORDER BY array_position($2::text[], t.scheme) LIMIT 1))`;
 /**
@@ -468,7 +469,7 @@ const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM part
  */
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at, ${require('../lib/customer-groups').SEGMENT_SQL_BASE.replace(/cl\./g, 'c.')} AS segment,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at, ${SEGMENT_SQL_C} AS segment,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,

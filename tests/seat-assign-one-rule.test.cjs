@@ -55,7 +55,7 @@ t('door B (lib/assign.js) has no paper test of its own and reads seat-abilities'
   assert.ok(src.includes('a.assignee_actor_id IS NOT NULL OR'), 'an assigned line of a sent paper must pass the filter');
 });
 t('door A (the assign-lines route) asks seat-abilities.assignOn and does not decide on its own', () => {
-  const all = read('routes/chits.js');
+  const all = require('../tools/chits-files.cjs').read(path.join(__dirname, '..')) /* the chits code through the one list (a split keeps this honest) */;
   const at = all.indexOf("router.post('/:chit_id/assign-lines'");
   const route = all.slice(at, at + 1500);
   assert.ok(route.includes('seatAbilities.assignOn('));
