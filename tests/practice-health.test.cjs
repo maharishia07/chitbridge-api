@@ -58,7 +58,7 @@ t('the band counts equal the filters; the default order is Needs help first, the
   assert.deepStrictEqual(rows.sort(H.byUrgency).map((r) => r.name), ['c', 'b', 'a']);
 });
 t('figures: the books own sums are read; a mixed-currency client carries none, no consent to costs hides margin and profit', () => {
-  const row = { sales_trend_pct: -30, sales_trend_months: 2, last_month_sales_minor: 7000000, gross_margin_pct: 40, profit_quarter_minor: 1300000, loss_months_running: 0, cash_minor: '5', currencies: 1 };
+  const row = { sales_trend_pct: -30, sales_trend_months: 2, last_month_sales_minor: 7000000, gross_sales_minor: 1000, gross_cost_minor: 600, profit_quarter_minor: 1300000, loss_months_running: 0, cash_minor: '5', currencies: 1 };
   const f = P.figuresOf(row, '2026-11-15', true);
   assert.deepStrictEqual([f.sales_trend_pct, f.gross_margin_pct, f.profit_quarter_minor, f.loss_months_running, f.cash_minor], [-30, 40, 1300000, 0, 5]);
   const mixed = P.figuresOf(Object.assign({}, row, { currencies: 2 }), '2026-11-15', true);
