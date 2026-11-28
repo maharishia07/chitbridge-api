@@ -460,6 +460,7 @@ const GUARDS_PART = [
   'till-rate-door.test.cjs', // ⭐ F5 A1: the counter's item carries its tax facts (gst_rate · categories[] · hsn from sac, never code); POST /rate refuses a key and a cashier in words, an owner/manager sets it once (idempotent); Veg Meals ₹120 inclusive at 5% through the engine
   'books-manual-events.test.cjs', // ⭐⭐ expense / other income / capital / drawings / staff advance + recovery: hand-worked lines, MJ + voucher type, double tap once, owner-only, the system gives a ledger's code
   'books-bank-line-tax.test.cjs', // ⭐ FIN-116: a bank line's tax answer (input_tax_minor) on POST /events: net 20.00 + tax 2.00 = Cr Bank 22.00 (AU), replay, refusals in words, unknown registration stays unknown
+  'books-supplier-bill-ask.test.cjs', // ⭐ BB-P1-3: POST /events kind bank_expense_supplier asks when the party has an open bill, so a bank payment never double-counts it (13 checks)
   'books-voucher-type-write.test.cjs', // ⭐ b279 ran 2026-10-03: every new entry stores its voucher TYPE; a manual MJ Payment reads Payment
   'ingest-iot-offline.test.cjs', // ⭐ TEST-INGEST-IOT: key none/unknown/inactive → 401; malformed body → 400 never 200; ERP replay → ONE chit, 'duplicate'; stats counts
   'sec3-s8-ai-spend-gate.test.cjs', // S8 (batch 1128): an AI call is reserved before it is checked, so parallel calls cannot overshoot; the platform ceiling read fails CLOSED

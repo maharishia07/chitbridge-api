@@ -43,6 +43,7 @@ const NEEDS_ENGINES = [
   'books-todo.test.cjs',
   'books-manual-events.test.cjs',
   'books-bank-line-tax.test.cjs',
+  'books-supplier-bill-ask.test.cjs',
   'books-voucher-series.test.cjs',
   'two-sided-books.test.cjs',
   'pay-fix-void.test.cjs', // QA-80: runs the real chits router over the books harness

@@ -23,7 +23,7 @@ const NO_ROW = { tax: {}, taxLedgers: PACK.taxLedgers };
   const got = await bad.withInvoice(h99, 'E1', PACK, { type: 'write_off', against_ref: CHIT, amount: 99 });
   ok('the event gains invoice, no note', [got.event.invoice, got.note], [{ gross_minor: 9900, tax_minor: 900 }, null]);
   const none = await bad.withInvoice(handle([]), 'E1', PACK, { type: 'write_off', against_ref: CHIT, amount: 99 });
-  ok('an invoice with no tax line: the event is as it was and the note says so', [none.event.invoice, /No GST was adjusted/.test(none.note)], [undefined, true]);
+  ok('an invoice with no tax line: the event is as it was and the note says so', [none.event.invoice, /No tax was adjusted/.test(none.note)], [undefined, true]);
   const noRef = await bad.withInvoice(h99, 'E1', PACK, { type: 'write_off', amount: 99 });
   ok('no against_ref: nothing read, the note says so', [noRef.event.invoice, /name the invoice/.test(noRef.note)], [undefined, true]);
   const notId = await bad.invoiceOf(h99, 'E1', PACK, 'not-a-chit');
