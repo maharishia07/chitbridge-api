@@ -48,7 +48,6 @@ const { query, queryAs, withEntity } = require('../db');
 const catwrite = require('../lib/catalogue-write'); /* ⭐ CAT-W1: the one product writer (patchItems) */
 const catalogueView = require('../lib/catalogue-view');
 const taxShelf = require('../lib/tax-shelf');
-const customerGroups = require('../lib/customer-groups'); /* CAT-347: the ONE segment expression, so the counter carries the segment an offer's "Only for" names */
 /** what tax-shelf.readShelf needs from this router — the db, the region layer, the catalogue face — in ONE place for its two callers (the snapshot, the rate door) */
 const shelfDeps = () => ({ withEntity, query, regionLayer: regional.regionLayer, getFace: (shopId) => catalogueView.getFace({ entity_id: shopId, withEntity }) });
 /* CTR-244: rateOf · taxFactsOf · soldPriceOf live in lib/till-row (the recheck's drift check at send reads the same projection); the row is still built here */
@@ -469,7 +468,7 @@ const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM part
  */
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at, ${customerGroups.SEGMENT_SQL_BASE.replace(/cl\./g, 'c.')} AS segment,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at, ${require('../lib/customer-groups').SEGMENT_SQL_BASE.replace(/cl\./g, 'c.')} AS segment,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -725,8 +724,7 @@ function customerRow(owed, booksOn, duesCut) {
 
 /** who the customer is: id, name, phone, groups, the rail entity (a business on the rail) and the buyer's GSTIN */
 function customerCore(x) {
-  const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] };
-  if (x.segment) out.segment = String(x.segment); /* CAT-347: the segment an offer's "Only for" may name, so the counter can pass the chosen customer's groups */
+  const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] }; if (x.segment) out.segment = String(x.segment); /* CAT-347: the segment an offer's "Only for" may name, so the counter can pass the chosen customer's groups */
   /* ⭐ present only for a business on the rail — absent = the bill stays the shop's own record (never sent) */
   if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
   /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */

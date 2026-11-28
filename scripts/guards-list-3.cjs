@@ -409,6 +409,7 @@ const GUARDS_PART = [
   'lib-leaf-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'lib-opening-bills.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'lib-period-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
+  'split-1138-units.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'shrink-parts.test.cjs', // SHRINK: the split parts' unit rules, refusals and fail-closed doors
   'sim-load-api.test.cjs', // SHRINK: the loader's api door: one request, stop-on-error, /health wait, tracked and drained ledger hooks
   'api-fuzz500.test.cjs', // api-fuzz500 (junk-fuzz lane): a NUL byte, a 3000-char handle, a 20 KB field, a bad date reach every route over a stand-in db and answer a Problem, never a 5xx
