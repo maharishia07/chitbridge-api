@@ -112,11 +112,11 @@ of file each thing is; this says what already does the job.
 | 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
 | 41 | `entries` | `books-store.js` |  |
 | 40 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
+| 40 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `says` | `adopt.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
-| 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `ensureCap` | `app.html` |  |
 | 38 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 37 | `note` | `device-id.js` | note(where, problem) — |
