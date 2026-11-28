@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 702,
+  "partial": 0,
+  "meets": 703,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -22446,11 +22446,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "ef8d17349cb8d37f"
+    "signed_off_by_date": "cb-api 2026-11-28 re-sign (PR #1455, 544a8ab0e), diff merge-base 233c9a93e..HEAD read for this route (routes/entities.js handler, lib/usage-read.js, tests/drift-15-usage-shop.test.cjs, closed shape in api-output-shapes.json), 13 machine columns true, stage2: hash moved by drift 15: every seat now reads the SHOP ledger via auth.entityOf (an actor read its own id: 0 for a cashier); a seat the books refuse (money-seat.noMoney) gets cost null + cost_hidden:true, meta dropped; owner bytes unchanged (golden in test); days 400 INVALID_INPUT, 401, 500 unchanged and declared; new keys in the closed output shape. Who sees cost is finance business; cb-security confirmation of the noMoney gate is OPEN and not covered by this sign-off.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-admin.js",
     "cap-settings.js"
