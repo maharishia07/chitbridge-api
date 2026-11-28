@@ -17,7 +17,7 @@ of file each thing is; this says what already does the job.
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 147 | `answer` | `availability.js` | from March; then nearest. |
 | 144 | `item` | `bank-band.js` |  |
-| 131 | `money` | `bill-privacy.js` |  |
+| 132 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
 | 112 | `entry` | `books-store.js` |  |
@@ -55,17 +55,17 @@ of file each thing is; this says what already does the job.
 | 69 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 68 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 68 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
+| 68 | `view` | `books-payables.js` | group: |
 | 68 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 67 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
-| 67 | `view` | `books-payables.js` | group: |
 | 67 | `page` | `crm-followups.js` | page(h, owner, { scope, done, me, party_id?, page? }) → the one envelope { followups, total, page, limit } + l |
 | 66 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 66 | `write` | `junitresults.js` | control characters are not legal XML at all — |
 | 65 | `body` | `books-acting.js` | a write's body: |
 | 65 | `named` | `bank-rec-log.js` | W15-71: |
 | 64 | `view` | `country-ready.js` |  |
+| 64 | `facts` | `bill-steps.js` | MY state_log — |
 | 64 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
-| 63 | `facts` | `bill-steps.js` | MY state_log — |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 59 | `note` | `dbwatch.js` |  |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
@@ -73,8 +73,8 @@ of file each thing is; this says what already does the job.
 | 58 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 57 | `sheet` | `cap-employees.js` |  |
 | 57 | `account` | `home-facts.js` | OMITTED: |
+| 56 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
-| 54 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 53 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 52 | `closeModal` | `app.html` |  |
 | 52 | `status` | `books-backfill.js` | read: |
@@ -103,17 +103,17 @@ of file each thing is; this says what already does the job.
 | 44 | `load` | `books-grant-view.js` |  |
 | 42 | `mount` | `attach-ui.js` | var CBAttach = (function () { |
 | 42 | `changes` | `books-store.js` |  |
+| 42 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 42 | `counter` | `repeat-supply.js` | the customer COUNTERS: |
 | 41 | `paint` | `attach-ui.js` | atts = o.atts ·· null; |
 | 41 | `opts` | `books-grant-filters.js` |  |
 | 41 | `money` | `cart.js` |  |
 | 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
-| 41 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
+| 40 | `guard` | `amend.js` | would disturb what has gone out. |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 39 | `says` | `adopt.js` |  |
-| 39 | `guard` | `amend.js` | would disturb what has gone out. |
 | 39 | `entries` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |

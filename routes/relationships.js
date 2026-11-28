@@ -763,7 +763,7 @@ router.get('/customers', grantFront, auth, ...checked('GET /customers'), async (
       Object.assign(item, { groups: Array.isArray(item.groups) ? item.groups : [] })
     );
     await partyFields.decorate(withEntity, owner, rows, 'customer_identity_id', 'customer');
-    rows.forEach((item) => { delete item.otp_contact; }); /* lens-sec 1129 (23b4c8830): the login phone is never a party's contact; decorate has used it for a minted party's phone above, the column itself is not sent */
+    const hideDues = (await require('../lib/money-seat').noMoney(req)) ? require('../lib/dues-view').noMoneyRow : (item) => item; rows.forEach((item) => { hideDues(item); delete item.otp_contact; }); /* drift 35a: customer dues are books money, null + cost_hidden for the seat GET /dues refuses, as GET /crm/parties; lens-sec 1129: the login phone is not a contact */ /* lens-sec 1129 (23b4c8830): the login phone is never a party's contact; decorate has used it for a minted party's phone above, the column itself is not sent */
     res.json(firm.relationsFor(req, Object.assign({ count: rows.length, groups_migrated: _g }, PL.pageOut('customers', rows, PL.pageArgs(req.query, PAGE_DEFAULT, PAGE_MAX))), 'customers')); /* CON-165: a firm seat under a grant reads the cut picker rows */
   } catch (err) {
     problem(req, res, failed(err, req, 'Get customers failed'));
