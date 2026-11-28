@@ -103,6 +103,16 @@ const call = (port, method, p, body) => new Promise((done) => {
   const again = await q('POST', door, { principal_minor: 440000, from: 'bank', date: '2026-10-28', client_ref: 'rest2' });
   ok('after that instalment is reversed the balance is back: the same 4,400.00 is accepted again', again.status === 200, JSON.stringify(again.body));
   eq('an account that is not a loan account is 404', (await q('POST', '/loans/' + encodeURIComponent('acct:' + bank.code) + '/emi', { principal_minor: 100, from: 'bank', date: '2026-10-28', client_ref: 'x' })).status, 404);
+  /* ── the bank reconciliation reaches 0.00: the engine's own matcher (window 3 days) over the statement lines of the hand table and the books' bank lines these doors posted ── */
+  const Recon = require(path.join(X.src.dir, 'bank-recon.js'));
+  const led = await q('GET', '/ledger/' + encodeURIComponent(bank.code) + '?from=2026-10-01&to=2026-10-31');
+  const mine = new Set([receiptId, rev.body.entry_id, emiEntry.entry_id]);
+  const bookLines = (led.body.lines || []).filter((l) => mine.has(l.entry_id)).map((l) => ({ id: l.entry_id, date: l.date, dr_minor: l.dr_minor, cr_minor: l.cr_minor, ref: null, narration: l.what }));
+  const stmt = [{ date: '2026-10-12', credit_minor: 30000, debit_minor: 0, narration: 'CHEQUE DEPOSIT 000123' }, { date: '2026-10-20', credit_minor: 0, debit_minor: 30000, narration: 'DISHONOURED CHEQUE 000123' }, { date: '2026-10-26', credit_minor: 0, debit_minor: 64000, narration: 'LOAN REPAYMENT CBA 8812' }];
+  const found = Recon.match(stmt.map((l, i) => Object.assign({ i }, l)), bookLines, { window_days: 3 });
+  eq('the cheque deposit, its return and the loan repayment all match the books: 0.00 left (hand: 0.00)', [found.unmatched_stmt.length, found.unmatched_ledger.length], [0, 0]);
+  const old = await Recon.match([{ i: 0, date: '2026-10-20', credit_minor: 0, debit_minor: 5000, narration: 'DISHONOURED CHEQUE 000124' }], (await q('GET', '/ledger/' + encodeURIComponent(bank.code) + '?from=2026-10-13&to=2026-10-13')).body.lines.filter((l) => Number(l.cr_minor) === 5000).map((l) => ({ id: l.entry_id, date: l.date, dr_minor: l.dr_minor, cr_minor: l.cr_minor })), { window_days: 3 });
+  ok('control: a reversal left on the original day (no date) is 7 days from the bank line and does NOT match (why the date is passed)', old.unmatched_stmt.length === 1, JSON.stringify(old));
   /* the module's own rules, alone: a day only for a person's reversal, refused in words before the receipt; a non-cheque source writes nothing */
   const Returned = require(path.join(H.API, 'lib', 'books-cheque-return'));
   const helpers = { isoDay: (d) => String(d).slice(0, 10), typedDate: () => {}, refuse: (words) => new Error(words), S: {}, E: {} };
