@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 702,
+  "partial": 0,
+  "meets": 703,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -9788,11 +9788,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "0b4ea017c5791f13"
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-28 PR#1447 stage2 (at 87fabf230, merged with develop): diff read against origin/develop (the merge brought only develop and the RC5 currency fix; delta is three files) for routes/books.js GET /ledger/:account, lib/books-closing.js (closingOf, closingAsAt) and lib/bank-rec-log.js booksBalanceAt. The route's closing_minor now comes from the ONE closing reader, in the shop's currency through MoneyOps (a missing or foreign currency is refused, not added); the answer keys, integer minor money, paged and unpaged shapes, statuses, seats and gates are unchanged; the bank sign-off reads the same figure (its 409 BOOKS_FIGURE_DIFFERS and sentences unchanged); no new key, code or status; unpaged read now asks the range sums once more only when the page sums are absent (round-trip budget column still true); 13 machine columns true. Business rule (the one closing) belongs to accounting; a later merge with develop or #1460 moves the hash and needs a re-sign.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "books-grant-api.js",
     "cap-bank.js",
