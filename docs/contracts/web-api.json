@@ -1459,6 +1459,7 @@
       "due": {
        "name": "followup",
        "title": "By due date",
+       "cite": null,
        "keys": [
         {
          "key": "not_due",
@@ -1485,6 +1486,7 @@
       "msme": {
        "name": "msme",
        "title": "MSME (45-day)",
+       "cite": "MSMED Act 2006 s.15 (buyer pays within the agreed period, never beyond 45 days); Income-tax Act s.43B(h)",
        "keys": [
         {
          "key": "0_30",
