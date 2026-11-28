@@ -35,7 +35,7 @@ const bankLines = async (shop) => ok(await j('/api/books/ledger/1500?from=2026-1
   ok(await j('/api/books/enable', { method: 'POST', token: S.token }), 'books on');
   ok(await j('/api/books/opening', { method: 'POST', token: S.token, body: { date: '2026-07-01', client_ref: RUN + 'open', rows: [{ code: '1500', dr_minor: 500000 }, { code: '2000', cr_minor: 300000 }, { code: '3000', cr_minor: 200000 }] } }), 'opening balances');
   const made = ok(await j('/api/relationships/customers', { method: 'POST', token: S.token, body: { name: 'Ravi Stores ' + RUN, phone: '98400' + String(Date.now()).slice(-5) } }), 'customer').b;
-  const party = made.customer_identity_id || (made.customer && (made.customer.customer_entity_id || made.customer.identity_id)) || made.identity_id || made.id;
+  const party = made.customer && made.customer.customer_identity_id; /* the id the books post against (a credit sale names the same one: acc-265 realstack) */
   expect(!!party, 'no party id in ' + JSON.stringify(made).slice(0, 200));
   let payId = null, receipt = null, reversal = null;
   const before = await tb(S);
