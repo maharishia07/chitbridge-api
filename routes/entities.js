@@ -418,8 +418,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       'plan',
       'params_override'
     ]);
-    const _tzCol = _cols.timezone;
-    const _supCol = _cols.supplies;
+    const _tzCol = _cols.timezone, _supCol = _cols.supplies;
     /**
      * ⭐⭐ THREE MORE COLUMNS OFF THE SAME ROW, PROBED — and they used to be TWO EXTRA ROUND TRIPS.
      *
@@ -470,7 +469,8 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
               /* ⭐ The parent's handle, so an employee can be shown the login they actually type: key@business.
                  A correlated subselect rather than a second round trip — this route is already on the slow
                  path Athi measured at 9.3s to open a chit, and an extra query for a label is not affordable. */
-              (SELECT p.user_id FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS parent_user_id
+              (SELECT p.user_id FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS parent_user_id,
+              (SELECT json_build_object('display_name', p.display_name, 'gstn', p.gstn, 'address', p.address) FROM identities p WHERE p.identity_id = identities.parent_entity_id) AS shop /* UX-217: the shop's facts beside a seat's own row, same trip; null for an entity */
        FROM identities WHERE identity_id = $1`,
       [req.identity.identity_id]
     );
@@ -523,14 +523,11 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
       }
     }
     if (req.identity.identity_type === 'actor') {
-      result.rows[0].identity_type = 'actor';
-      result.rows[0].hat = req.identity.hat || null;
-      result.rows[0].access_level = req.identity.access_level || null;
-      result.rows[0].whole_entity = req.identity.whole_entity === true;
-      result.rows[0].parent_entity_id = req.identity.parent_entity_id || null;
+      Object.assign(result.rows[0], { identity_type: 'actor', hat: req.identity.hat || null, access_level: req.identity.access_level || null, whole_entity: req.identity.whole_entity === true, parent_entity_id: req.identity.parent_entity_id || null });
     } else {
       result.rows[0].identity_type = 'entity';
     }
+    result.rows[0].seat = require('../lib/seat-abilities').seatOf(req); /* UX-221: what this seat may open on Home and in Accounts, from the SAME predicates the gates use */
     result.rows[0].is_practice = await require('../lib/people').practiceOf(auth.entityOf(req), req.identity.identity_id); /* walkfix 1119 (a): every seat reads whether its shop is a practice (the one rule, lib/people firmSql); null = unknown */
 
     /**
@@ -548,8 +545,7 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
     );
     // the ENTITY's capability selection (add-ons; core is implicit) — drives the itemised capability toggles. [b55/connector]
     // Defensive: defaults to [] if the b55 column isn't present in this environment.
-    let capabilities = [];
-    let capabilities_debug = 'ok';
+    let capabilities = [], capabilities_debug = 'ok';
     try {
       const eid = auth.entityOf(req);
       /**
@@ -563,7 +559,8 @@ router.get('/me', auth, ...checked('GET /me'), async (req, res) => {
        * capability list instead of their employer's, silently removing every capability-gated nav item. A round
        * trip saved by answering the wrong question is not a saving.
        */
-      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await boundRead(query, eid, 'SELECT capabilities FROM identities WHERE identity_id = $1', [eid]);
+      const c = eid === req.identity.identity_id && _me ? { rows: [_me] } : await require('../lib/me-shop').shopRowOf(eid, _tzCol); /* DRIFT 29: an actor's answer carries the SHOP's zone/currency/country/GSTIN */
+      Object.assign(result.rows[0], require('../lib/me-shop').shopScoped(c.rows[0], eid !== req.identity.identity_id));
       capabilities = (c.rows[0] && c.rows[0].capabilities) || [];
       capabilities_debug =
         (c.rows[0] ? 'rows=1' : 'rows=0') + ' eid=' + String(eid).slice(0, 8) + ' raw=' + JSON.stringify(c.rows[0] ? c.rows[0].capabilities : null);

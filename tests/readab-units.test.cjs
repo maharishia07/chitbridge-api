@@ -176,10 +176,11 @@ const norm = (sql) => String(sql).replace(/\s+/g, ' ').trim();
   const app = { use: (route, limiter) => mounted.push({ route, limiter }) };
   mount(app, { rateLimit: (options) => options, intFromEnv: (_name, fallback) => fallback });
   const byName = Object.fromEntries(mounted.map((item) => [item.limiter.name, item]));
-  check('own-limiters: four limiters, each with its own name', mounted.length === 4 && ['api-governance-ai-draft', 'api-connector-reissue-code', 'api-connector-erp-test', 'api-chit-status'].every((name) => byName[name]));
+  check('own-limiters: six limiters, each with its own name', mounted.length === 6 && ['api-governance-ai-draft', 'api-connector-reissue-code', 'api-connector-erp-test', 'api-chit-status', 'api-network-firm-invites', 'api-network-connection-asks'].every((name) => byName[name]));
   check('own-limiters: the maxima are 40, 10, 30 and 300 (each tighter than the global 500)', byName['api-governance-ai-draft'].limiter.max === 40 && byName['api-connector-reissue-code'].limiter.max === 10 && byName['api-connector-erp-test'].limiter.max === 30 && byName['api-chit-status'].limiter.max === 300);
   check('own-limiters: every limiter is keyed by the caller (a login cannot spend another login\'s allowance)', mounted.every((item) => typeof item.limiter.keyGenerator === 'function'));
   check('own-limiters: a refusal says too many requests, in words', mounted.every((item) => item.limiter.message.error === 'Too many requests' && /try again/.test(item.limiter.message.message)));
+  check('own-limiters: the firm door maxima are 10 (invitations) and 60 (asks), the ask counts a POST to the collection only', byName['api-network-firm-invites'].limiter.max === 10 && byName['api-network-connection-asks'].limiter.max === 60 && byName['api-network-connection-asks'].limiter.skip({ method: 'POST', path: '/' }) === false && byName['api-network-connection-asks'].limiter.skip({ method: 'POST', path: '/abc/approve' }) === true && byName['api-network-connection-asks'].limiter.skip({ method: 'GET', path: '/' }) === true);
   const statusLimiter = byName['api-chit-status'].limiter;
   check('own-limiters: the chit status limiter counts a PUT only (a read is skipped)', statusLimiter.skip({ method: 'GET' }) === true && statusLimiter.skip({ method: 'PUT' }) === false);
 

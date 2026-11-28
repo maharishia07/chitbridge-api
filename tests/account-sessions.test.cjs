@@ -106,6 +106,12 @@ const call = (port, method, p, body) => new Promise((ok) => {
   t('facts/account -> 2 devices hold a sign-in now (the revoked one does not), 1 key for other systems (the till key is a counter)',
     [r.status, r.json.lines.map((l) => l.text), r.json.figures], [200, ['Signed in on 2 devices', '1 key for other systems'], { devices: 2, keys: 1 }]);
 
+  WHO = COASSIST; SESSION = { jti: 'j-clerk', device_id: 'dev-phone' };
+  r = await call(port, 'GET', '/api/facts/account');
+  t('facts/account for a seat -> only ITS device (1), never the shop total, no key line (UX-226b C6)',
+    [r.status, r.json.lines.map((l) => l.text), r.json.figures], [200, ['Signed in on 1 device'], { devices: 1, keys: 0 }]);
+  WHO = OWNER;
+
   CHITS = rowsFew();
   r = await call(port, 'GET', '/api/facts/reports');
   t('facts/reports -> open (3: two chits + the own note) and stuck (1: the 10-day pending chit; the own note never)', [r.status, r.json.lines.map((l) => l.text), r.json.figures],

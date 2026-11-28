@@ -103,7 +103,8 @@
   },
   "GET /api/entities/sides": {
    "output_allowlist": {
-    "pass": true
+    "pass": false,
+    "why": "not reached: answered 500"
    }
   },
   "GET /api/entities/me": {
@@ -3173,6 +3174,19 @@
    "output_allowlist": {
     "pass": false,
     "why": "not reached: answered 409"
+   }
+  },
+  "GET /api/network/asks": {
+   "output_allowlist": {
+    "pass": true
+   }
+  },
+  "POST /api/network/firm-invites": {
+   "strict_input": {
+    "pass": true
+   },
+   "output_allowlist": {
+    "pass": true
    }
   },
   "POST /api/network/connections/:id/approve": {

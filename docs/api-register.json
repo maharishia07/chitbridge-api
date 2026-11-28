@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 701,
+  "routes": 703,
   "no_does": 1,
   "not_started": 0,
   "partial": 0,
-  "meets": 701,
+  "meets": 703,
   "columns": {
    "strict_input": {
-    "applies": 360,
+    "applies": 361,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 701,
+    "applies": 703,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,13 +29,13 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 701,
+    "applies": 703,
     "failing": 0
    }
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 79,
+    "applies": 82,
     "failing": 0
    },
    "parameterised_query": {
@@ -43,32 +43,32 @@
     "failing": 1
    },
    "rate_limited": {
-    "applies": 701,
-    "failing": 519
+    "applies": 703,
+    "failing": 514
    },
    "role_matrix": {
-    "applies": 701,
-    "failing": 637
+    "applies": 703,
+    "failing": 639
    },
    "junk_fuzz": {
-    "applies": 701,
-    "failing": 60
+    "applies": 703,
+    "failing": 62
    },
    "resource_cap": {
-    "applies": 701,
+    "applies": 703,
     "failing": 0
    },
    "audit_logged": {
-    "applies": 408,
-    "failing": 354
+    "applies": 409,
+    "failing": 355
    },
    "stale_write_refused": {
     "applies": 64,
     "failing": 62
    },
    "documented_example": {
-    "applies": 701,
-    "failing": 699
+    "applies": 703,
+    "failing": 701
    },
    "paged_read": {
     "applies": 78,
@@ -77,7 +77,7 @@
   },
   "resource_cap_causes": {},
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 176
+  "output_allowlist_from_recordings": 178
  },
  "machine_columns": [
   "schema_in",
@@ -6246,7 +6246,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 121,
-   "hash": "c1dfe6eea9319d5c",
+   "hash": "cf91a95bf267417a",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
     "count": 2,
@@ -6351,7 +6351,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit. RE-SIGN 2026-11-18 (x-words): the route keeps its released refusal sentence byte for byte through the fragment x-words in middleware/validate.js sentenceOf; diff re-read, 13 machine columns true.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read: answer adds visits[] (closed shape in api-output-shapes.json, owner-only door unchanged, looks kept byte for byte so legacy callers hold); 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -7626,7 +7626,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 890,
-   "hash": "8bcaea2e4297db09",
+   "hash": "5314c9ab21107e8c",
    "does": "An as-at date in -> we read assets, liabilities and equity -> the balance sheet and whether it balances.",
    "errors": {
     "count": 2,
@@ -7732,7 +7732,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: MONEY-01 (fold 4c6b09db2): the four reports refuse a cost-blind reader first (costBlindStops, REPORT_COST_BLIND_SAY, the existing 403 OWNER_ONLY path); answer shape unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign (AUDBS 9f9a3dc41), diff f9665a5bd...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: shown_as_at is now the day asked (asOf) instead of the day capped to the shop today; same key, same string date type, no new key, no status, error or auth change; the heading-day rule is an accounting-area behaviour the member meant (Xero, QuickBooks, MYOB heading), flagged to the coordinator.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -8717,7 +8717,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 674,
-   "hash": "3856300814f38d72",
+   "hash": "f1d8190bbe35260b",
    "does": "Customer or supplier side, optionally the finance view in -> we read who owes what by age (limits and interest for the owner only) -> the dues list.",
    "errors": {
     "count": 2,
@@ -8825,7 +8825,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-07: a side other than customer or supplier is a worded 400 BOOKS_BAD_REQUEST (registered, declared), after the owner door; answer shape unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1417 stage2: diff read (routes/books.js, entities.js, lib/access.js, lib/seat-abilities.js); GET /dues: owner-only finance gate moved behind seat-abilities.mayDo, same 403 OWNER_ONLY and words, same status set; GET /entities/me: one ADDITIVE key shop {display_name,gstn,address} (null for an owner) from the parent row in the same trip, no key lost, no status change, no error text; openapi-diff 0 breaking; 13 columns pass; raw-error 0; the seat-ability behaviour is cb-people's",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -12252,7 +12252,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 793,
-   "hash": "4d5d4cfaceb56f36",
+   "hash": "c86196b8310c4394",
    "does": "An as-at date in -> we read every account's debit and credit total -> the trial balance and whether it balances.",
    "errors": {
     "count": 2,
@@ -12361,7 +12361,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-26 batch 1130 re-sign (resign), diff 636f5d254..HEAD read for this route: cireds readability only, the transaction callback parameter h renamed handle at every use (5 lines), nothing else; same reads, same answer, doors, statuses and output shape; 13 machine columns true, stage2.",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign (AUDBS 9f9a3dc41), diff f9665a5bd...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: shown_as_at is now the day asked (asOf) instead of the day capped to the shop today; same key, same string date type, no new key, no status, error or auth change; the heading-day rule is an accounting-area behaviour the member meant (Xero, QuickBooks, MYOB heading), flagged to the coordinator.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -19564,7 +19564,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 147,
-   "hash": "4e40cc134cb62f6d",
+   "hash": "780cf060e7e7a29b",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
     "count": 0,
@@ -19669,7 +19669,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. One cut record under a grant, the open record unchanged; foreign id still 404. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-28 PR#1429 stage2: GET /parties/:id: handler diff read; lead.may goes through lib/lead-may (not migrated: same NOT_READY sentence; else ok:true, or ok:false with code and why for a seat that may not write, so a viewer no longer gets a live button that answers 403); lead and may are open objects in api-output-shapes, additive optional code key, no nullability change; the crm owner must confirm the greyed-viewer rule (a business rule, theirs); 13 columns true; openapi-diff 0 breaking",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -20770,7 +20770,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2324,
+   "line": 2321,
    "hash": "060a5c407fc62544",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -21023,7 +21023,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 395,
-   "hash": "50030430efeefcfc",
+   "hash": "d0092d77f99f1bc8",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
     "count": 0,
@@ -21126,7 +21126,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-26 batch 1131 re-sign (fix/idreads-1131, SEC-198/199 identity reads), diff origin/main 28a73d36d...HEAD read per route: the identities reads in the handler now go through lib/bound-read boundRead (same SQL, same params, same result rows, still ONE trip; a stub sees the plain statement) and the platform counts through lib/platform-count (one ops definer call, old read as fallback on 42883); no key, status, code or error text added or moved, no schema or contract change; 13 machine columns true",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: answer gains seat (lib/seat-abilities.seatOf, UX-221) and shop (the parent identity facts, UX-217) inside the open entity object, and an actor seat now reads the SHOP timezone, currency, country and gstn (lib/me-shop, DRIFT 29); additive, no key removed, no status or auth change, legacy keys frozen; the shop-scoped overlay is a settings-area behaviour the member meant.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -21173,7 +21173,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 740,
+   "line": 737,
    "hash": "f12cd611fc9dc327",
    "does": "Signed-in caller -> we check whether it may see cost prices and set rates -> yes or no for costs, whether it is the owner, and whether it may set a rate.",
    "errors": {
@@ -21302,7 +21302,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1639,
+   "line": 1636,
    "hash": "a9856e763ccbe71d",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
@@ -21571,7 +21571,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1522,
+   "line": 1519,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -21703,7 +21703,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1384,
+   "line": 1381,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -21833,7 +21833,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1367,
+   "line": 1364,
    "hash": "003d5303fcd66629",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -22342,7 +22342,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1186,
+   "line": 1183,
    "hash": "387414ee576f9b88",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
@@ -22846,7 +22846,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; every card builder in lib/home-facts.js returns only lines/figures/state (rail: its own six keys), all in the closed shape; unknown card 404, api key 403, fault the generic sentence; 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: re-read for card network (lib/home-facts.js): same closed lines/figures/state shape, owner seat only reads requests, staff reads 0 and no door, unknown card still 404, key 403; route hash unchanged; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -29542,7 +29542,7 @@
    "owner_agent": "cb-compliance",
    "file": "routes/kyb.js",
    "line": 47,
-   "hash": "a45d7fb9c9b70281",
+   "hash": "19f1b5e93e51d55e",
    "does": "Signed-in business -> we read its chits and work out its risk picture, free of charge -> the risk summary.",
    "errors": {
     "count": 0,
@@ -29641,7 +29641,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-28 PR#1427 (drift 19b/35a): handler diff and lib/dues-view.noMoneyRisk + lib/money-seat read after the hash moved; 13 columns true on the regenerated register. Seats the books gate refuses (cashier, view-only; not owner, in-house accountant, live grant or auditor) get facts.concentration value and total null plus cost_hidden:true; names, pct, counts, exposures, expiring stand; same status, same one error shape, no new code, no key removed. Contract: published schema said value/total number and had no cost_hidden, so the output shape (api-output-shapes.json) now marks value/total number|null and adds optional cost_hidden boolean (additive on keys, a nullability change on value/total: breaking in the strict type sense for a typed client, not for web, which only reads display strings via the seat that sees no money; acknowledged here, owner answer unchanged). Business rule belongs to books/security (who reads money), already decided by mayReadMoney. PRIOR: cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as re",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30729,13 +30729,135 @@
    }
   },
   {
+   "key": "GET /api/network/asks",
+   "method": "GET",
+   "path": "/api/network/asks",
+   "owner_area": "network",
+   "owner_agent": "cb-network",
+   "file": "src/routes/network.js",
+   "line": 179,
+   "hash": "43d5d52e761d9c8e",
+   "does": "Nothing in (business owner only) -> we read the requests to connect that wait for this business and the ones it asked, a firm always the parent -> { to_me, by_me }.",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     401,
+     500
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": false,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    401,
+    500
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "output_allowlist_basis": "recordings",
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": false,
+    "role_matrix": false,
+    "junk_fuzz": false,
+    "resource_cap": true,
+    "audit_logged": true,
+    "stale_write_refused": true,
+    "documented_example": false,
+    "paged_read": true
+   },
+   "reported_applies": {
+    "bfla_role_check": true,
+    "parameterised_query": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
+    "resource_cap": true,
+    "audit_logged": false,
+    "stale_write_refused": false,
+    "documented_example": true,
+    "paged_read": false
+   },
+   "reported_causes": {
+    "resource_cap": [],
+    "paged_read": [],
+    "stale_write_refused_na": [
+     "read"
+    ]
+   },
+   "reported_facts": {
+    "paged_read": {
+     "kind": "single",
+     "mode": "none",
+     "default": null,
+     "max": null,
+     "unasked": "n/a",
+     "via": "no rows answered"
+    }
+   },
+   "human": {
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: NEW route read: owner-only (ownerDecides, staff and keys 403 OWNER_ONLY), no id in input so foreign_id_404 n/a, answer { to_me, by_me } from lib/connect-asks over the caller own entity only, closed output shape, 1 trip budgeted, generic 500 sentence; 13 columns pass | re-signed 2026-11-28 after checked() was dropped from the route (it refused nothing: no input), 400 no longer declared, scope entry removed, owner gate and closed shape unchanged, 13 columns pass",
+    "lifecycle": "stable"
+   },
+   "status": "meets standard",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 1,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "GET /api/network/entities/:id/connections",
    "method": "GET",
    "path": "/api/network/entities/:id/connections",
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 153,
+   "line": 155,
    "hash": "a0d06b8ea42b5e78",
    "does": "A business id in the address (signed-in) -> we read its connections as the caller may see them -> the connections.",
    "errors": {
@@ -30861,7 +30983,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 146,
+   "line": 148,
    "hash": "26ec7c352ead04da",
    "does": "A business id in the address (signed-in) -> we read that business and the ones below it, as the caller may see them -> the branch of the network.",
    "errors": {
@@ -30991,7 +31113,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 65,
+   "line": 67,
    "hash": "e154f449feca36d9",
    "does": "A bridge id in the query (signed-in) -> we look up that business in the network -> found with its card, or not found.",
    "errors": {
@@ -31119,7 +31241,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 100,
+   "line": 102,
    "hash": "4747f2c6ffbcb794",
    "does": "A bridge id in the query (signed-in) -> we find where the business sits and the whole network above it in one call -> the business, its root and all nodes.",
    "errors": {
@@ -31247,8 +31369,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 171,
-   "hash": "076b1beba109c671",
+   "line": 174,
+   "hash": "d01ee3c7fdf751ef",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
@@ -31350,7 +31472,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api, open pending) stage2 re-sign, diff read (badgeOf + badgeAsksSql): the owner asks count now rides as one scalar column of the ?count=1 badge statement (no extra statement, no extra trip; staff and keys get none), badge keys { count, total, seen_at, asks } in the closed shape, count includes the waiting requests; the FEED answer is back to its old keys (no asks key, no request rows); legacy keys and order kept; generic 500; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31361,7 +31483,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 3,
-    "wire": 9,
+    "wire": 10,
     "screens": [
      "app.html 3/109",
      "rail-bell.js 3/4"
@@ -31730,7 +31852,7 @@
    "owner_agent": "cb-people",
    "file": "routes/people.js",
    "line": 32,
-   "hash": "a8b1fb1d077f2b19",
+   "hash": "15852cb2c5a9754f",
    "does": "Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.",
    "errors": {
     "count": 0,
@@ -31833,7 +31955,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; answer gains hat on access_choices (additive); firm picker words only",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: answer rows gain sign_in_as (handle.typedForm, O4; in the closed output shape) beside user_id; additive, same 401/422/500, same owner door.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -33689,7 +33811,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 723,
-   "hash": "dbeecd4aa2564d45",
+   "hash": "2e6bcf63d1612c3b",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
     "count": 0,
@@ -33793,7 +33915,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Customer picker rows cut by CUSTOMER_ROW_KEEP, a subset of the open row; envelope and open answer unchanged. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: a seat the books gate refuses (lib/money-seat.noMoney) gets balance null + cost_hidden:true on each row (drift 35a, same masking as GET /crm/parties), every row carries phone (lib/party-phone), otp_contact still deleted (merge resolution kept both statements); phone and cost_hidden are in the closed output shape; no status or auth change.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -40448,13 +40570,14 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 170,
-   "hash": "8d7990b747431ba7",
+   "hash": "a09c4d60f7d818b6",
    "does": "Optional since time in -> we read the shop's products, customers, suppliers and stock for a counter to hold offline, or a trimmed cut for a screen -> the snapshot.",
    "errors": {
     "count": 0,
     "statuses": [
      400,
      401,
+     403,
      500
     ],
     "codes": []
@@ -40506,6 +40629,7 @@
    "declared": [
     400,
     401,
+    403,
     500
    ],
    "notes": [
@@ -40557,7 +40681,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-10-30 PR#588 stage2 (B6 batch 3)",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1426 stage2: diff read (routes/till.js, lib/till-contract.js, lib/seat-abilities.js, lib/access.js); GET /api/till/snapshot gains the sellsOnly door: a books-only seat (Bookkeeper preset, view-only, outside firm) answers 403 TILL_NOT_FOR_SEAT as one Problem body with legacy keys error/message, declared inline in the contract; code registered in ERROR-CODES.md with shopkeeper sentence and hint, tested by scenario snapshot-bookkeeper-refused, legacy body frozen; 200 body unchanged; openapi-diff 0 breaking (a new 403 is additive); 13 columns pass; raw-error 0; the seat rule (who sells) belongs to cb-people/cb-counter",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -41999,7 +42123,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 103,
-   "hash": "968b93945cedab0f",
+   "hash": "b8419b116b120c26",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
     "count": 2,
@@ -42108,7 +42232,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body keys posting, posting_cap_minor, posting_cap_currency; owner only as before. 13 machine columns true.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read (lib/books-grant.js change/changeCosts): can_see_costs and consent in the closed body, a rise needs consent true else 422 BOOKS_GRANT_CONSENT_NEEDED, 503 in words before b915, owner-only door unchanged, before/after logged; answer shape unchanged; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -43077,7 +43201,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1155,
+   "line": 1152,
    "hash": "20f9a1debd6a5b5d",
    "does": "A business id in the address (platform operators only) -> we mark it erased and refuse sealed system accounts -> a done answer, or not found when nothing matched.",
    "errors": {
@@ -43208,7 +43332,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 712,
+   "line": 709,
    "hash": "e801052b639158fc",
    "does": "Switches for what is shown to customers (signed-in) -> we merge the known yes or no keys into the business defaults -> the saved switches.",
    "errors": {
@@ -43337,7 +43461,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 705,
+   "line": 702,
    "hash": "d2930b3021a93ac9",
    "does": "A preference kind in the address and its value (signed-in) -> we save that preference for the caller -> the saved preference.",
    "errors": {
@@ -43605,7 +43729,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 852,
+   "line": 849,
    "hash": "b8c64c0ba9e3572c",
    "does": "Shop details to change (owner or an editor, and only the owner may change the tax number) -> we validate and save them, saying which rule failed -> the saved profile.",
    "errors": {
@@ -50694,7 +50818,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1769,
-   "hash": "d6198d021092437e",
+   "hash": "f63b2066de6dc7ea",
    "does": "A manual event with its fields and a client_ref in -> we post it once as a journal entry -> the entry number (owner only).",
    "errors": {
     "count": 3,
@@ -50799,7 +50923,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: body gains tax_rate (listed); a stray tax key is refused in words through the existing refuse path, 422 declared.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1439 re-signed at 16228b10c, diff 5b4cc26d7..HEAD read (lib/bank-pay-needs askIfSupplierBill, books-bank-tax, books-contract), 13 machine columns true, stage2: hash moved because the closed body gains not_this_bill (listed in EVENT_BODY); on bank_expense_supplier an open bill of the same gross is asked 422 NEEDS_WHICH_BILL (code, needs, bill, bills beside error/message; row registered), not_this_bill true posts and notes the refs, a non-boolean is refused 422 in words, and on every other kind the key is refused not ignored; nothing is posted on the ask; the earlier bank_expense_supplier review (one entry, plain expense refused naming the kind) stands.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -51506,7 +51630,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2538,
-   "hash": "b8c2128a61b6452d",
+   "hash": "86e1a5feefd9deca",
    "does": "A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).",
    "errors": {
     "count": 2,
@@ -51611,7 +51735,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1437 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the close carries pack_version and a repeat of a lodged close under another rules version answers the stored figures plus the optional pack_mismatch receipt (code BOOKS_PACK_VERSION_MISMATCH, registered, fixed shopkeeper sentence, no raw error text); pack_mismatch added to the output shape as an optional key; request body, gates and statuses unchanged.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53543,7 +53667,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1133,
-   "hash": "8f171add7a618bab",
+   "hash": "c1a30e050bb97323",
    "does": "A party, amount and mode in -> we record money received or paid and settle open bills (a cheque waits until it clears); a repeat is ignored -> the payment and what it settled (editors).",
    "errors": {
     "count": 3,
@@ -53657,7 +53781,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1439 BB-P1-3 (BB-P1-3 bank line to a named supplier), diff origin/main...HEAD read per route (handler, chain, lib), 13 machine columns true, stage2: hash moved with one added line (askIfBankLine); body gains bank_line (listed in the closed body, boolean, a non-boolean refused 422 in words); new 422 NEEDS_WHICH_ACCOUNT / NEEDS_WHICH_BILL carry code, needs, bill beside error and message through the books-contract RULES (coded 422), both registered with shopkeeper sentences; without bank_line, money in, or named allocations the route is unchanged (Dues door), nothing posted on a refusal.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54370,7 +54494,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1759,
-   "hash": "71782bfdea7433b2",
+   "hash": "b090c29e84b15e78",
    "does": "A manual event and its fields in -> we compose the journal as it would post, posting nothing -> the lines, totals and whether it balances.",
    "errors": {
     "count": 2,
@@ -54474,7 +54598,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: answer gains needs (null or object) in the closed shape; refusals list adds tax_payment.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1439 re-signed at 16228b10c, diff 5b4cc26d7..HEAD read, 13 machine columns true, stage2: hash moved only because it shares the closed EVENT_BODY, which gains not_this_bill (listed); the preview writes nothing, and the same builder asks an open bill of the same gross with the registered 422 NEEDS_WHICH_BILL.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54906,7 +55030,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 230,
-   "hash": "b869037176ba0f07",
+   "hash": "07ede58dfc250f9c",
    "does": "Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).",
    "errors": {
     "count": 2,
@@ -55013,7 +55137,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1437 re-sign (1138 proof Finding 1), diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the body now declares pack_version and pack_from (the restamp door was refused 422 by the closed body) and the answer carries pack_version ({from,version,was} or null); restamp is forward-only from a period start (lib/books-pack-pin restamp), refusals carry registered codes BOOKS_PACK_BACKWARD / BOOKS_PACK_FROM / BOOKS_PACK_VERSION_UNKNOWN / BOOKS_NOT_ON, owner-only gate unchanged; proved through the LIVE route in tests/acc420-setting-route.test.cjs (200 restamp, backward and non-period-start refused; mutation: drop the two keys = red).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55183,7 +55307,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1826,
-   "hash": "0d97b5dac25475ba",
+   "hash": "e8789ed58ca7d707",
    "does": "A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -55296,7 +55420,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-02/AX-F-07: a zero or negative write-off is a worded 400 BOOKS_BAD_REQUEST, and the posting passes the event-guard so a reused client_ref with a changed body is 409; both registered and declared; same shape.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1437 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the handler now reads the invoice GST through lib/books-bad-debt.adjusted (ACC-418, accounting owns the rule) before the one postEntry; the answer keys are unchanged, note is a fixed sentence (no raw or relayed error text), refusals still go through refusalOf, body and gates unchanged.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -58932,7 +59056,7 @@
    "owner_agent": "cb-rail",
    "file": "routes/chits.js",
    "line": 5076,
-   "hash": "b179706addd3e300",
+   "hash": "55824035434d9242",
    "does": "A chit id and per-line assignees in -> we record who does which line, private to you, and log it -> the assignments.",
    "errors": {
     "count": 0,
@@ -59035,7 +59159,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-20 batch 1123 PR#1389 head 13809b8f8 (Athi approved the review 20 Nov) stage2: diff origin/main...13809b8f8 read per route; 13 machine columns true; hash moved only because x-chits-refusals gained ASSIGN_PICKUP_OFF and ASSIGN_HELD_BY_OTHER (403, both registered in docs/error-codes.json with shopkeeper sentences); handler, input and answer unchanged",
+    "signed_off_by_date": "cb-api 2026-11-28 batch/api-1138 re-sign, diff origin/main...HEAD read per route (handler, chain, operation, contract), 13 machine columns true, stage2: the gate verdict now comes from seat-abilities.assignOn, which is the same railActions.can(held, me, assign) call and the same ownCopyRefusalOf refusal (DRIFT 9b); same 401/404/422, same body and answer.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -67166,7 +67290,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 757,
+   "line": 754,
    "hash": "b14b1f9cf65d153d",
    "does": "Signed-in staff -> we mint a 15-minute token bound to their own shop -> the preview-only token the customer page holds, and how long it lives.",
    "errors": {
@@ -67288,7 +67412,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1612,
+   "line": 1609,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -72778,7 +72902,7 @@
    "owner_area": "kyb",
    "owner_agent": "cb-compliance",
    "file": "routes/kyb.js",
-   "line": 56,
+   "line": 57,
    "hash": "c7243483b6c92dfa",
    "does": "Signed-in business -> we run the field and direction search, reusing the last 24 hours and charging usage only when it runs afresh -> the field section.",
    "errors": {
@@ -74562,8 +74686,8 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 160,
-   "hash": "5c423f5a383b953e",
+   "line": 162,
+   "hash": "78f57dfd06bfad30",
    "does": "Two sides of a connection (signed-in) -> we raise a connection request between those businesses -> the new connection.",
    "errors": {
     "count": 0,
@@ -74621,7 +74745,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -74631,7 +74755,7 @@
     "paged_read": true
    },
    "reported_applies": {
-    "bfla_role_check": false,
+    "bfla_role_check": true,
     "parameterised_query": false,
     "rate_limited": true,
     "role_matrix": true,
@@ -74663,7 +74787,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read: ownerAsks added (staff or key 403 OWNER_ONLY, was 401 NO_ACTOR: the intended change, frozen in api-legacy.json), schema and answer unchanged, new refusals 409 FIRM_DIRECTION and 429 ASK_LIMIT/ASK_COOLING_OFF are in the register with sentences; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -74692,7 +74816,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 176,
+   "line": 195,
    "hash": "cf94b2f1ecb4b050",
    "does": "A connection id in the address (business owner only) -> we approve that requested connection -> the connection now live.",
    "errors": {
@@ -74753,7 +74877,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -74826,7 +74950,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 185,
+   "line": 204,
    "hash": "0fc9c8e13510c1f5",
    "does": "A connection id in the address (business owner only) -> we decline that requested connection -> the connection as declined.",
    "errors": {
@@ -74887,7 +75011,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -74960,7 +75084,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 212,
+   "line": 231,
    "hash": "f2723d9cbe44782d",
    "does": "A connection id in the address (business owner only) -> we end that connection -> the connection as ended.",
    "errors": {
@@ -75021,7 +75145,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75094,7 +75218,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 203,
+   "line": 222,
    "hash": "3816956041ef4601",
    "does": "A connection id in the address (business owner only) -> we turn a suspended connection back on -> the connection as active.",
    "errors": {
@@ -75155,7 +75279,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75228,7 +75352,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 194,
+   "line": 213,
    "hash": "53cbc22c6326a455",
    "does": "A connection id in the address (business owner only) -> we pause that connection without ending it -> the connection as suspended.",
    "errors": {
@@ -75289,7 +75413,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": false,
+    "rate_limited": true,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75362,7 +75486,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 56,
+   "line": 58,
    "hash": "9df9dbc22a72511d",
    "does": "The details of a business to add to the network (signed-in) -> we register it as a node, and a platform-owned one only for the platform seat -> the new network entity, or 403 NOT_PLATFORM.",
    "errors": {
@@ -75488,7 +75612,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 75,
+   "line": 77,
    "hash": "f50ade78cee2531b",
    "does": "A network business id in the address (signed-in) -> we mark that listed, still unclaimed business as claimed, only when the caller is the business whose bridge id it carries -> the claimed entity, or the one not-found answer.",
    "errors": {
@@ -75610,13 +75734,139 @@
    }
   },
   {
+   "key": "POST /api/network/firm-invites",
+   "method": "POST",
+   "path": "/api/network/firm-invites",
+   "owner_area": "network",
+   "owner_agent": "cb-network",
+   "file": "src/routes/network.js",
+   "line": 186,
+   "hash": "afc2ae17cdf90915",
+   "does": "A business address in the body (business owner only) -> we send ONE fixed e-mail inviting a firm that is not on ChitBridge, capped, and say whether it was delivered -> { sent, delivered, message }, nothing connects.",
+   "errors": {
+    "count": 0,
+    "statuses": [
+     400,
+     401,
+     500,
+     503
+    ],
+    "codes": []
+   },
+   "reads": [],
+   "writes": [],
+   "money": false,
+   "actions": [],
+   "derived": [
+    "reads",
+    "writes",
+    "money"
+   ],
+   "columns": {
+    "schema_in": true,
+    "schema_out": true,
+    "missing_input_answer": true,
+    "error_shape": true,
+    "codes_registered": true,
+    "error_tests": true,
+    "status_codes": true,
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": true,
+    "idempotent_money_write": true,
+    "inbound_validated": true,
+    "trips_budgeted": true
+   },
+   "applies": {
+    "strict_input": true,
+    "output_allowlist": true,
+    "foreign_id_404": false,
+    "idempotent_money_write": false,
+    "inbound_validated": false,
+    "trips_budgeted": true
+   },
+   "declared": [
+    400,
+    401,
+    500,
+    503
+   ],
+   "notes": [
+    "auth middleware answers 401 in the old body",
+    "legacy keys frozen in docs/contracts/api-legacy.json"
+   ],
+   "output_allowlist_basis": "recordings",
+   "reported": {
+    "bfla_role_check": true,
+    "parameterised_query": true,
+    "rate_limited": true,
+    "role_matrix": false,
+    "junk_fuzz": false,
+    "resource_cap": true,
+    "audit_logged": false,
+    "stale_write_refused": true,
+    "documented_example": false,
+    "paged_read": true
+   },
+   "reported_applies": {
+    "bfla_role_check": true,
+    "parameterised_query": false,
+    "rate_limited": true,
+    "role_matrix": true,
+    "junk_fuzz": true,
+    "resource_cap": true,
+    "audit_logged": true,
+    "stale_write_refused": false,
+    "documented_example": true,
+    "paged_read": false
+   },
+   "reported_causes": {
+    "resource_cap": [],
+    "paged_read": [],
+    "stale_write_refused_na": [
+     "create"
+    ]
+   },
+   "reported_facts": {
+    "paged_read": {
+     "kind": "n/a",
+     "mode": "none",
+     "default": null,
+     "max": null,
+     "unasked": "n/a",
+     "via": null
+    }
+   },
+   "human": {
+    "names_clear": true,
+    "sentence_plain": true,
+    "backward_compatible": true,
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: NEW route read: owner-only, write gate 503, strict one-key body { email } (contract pattern fixed: it was an unescaped string, so any address with the letter s was refused 400), cap 429 INVITE_LIMIT registered with sentence, answer { sent, delivered, message } closed, nothing connects, no stored id; 13 columns pass",
+    "lifecycle": "stable"
+   },
+   "status": "meets standard",
+   "callers": [],
+   "offline": "online-only",
+   "round_trips": {
+    "trips": 1,
+    "wire": 1,
+    "screens": []
+   },
+   "measured": {
+    "server_ms_p50": null,
+    "server_ms_p95": null,
+    "bytes_out": null,
+    "slow_3g": null
+   }
+  },
+  {
    "key": "POST /api/notifications/dismiss",
    "method": "POST",
    "path": "/api/notifications/dismiss",
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 289,
+   "line": 292,
    "hash": "8ca0946b1d787775",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -75754,7 +76004,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 237,
+   "line": 240,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {
@@ -91633,7 +91883,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1578,
+   "line": 1575,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -91768,7 +92018,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1495,
+   "line": 1492,
    "hash": "b0e5f4d41975080d",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {

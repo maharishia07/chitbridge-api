@@ -32,7 +32,7 @@ const pageLimit = require('../lib/page-limit'); /* LIM2: the ONE pager — asked
 const PAGE_DEFAULT = 50,
   PAGE_MAX = 200; /* one page of this file's lists */
 const { problem, softFault } = require('../lib/problem'); // API-STANDARD S1: the one error writer
-const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
+const { RECHECK_ITEM_KEYS, said, notFound, failed, relayed, refusalOf, categoriesFailed, checked, pathsOf, refuseBad, refuseNoCounter, sellsOnly } = require('../lib/till-contract'); // the contract (S9), the schema check of each route and the words of a refusal
 const log = require('../lib/logger');
 const { UUID_RE } = require('../lib/trace'); /* the one uuid pattern (routes/quick-keys.js reads it too) */
 const {
@@ -167,7 +167,7 @@ const { holdsStockOf } = require('../lib/holds-stock'); /* M127: does this shop 
  * finished body to a counter, or its allow-listed cut to a TV; takeSnapshot below reads the shop in the order its comments explain.
  */
 // @does Optional since time in -> we read the shop's products, customers, suppliers and stock for a counter to hold offline, or a trimmed cut for a screen -> the snapshot.
-router.get('/snapshot', auth, ...checked('GET /snapshot'), async (req, res) => {
+router.get('/snapshot', auth, sellsOnly, ...checked('GET /snapshot'), async (req, res) => {
   try {
     const taken = await takeSnapshot(req);
     const answer = taken.screen ? screenView(taken.body) : taken.body;
@@ -468,7 +468,7 @@ const BUYER_TAX_ID_SQL = `COALESCE(NULLIF(i.gstn, ''), (SELECT t.value FROM part
  */
 function customersRead(db, entity_id) {
   return db.query(
-    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at,
+    `SELECT i.identity_id, i.display_name, i.otp_contact AS phone, ${BUYER_TAX_ID_SQL} AS gstn, i.address, c.groups, c.last_txn_at, ${require('../lib/customer-groups').SEGMENT_SQL_BASE.replace(/cl\./g, 'c.')} AS segment,
                 /* ⭐ BOOKS v2 (b274) — read through to_jsonb so this query runs the same before and after the
                    columns exist: a missing column is a NULL here ("limit unknown offline"), never a failed snapshot */
                 to_jsonb(c)->>'credit_days' AS credit_days, to_jsonb(c)->>'credit_limit_minor' AS credit_limit_minor,
@@ -573,7 +573,7 @@ async function readDeclared(entity_id) {
 /** the live offers this shop is running — the same rows the storefront and the chit read; a shop with no offers bills fine */
 async function readLiveOffers(entity_id) {
   try {
-    const live = await catalogueView.liveOffers({ entity_id, withEntity, viewer: null, groups: [], all: false });
+    const live = await catalogueView.liveOffers({ entity_id, withEntity, viewer: null, groups: [], all: true });
     return Array.isArray(live) ? live : (live && live.offers) || [];
   } catch (e) {
     log.fellBack('till GET /snapshot: the read failed — carried on without it', e);
@@ -724,7 +724,7 @@ function customerRow(owed, booksOn, duesCut) {
 
 /** who the customer is: id, name, phone, groups, the rail entity (a business on the rail) and the buyer's GSTIN */
 function customerCore(x) {
-  const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] };
+  const out = { identity_id: x.identity_id, name: x.display_name, phone: x.phone || null, groups: Array.isArray(x.groups) ? x.groups : [] }; if (x.segment) out.segment = String(x.segment); /* CAT-347: the segment an offer's "Only for" may name, so the counter can pass the chosen customer's groups */
   /* ⭐ present only for a business on the rail — absent = the bill stays the shop's own record (never sent) */
   if (x.rail_entity_id) out.entity_id = x.rail_entity_id;
   /* ⭐ the customer's GSTIN, so the counter's invoice names its buyer (CBTax.determine BuyerDtls — GSTR-1 b2b, Rule 46) */

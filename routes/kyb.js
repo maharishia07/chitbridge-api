@@ -46,7 +46,8 @@ router.get('/position', auth, ...contract.checked('GET /position'), async (req, 
 // @does Signed-in business -> we read its chits and work out its risk picture, free of charge -> the risk summary.
 router.get('/risk', auth, ...contract.checked('GET /risk'), async (req, res) => {
   try {
-    res.json(await kyb.risk(entityId(req)));
+    const answer = await kyb.risk(entityId(req));
+    res.json((await require('../lib/money-seat').noMoney(req)) ? require('../lib/dues-view').noMoneyRisk(answer) : answer); // drift 19b: trade amounts are books money; the seat GET /dues refuses gets names, percentages and counts, no amounts
   } catch (err) {
     problem(req, res, faultOf(err, req, 'Risk failed'));
   }

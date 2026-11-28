@@ -235,6 +235,7 @@ async function requestConnect({ parentId, parentHandle, childBridgeId, childId, 
     type
   ]);
   if (open) throw err(409, open.state === 'requested' ? 'already asked — waiting for an answer' : 'already connected', 'EXISTS');
+  if (type === AGENCY) await require('../../lib/connect-caps').refuseFirmAsk((sql, params) => pool.query(sql, params), { actor, parent, child }, err);
   const { rows } = await pool.query(
     `insert into cb_edge(parent_id,child_id,type,state,requested_by)
      values ($1,$2,$3,'requested',$4) returning *`,

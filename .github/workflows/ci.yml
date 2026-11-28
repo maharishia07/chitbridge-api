@@ -480,6 +480,13 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/net-agency-firm-not-network.realstack.cjs
+      - name: FIRM-CONNECT-1138 · the firm-to-shop path (real Postgres, cb_app, asks, re-ask after a refusal, 150 waiting, costs consent, the grant privilege matrix, visits)
+        env:
+          DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
+          NODE_ENV: test
+        run: node tests/firm-connect-1138.realstack.cjs
+      - name: FIRM-CONNECT-1138 · mutation-red (each guard removed from the source must turn the test red)
+        run: node tests/firm-connect-1138.test.cjs --mutants
       - name: ACC-328 · an opening is posted once and never in the future, the race held by the opening|day lock (real Postgres, cb_app, RLS on; run on SIT 17 Nov, 3 cases)
         env:
           API_BASE: http://127.0.0.1:3000

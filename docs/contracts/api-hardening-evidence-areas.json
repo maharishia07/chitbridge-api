@@ -195,25 +195,25 @@
    "junk_fuzz": true
   },
   "GET /api/books-grants": {
-   "output_allowlist": true,
-   "role_matrix": true,
-   "junk_fuzz": true
-  },
-  "GET /api/books-grants/consent": {
-   "output_allowlist": true,
-   "role_matrix": true,
-   "junk_fuzz": true
-  },
-  "GET /api/books-grants/log": {
-   "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
+   "output_allowlist": true
+  },
+  "GET /api/books-grants/consent": {
+   "role_matrix": true,
+   "junk_fuzz": true,
+   "output_allowlist": true
+  },
+  "GET /api/books-grants/log": {
+   "role_matrix": true,
+   "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "GET /api/books-grants/practice": {
-   "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/books/accounts": {
    "output_allowlist": true,
@@ -289,20 +289,20 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/compare/:id/csv": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/daybook": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "output_allowlist": true
+   "output_allowlist": true,
+   "bfla_role_check": true
   },
   "GET /api/books/depreciation/schedule": {
    "output_allowlist": true,
@@ -322,8 +322,8 @@
   "GET /api/books/evidence/:id": {
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/fx-rates": {
    "output_allowlist": true,
@@ -349,8 +349,8 @@
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/loans": {
    "output_allowlist": true,
@@ -401,15 +401,15 @@
    "output_allowlist_basis": "recordings",
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/party/:id/statement": {
    "output_allowlist": true,
    "role_matrix": true,
    "junk_fuzz": true,
-   "bfla_role_check": true,
-   "foreign_id_404": true
+   "foreign_id_404": true,
+   "bfla_role_check": true
   },
   "GET /api/books/payments/:id/advice": {
    "output_allowlist": true,
@@ -777,8 +777,8 @@
    "output_allowlist": true
   },
   "GET /api/events/stats": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/events/stream": {
    "junk_fuzz": true
@@ -1027,6 +1027,10 @@
    "output_allowlist": true,
    "junk_fuzz": true
   },
+  "GET /api/network/asks": {
+   "bfla_role_check": true,
+   "output_allowlist": true
+  },
   "GET /api/network/entities/:id/connections": {
    "junk_fuzz": true,
    "output_allowlist": true,
@@ -1048,8 +1052,8 @@
    "output_allowlist": true
   },
   "GET /api/notifications": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "GET /api/offers/kinds": {
    "output_allowlist": true,
@@ -1364,8 +1368,8 @@
    "bfla_role_check": true
   },
   "PATCH /api/books-grants/:id": {
-   "output_allowlist": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "PATCH /api/books/payments/:id": {
@@ -1554,19 +1558,19 @@
    "junk_fuzz": true
   },
   "POST /api/books-grants": {
-   "output_allowlist": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "POST /api/books-grants/:id/revoke": {
-   "output_allowlist": true,
    "junk_fuzz": true,
+   "output_allowlist": true,
    "bfla_role_check": true
   },
   "POST /api/books-grants/practice/baseline": {
-   "output_allowlist": true,
    "role_matrix": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/books/accounts": {
    "output_allowlist": true,
@@ -1666,6 +1670,10 @@
    "junk_fuzz": true
   },
   "POST /api/books/events/batch": {
+   "output_allowlist": true,
+   "output_allowlist_basis": "recordings"
+  },
+  "POST /api/books/evidence": {
    "output_allowlist": true,
    "output_allowlist_basis": "recordings"
   },
@@ -2210,8 +2218,8 @@
    "output_allowlist": true
   },
   "POST /api/events/ticket": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/flags": {
    "output_allowlist": true,
@@ -2443,42 +2451,43 @@
   "POST /api/network/connections": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
+   "bfla_role_check": true,
    "output_allowlist": true
   },
   "POST /api/network/connections/:id/approve": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
+   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/decline": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
+   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/disconnect": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
+   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/resume": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
+   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "foreign_id_404": true
   },
   "POST /api/network/connections/:id/suspend": {
    "output_allowlist_basis": "recordings",
    "junk_fuzz": true,
+   "bfla_role_check": true,
    "output_allowlist": true,
-   "foreign_id_404": true,
-   "bfla_role_check": true
+   "foreign_id_404": true
   },
   "POST /api/network/entities": {
    "output_allowlist_basis": "recordings",
@@ -2491,13 +2500,17 @@
    "output_allowlist": true,
    "foreign_id_404": true
   },
+  "POST /api/network/firm-invites": {
+   "bfla_role_check": true,
+   "output_allowlist": true
+  },
   "POST /api/notifications/dismiss": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/notifications/seen": {
-   "output_allowlist": true,
-   "junk_fuzz": true
+   "junk_fuzz": true,
+   "output_allowlist": true
   },
   "POST /api/offers/evaluate": {
    "output_allowlist": true,
@@ -3024,10 +3037,6 @@
   },
   "PUT /api/testing/cmdb/:ci": {
    "junk_fuzz": true
-  },
-  "POST /api/books/evidence": {
-   "output_allowlist": true,
-   "output_allowlist_basis": "recordings"
   }
  },
  "junk_fuzz": {

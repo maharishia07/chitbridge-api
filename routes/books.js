@@ -69,7 +69,7 @@ const today = (req) => CLOCK.today(req && req.books); /* the shop's day; dayOf o
 /* ACC-274: a date the caller GIVES must be a real day or it is a 400 DATE_INVALID (refusalOf names the field); absent → the fallback. The one reader is books-period.dateGiven (dateOf is its body twin). */
 const dateQ = (value, fallback) => require('../lib/books-period').dateGiven(value, null, fallback);
 /* E1 (Fable walk 17 Nov): an ageing is "as at" a day that has happened. A page asked for the end of the year in progress (30 Jun 2027) and every bill fell into 90+ while the owner, asking nothing, read 1-30 days. ONE rule for every seat: the as-at of an ageing is the earlier of the day asked and the shop's today. */
-/* P1-3 (18 Nov): the ONE day a heading may say — the earlier of the day asked and the shop's today; the Trial balance and the Balance sheet both carry it as shown_as_at, so no report is headed with a day that has not happened. */
+/* P1-3 (18 Nov), changed by AUDBS (28 Nov): headingDay caps the ageing (dues, cash held) to the shop's today. The Trial balance and the Balance sheet are NOT capped: their shown_as_at is the day the figures are read at. */
 const headingDay = (asked, req) => { const now = today(req); return asked > now ? now : asked; };
 const agedAt = (req) => headingDay(dateQ(req.query.asOf, today(req)), req);
 /* minor units in; an amount in major units goes through the api's ONE major → minor (books-cashflow.toMinor: money.round, then the
@@ -233,15 +233,15 @@ router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req
       b = req.body || {},
       s = req.books;
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : s.walkin_grain;
-    const enabled = b.enabled !== false;
+    const enabled = b.enabled !== false; let restamped = null;
     await withEntity(e, async (h) => {
-      await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain }));
+      await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain })); if (b.pack_version) restamped = await require('../lib/books-pack-pin').restampFor(h, e, s, b, byOf(req)); /* pack pinning: forward only, from a tax-period start, audited; periods already closed keep their version */
       if (grain !== s.walkin_grain)
         await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'walkin_grain', old: s.walkin_grain, new: grain });
       if (!enabled) await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'enabled', old: 'true', new: 'false' });
     });
     require('../lib/books-hooks').forget(e);
-    res.json({ ok: true, enabled, walkin_grain: grain });
+    res.json({ ok: true, enabled, walkin_grain: grain, pack_version: restamped });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /**
@@ -677,7 +677,7 @@ router.get('/dues', auth, moneyReader, onDues, ...checked('GET /dues'), async (r
        Owner only — the server decides. The limit and the interest rate are the customer's TERMS (FIN-R1): own, else the shop default, else
        not set — credit_limit_from null / interest_state 'not_set' (interest_minor null) is the code the screen paints "Not set" from. */
     const fin = req.query.finance === '1';
-    if (fin && !isOwner(req)) {
+    if (fin && !require('../lib/seat-abilities').mayDo('collections', req)) {
       const no = req.query.side === 'supplier' ? 'Only the owner may see what you owe.' : 'Only the owner may see collections.';
       return problem(req, res, { status: 403, code: 'OWNER_ONLY', detail: no, legacy: { error: no, message: no } });
     }
@@ -811,7 +811,7 @@ router.get('/trial-balance', auth, moneyReader, on, ...checked('GET /trial-balan
     res.json(await forBooksDoor(req, e, 'trial_balance', {
       currency: curOf(req),
       asOf,
-      shown_as_at: agedAt(req) /* F5 (17 Nov): the day a heading may say: the earlier of the day asked and the shop's today, the E1 rule (agedAt); the figures still read what was asked */,
+      shown_as_at: asOf /* AUDBS (28 Nov): the heading says the day the figures were READ at: a report for any day you pick, future included, is headed with that day (Xero, QuickBooks, MYOB); never a capped day over figures of another */,
       fy_from: fyStart(req, asOf) /* the year the as-at day is in: the year each line reads its entries from */,
       rows: reportPeriod.compareTrialRows(tb.rows, tb.was && tb.was.rows, curOf(req)).map((item) => ({ code: item.code, name: item.name, group: item.group, group_label: item.group_label, dr_minor: item.debit_minor, cr_minor: item.credit_minor, net_minor: item.net_minor, ...(tb.was ? { prior_net_minor: item.prior_net_minor, change_minor: item.change_minor, change_bp: item.change_bp, change_over: item.change_over } : {}) })),
       over_rule: reportPeriod.overRule(curOf(req)) /* ASA 520: the one threshold a change is highlighted at, as the P&L states it */,
@@ -946,7 +946,7 @@ router.get('/bs', auth, moneyReader, on, ...checked('GET /bs'), async (req, res)
         schedule_iii: sched3(now.bs, Object.keys(B.packOf(req.books).sch3 || {}), curOf(req))
       };
     });
-    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, shown_as_at: headingDay(asOf, req) /* P1-3: the day the heading may say (the one rule, headingDay) */, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
+    res.json(await forBooksDoor(req, e, 'bs', Object.assign({ currency: curOf(req), asOf, shown_as_at: asOf /* AUDBS: the day the figures are read at, the heading's day (not capped to today) */, fy_from: fyStart(req, asOf), as_at: picked || { kind: 'custom', step: 0, as_at: asOf, can_next: false } }, out)));
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -971,22 +971,22 @@ function allocateOf(body) {
   return body.allocate === 'none' ? 'none' : body.allocate === 'oldest_first' ? 'oldest_first' : null;
 }
 const { directionOf, payOut } = require('../lib/pay-out-gate').make({ UUID, isOwner, isInHouseAccountant, ctx, withEntity, store: S, problem, refusalOf }); /* FIN-79 directionOf · AK-F-02 payOut: who may pay a supplier */
+/** the party a body names (party_id, else party), '' when neither */
+const partyIdOf = (body) => String(body.party_id || body.party || '');
+/** the bill-by-bill split a body spells out, null when it names none (the books then decide) */
+const spreadOf = (body) => (Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode, fxRate) {
-  const body = req.body || {},
-    currency = String(curOf(req)).toUpperCase();
-  const party = String(body.party_id || body.party || '');
+  const body = req.body || {}, currency = String(curOf(req)).toUpperCase(), party = partyIdOf(body);
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   const paidIn = paidInOf(body, currency, fxRate);
   if (paidIn.refuse) return paidIn;
   const amount_minor = minorAsked(body, paidIn.currency);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
-  const direction = directionOf(body);
-  if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
+  const direction = directionOf(body); if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
   const mode = knownMode(body, req.books);
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — ' + P().modeList(P().modesOf(req.books, { cheque: true })) + '?' } };
-  const allocate = allocateOf(body);
-  const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
+  const allocate = allocateOf(body), allocations = spreadOf(body);
   return { party, direction, amount_minor, cur: paidIn.currency, ledger: currency, mode, allocate, allocations, country: req.books && req.books.country };
 }
 /** ⭐ ACC-377: the currency a payment is made in — a FOREIGN one only when it states the bank's rate (fx_rate); without one the ledger's own currency is the only one */
@@ -1144,8 +1144,8 @@ router.post('/payments', auth, noKey, editor, payOut('body'), onceOnly, on, ...c
     const allocations = allocationsOf(b, curOf(req));
     /* ⭐ the payment row and its entry are ONE transaction (B.recordPayment) — a refusal leaves nothing half-recorded */
     const out = await withEntity(e, async (h) => {
-      const who = await partyOf(h, e, party),
-        name = who.name;
+      const who = await partyOf(h, e, party), name = who.name;
+      await require('../lib/bank-pay-needs').askIfBankLine(h, e, { bank_line: b.bank_line, direction, allocations, party, amount_minor, currency: curOf(req) }); /* BB-P1-3: a bank line to a party with no account and no bill is asked, never posted on account */
       /* the duplicate rule runs INSIDE recordPayment (p.warn), after its gates (a replay answers first; a stranger or a bad date is a 422) */
       const rec = await B.recordPayment(h, e, {
         party_id: party,
@@ -1848,8 +1848,8 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
       doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
       by: byOf(req)
     };
-    const out = await B.postEntry(null, entity, writeOff, require('../lib/books-event-guard').guardOf(entity, writeOff)); /* AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
-    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
+    const found = await require('../lib/books-bad-debt').adjusted(entity, writeOff), out = await B.postEntry(null, entity, found.event, require('../lib/books-event-guard').guardOf(entity, found.event)); /* ACC-418: the invoice's own GST (adjusted); AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
+    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: [out.note, found.note].filter(Boolean).join(' ') || out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
@@ -2607,10 +2607,10 @@ route('post', '/contra', (req, e, setting, body, by) => P().contra(e, setting, b
    never fetched, never assumed. Everyone who may read the books may read the rates (an auditor checks them); only the owner adds one or revalues. ── */
 const FXR = require('../lib/fx-rates');
 const FX_NOT_READY = FXR.WAITS.rates;
-const FX_OWNER_ONLY = 'Only the owner may add a rate.';
+const FX_OWNER_ONLY = 'Only the owner or the shop’s own accountant may add a rate.'; /* UX-222: DECISIONS 22 Nov item 5 — the manager-hat accountant sets FX rates (POST /fx-rates is ownerOrAccountant) */
 function fxMay(req, ready) {
   if (!ready) return { may: false, why: FX_NOT_READY };
-  return isOwner(req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
+  return require('../lib/seat-abilities').mayDo('fx_rates', req) ? { may: true, why: null } : { may: false, why: FX_OWNER_ONLY };
 }
 /** GET /fx-rates?from=USD → { currency, ready, why, may: { add }, sources, rule: { standard, tax_rate_rule, official_name }, rates: [{ rate_id, date, from, to, rate, source, source_ref, created_at }] } — one transaction */
 // @does Optionally a currency in -> we read the exchange rates the owner typed or imported -> the rates and whether the caller may add one.

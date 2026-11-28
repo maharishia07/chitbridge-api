@@ -2319,7 +2319,8 @@
       "schema": {
         "type": "object",
         "required": [
-          "looks"
+          "looks",
+          "visits"
         ],
         "properties": {
           "looks": {
@@ -2364,6 +2365,69 @@
               },
               "additionalProperties": false,
               "x-closed-by": "recordings"
+            }
+          },
+          "visits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "grant_id",
+                "grantee_entity",
+                "actor_identity_id",
+                "actor_name",
+                "actor_entity_name",
+                "preset",
+                "from",
+                "to",
+                "pages",
+                "refused",
+                "pages_list"
+              ],
+              "properties": {
+                "grant_id": {
+                  "type": "string"
+                },
+                "grantee_entity": {
+                  "type": "string"
+                },
+                "actor_identity_id": {},
+                "actor_name": {},
+                "actor_entity_name": {},
+                "preset": {},
+                "from": {
+                  "type": "string"
+                },
+                "to": {
+                  "type": "string"
+                },
+                "pages": {
+                  "type": "number"
+                },
+                "refused": {
+                  "type": "number"
+                },
+                "pages_list": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "route_pattern",
+                      "count"
+                    ],
+                    "properties": {
+                      "route_pattern": {
+                        "type": "string"
+                      },
+                      "count": {
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "additionalProperties": false
             }
           }
         },
@@ -9520,6 +9584,28 @@
       "closed_by": "recordings",
       "example": {
         "url": "/api/network-offers"
+      }
+    },
+    "GET /api/network/asks": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "to_me",
+          "by_me"
+        ],
+        "properties": {
+          "to_me": {},
+          "by_me": {}
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 2,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/asks"
       }
     },
     "GET /api/network/entities/:id/connections": {
@@ -23071,7 +23157,8 @@
           },
           "paid_note": {
             "type": "string"
-          }
+          },
+          "pack_mismatch": {}
         },
         "additionalProperties": false,
         "x-closed-by": "recordings"
@@ -28222,6 +28309,39 @@
         "body": {}
       }
     },
+    "POST /api/network/firm-invites": {
+      "status": "200",
+      "schema": {
+        "type": "object",
+        "required": [
+          "sent",
+          "delivered",
+          "message"
+        ],
+        "properties": {
+          "sent": {
+            "type": "boolean"
+          },
+          "delivered": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "x-closed-by": "recordings"
+      },
+      "observed": 1,
+      "open": [],
+      "closed_by": "recordings",
+      "example": {
+        "url": "/api/network/firm-invites",
+        "body": {
+          "email": "firm@example.com"
+        }
+      }
+    },
     "POST /api/offers/evaluate": {
       "status": "200",
       "schema": {
@@ -31262,6 +31382,9 @@
           "count": {
             "type": "number"
           },
+          "asks": {
+            "type": "integer"
+          },
           "total": {
             "type": "number"
           },
@@ -33332,7 +33455,10 @@
                         "type": "string"
                       },
                       "value": {
-                        "type": "number"
+                        "type": [
+                          "number",
+                          "null"
+                        ]
                       },
                       "pct": {
                         "type": "number"
@@ -33355,7 +33481,10 @@
                           "type": "string"
                         },
                         "value": {
-                          "type": "number"
+                          "type": [
+                            "number",
+                            "null"
+                          ]
                         },
                         "pct": {
                           "type": "number"
@@ -33384,7 +33513,10 @@
                           "type": "string"
                         },
                         "total": {
-                          "type": "number"
+                          "type": [
+                            "number",
+                            "null"
+                          ]
                         },
                         "chits": {
                           "type": "number"
@@ -33401,7 +33533,10 @@
                               "type": "string"
                             },
                             "value": {
-                              "type": "number"
+                              "type": [
+                                "number",
+                                "null"
+                              ]
                             },
                             "pct": {
                               "type": "number"
@@ -33424,7 +33559,10 @@
                                 "type": "string"
                               },
                               "value": {
-                                "type": "number"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               },
                               "pct": {
                                 "type": "number"
@@ -33455,6 +33593,9 @@
                     },
                     "additionalProperties": false,
                     "x-closed-by": "recordings"
+                  },
+                  "cost_hidden": {
+                    "type": "boolean"
                   }
                 },
                 "additionalProperties": false,
@@ -35235,6 +35376,9 @@
                     "string",
                     "null"
                   ]
+                },
+                "cost_hidden": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false,
@@ -38902,7 +39046,8 @@
         "required": [
           "ok",
           "enabled",
-          "walkin_grain"
+          "walkin_grain",
+          "pack_version"
         ],
         "properties": {
           "ok": {
@@ -38913,7 +39058,8 @@
           },
           "walkin_grain": {
             "type": "string"
-          }
+          },
+          "pack_version": {}
         },
         "additionalProperties": false
       },
@@ -50158,6 +50304,7 @@
                 "id",
                 "name",
                 "user_id",
+                "sign_in_as",
                 "actor_key",
                 "role",
                 "phone",
@@ -50181,6 +50328,9 @@
                   "type": "string"
                 },
                 "user_id": {
+                  "type": "string"
+                },
+                "sign_in_as": {
                   "type": "string"
                 },
                 "actor_key": {

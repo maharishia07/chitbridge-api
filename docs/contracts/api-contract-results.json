@@ -1763,7 +1763,7 @@
    ]
   },
   "PATCH /api/books-grants/:id": {
-   "cases": 8,
+   "cases": 10,
    "failed": 0,
    "missing_input_ok": true,
    "statuses": [
@@ -3747,6 +3747,14 @@
    ]
   },
   "POST /api/network/entities/:id/claim": {
+   "cases": 4,
+   "failed": 0,
+   "missing_input_ok": true,
+   "statuses": [
+    400
+   ]
+  },
+  "POST /api/network/firm-invites": {
    "cases": 4,
    "failed": 0,
    "missing_input_ok": true,

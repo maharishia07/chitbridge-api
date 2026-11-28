@@ -1,0 +1,6 @@
+# Critique BB-P1-3 api (28 Nov 2026), after the cb-critic goldfish review (CHANGE), before the code merged
+(a) Assumptions checked: lib/books-bank-tax.js:96 refused a supplier beside bank tax TRUE; books-cashflow.js:214 reads expense+supplier as credit TRUE but only for recurring templates, the new kind maps to null there; planItems gives both creditors lines one document id TRUE (books.js ~595); the gate used a MANUAL entry, so BILL_KIND/CREDIT_KIND for the new kind was unproven - now mapped and tested (ref_kind bill + advance, not on_account).
+(b) Conflicts: none with the rail; the party question is answered by the server's code (needs which_account / which_bill), never prose; one calculation (the new builder calls BUILD.expense).
+(c) Simpler: supplier+paid_from presence as the trigger - REJECTED by the critic (silently turns a credit purchase into cash out); an explicit kind is used.
+(d) Risks: readers of "expense + supplier" (evidence flag, day book, to-do, tally, voucher type Payment) - each edited and covered; reversal keeps the supplier at 0 (test); step 3 never auto-settles an exact-amount bill (asks to confirm). Engines must be tagged and the api pin adopted before this lands (tests here run on BOOKS_ENGINES_SRC).
+(e) VERDICT: BUILD WITH CHANGES - all taken.

@@ -51,8 +51,7 @@ function create() {
       if (a.role && T.accounts.some((x) => x.entity_id === e && x.role === a.role)) throw Object.assign(new Error('dup role'), { code: '23505' });
       const r = { account_id: id(), entity_id: e, code: a.code, name: a.name, parent_id: a.parent_id || null, is_group: !!a.is_group, nature: a.nature, role: a.role || null,
                   tally_group: a.tally_group || null, sch3_line: a.sch3_line || null, saft_grouping: a.saft_grouping || null, currency: null, active: true, source_code: a.source_code ? String(a.source_code).trim().slice(0, 20) : null };
-      T.accounts.push(r); return r.account_id;
-    },
+      T.accounts.push(r); return r.account_id; },
     async periods(db, e, fy) { return clone(T.periods.filter((p) => p.entity_id === e && (!fy || p.fiscal_year === fy))).sort((a, b) => a.fiscal_year.localeCompare(b.fiscal_year) || a.period - b.period); },
     async periodFigures(db, e, fy) {
       const m = new Map();
@@ -112,6 +111,7 @@ function create() {
       return Array.from(out.values());
     },
     async taxOfEntriesWith(db, e, from, to, taxRole, roles) { const day = (x) => String(x.posting_date).slice(0, 10), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; let net = 0; T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening).forEach((h) => { const ls = T.lines.filter((l) => l.entry_id === h.entry_id); if (ls.some((l) => roles.indexOf(role(l)) >= 0)) ls.filter((l) => role(l) === taxRole).forEach((l) => { net += Number(l.dr_minor || 0) - Number(l.cr_minor || 0); }); }); return { net_minor: net }; },
+    async taxOfEvents(db, e, from, to, taxRole, events) { const day = (x) => String(x.posting_date).slice(0, 10), role = (l) => (T.accounts.find((a) => a.account_id === l.account_id) || {}).role; let dr = 0, cr = 0; T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening && events.indexOf(x.event_type) >= 0).forEach((h) => { T.lines.filter((l) => l.entry_id === h.entry_id && role(l) === taxRole).forEach((l) => { dr += Number(l.dr_minor || 0); cr += Number(l.cr_minor || 0); }); }); return { dr_minor: dr, cr_minor: cr }; },
     async zeroRateSales(db, e, from, to, role, currency) {
       const day = (x) => String(x.posting_date).slice(0, 10);
       const live = (x) => !x.reverses_entry_id && !T.entries.some((r) => r.entity_id === e && r.reverses_entry_id === x.entry_id);
