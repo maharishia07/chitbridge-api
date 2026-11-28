@@ -127,7 +127,10 @@ const EVIDENCE_PATHS = [/^[/]api[/]tax[/]gstr[/]?$/ /* M-F-02 (21 Nov): GSTR-1 /
 const evidencePath = (fullPath) => EVIDENCE_PATHS.some((test) => test.test(fullPath));
 const evidenceRead = (req) => req.method === 'GET' && evidencePath(fullPathOf(req));
 /** an ADVISER request is listed when it is a door, a bank read, a bank write with its body, or a GET on a listed pattern / extra read / evidence read */
-const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || (proposeDoor(req) && proposeBodyOk(req)) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
+const proposeListed = (req) => proposeDoor(req) && proposeBodyOk(req);
+/** the bank doors an adviser may reach: the bank reads, a bank write with the Bank page's own body, a proposal with the Bank page's own body (BB-P1-2) */
+const bankListed = (req) => bankRead(req) || (bankWrite(req) && bankWriteBody(req)) || proposeListed(req);
+const adviserListed = (req) => adviserDoor(req.method, (req.baseUrl || '') + req.path) !== null || bankListed(req) || (req.method === 'GET' && (listedPattern(req.path) !== null || filePattern(req.path) !== null || adviserReadsExtra(req.path) || evidenceRead(req)));
 /** W4-03: the auditor's one file read: the kept statement loaded into the Bank page's reader (use=read, GET); the DOWNLOAD (use=download or none) stays held (MONEY-01 A6), and the grant's own log names the look */
 const statementReaderRead = (req) => req.method === 'GET' && filePattern(req.path) === '/bank/statement-files/:id/file' && !!req.query && req.query.use === 'read';
 const listedFor = (role, req) => (isPartyRead(req) ? true /* CON-165: the exact area path, GET only (isPartyRead): the look lists it for either role */ : isMarks(req) ? markReadDoor(req) !== null : role === grants.ADVISER ? adviserListed(req) : listedPattern(req.path) !== null || evidenceRead(req) || statementReaderRead(req));
@@ -275,6 +278,11 @@ function answerFailure(req, res, failure) {
   return refuse(req, res, 503, 'BOOKS_GRANT_LOG_UNAVAILABLE', 'We could not record this look at the books, so nothing was shown. Try again in a minute.');
 }
 
+/** BB-P1-2: under owner_approves the live grant row (lib/books-grant.bankPostingOutcome marked it) lets the firm PROPOSE a bank line: a NEW flag, never acting_bank_write, so no owner door admits it; the proposing gate (lib/books-approval.grantProposeGate) is terminal */
+function markProposal(req, verdict) {
+  const may = verdict.grant.preset === grants.ADVISER && verdict.grant.bank_propose === true && proposeDoor(req);
+  if (may && require('../lib/access').canEdit(req.identity)) req.acting_bank_propose = true;
+}
 /** the request, run as the grant says: the bank page's adviser writes flagged for the owner gates, an adviser's action doors in one normal transaction stamped with the grant, everything else READ ONLY */
 async function runStamped(req, next, verdict) {
   /* the bank page's writes under an adviser_posts grant: the OWNER gates of POST /events read this flag (set here from the live grant row, never from the request) */
@@ -282,8 +290,7 @@ async function runStamped(req, next, verdict) {
     req.acting_bank_write = true;
     await require('../lib/books-action').alertBankFirst(verdict.grant.grantor_entity, { identity_id: req.realIdentity.identity_id, name: req.realIdentity.display_name, firm_name: verdict.firm_name || null, grant_id: verdict.grant.grant_id }); /* the owner's record of the first bank write, before it is made */
   }
-  /* BB-P1-2: under owner_approves the live grant row (lib/books-grant.bankPostingOutcome marked it) lets the firm PROPOSE a bank line: a NEW flag, never acting_bank_write, so no owner door admits it; the proposing gate (lib/books-approval.grantProposeGate) is terminal */
-  if (verdict.grant.preset === grants.ADVISER && verdict.grant.bank_propose === true && proposeDoor(req) && require('../lib/access').canEdit(req.identity)) req.acting_bank_propose = true;
+  markProposal(req, verdict);
   /* an adviser's GET is read only like an auditor's; the action doors (POST) run in one normal transaction stamped with the grant: they write ONLY the action's own step, never the books */
   if (verdict.grant.preset === grants.ADVISER && req.method !== 'GET' && !(isMarks(req) && markReadDoor(req))) return reqctx.runActingFor(verdict.grant.grant_id, () => next(), { name: req.realIdentity.display_name, firm: verdict.firm_name || null });
   return reqctx.runReadOnly(() => next());

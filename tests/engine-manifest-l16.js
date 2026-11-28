@@ -101,6 +101,7 @@ const INFRA = [
   'pay-out-gate.js', // AK-F-02: who may pay a supplier (seat gate) split out of routes/books.js — an Express gate, no rule of the engines
   'books-readers.js', /* SEC-161/STAFF-BOOKS: the two read gates split out of routes/books.js: the parent's class (infra), the reader test itself is the books gate */
   'policy-books.js', /* SHOPBK-B: the books_owner_approves rule row split out of lib/policy.js (FLAGS row, CARD row): rule data of the policy, the parent's class (infra) */
+  'books-bank-body.js', /* BB-P1-2: the ONE test of the bank page's own event body, split out of middleware/books-grant.js (infra: a request-shape check, no rule of the engines) */
   'books-approval.js', /* SHOPBK-B: who presses post for the shop's own Bookkeeper: reads the one flag and hands the entry to the ONE queue (books-action); no posting rule of its own */
   'books-action-queue.js', /* SHOPBK-B: the queue reads split out of books-action.js (INFRA, its parent's class): one count and one page of the store's own steps, no posting rule */
   'books-reversal-date.js', /* H-h2-003 (20 Nov): the future-day test for a person's reversal, split out of books.js (INFRA, its parent's class): asks the one future rule, holds no posting rule */

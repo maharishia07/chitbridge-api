@@ -162,8 +162,8 @@ const asker = (extra) => Object.assign({ method: 'POST', listed: true, owner: tr
   await t('wiring: both doors carry the terminal gate after the contract check, and the proposer flag is read by no other file', () => {
     const single = fs.readFileSync(path.join(HERE, 'routes', 'books.js'), 'utf8');
     const batch = fs.readFileSync(path.join(HERE, 'routes', 'books-events-batch.js'), 'utf8');
-    assert(single.includes("router.post('/events', auth, noKey, ownerOrAccountantOrProposer, on, ...checked('POST /events'), require('../lib/books-approval').grantProposeGate(refusalOf)"));
-    assert(batch.includes("router.post('/events/batch', auth, noKey, ownerOrAccountantOrProposer, on, ...checked('POST /events/batch'), require('../lib/books-approval').grantProposeGate(refusalOf)"));
+    assert(single.includes("router.post('/events', auth, noKey, ownerOrAccountant, on, ...checked('POST /events'), require('../lib/books-approval').grantProposeGate(refusalOf)"));
+    assert(batch.includes("router.post('/events/batch', auth, noKey, ownerOrAccountant, on, ...checked('POST /events/batch'), require('../lib/books-approval').grantProposeGate(refusalOf)"));
     const readers = [];
     const walk = (dir) => {
       for (const name of fs.readdirSync(dir)) {
