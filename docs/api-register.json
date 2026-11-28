@@ -19564,7 +19564,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/crm.js",
    "line": 147,
-   "hash": "4e40cc134cb62f6d",
+   "hash": "780cf060e7e7a29b",
    "does": "A party id in -> we read that party's record with its relationship totals, points and open follow-ups -> the party record, or not-your-party.",
    "errors": {
     "count": 0,
@@ -19669,7 +19669,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. One cut record under a grant, the open record unchanged; foreign id still 404. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-28 PR#1429 stage2: GET /parties/:id: handler diff read; lead.may goes through lib/lead-may (not migrated: same NOT_READY sentence; else ok:true, or ok:false with code and why for a seat that may not write, so a viewer no longer gets a live button that answers 403); lead and may are open objects in api-output-shapes, additive optional code key, no nullability change; the crm owner must confirm the greyed-viewer rule (a business rule, theirs); 13 columns true; openapi-diff 0 breaking",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -21023,7 +21023,7 @@
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
    "line": 395,
-   "hash": "50030430efeefcfc",
+   "hash": "7162e1b85c0c7f89",
    "does": "Signed-in caller -> we read its own profile, settings and identity details -> the caller's own business record.",
    "errors": {
     "count": 0,
@@ -21126,7 +21126,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-26 batch 1131 re-sign (fix/idreads-1131, SEC-198/199 identity reads), diff origin/main 28a73d36d...HEAD read per route: the identities reads in the handler now go through lib/bound-read boundRead (same SQL, same params, same result rows, still ONE trip; a stub sees the plain statement) and the platform counts through lib/platform-count (one ops definer call, old read as fallback on 42883); no key, status, code or error text added or moved, no schema or contract change; 13 machine columns true",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-28 PR#1429 stage2: GET /me: handler diff read; an actor seat now gets timezone, currency_code, country, gstn from the SHOP row (lib/me-shop), the shop seat unchanged; entity is an open pass-through in api-output-shapes so no key added or removed, a shop value may be null where the person row had one (web already falls back); same statuses and error shape; 13 columns true on the regenerated register; openapi-diff 0 breaking",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -33690,7 +33690,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 723,
-   "hash": "dbeecd4aa2564d45",
+   "hash": "89c1284f2aaedf35",
    "does": "Optional segment filter -> we list the shop's customers with their segment, contacts and groups -> the customers.",
    "errors": {
     "count": 0,
@@ -33794,7 +33794,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Customer picker rows cut by CUSTOMER_ROW_KEEP, a subset of the open row; envelope and open answer unchanged. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-28 PR#1429 stage2: GET /customers: handler diff read; phone now from lib/party-phone (same rule as the CRM list: published phone, else the number the shop typed for a party it minted, else null; otp_contact still deleted); phone is string|null, already any in api-output-shapes, no nullability change; same envelope, statuses and error shape; 13 columns true; openapi-diff 0 breaking; second to merge after #1427 must re-sign again (same line edited)",
     "lifecycle": "stable"
    },
    "status": "meets standard",
