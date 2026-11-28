@@ -6,7 +6,7 @@
  * CARD 16-finance/bank-reconciliation-and-bank-rail
  */
 'use strict';
-const { rig, counter, SUPP } = require('./support/books-manual-rig.cjs');
+const { rig, counter, SUPP, SHOP } = require('./support/books-manual-rig.cjs');
 const { ok, eq, done } = counter();
 const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', timezone: 'Australia/Sydney', policy_flags: { gst_registration: 'regular' } };
 
@@ -31,5 +31,10 @@ const REGISTERED = { country: 'AU', currency_code: 'AUD', gstn: '51824753556', t
   ok('D: the Dues door (no bank_line) pays on account as before → 200', d.status === 200, d.status + ' ' + JSON.stringify(d.body).slice(0, 200));
   const e = await q('POST', '/payments', { party_id: SUPP, direction: 'in', mode: 'bank', received_at: '2026-10-05', allocate: 'none', amount_minor: 1000, bank_line: true, client_ref: 'bb-e' });
   ok('E: money IN with bank_line is not asked here (its own door)', e.status !== 422 || e.body.code !== 'NEEDS_WHICH_ACCOUNT', e.status + ' ' + JSON.stringify(e.body).slice(0, 200));
+  /* the module on its own: what passes untouched, and the fail-closed answer */
+  const needs = require('../lib/bank-pay-needs');
+  const through = async (extra) => { try { await needs.askIfBankLine(null, SHOP, Object.assign({ direction: 'out', party: SUPP, amount_minor: 1 }, extra)); return 'passed'; } catch (err) { return err.code; } };
+  eq('unit: no bank_line, money in, or a named bill all pass untouched', [await through({}), await through({ bank_line: true, direction: 'in' }), await through({ bank_line: true, allocations: [{ against_ref: 'x', amount_minor: 1 }] })], ['passed', 'passed', 'passed']);
+  eq('unit (fail closed): bank_line "true" (a word, not a boolean) is refused, not read as no', await through({ bank_line: 'true' }), 'BOOKS_BAD_REQUEST');
   R.close(); done();
 })();
