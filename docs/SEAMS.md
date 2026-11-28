@@ -13,24 +13,24 @@ of file each thing is; this says what already does the job.
 | 207 | `rows` | `crm.js` | still in them: |
 | 192 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 183 | `words` | `variant.browser.js` |  |
-| 165 | `withEntity` | `books-hooks.js` |  |
+| 166 | `withEntity` | `books-hooks.js` |  |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 145 | `answer` | `availability.js` | from March; then nearest. |
 | 144 | `item` | `bank-band.js` |  |
 | 131 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 112 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 113 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 110 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
-| 100 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
+| 101 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 92 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
 | 90 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 90 | `again` | `signin-ui.js` |  |
+| 90 | `pack` | `books-store-packs.js` |  |
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
-| 89 | `pack` | `books-store-packs.js` |  |
 | 87 | `words` | `accounts-shell.js` | var CBLedger = (function () { |
 | 87 | `order` | `mint.js` | whatever order the array or the driver felt like, which is the same non-determinism in a new coat. |
 | 86 | `register` | `regulation.js` | register(pack) → the pack — |
@@ -123,10 +123,10 @@ of file each thing is; this says what already does the job.
 | 37 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
 | 36 | `call` | `assign-bar.js` | one call to the api; a network failure is NOT thrown: |
 | 36 | `names` | `shortcuts.js` |  |
+| 36 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 35 | `bkMoney` | `cap-books.js` |  |
 | 35 | `shown` | `country-compare.js` | one side's value for the line: |
 | 35 | `reason` | `lab-kit.js` | W9: |
-| 35 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 34 | `shown` | `bank-rec-log.js` | a stored row → what the caller reads: |
 | 34 | `rail` | `home-facts.js` | action greyed with `say`; it branches on `why`, never on the words. |
 | 34 | `governance` | `home-facts.js` |  |
@@ -138,11 +138,11 @@ of file each thing is; this says what already does the job.
 | 33 | `internalSpec` | `problem.js` | A route whose catch must not widen into known(err) (a read that always answered 500) calls problem(req, res, i |
 | 32 | `form` | `accounts-shell-unsaved.js` |  |
 | 32 | `build` | `bookpack.js` | mismatches are named; the caller shows them and never marks such a pack clean. |
+| 32 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 32 | `profile` | `country-setup.js` | row FOR UPDATE in the same statement, so two saves of one shop merge over each other's answer, never over a st |
 | 31 | `bkDate` | `cap-books.js` |  |
 | 31 | `model` | `chit-sheet.js` |  |
 | 31 | `chip` | `screen-id.js` | var S = { app: |
-| 31 | `carry` | `catalogue-blueprint.js` | AN ARRAY IS NOT A STRING — |
 | 31 | `group` | `identity.js` | again in a different costume. |
 | 31 | `balance` | `reward-store.js` | about to write anyway persists them, and the caller that is only looking does not have to. |
 | 30 | `options` | `bank-lines.js` | cfg.extra { columns, actions, head, wrapStatus(row, iconHtml) } what a page adds (the owner's page: |
