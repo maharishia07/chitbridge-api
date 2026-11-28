@@ -105,6 +105,10 @@ const call = (port, method, p, body) => new Promise((done) => {
   lateRow.posting_date = '2026-09-20';
   const late = await Taxed.changedSinceClose(X.db, AU, pack, item, closeRow.created_at);
   ok('RC2: a sale dated 20 Sep but posted after the close is said: 1 entry, +10.00 on the tax ledgers, in words', late && late.entries_n === 1 && late.tax_moved_minor === 1000 && /posted after it was closed/.test(late.note), JSON.stringify(late));
+  const storedClose = { created_at: new Date(closeRow.created_at), tax_close: { answer: { owed_before_payments_total_minor: 1234, pay_total_minor: 999 } } };
+  const lodgedRow = await Taxed.lodgedEntry(X.db, AU, pack, Object.assign({ period: '2026-Q1' }, item), storedClose);
+  ok('RC2: the lodged list row carries the STORED net untouched (12.34, never the live return) and the late posting beside it', lodgedRow && lodgedRow.net_minor === 1234 && lodgedRow.source === 'close' && lodgedRow.changed_since_close && lodgedRow.changed_since_close.entries_n === 1, JSON.stringify(lodgedRow));
+  ok('RC2: a close with no carried answer gives no row (never invented)', (await Taxed.lodgedEntry(X.db, AU, pack, item, { created_at: new Date(), tax_close: null })) === null);
   const realLate = LATE.lateTaxEntries; LATE.lateTaxEntries = async () => [];
   const blind = await Taxed.changedSinceClose(X.db, AU, pack, item, closeRow.created_at);
   ok('RC2 MUTATION (the late-posting reader stops reading): the check above would go RED', blind === null);
