@@ -847,4 +847,6 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | ASK_LIMIT | 429 | Too many requests to connect | You or that business have had a lot of requests to connect lately. | Wait for answers, or try again later. | network | 2026-11-28 |
 | ASK_COOLING_OFF | 429 | Refused a short while ago | That business refused your request a short while ago. | Try again a little later. | network | 2026-11-28 |
 | INVITE_LIMIT | 429 | Too many invitations | You have sent a lot of invitations, or that address was invited a short while ago. | Try again tomorrow, or wait a few days for that address. | network | 2026-11-28 |
+| NEEDS_WHICH_ACCOUNT | 422 | Say which account | This bank payment names a supplier but no bill and no account, so nothing was posted. | Say what the payment was for, or pick the bill it settles, then send it again. | accounting | 2026-11-28 |
+| NEEDS_WHICH_BILL | 422 | Confirm which bill | This payment is the same amount as an open bill of theirs, so nothing was posted until you say which it is. | Use that bill, say it is a new expense (not_this_bill), or say which account it is for, then send it again. | accounting | 2026-11-28 |
 <!-- codes:end -->

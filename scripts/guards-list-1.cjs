@@ -380,6 +380,8 @@ const GUARDS_PART = [
   'books-past-years.test.cjs', // past years: a closed year opens read-only, can_close_if_lodged, period.state (past-years lane)
   'books-lodged-later.test.cjs', // past years: returns_lodged on an already closed year records the declaration, repeat idempotent (past-years lane)
   'past-years-auditor-party.test.cjs', // past years: the auditor party sees the closed years
+  'books-party-netzero.test.cjs', // ⭐ BB-P1-3: a bank line to a named supplier is ONE entry (kind bank_expense_supplier): party kept, expense + GST split, supplier nets to nil, reversal keeps it; needs the engines branch with the kind (BOOKS_ENGINES_SRC)
+  'books-bank-pay-needs.test.cjs', // ⭐ BB-P1-3: a money-out bank line with no account and no bill is asked (needs which_account / which_bill), never posted on account
   'books-card-split.test.cjs', // ⭐ BB-04: a card settlement net of the acquirer's fee posts Dr bank · Dr bank charges · (Dr tax) · Cr card; refusals in words (needs the engines src: BOOKS_ENGINES_SRC or the sibling chitbridge-engines)
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
