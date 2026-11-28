@@ -1,0 +1,23 @@
+{
+  "figure": "gstr3b-month-heads",
+  "says": "The month's output tax and input credit by head are read from a chit invoice by ONE reader, tax-lines.heads; ledger() sums them, the engine 3B re-sums the same rows. Nothing else in lib/routes reads the invoice's Cgst/Sgst/IgstVal (builders/validators of an invoice and the adopted engine copies are listed).",
+  "covers": [
+    "in.gstr3b.3_1a",
+    "in.gstr3b.itc"
+  ],
+  "owner": "lib/tax-lines.js",
+  "owner_fn": "heads",
+  "allowed_elsewhere": [
+    "lib/issued-invoice.js",
+    "lib/offrail-itc.js",
+    "lib/tax-copy.js",
+    "lib/tax.js",
+    "lib/tax-engine.browser.js"
+  ],
+  "forbidden": [
+    "CgstVal",
+    "SgstVal",
+    "IgstVal"
+  ],
+  "decided": "2026-11-28 batch 1141 RC3 (Athi: unify, do not build). offrail-itc and tax-copy BUILD the expense / off-rail invoice; their rows are read back through heads() (proved in tests/one-figure-gstr3b-month.test.cjs)."
+}
