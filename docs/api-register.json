@@ -9674,7 +9674,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 467,
-   "hash": "85b0231a0d86f29f",
+   "hash": "6899f63820422094",
    "does": "An account and optional party and dates in -> we read that account's lines with a running balance from its opening -> the ledger with opening, lines and closing.",
    "errors": {
     "count": 1,
@@ -9790,7 +9790,7 @@
     "backward_compatible": true,
     "signed_off_by_date": null,
     "lifecycle": "stable",
-    "stale_since": "85b0231a0d86f29f"
+    "stale_since": "6899f63820422094"
    },
    "status": "partial",
    "callers": [
