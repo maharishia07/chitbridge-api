@@ -385,6 +385,7 @@ const GUARDS_PART = [
   'books-card-split.test.cjs', // ⭐ BB-04: a card settlement net of the acquirer's fee posts Dr bank · Dr bank charges · (Dr tax) · Cr card; refusals in words (needs the engines src: BOOKS_ENGINES_SRC or the sibling chitbridge-engines)
   'books-rcm.test.cjs', // ⭐ v1.20.0: a purchase under reverse charge posts the buyer's own tax (2204–2206), paid in cash only at the GST close / challan
   'books-year.test.cjs', // ⭐ v1.20.0: the year close — refused in words (running, open months, Suspense), then every month hard-locked, next year opens on the carry-forward, idempotent
+  'one-figure-money-roles.test.cjs', // ONE-FIGURE RC9: the money roles (cash balance, tender, tax-settlement money) are listed once in lib/money-roles.js; a hand-kept copy fails; values golden-equal
   'books-year-country.test.cjs', // ⭐ ACC-204 (AU-18b): an AU year close waits for every BAS period (422 PERIOD_RETURN_OPEN, the labels), the month lock stays allowed and names its period, a close under an old label still reads closed
   'acc-new-4-year-gate.test.cjs', // ⭐ l16-accfix API-new-1 / CTY-new-1: the year-close refusal carries period_codes beside the labels (the code POST /gst/close takes); AE's gate fires without a stagger (every month covered by a closed tax period)
   'tax-lock-f4.test.cjs', // ⭐ F4 (1128): a month of a closed tax period opens only by the explicit amendment (amend_tax); a year reopen keeps the set-off periods locked
