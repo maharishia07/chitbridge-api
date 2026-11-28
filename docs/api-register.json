@@ -51506,7 +51506,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 2538,
-   "hash": "b8c2128a61b6452d",
+   "hash": "86e1a5feefd9deca",
    "does": "A year and tax period in -> we set the month's input tax against output tax and post what is payable or carried -> the amounts and entry number (owner only).",
    "errors": {
     "count": 2,
@@ -51611,7 +51611,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1437 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the close carries pack_version and a repeat of a lodged close under another rules version answers the stored figures plus the optional pack_mismatch receipt (code BOOKS_PACK_VERSION_MISMATCH, registered, fixed shopkeeper sentence, no raw error text); pack_mismatch added to the output shape as an optional key; request body, gates and statuses unchanged.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -54906,7 +54906,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 230,
-   "hash": "b869037176ba0f07",
+   "hash": "07ede58dfc250f9c",
    "does": "Walk-in grain and on or off in -> we save the shop's books setting and log the change -> the saved setting (owner only).",
    "errors": {
     "count": 2,
@@ -55013,7 +55013,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1437 re-sign (1138 proof Finding 1), diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the body now declares pack_version and pack_from (the restamp door was refused 422 by the closed body) and the answer carries pack_version ({from,version,was} or null); restamp is forward-only from a period start (lib/books-pack-pin restamp), refusals carry registered codes BOOKS_PACK_BACKWARD / BOOKS_PACK_FROM / BOOKS_PACK_VERSION_UNKNOWN / BOOKS_NOT_ON, owner-only gate unchanged; proved through the LIVE route in tests/acc420-setting-route.test.cjs (200 restamp, backward and non-period-start refused; mutation: drop the two keys = red).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -55183,7 +55183,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1826,
-   "hash": "0d97b5dac25475ba",
+   "hash": "e8789ed58ca7d707",
    "does": "A customer and an amount in -> we post a bad-debt write-off once per client_ref -> the entry (owner only).",
    "errors": {
     "count": 2,
@@ -55296,7 +55296,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129a), diff origin/main (5c0762fbe)...5e3ece977 read per route (own handler, validation chain, operation, contract), 13 machine columns true, stage2: fixAX 10f507acc AX-F-02/AX-F-07: a zero or negative write-off is a worded 400 BOOKS_BAD_REQUEST, and the posting passes the event-guard so a reused client_ref with a changed body is 409; both registered and declared; same shape.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1437 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the handler now reads the invoice GST through lib/books-bad-debt.adjusted (ACC-418, accounting owns the rule) before the one postEntry; the answer keys are unchanged, note is a fixed sentence (no raw or relayed error text), refusals still go through refusalOf, body and gates unchanged.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
