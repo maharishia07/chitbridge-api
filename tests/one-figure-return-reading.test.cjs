@@ -84,6 +84,31 @@ const call = (port, method, p, body) => new Promise((done) => {
   const mr = await q('GET', '/returns?period=2026-Q1');
   ok('MUTATION (the one reader of the set-off stops reading it): the box moves off its figure, so the "set-off does not move the boxes" check above goes RED', box(mr, '1A').amount_minor !== before1A && m.status === 200, '1A ' + box(mr, '1A').amount_minor + ' vs ' + before1A);
   realStore.taxEntryLines = realTEL;
+  /* RC2: a lodged period's net is the stored close; a posting dated inside the period but made after the close is SAID, never merged into the stored net */
+  const Taxed = require(path.join(H.API, 'lib', 'books-period-taxed')), B0 = require(path.join(H.API, 'lib', 'books'));
+  const pack = (await B0.ledgerCtx(X.db, AU)).pack, item = { start: '2026-07-01', end: '2026-09-30' };
+  const LATE = require(path.join(H.API, 'lib', 'books-store-late')); /* the in-memory version of the one SQL read: the entries dated in the span, created after the close, with a tax line and a non-settlement line */
+  LATE.lateTaxEntries = async (db, e, from, to, after, taxRoles, settleRoles) => {
+    const day = (x) => String(x.posting_date).slice(0, 10), roleOf = (l) => (X.T.accounts.find((a) => a.account_id === l.account_id) || {}).role;
+    return X.T.entries.filter((x) => x.entity_id === e && day(x) >= from && day(x) <= to && !x.is_opening && String(x.created_at) > String(after)).map((h) => ({ h, ls: X.T.lines.filter((l) => l.entry_id === h.entry_id) }))
+      .filter(({ ls }) => ls.some((l) => taxRoles.indexOf(roleOf(l)) >= 0) && !ls.every((l) => settleRoles.indexOf(roleOf(l)) >= 0))
+      .map(({ h, ls }) => { const tl = ls.filter((l) => taxRoles.indexOf(roleOf(l)) >= 0); return { entry_id: h.entry_id, dr_minor: tl.reduce((t, l) => t + Number(l.dr_minor || 0), 0), cr_minor: tl.reduce((t, l) => t + Number(l.cr_minor || 0), 0) }; });
+  };
+  const closeRow = X.T.entries.find((x) => x.entity_id === AU && /^gstclose/.test(String(x.source_ref)));
+  ok('RC2: the close entry is found (its created_at is the "closed at")', !!closeRow, JSON.stringify(X.T.entries.filter((x) => x.entity_id === AU).map((x) => x.source_ref)));
+  const nothing = await Taxed.changedSinceClose(X.db, AU, pack, item, closeRow.created_at);
+  ok('RC2: nothing posted after the close -> no "changed since close"', nothing === null, JSON.stringify(nothing));
+  await new Promise((done) => setTimeout(done, 15));
+  await day(AU, 'AUD', '2026-09-20', 100, 10, 'gst', 'LATE1');
+  const lateRow = X.T.entries.find((x) => x.entity_id === AU && x.source_ref === 'walkin:C1:2026-09-20'); /* the close LOCKS its months: the books move a new posting to 1 Oct; this puts one back inside the period (a dated import or manual journal) so the reader is proven */
+  ok('RC2: the closed period is locked: a new posting is moved out of it (the lock is the first defence)', lateRow.posting_date === '2026-10-01', lateRow.posting_date);
+  lateRow.posting_date = '2026-09-20';
+  const late = await Taxed.changedSinceClose(X.db, AU, pack, item, closeRow.created_at);
+  ok('RC2: a sale dated 20 Sep but posted after the close is said: 1 entry, +10.00 on the tax ledgers, in words', late && late.entries_n === 1 && late.tax_moved_minor === 1000 && /posted after it was closed/.test(late.note), JSON.stringify(late));
+  const realLate = LATE.lateTaxEntries; LATE.lateTaxEntries = async () => [];
+  const blind = await Taxed.changedSinceClose(X.db, AU, pack, item, closeRow.created_at);
+  ok('RC2 MUTATION (the late-posting reader stops reading): the check above would go RED', blind === null);
+  LATE.lateTaxEntries = realLate;
   /* AE: a VAT201 with its own set-off */
   WHO = owner(AE, 'Deira Stores'); DAY = '2026-06-10';
   await X.store.saveSetting(X.db, AE, { enabled: false, country: 'AE' });
