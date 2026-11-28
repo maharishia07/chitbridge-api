@@ -20,14 +20,14 @@ of file each thing is; this says what already does the job.
 | 133 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
-| 115 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
+| 114 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 113 | `entry` | `books-store.js` |  |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
+| 103 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 103 | `next` | `dayopen.js` | the next thing to do — |
-| 102 | `lines` | `catalogue-read.js` | own products are the ones they maintain, and an arbitrary interleave would put a rule where a decision belongs |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
 | 95 | `refusal` | `availability.js` | and is not judged here (stamp keeps its own rule for those). |
-| 92 | `pack` | `books-store-packs.js` |  |
+| 94 | `pack` | `books-store-packs.js` |  |
 | 90 | `line` | `country-compare.js` | and `text`, the one short line the table shows. |
 | 90 | `again` | `signin-ui.js` |  |
 | 89 | `catalogue` | `books-manual.js` | GET /events → the grid. |
@@ -46,16 +46,16 @@ of file each thing is; this says what already does the job.
 | 78 | `toast` | `cb-words.js` |  |
 | 78 | `record` | `access-events.js` |  |
 | 78 | `failed` | `service.js` | what every catch answers: |
+| 76 | `adopt` | `counter-kinds.js` | A line the server names gets the server's row; a line the catalogue took the client's kind off (`changes[].to  |
+| 75 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 74 | `table` | `convert.js` | over a stale one should get the fresher answer without having to remove anything. |
-| 74 | `adopt` | `counter-kinds.js` | A line the server names gets the server's row; a line the catalogue took the client's kind off (`changes[].to  |
-| 73 | `root` | `platformroot.js` | the uuid of this deployment's root entity, or null if none is configured |
 | 71 | `host` | `chit-sheet.js` |  |
 | 71 | `open` | `bank-statement-file.js` | The event is written in the same request unless the request is read only (an auditor: |
 | 70 | `shape` | `books-practice.js` | a client's practice row: |
+| 70 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 70 | `entity` | `mintuserid.js` | Registration chooses this; we only say whether it is allowed. |
 | 69 | `button` | `bank-preview-ui-parts.js` | var escapeHtml = ctx.escapeHtml; |
 | 69 | `page` | `books-grant-drill.js` | one page of the ledger and, for the same entries, the Day book's lines (party names, who made it) |
-| 69 | `party` | `mint.js` | passed through untouched, because they legitimately differ per path. |
 | 68 | `holds` | `assign-register.js` | ONE statement; the switch rides in it: |
 | 68 | `verdict` | `books-advice-in.js` | the verdict for a received advice: |
 | 68 | `view` | `books-payables.js` | group: |
@@ -67,7 +67,7 @@ of file each thing is; this says what already does the job.
 | 65 | `waiting` | `books-store.js` | FROM books_outbox WHERE entity_id = ${entityRef} AND source_chit_id = ${chitRef} AND done_at IS NULL ORDER BY  |
 | 64 | `view` | `country-ready.js` |  |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
-| 60 | `note` | `dbwatch.js` |  |
+| 61 | `note` | `dbwatch.js` |  |
 | 59 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 59 | `live` | `receivables.js` | the allocations that still count: |
 | 58 | `lines` | `cart.js` |  |
@@ -89,10 +89,10 @@ of file each thing is; this says what already does the job.
 | 50 | `rate` | `convert.js` | A rate, with its evidence. |
 | 50 | `send` | `crm-groups.js` | a real send goes through the ONE sender per allowed member. |
 | 50 | `hold` | `orders.js` |  |
+| 50 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
 | 49 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
-| 49 | `ledger` | `tax-lines.js` | ITC only when I am a regular taxpayer AND the seller charged tax (regular seller, not zero-rated to me). |
+| 49 | `rules` | `docnumber.js` | the rule set for a country — |
 | 48 | `shell` | `pick.js` |  |
-| 48 | `rules` | `docnumber.js` | the rule set for a country — |
 | 46 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 46 | `sentence` | `one-person.js` |  |
 | 46 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
@@ -121,9 +121,9 @@ of file each thing is; this says what already does the job.
 | 38 | `lookup` | `regulation.js` | lookup(country) → its pack, or the UNKNOWN answer (unknown_) — |
 | 37 | `note` | `device-id.js` | note(where, problem) — |
 | 37 | `resolve` | `catalogue-build.js` | resolve(sourceKey, commercials) → the SHARED catalogue (by reference) with the entity's COMMERCIALS overlaid p |
+| 37 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 36 | `call` | `assign-bar.js` | one call to the api; a network failure is NOT thrown: |
 | 36 | `names` | `shortcuts.js` |  |
-| 36 | `guess` | `move-in.js` | `table` (optional, PR1): |
 | 35 | `bkMoney` | `cap-books.js` |  |
 | 35 | `shown` | `country-compare.js` | one side's value for the line: |
 | 35 | `reason` | `lab-kit.js` | W9: |
