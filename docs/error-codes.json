@@ -9989,6 +9989,30 @@
    ]
   },
   {
+   "code": "NEEDS_WHICH_ACCOUNT",
+   "status": "422",
+   "title": "Say which account",
+   "shopkeeper": "This bank payment names a supplier but no bill and no account, so nothing was posted.",
+   "hint": "Say what the payment was for, or pick the bill it settles, then send it again.",
+   "owner_area": "accounting",
+   "since": "2026-11-28",
+   "raised_by": [
+    "POST /api/books/payments"
+   ]
+  },
+  {
+   "code": "NEEDS_WHICH_BILL",
+   "status": "422",
+   "title": "Confirm which bill",
+   "shopkeeper": "This payment is the same amount as one open bill of theirs, so nothing was posted until you confirm it.",
+   "hint": "Confirm that bill, or say which account the payment is for, then send it again.",
+   "owner_area": "accounting",
+   "since": "2026-11-28",
+   "raised_by": [
+    "POST /api/books/payments"
+   ]
+  },
+  {
    "code": "NEED_DAY",
    "status": "400",
    "title": "Day needed",
