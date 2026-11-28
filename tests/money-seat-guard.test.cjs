@@ -72,7 +72,7 @@ test('no other route or lib file decorates customer balances or reads the KYB ri
 test('a routes/ file that names balance_minor is the books, a listed money-seat file, or exempt with a reason', () => {
   const exempt = {
     'routes/books.js': 'the Books page: its own gate (moneyReader / mayReadMoney) and blindDues',
-    'routes/till.js': 'OPEN: the till reads its own party balances; owner cb-counter to confirm its seat gate (critic 28 Nov, not checked here)'
+    'routes/till.js': 'DECIDED 28 Nov (cb-counter): GET /snapshot hands the counter each customer balance + open bills ONLY so it can enforce the credit limit offline (DEC-051: credit limit warns, owner PIN-overrides offline; SPEC-books-v2 C2/D1). Device-scoped (till key), ledger-on only, not a books screen; hiding it would make the till fail open on credit. Re-open if a view-only seat can pair a till'
   };
   const listed = new Set(MONEY_SEAT_ROUTES.map((item) => item.file));
   const hits = fs.readdirSync(path.join(root, 'routes')).filter((n) => n.endsWith('.js')).map((n) => 'routes/' + n).filter((rel) => !listed.has(rel) && !exempt[rel] && /balance_minor/.test(fs.readFileSync(path.join(root, rel), 'utf8')));
