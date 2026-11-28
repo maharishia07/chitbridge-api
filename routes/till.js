@@ -67,7 +67,7 @@ const lotfields = require('../lib/lotfields');
 const units = require('../lib/units');
 /* ⭐ BOOKS v2: is this shop's ledger on (the hooks' one cached read), and the ledger's one reader of a `date` column */
 const booksHooks = require('../lib/books-hooks');
-const booksYmd = require('../lib/books-engines').ymd;
+const Dues = require('../lib/books-dues'); /* ONE-FIGURE RC10: what each customer owes is read by books-dues, the counter only carries it */
 const variantEngine = require('../lib/variant.browser.js'); /* the same shape-guard the Modifiers tab authors through */
 const keys = require('../lib/api-keys');
 const { isScreenKey } = require('../lib/holder'); /* a TV / customer display — SNAP-SCREEN: the one question, asked once */
@@ -613,7 +613,7 @@ async function readCustomers(entity_id, ownRead) {
     const found = await ownRead('customers'); /* OWN.customers — the name and number are on identities, see customersRead */
     const booksOn = await readBooksOn(ownRead);
     const { dues, duesCut } = booksOn && found.rows.some((x) => x.has_party_item) ? await readDues(entity_id) : { dues: { rows: [] }, duesCut: false };
-    const owed = foldDues(dues.rows);
+    const owed = Dues.foldByParty(dues.rows);
     result.booksOn = booksOn;
     result.customers = found.rows.map(customerRow(owed, booksOn, duesCut));
   } catch (e) {
@@ -655,21 +655,7 @@ async function readDues(entity_id) {
   let dues = { rows: [] },
     duesCut = false; /* SEC-SMALL: a snapshot over the cap says unknown, never a short sum */
   try {
-    dues = await withEntity(entity_id, (db) =>
-      db.query(
-        `SELECT party_id, against_ref, SUM(amount_minor)::bigint AS balance_minor,
-                    MIN(due_date) FILTER (WHERE ref_kind = 'bill') AS due_date,
-                    MIN(doc_date) FILTER (WHERE ref_kind = 'bill') AS doc_date,
-                    COALESCE((array_agg(status ORDER BY item_id DESC) FILTER (WHERE status IN ('disputed', 'undisputed')))[1] = 'disputed', false) AS disputed
-               FROM party_item
-              WHERE entity_id = $1 AND side = 'receivable'
-              GROUP BY party_id, against_ref
-             HAVING SUM(amount_minor) <> 0
-              ORDER BY MIN(due_date) FILTER (WHERE ref_kind = 'bill') NULLS LAST, against_ref
-              LIMIT $2`,
-        [entity_id, DELTA_CAP + 1]
-      )
-    );
+    dues = await withEntity(entity_id, (db) => Dues.receivableBills(db, entity_id, DELTA_CAP + 1));
     if (dues.rows.length > DELTA_CAP) {
       duesCut = true;
       dues = { rows: [] };
@@ -683,26 +669,6 @@ async function readDues(entity_id) {
     log.warn('till.snapshot.dues', { entity_id, why: String(e && e.message) });
   }
   return { dues, duesCut };
-}
-
-/** the open bills of each party, folded: { party_id → { balance_minor, open_bills[] } } (a bill is listed only while it is owed) */
-function foldDues(rows) {
-  const owed = {};
-  for (const due of rows) {
-    const key = String(due.party_id),
-      mine = owed[key] || (owed[key] = { balance_minor: 0, open_bills: [] });
-    mine.balance_minor += Number(due.balance_minor) || 0;
-    if (Number(due.balance_minor) > 0)
-      mine.open_bills.push({
-        ref: due.against_ref,
-        balance_minor: Number(due.balance_minor),
-        /* ⚠️ `date` columns, read by the ledger's ONE date reader — toISOString() was the day before, east of UTC (critic M8) */
-        due_date: booksYmd(due.due_date),
-        date: booksYmd(due.doc_date),
-        disputed: !!due.disputed
-      });
-  }
-  return owed;
 }
 
 /** a number out of a text column, or null when it is blank or not a number */
