@@ -185,7 +185,7 @@ router.get('/parties/:id', grantFront, auth, noKey, ...checked('GET /parties/:id
     if (rec.lead)
       rec.lead = Object.assign({}, rec.lead, {
         moves: M.KINDS.lead_stage.groups.filter((item) => item !== rec.lead.stage),
-        may: found.leads_ready ? { ok: true } : { ok: false, why: M.NOT_READY }
+        may: require('../lib/lead-may').leadMay(found.leads_ready, crmMay(req)) /* DRIFT 21: not migrated -> its sentence; else the seat's own write verdict (the POST refuses a viewer) */
       });
     /* the bills: the dearer of the chit bills and the ledger bills (the same rule the record always used on a page of the timeline), now over the WHOLE history */
     rec.bills = { n: Math.max(chitBills.n, ledgerBills.n), last_at: [chitBills.last, ledgerBills.last].filter(Boolean).sort().pop() || null };
