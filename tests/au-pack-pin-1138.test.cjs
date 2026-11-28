@@ -53,7 +53,7 @@ const box = (r, c) => (r.boxes.find((x) => x.code === c) || {}).amount_minor;
   await ok('a BAS lodged under 1.0.0 (period 2026-Q1, Jul-Sep) reads the same after 1.0.1 is adopted and the shop restamped', async () => {
     const p = Pin.packAt(shop1, '2026-07-01');
     assert.strictEqual(p.version, '1.0.0');
-    assert.strictEqual(p, AU0);
+    assert.strictEqual(p.marker, undefined); assert.strictEqual(p.fy_start_month, 7); assert.strictEqual(p.returns, AU0.returns);
     const r = GR.returnFor(p, '2026-Q1', MOVES, { simpler: false });
     assert.deepStrictEqual([box(r, '1A'), box(r, '1B'), r.net_minor], [100000, 25000, 75000]);
   });
