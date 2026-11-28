@@ -63,7 +63,7 @@ ok('a firm that connected by request (active agency edge) is live in the list AN
   const { isGrantParentSql } = require('../lib/network-membership');
   assert.ok(isGrantParentSql('$1::text', '$2::text').includes("a.type = 'agency' AND a.state = 'active'"), 'the agency edge is in the one parent test');
   const src = fs.readFileSync(path.join(__dirname, '..', 'lib', 'books-grant.js'), 'utf8');
-  assert.ok(src.includes("${isGrantParentSql('g.grantee_entity::text', 'g.grantor_entity::text')} AS edge_live"), 'list() reads edge_live through isGrantParentSql');
+  assert.ok(src.includes("${stateColumnsSql('g')}") && new RegExp('const stateColumnsSql = [^'+String.fromCharCode(92)+'n]*isGrantParentSql[(]').test(src), 'list() reads edge_live and unexpired through stateColumnsSql, built on isGrantParentSql');
   assert.ok(src.includes("${isGrantParentSql('$1::text', '$2::text')} AS edge_live"), 'the gate (rowFor) reads edge_live through the same isGrantParentSql');
 });
 console.log('\n  ✓ ' + n + ' passed');
