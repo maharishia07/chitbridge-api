@@ -339,8 +339,8 @@ it('⚠️⚠️ every added_via the route writes is one the CHECK constraint pe
   assert.ok(permitted.length, 'the supplier_list added_via constraint moved — this guard is now blind');
 
   const route = src('routes/relationships.js') + src('lib/supplier-list.js'); /* red1128: the supplier insert lives in lib/supplier-list.js (CRM-247), read with the route */
-  const written = (route.match(/added_via\s*\)[\s\S]{0,400}?VALUES[\s\S]{0,200}?'([a-z_]+)'\)/g) || [])
-    .map((s) => (s.match(/'([a-z_]+)'\)$/) || [])[1]).filter(Boolean);
+  /* ACC-401: the insert takes its added_via from `fields.added_via || 'manual'`; every value any caller hands it is spelled `added_via: '<value>'` in lib/supplier-list.js (the one supplier writer) */
+  const written = (src('lib/supplier-list.js').match(/added_via(?::| \|\|) *'[a-z_]+'/g) || []).map((s) => s.match(/'([a-z_]+)'/)[1]);
   assert.ok(written.length >= 1, 'expected the supplier insert to name an added_via, found ' + written.length); /* CRM-247: the two inserts became the one listSupplier helper */
   written.forEach((v) => assert.ok(permitted.indexOf(v) >= 0,
     "added_via '" + v + "' is not permitted by the constraint (" + permitted.join(', ') + ') — this is a 500'));

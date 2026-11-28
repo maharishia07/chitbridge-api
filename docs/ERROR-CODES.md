@@ -65,7 +65,7 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | BOOKS_CONSTITUTED | 422 | Chart already in use | This ledger already has entries, so its chart cannot be set up again. | Add or change accounts one by one instead. | books | 2026-11-17 |
 | BOOKS_ENGINE | 503 | Ledger calculations unavailable | The ledger calculations are not available yet. | Try again later. If it stays, tell us. | books | 2026-10-23 |
 | BOOKS_FOR_NOT_HERE | 403 | Not a books request | This request names a client's books, which only the books screens use. Nothing was done. | Open the client's books from the books screens. | network | 2026-11-15 |
-| BOOKS_FOR_READ_ONLY | 403 | Read only for a firm seat | This conversation is open to an auditor or an adviser to read, not to write in. Nothing was done. | Read the thread; ask the firm or the owner to reply. | network | 2026-11-19 |
+| BOOKS_FOR_READ_ONLY | 403 | Read only for a firm seat | Read only for a firm seat: a conversation or a client's parties can be read, not changed. Nothing was done. | Read it; ask the firm or the owner to make the change. | network | 2026-11-19 |
 | BOOKS_SIGNOFF_SELF_PREPARED | 403 | You prepared this | You prepared entries in these books since your last check, so you cannot sign them off as the auditor. Ask a colleague to check them. | Ask a colleague who did not prepare them to mark the client as checked. | network | 2026-11-19 |
 | BOOKS_GRANT_CONSENT_NEEDED | 422 | Say yes to the consent | Read what your auditor can see, then say yes. | Tick the yes under the plain words and send again. | network | 2026-11-14 |
 | BOOKS_GRANT_ENDED | 403 | Access has ended | This access was ended, or has run out. Ask the owner of the books to renew it. | The owner gives a new access from its grant screen. | network | 2026-11-14 |
@@ -835,4 +835,5 @@ One row per code the API can answer. The table is the master; `docs/error-codes.
 | INVOICE_INCOMPLETE | 422 | Invoice has no total | The invoice carries part of its money block but no total, so it was not sent. Nothing was saved. | Send it with its complete money block, or send the lines and let the server price them. | accounting | 2026-11-22 |
 | CREDIT_NOTE_REASON_MISSING | 422 | Credit note needs a reason | A credit note here must say why it is issued, so it was not sent. Nothing was saved. | Add a short reason, such as goods returned or price corrected, and send it again. | accounting | 2026-11-22 |
 | STANDARD_UNKNOWN | 422 | Standard not known | That standard or document is not one we know, so nothing was recorded. | Check the names against your readiness list and send it again. | rail | 2026-11-22 |
+| MOVE_IN_MINT_BUSY | 409 | Move in numbers busy | Nothing was imported: the numbers for the new contacts could not be taken just now. | Try the same file again. | connect | 2026-11-27 |
 <!-- codes:end -->

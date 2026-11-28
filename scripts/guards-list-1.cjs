@@ -9,6 +9,8 @@
  */
 'use strict';
 const GUARDS_PART = [
+  'con-165-firm-reads-parties.test.cjs', // CON-165: a firm seat under a books grant reads the client's parties cut to names, numbers, terms and dues (offline)
+  'crm-259-261-search-and-page.test.cjs', // CRM-259/261: the list's ?q search and its 500-row page with { total, page, limit, next } (offline over crm-stub)
   'reviews1-invoice-discount-dp.test.cjs', // reviews1 GF4: an invoice discount rounds in the invoice's own currency (JPY 0 dp)
   'reviews1-trace-batch-errors.test.cjs', // reviews1 EL F8: a lot recall rethrows a failed read, answers no rows only for a missing table or column
   'reviews1-bill-steps-quiet.test.cjs', // reviews1 counter M6: a failed fact read is logged, the fallback stands
@@ -355,6 +357,8 @@ const GUARDS_PART = [
   'gstr-one-source.test.cjs', // ⭐⭐ Fable 2026-10-23 f1-3: the rail GSTR-3B counts the chits the books count, in the shop's month; equals GST close's balances per head; 3.1 split (a)(b)(c)(e)
   'gstr3b-rcm-1128.test.cjs', // ⭐ F1 (1128): the served GSTR-3B is the engine's (one builder): reverse-charge tax in 3.1(d) and 4(A)(3), hand figures in rupees
   'gstr3b-opening-itc-1128.test.cjs', // ⭐ F2 (EL-TAX 1128): 6.1 carries the credit the books bring in (opening_itc): used + carried = opening, a shortfall is named
+  'ctry-148-gstr3b-composition.test.cjs', // CTRY-148: GSTR-3B for a composition shop is refused naming CMP-08 and GSTR-4; regular unchanged
+  'ctry-148-gstr3b-composition-route.test.cjs', // CTRY-148: the same through GET /api/tax/gstr, shop set up the country-setup way (422 GSTR_REFUSED)
   'gstr1-ref-whole-1128.test.cjs', // ⭐ F6 (EL-TAX 1128): a return keeps the whole document number; 99 notes of 19 characters are 99 refs in Table 13, none merged
   'walkf-setoff-1128.test.cjs', // ⭐ F-F-08 (1128): the ledger / GSTR-3B net applies the s.49 set-off order (IGST credit 600 vs 160.16 / 247.50 / 247.50 → SGST 55.16)
   'einvoice-note-1128.test.cjs', // ⭐ F13 (1128): the GSTR-1 _cb.einvoice warning, the limit read from the pack's dated row (confirmed or not named as such)
