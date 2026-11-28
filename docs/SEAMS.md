@@ -10,11 +10,11 @@ of file each thing is; this says what already does the job.
 | used by | name | defined in | what it is for |
 |---|---|---|---|
 | 222 | `list` | `amend.js` | list(entity_id, chit_id) — |
-| 213 | `rows` | `crm.js` | still in them: |
+| 214 | `rows` | `crm.js` | still in them: |
 | 197 | `read` | `bank-rec-log.js` | one account's bank reconciliation log: |
 | 185 | `words` | `variant.browser.js` |  |
 | 166 | `withEntity` | `books-hooks.js` |  |
-| 149 | `answer` | `availability.js` | from March; then nearest. |
+| 151 | `answer` | `availability.js` | from March; then nearest. |
 | 148 | `problem` | `problem.js` | problem(req, res, spec) — |
 | 144 | `item` | `bank-band.js` |  |
 | 133 | `money` | `bill-privacy.js` |  |
@@ -68,8 +68,8 @@ of file each thing is; this says what already does the job.
 | 64 | `view` | `country-ready.js` |  |
 | 63 | `checked` | `capture-contract.js` | the schema check of one route as a list to spread after auth (a route that takes no input has none) |
 | 61 | `note` | `dbwatch.js` |  |
+| 60 | `live` | `receivables.js` | the allocations that still count: |
 | 59 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
-| 59 | `live` | `receivables.js` | the allocations that still count: |
 | 58 | `lines` | `cart.js` |  |
 | 58 | `change` | `books-grant.js` | change(grantor, by, grantId, { expires_at }) → the grant: |
 | 58 | `account` | `home-facts.js` | OMITTED: |
@@ -79,9 +79,9 @@ of file each thing is; this says what already does the job.
 | 53 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 53 | `posted` | `books-event-guard.js` | post through the one writer; a look-alike rides on the answer as a non-blocking warning |
 | 52 | `status` | `books-backfill.js` | read: |
+| 52 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 52 | `counts` | `capabilities.js` | what the PUBLIC /health shows: |
 | 52 | `owner` | `books.js` | const { postVerdict, openingGate } = require('../lib/books-approval'); /* W25 postVerdict · RC-7 openingGate: |
-| 51 | `statement` | `books-practice.js` | the one statement a client's books answer ($1 the client, $2 today). |
 | 51 | `gate` | `country-setup.js` | gate(h, entity): |
 | 51 | `missing` | `signin-pending.js` | a store failure that means "b879 is not applied": |
 | 50 | `open` | `cap-attention.js` | a count pressed: |
@@ -207,5 +207,5 @@ of file each thing is; this says what already does the job.
 | 23 | `close` | `person-session.js` | When device_id is null the jti is looked for under every device (an owner revoking a jti from the list). |
 | 23 | `report` | `raida.js` | register at the one moment it must not. |
 | 23 | `told` | `signin-switched-off.js` | const words = (shop) => 'This account is switched off, so you cannot sign in. |
+| 23 | `heads` | `tax-lines.js` | The heads, summed. |
 | 22 | `figure` | `books-acting.js` | a figure the way the books screens paint it: |
-| 22 | `show` | `books-grant-drill.js` |  |
