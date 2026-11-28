@@ -39,7 +39,7 @@
     "failing": 0
    },
    "parameterised_query": {
-    "applies": 279,
+    "applies": 278,
     "failing": 1
    },
    "rate_limited": {
@@ -77,7 +77,7 @@
   },
   "resource_cap_causes": {},
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 178
+  "output_allowlist_from_recordings": 179
  },
  "machine_columns": [
   "schema_in",
@@ -20770,7 +20770,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 2321,
+   "line": 2272,
    "hash": "060a5c407fc62544",
    "does": "Signed-in business -> we read its plan and work out each quota and what its rules allow -> the plan, the quota states and the allowed envelope.",
    "errors": {
@@ -21302,7 +21302,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1636,
+   "line": 1587,
    "hash": "a9856e763ccbe71d",
    "does": "Platform operators only -> we total businesses across the platform by class and population, refusing everyone else outright -> the cross-business MIS report.",
    "errors": {
@@ -21571,7 +21571,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1519,
+   "line": 1470,
    "hash": "6a13bf4d7882b36c",
    "does": "Platform operators only -> we read the registered populations with their desk and counts -> the list of populations.",
    "errors": {
@@ -21703,7 +21703,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1381,
+   "line": 1332,
    "hash": "bd72f1910c24b423",
    "does": "Signed-in business -> we read where each kind of work is routed, plus its folders, people and teams to choose from -> the routing rows and the choices.",
    "errors": {
@@ -21833,7 +21833,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1364,
+   "line": 1315,
    "hash": "003d5303fcd66629",
    "does": "Signed-in business with a work kind and details -> we show where such work would be routed, changing nothing -> the preview of who would get it.",
    "errors": {
@@ -22342,8 +22342,8 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1183,
-   "hash": "387414ee576f9b88",
+   "line": 1184,
+   "hash": "ef8d17349cb8d37f",
    "does": "Signed-in business with an optional number of days -> we read its usage per day from the ledger -> the usage totals and the daily rows.",
    "errors": {
     "count": 1,
@@ -22357,6 +22357,7 @@
     ]
    },
    "reads": [
+    "identities",
     "usage_ledger"
    ],
    "writes": [],
@@ -22399,6 +22400,7 @@
     "auth middleware answers 401 in the old body",
     "legacy keys frozen in docs/contracts/api-legacy.json"
    ],
+   "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
@@ -22413,7 +22415,7 @@
    },
    "reported_applies": {
     "bfla_role_check": false,
-    "parameterised_query": true,
+    "parameterised_query": false,
     "rate_limited": true,
     "role_matrix": true,
     "junk_fuzz": true,
@@ -22437,14 +22439,14 @@
      "default": null,
      "max": null,
      "unasked": "n/a",
-     "via": "allowed: one entity's usage summary"
+     "via": "no rows answered"
     }
    },
    "human": {
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-25 batch 1129 re-sign (sign1129b), diff origin/main (5c0762fbe)...HEAD read per route (own handler, validation chain, operation, contract; the three hash parts dumped at both heads and compared), 13 machine columns true, stage2: hash moved by walk BB 27c568690 (BB-F-09): days must be a whole number from 1 to 365 or absent (30), else 400 INVALID_INPUT with the old {error, message} keys beside the Problem; it used to answer 200 with a silently changed window; 400 declared and tested; answer keys unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 re-sign (PR #1455, 544a8ab0e), diff merge-base 233c9a93e..HEAD read for this route (routes/entities.js handler, lib/usage-read.js, tests/drift-15-usage-shop.test.cjs, closed shape in api-output-shapes.json), 13 machine columns true, stage2: hash moved by drift 15: every seat now reads the SHOP ledger via auth.entityOf (an actor read its own id: 0 for a cashier); a seat the books refuse (money-seat.noMoney) gets cost null + cost_hidden:true, meta dropped; owner bytes unchanged (golden in test); days 400 INVALID_INPUT, 401, 500 unchanged and declared; new keys in the closed output shape. Who sees cost is finance business; cb-security confirmation of the noMoney gate is OPEN and not covered by this sign-off.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -67412,7 +67414,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1609,
+   "line": 1560,
    "hash": "3c261678a79ac355",
    "does": "A code, label and note (platform operators only) -> we add a new population to the registry -> the new population, or a sentence saying why not.",
    "errors": {
@@ -91883,7 +91885,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1575,
+   "line": 1526,
    "hash": "1e6bdde2d70a0960",
    "does": "A population code and a desk business id, or empty to clear (platform operators only) -> we set which desk serves that population -> the updated population.",
    "errors": {
@@ -92018,7 +92020,7 @@
    "owner_area": "entities",
    "owner_agent": "cb-network",
    "file": "routes/entities.js",
-   "line": 1492,
+   "line": 1443,
    "hash": "b0e5f4d41975080d",
    "does": "A work kind with a folder, person and team, or empty to clear (signed-in) -> we save where that kind of work goes -> an ok with the kind, or a refusal.",
    "errors": {
