@@ -74,7 +74,7 @@ of file each thing is; this says what already does the job.
 | 57 | `sheet` | `cap-employees.js` |  |
 | 57 | `account` | `home-facts.js` | OMITTED: |
 | 56 | `header` | `mint.js` | spreading it into each copy is what makes that structural rather than a thing to remember. |
-| 54 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
+| 55 | `refuse` | `bank-rec-log.js` | a refusal in words (422); `code` names the kind when it is not the general one |
 | 53 | `CBAction` | `accounts-shell.js` | Every writing control and whether it uses this: |
 | 52 | `closeModal` | `app.html` |  |
 | 52 | `status` | `books-backfill.js` | read: |
@@ -92,7 +92,7 @@ of file each thing is; this says what already does the job.
 | 48 | `shell` | `pick.js` |  |
 | 48 | `packs` | `books-engines.js` | let packsDoor = null; /* { raw, mod } — |
 | 48 | `rules` | `docnumber.js` | the rule set for a country — |
-| 48 | `hold` | `orders.js` |  |
+| 49 | `hold` | `orders.js` |  |
 | 46 | `changed` | `cap-catalogue.js` | an import landed (the _cfImportRun painter calls this) — |
 | 46 | `sentence` | `one-person.js` |  |
 | 46 | `back` | `signin-ui.js` | into the next person's sign-in, so the next person's six-digit code was checked as the first person's PIN. |
@@ -114,7 +114,7 @@ of file each thing is; this says what already does the job.
 | 39 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
 | 39 | `says` | `adopt.js` |  |
 | 39 | `guard` | `amend.js` | would disturb what has gone out. |
-| 39 | `entries` | `books-store.js` |  |
+| 40 | `entries` | `books-store.js` |  |
 | 39 | `faultOf` | `capture-contract.js` | keeps that status: |
 | 39 | `field` | `finance-terms.js` | one number field, or null (= not set); throws a shopkeeper sentence |
 | 38 | `ensureCap` | `app.html` |  |
@@ -155,6 +155,7 @@ of file each thing is; this says what already does the job.
 | 29 | `step` | `cart.js` |  |
 | 29 | `stamp` | `availability.js` | rounded to zero looks like an out-of-stock store instead of a broken connector. |
 | 29 | `setting` | `books-store.js` | FROM books_setting s LEFT JOIN identities i ON i.identity_id = s.entity_id WHERE s.entity_id = $1`; |
+| 29 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 29 | `recorded` | `stock-below-zero.js` | is this movement (the unique key: |
 | 29 | `allowed` | `trips.js` | let _idsFrom = null, |
 | 29 | `same` | `variant.browser.js` | do two sets of choices mean the same thing — |
@@ -163,7 +164,6 @@ of file each thing is; this says what already does the job.
 | 28 | `card` | `cap-shop.js` |  |
 | 28 | `cblog` | `core.js` | const __cblog = []; |
 | 28 | `chart` | `fx-rates.js` |  |
-| 28 | `clock` | `sla.js` | delivered on time, and the party at fault would be the one who fixed it. |
 | 27 | `parts` | `country-compare.js` | the parts of one row of one country; [] for an unknown row |
 | 27 | `currency` | `ui-money.js` | the currency a money field uses: |
 | 27 | `refusalOf` | `bill-number-taken.js` | the refusal thrown as data: |
@@ -182,6 +182,7 @@ of file each thing is; this says what already does the job.
 | 25 | `dialog` | `ui.js` | ui.dialog({ mount, title · titleText, titleId, titleTestid, subText, subClass, subId, footId, pop, testid, bod |
 | 25 | `reply` | `private-flag.js` | Refused in words: |
 | 25 | `base` | `qty.js` | handing it over keeps this file free of a dependency that would have to be vendored in a fixed order. |
+| 25 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 24 | `done` | `attach-ui.js` |  |
 | 24 | `current` | `assign.js` | to "no line assignment on this chit" rather than erroring — |
 | 24 | `receipt` | `books-events-batch.js` | the receipt: |
@@ -192,7 +193,6 @@ of file each thing is; this says what already does the job.
 | 24 | `totals` | `orders.js` | ONE READER for what an order comes to, so no screen adds up its own version |
 | 24 | `report` | `raida.js` | register at the one moment it must not. |
 | 24 | `actions` | `rail-actions.js` | the whole answer for GET /chits/:id |
-| 24 | `asks` | `readiness.js` | asks(origin, vertical) → { asked: |
 | 24 | `claim` | `reward-store.js` | Both holders locked, the balance read on the same handle, the due expiries written, then both halves; a half t |
 | 24 | `pick` | `scalecode.js` | pull out the digits one letter marks, as a string, in order |
 | 24 | `keep` | `signin.js` | see. |

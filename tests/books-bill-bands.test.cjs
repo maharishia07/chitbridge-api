@@ -28,7 +28,13 @@ ok('an unknown side is aged as a receivable (the safe default)', billBands(docsO
 
 // fail closed: with no credit days anywhere a bill ages from its bill date and says so — it is never quietly "not due"
 const noTerms = billBands(docsOf([fresh]), '2026-11-01', NONE, 'receivable');
-ok('fail closed: a bill with no terms ages from its bill date and is marked no_terms', noTerms.B2.no_terms === true && noTerms.B2.days_late === 12 && noTerms.B2.band === 'd0_30', JSON.stringify(noTerms.B2));
+ok('fail closed: a bill with no terms ages from its bill date and is marked no_terms', noTerms.B2.no_terms === true && noTerms.B2.age_days === 12 && noTerms.B2.band === 'd0_30', JSON.stringify(noTerms.B2));
+// ACC-412: 20 Oct bill, no terms, asOf 1 Nov = 12 days old by hand: it still sits in the 0-30 band, but it is NOT overdue (no due date), days_late null
+ok('ACC-412: no terms = not overdue, days_late null, age 12 kept for the band', noTerms.B2.overdue === false && noTerms.B2.days_late === null, JSON.stringify(noTerms.B2));
+// by hand: B1 due 15 Sep, asOf 1 Nov = 47 days past a real due date = overdue; B2 due 15 Nov (30 days terms) is not yet due = not overdue
+ok('ACC-412: past a real due date is overdue (47); not yet due is not', bands.B1.overdue === true && bands.B1.age_days === 47 && bands.B2.overdue === false, JSON.stringify([bands.B1, bands.B2]));
+// due today: 15 Sep asOf 15 Sep = 0 days late = not overdue
+ok('ACC-412: due today is not overdue', billBands(docsOf([old]), '2026-09-15', THIRTY, 'receivable').B1.overdue === false);
 
 // the refusal path: a settled document and an empty set get no band at all (refused, not zero-filled)
 const refused = (items) => { try { docsOf(items); return false; } catch (err) { return err.status === 422; } };
