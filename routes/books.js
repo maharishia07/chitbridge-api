@@ -657,8 +657,7 @@ async function statementInput(db, e, party, from, to) {
  * you, − you owe them), oldest_due, disputed_minor, buckets }], total_minor } — CBReceivables.outstanding → CBLedger.ageing.
  * Without `side`: both, one row per party (a party on both lists nets). ⚠️ A supplier's buckets are Schedule III's
  * PAYABLE ones (not_due · lt_1y · y1_2 · y2_3 · gt_3y) — the six receivable columns do not apply to them.
- * ⭐ ?side=supplier&finance=1 (CB Finance · Payables, F4 — lib/books-payables.view): each supplier row + `payable` { total_minor, buckets (0_30 · 31_45 ·
- *   46_60 · 60_plus), msme, msme_risk, msme_words, pay_by, group (msme · overdue · week · later), terms, early, bills[] }, and `payables` { total_minor }
+ * ⭐ ?side=supplier&finance=1 (CB Finance · Payables, F4 — lib/books-payables.view): each supplier row + `payable` { total_minor, buckets (the engine's due-date set, every country) + buckets_msme (India only: the engine's msme set, from the bill date), msme, msme_risk, msme_words, pay_by, group (msme · overdue · week · later), terms, early, bills[] }, and `payables` { total_minor }
  *   beside the parties — the bills are F3's own (books-cashflow.datedSide 'out'), so the total IS the cash view's outgoing dues. Owner only, as Collections.
  *   Trips added: cheques 1 · Udyam ids 1 · supplier terms 1 (+ the terms-column check, cached). Nothing per party.
  */

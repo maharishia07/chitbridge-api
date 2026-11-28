@@ -1289,10 +1289,11 @@
       "payable": {
        "total_minor": 59000,
        "buckets": {
-        "0_30": 0,
-        "31_45": 0,
-        "46_60": 0,
-        "60_plus": 59000
+        "not_due": 0,
+        "d0_30": 0,
+        "d31_60": 0,
+        "d61_90": 0,
+        "d90_plus": 59000
        },
        "msme": true,
        "msme_risk": true,
@@ -1344,7 +1345,7 @@
          "due_date": "2026-10-06",
          "open_minor": 59000,
          "age_days": 216,
-         "bucket": "60_plus",
+         "bucket": "d90_plus",
          "overdue": true,
          "msme_day45": "2026-10-06",
          "msme_days_left": -186,
@@ -1380,9 +1381,16 @@
            "say": "Ask Kumar Traders for a GST credit note. You confirm it when it comes."
           }
          },
-         "note": null
+         "note": null,
+         "bucket_msme": "60_plus"
         }
-       ]
+       ],
+       "buckets_msme": {
+        "0_30": 0,
+        "31_45": 0,
+        "46_60": 0,
+        "60_plus": 59000
+       }
       },
       "interest_minor": null,
       "interest_state": "not_set",
@@ -1446,7 +1454,57 @@
      }
     },
     "payables": {
-     "total_minor": 59000
+     "total_minor": 59000,
+     "sets": {
+      "due": {
+       "name": "followup",
+       "title": "By due date",
+       "keys": [
+        {
+         "key": "not_due",
+         "label": "Not due yet"
+        },
+        {
+         "key": "d0_30",
+         "label": "0–30 days late"
+        },
+        {
+         "key": "d31_60",
+         "label": "31–60 days late"
+        },
+        {
+         "key": "d61_90",
+         "label": "61–90 days late"
+        },
+        {
+         "key": "d90_plus",
+         "label": "Over 90 days late"
+        }
+       ]
+      },
+      "msme": {
+       "name": "msme",
+       "title": "MSME (45-day)",
+       "keys": [
+        {
+         "key": "0_30",
+         "label": "0–30 days"
+        },
+        {
+         "key": "31_45",
+         "label": "31–45 days"
+        },
+        {
+         "key": "46_60",
+         "label": "46–60 days"
+        },
+        {
+         "key": "60_plus",
+         "label": "Over 60 days"
+        }
+       ]
+      }
+     }
     },
     "follow_up_total": {
      "not_due": 0,
