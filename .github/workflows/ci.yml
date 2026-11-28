@@ -480,7 +480,7 @@ jobs:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
         run: node tests/net-agency-firm-not-network.realstack.cjs
-      - name: FIRM-CONNECT-1138 · the firm-to-shop path (real Postgres, cb_app: asks, re-ask after a refusal, 150 waiting, costs consent, the grant privilege matrix, visits)
+      - name: FIRM-CONNECT-1138 · the firm-to-shop path (real Postgres, cb_app, asks, re-ask after a refusal, 150 waiting, costs consent, the grant privilege matrix, visits)
         env:
           DATABASE_URL: postgres://cb_app:cbapp@localhost:5432/cb_s41
           NODE_ENV: test
