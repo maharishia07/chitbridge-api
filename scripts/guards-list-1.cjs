@@ -305,6 +305,7 @@ const GUARDS_PART = [
      id, its shape, its separator, whether it can be sent to, and where the rule lives. It exists because the
      grammar used to live only in one file’s comments, and a document nothing checks becomes fiction. */
   'namespace.test.cjs',
+  'o4-typed-signin.test.cjs', // ⭐ O4: staff sign-in shown as typed (name@shop), never the stored .br / .cr
   /* ⭐⭐ MINT a user id and RESOLVE one — every combination in one place (lib/mintuserid.js), every reading in
      another (lib/resolveuserid.js). § 0 holds the customer form byte-identical to what production already
      stores: one character of drift and every returning customer becomes a second identity. */
