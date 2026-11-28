@@ -17,6 +17,7 @@ const GUARDS_PART = [
   'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
   'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
   'acc417-adjustments.test.cjs', // ACC-417: BAS rows split into adjustment and plain by the pack's event list
+  'acc418-bad-debt.test.cjs', // ACC-418: the invoice a write-off / recovery names: its own GST, read from the posted tax lines
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };

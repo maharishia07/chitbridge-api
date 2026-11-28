@@ -1848,8 +1848,8 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
       doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
       by: byOf(req)
     };
-    const out = await B.postEntry(null, entity, writeOff, require('../lib/books-event-guard').guardOf(entity, writeOff)); /* AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
-    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
+    const found = await require('../lib/books-bad-debt').adjusted(entity, writeOff), out = await B.postEntry(null, entity, found.event, require('../lib/books-event-guard').guardOf(entity, found.event)); /* ACC-418: the invoice's own GST (adjusted); AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
+    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: [out.note, found.note].filter(Boolean).join(' ') || out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
