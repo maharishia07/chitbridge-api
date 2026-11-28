@@ -1306,7 +1306,7 @@ async function signOffStatement(req, e, body) {
     return { statement: await BANK_LOG.appendStatement(handle, e, account, curOf(req), body, byOf(req), actingOf(req)) };
   });
 }
-/** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
+/** POST /bank/statements { account, period_from, period_to, opening_minor, closing_bank_minor, closing_books_minor, difference_minor, exceptions_minor, unmatched_lines (the statement lines still needing a decision; above 0 = 409 BANK_LINES_UNMATCHED), currency, file_hash } → { statement } — editor; the carried BRS figures, a re-sign is a new row. */
 // @does A bank account with its period, opening and closing balances in -> we store the reconciled statement in the log -> the saved statement (editors).
 router.post('/bank/statements', auth, noKey, editor, bankWriter, on, declaresStatuses([503]), ...checked('POST /bank/statements'), async (req, res) => {
   try {
