@@ -146,6 +146,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # SEAMS_PR_BASE below diffs against the base branch
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -164,7 +166,39 @@ jobs:
           ref: ${{ steps.twin.outputs.ref }}
           path: .side/chitbridge-web
       - name: docs/SEAMS.md has not drifted (node .side/chitbridge-web/tools/seams.cjs --check --repo api)
+        env:
+          SEAMS_PR_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
         run: node .side/chitbridge-web/tools/seams.cjs --check --repo api
+
+  seams-regen:
+    # develop only (push): docs/SEAMS.md is GENERATED and its user counts move whenever any PR merges. A pull request judges only the rows of the files it changes
+    # (SEAMS_PR_BASE, tools/seams.cjs), so this job keeps the rest true: it regenerates the file and commits it when stale. A push by GITHUB_TOKEN starts no new run.
+    # If develop's branch protection refuses the push, the step warns and the next PR that changes a row's file corrects it; nothing goes red.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/checkout@v4
+        with:
+          repository: maharishia07/chitbridge-web
+          ref: develop
+          path: .side/chitbridge-web
+      - name: Regenerate docs/SEAMS.md
+        env:
+          SEAMS_ROOT_WEB: ${{ github.workspace }}/.side/chitbridge-web
+        run: node .side/chitbridge-web/tools/seams.cjs --write --repo api
+      - name: Commit it when it changed
+        continue-on-error: true
+        run: |
+          git diff --quiet -- docs/SEAMS.md && { echo "SEAMS.md is current"; exit 0; }
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/SEAMS.md; git commit -m "docs: regenerate SEAMS.md (develop, bot)"; git push origin HEAD:develop
 
   api-standard:
     # API-1 (API-STANDARD S15/S16, 22 Oct 2026): the API REGISTER equals what the code says, a route this PR adds or changes meets the standard, and the count of
