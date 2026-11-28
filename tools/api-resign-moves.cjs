@@ -11,8 +11,8 @@
  *           ──▶ with --write: the route's own line of docs/api-signoffs.json is patched in place (hash + signed_off_by_date); never reserialised, never re-sorted
  * CARD      28-platform-and-operations/api-standard
  *
- *   node tools/api-resign-moves.cjs --base origin/main            dry run: one line per moved route, proven or not, and why
- *   node tools/api-resign-moves.cjs --base origin/main --write    patch the sign-off lines of the proven routes whose sign-off is stale
+ *   node tools/api-resign-moves.cjs --base origin/develop            dry run: one line per moved route, proven or not, and why
+ *   node tools/api-resign-moves.cjs --base origin/develop --write    patch the sign-off lines of the proven routes whose sign-off is stale
  *   --date YYYY-MM-DD   the sign date (default today) · --only "METHOD /path"   one route · --receipt F   the whole receipt as JSON
  * The base register is read with the HEAD's generator (the ratchet does the same), so a base without --parts can still be measured.
  * A route signed by hand at the head already (its hash is current) is still judged, so the tool can be run over history to count what it would have signed.
@@ -102,7 +102,7 @@ function print(verdicts, ref) {
 /** the command line: judge every moved route, print the receipt, and with --write patch the proven ones */
 function main() {
   const ref = valueOf('--base');
-  if (!ref) throw new Error('--base <ref> is required (origin/main, or the sha the sign-offs were last current at)');
+  if (!ref) throw new Error('--base <ref> is required (origin/develop, or the sha the sign-offs were last current at)');
   const base = checkoutBase(ref);
   try {
     const head = generate(ROOT);

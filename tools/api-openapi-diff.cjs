@@ -10,7 +10,7 @@
  *           what a caller READS (answers) may not lose a key, a status, a type or a required key; what a caller SENDS (requests) may not gain a required key or narrow a type, enum or limit
  * CARD      28-platform-and-operations/api-standard
  *
- *   node tools/api-openapi-diff.cjs --base origin/main [--strict] [--receipt F]
+ *   node tools/api-openapi-diff.cjs --base origin/develop [--strict] [--receipt F]
  * Acknowledged findings: docs/contracts/api-breaking-ok.json { "ok": { "<finding id as printed>": "why this is intended" } }; a finding is "<key> · <where> · <what>".
  */
 const fs = require('fs');
@@ -121,7 +121,7 @@ const opsOf = (parts) => Object.fromEntries(Object.entries(parts).map(([key, val
 function main() {
   const argv = process.argv.slice(2);
   const ref = argv.includes('--base') ? argv[argv.indexOf('--base') + 1] : null;
-  if (!ref) throw new Error('--base <ref> is required (origin/main in CI)');
+  if (!ref) throw new Error('--base <ref> is required (origin/develop in CI)');
   const base = checkoutBase(ref);
   let found;
   try { found = diffOperations(opsOf(generate(base.dir).parts), opsOf(generate(ROOT).parts)); } finally { base.remove(); }

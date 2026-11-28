@@ -6,7 +6,7 @@
 # the database and its migrations (an empty database gets the baseline + every migration; later runs only the new ones) -> this installation's own
 # `installation` row (the country pack) -> the stack -> health of web and api, and the commit each one runs. It seeds NOTHING: a shop
 # is made by registering, as on the live site. It is the existing deploy/compose.yml widened by deploy/sit/docker-compose.yml; nothing is copied.
-# Env you may pass:  GIT_TOKEN (read-only, while the repos are private) · API_REF / WEB_REF (branches, default main) · SIT_ROOT (default: the folder above this repo)
+# Env you may pass:  GIT_TOKEN (read-only, while the repos are private) · API_REF / WEB_REF (branches, default develop) · SIT_ROOT (default: the folder above this repo)
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -111,8 +111,8 @@ sync_repo() {
   fi
 }
 say "repos under $SIT_ROOT"
-API_REF=${API_REF:-$(get_kv API_REF)}; API_REF=${API_REF:-main}
-WEB_REF=${WEB_REF:-$(get_kv WEB_REF)}; WEB_REF=${WEB_REF:-main}
+API_REF=${API_REF:-$(get_kv API_REF)}; API_REF=${API_REF:-develop}
+WEB_REF=${WEB_REF:-$(get_kv WEB_REF)}; WEB_REF=${WEB_REF:-develop}
 BEFORE=$(cksum < "$HERE/up.sh")
 sync_repo "$API_DIR" https://github.com/maharishia07/chitbridge-api.git "$API_REF"
 sync_repo "$WEB_DIR" https://github.com/maharishia07/chitbridge-web.git "$WEB_REF"
