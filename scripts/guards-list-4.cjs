@@ -19,6 +19,7 @@ const GUARDS_PART = [
   'acc417-adjustments.test.cjs', // ACC-417: BAS rows split into adjustment and plain by the pack's event list
   'acc418-bad-debt.test.cjs', // ACC-418: the invoice a write-off / recovery names: its own GST, read from the posted tax lines
   'au-pack-pin-1138.test.cjs', // pack pinning: a day reads under the version in force; restamp forward only, from a period start, audited
+  'acc418-write-off-recover.test.cjs', // ACC-418: POST /write-off/recover posts the engine's write_off_recovery once per ref, GST split by the engine (figures wait for engines #165)
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
 ];
 module.exports = { GUARDS_PART };

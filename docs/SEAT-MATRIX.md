@@ -55,6 +55,7 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `POST /entries` | Post a manual journal entry | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
 | `POST /entries/:id/reverse` | Reverse an entry with a mirror entry | yes | yes | - | - | - | - | auth > ownerOrAccountant > on |
 | `POST /write-off` | Write off what a customer owes | yes | - | - | - | - | - | auth > owner > on |
+| `POST /write-off/recover` | Record what a written-off customer paid later; the tax inside the write-off is given back | yes | - | - | - | - | - | (contract) owner > on |
 | `POST /opening` | Post the opening balances as one entry | yes | unless the owner asks to approve | - | - | - | - | auth > ownerOrAccountant > openingGate > on |
 | `POST /opening/preview` | The opening balances as the posting engine would see them: its own Difference, the bills against their control line, what would refuse; nothing is written | yes | - | - | - | - | - | (contract) owner > on |
 | `POST /opening/replace` | Change the saved opening balances on a day: the old entries are reversed with the reason and the new rows posted, all or nothing | yes | - | - | - | - | - | (contract) owner > on |
@@ -109,4 +110,4 @@ Seats: **Owner** · **Accountant** = a staff login whose hat is manager and who 
 | `GET /fx-revalue` | What revaluing the foreign balances at month end would post | yes | - | - | - | - | - | auth > noKey > on > owner |
 | `POST /fx-revalue` | Post the revaluation and its reversal (owner); idempotent | yes | - | - | - | - | - | auth > noKey > on > owner |
 
-102 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.
+103 routes. The adviser and auditor columns are the contract's declared seats (lib/role-matrix.js), proved live by tools/role-matrix-live.cjs; the first four are computed here.

@@ -233,6 +233,9 @@ const WRITES_READY = [
   X('entry-reversed-reopens', 'POST /api/books/entries/:id/reverse', 200, { body: { reason: 'wrong party' }, patch: { books: { reverseEntry: async () => REVERSAL_REOPENS } } }),
   X('write-off-posted', 'POST /api/books/write-off', 200, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => JOURNAL } } }),
   X('write-off-replayed', 'POST /api/books/write-off', 200, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt', client_ref: 'c1' }, patch: { books: { postEntry: async () => DUPLICATE } } }),
+  /* ACC-418: the recovery of a written-off debt: the same door's answer, the engine does the GST split */
+  X('write-off-recovered', 'POST /api/books/write-off/recover', 200, { body: { amount_minor: 9900, reason: 'paid at last', into: 'bank' }, patch: { books: { postEntry: async () => JOURNAL } } }),
+  X('write-off-recovery-replayed', 'POST /api/books/write-off/recover', 200, { body: { amount_minor: 9900, reason: 'paid at last', client_ref: 'c1' }, patch: { books: { postEntry: async () => DUPLICATE } } }),
   X('opening-posted', 'POST /api/books/opening', 200, { body: { rows: [{ code: '1300', dr_minor: 1000, cr_minor: 0 }] }, patch: { books: { postOpening: async () => Object.assign({}, JOURNAL, { suspense_minor: -1000 }) } } }),
   X('opening-replayed', 'POST /api/books/opening', 200, { body: { rows: [{ code: '1300', dr_minor: 1000, cr_minor: 0 }], client_ref: 'c1' }, patch: { books: { postOpening: async () => Object.assign({}, DUPLICATE, { suspense_minor: 0 }) } } }),
   X('ledger-read', 'GET /api/books/ledger/:account', 200, { patch: LEDGER_PATCH }),
@@ -365,6 +368,8 @@ const EXTRAS = WRITES_READY.concat(MONTHS_PACKS_RATES, BANK_RECORD, BOX_ROWS, [
   X('cheque-step-unnamed', 'POST /api/books/cheques/:id/status', 400, { body: {} }),
   X('dispute-bill-unnamed', 'POST /api/books/parties/:id/dispute', 400, { body: {} }),
   X('write-off-customer-unnamed', 'POST /api/books/write-off', 400, { body: {} }),
+  X('write-off-recovery-amount-unnamed', 'POST /api/books/write-off/recover', 400, { body: { reason: 'paid at last' } }),
+  X('write-off-recovery-reused-ref', 'POST /api/books/write-off/recover', 409, { body: { amount_minor: 9900, reason: 'paid at last', client_ref: 'c1' }, patch: { books: { postEntry: async () => { throw Object.assign(new Error('This reference was already used for a different recovery.'), { code: 'EVENT_REF_REUSED', status: 409 }); } } } }),
   /* FIN-78: a write-off above what is still owed (the ledger refuses it before any row) is a 409 in one sentence naming the amount still owed and the currency */
   X('write-off-above-due', 'POST /api/books/write-off', 409, { body: { party_id: PARTY, amount_minor: 500, reason: 'bad debt' }, patch: { books: { postEntry: async () => { throw Object.assign(new Error('Only ₹0 INR is still owed, so ₹5 INR cannot be written off.'), { code: 'BOOKS_CONFLICT', status: 409 }); } } } }),
   X('opening-no-rows', 'POST /api/books/opening', 400, { body: {} }),
@@ -719,7 +724,7 @@ process.on('unhandledRejection', (failure) => console.log('  (unhandled rejectio
   installStubs();
   const mounted = MOUNTS.map((mount) => ({ mount, router: require(path.join(HERE, ROUTE_FILES[mount])) }));
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-opening.js')) }); /* l16: the opening balances page's doors, its own file under the same mount */
-  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-evidence.js')) }); /* FW2-03 */ /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
+  mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-money.js')) }); mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-evidence.js')) }); mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-write-off-recover.js')) }); /* ACC-418 */ /* FW2-03 */ /* ACC-206 B: a second router under the same mount (the ledger's own gates, its own file) */
   mounted.push({ mount: '/api/books', router: require(path.join(HERE, 'routes', 'books-events-batch.js')) }); /* SPD bank Add: POST /events/batch, its own file under the same mount (1129) */
   const routes = Object.assign({}, ...mounted.map((one) => routesOf(one.router, one.mount)));
   const app = express();

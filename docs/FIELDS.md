@@ -1753,3 +1753,15 @@ The five ride beside `items[]`. web `public/app/core.js` SIBS now lists them, so
 | engines `packs/register.json` (the register, one home) | `<ID>@<version>` → `status` · `sha256` · `kind` (law\|rate\|form\|fix\|added) · `purpose` · `source` · `law_as_at` · `form` · `effective_from` · `approved_by` · `touches` | What each released pack version is, frozen by its content hash (engines tests/pack-freeze.test.js) and replayed (tests/golden reg-versions). `null` = not yet checked against the official source. |
 ||||||| 159b4acb2
 | `tax_registration.registered_on` (read only here; no writer yet) | `YYYY-MM-DD` · absent | Source · `entity_governance.tax_registration` JSON, a key beside registered/number/scheme (no migration). Read by lib/books-return-registration `registrationDayOf` (1138, the new-shop BAS): the day GST registration began; the first BAS period is the one holding it, periods wholly before it are not shown and never owed. Absent: while the books hold no entry, `identities.created_at` stands in; with entries the books start rules. The setup step that WRITES it (country-setup mergeTax_ TAX_KEYS, the web form) is the settings and web areas' work. |
+||||||| 0a5f8e7dc
+
+## POST /api/books/write-off/recover · a written-off debt paid later (ACC-418, 2026-11-28)
+
+| Route | Key | Meaning |
+|---|---|---|
+| POST /write-off/recover body `amount_minor` | whole number above 0 | What came in, in the shop currency's smallest unit. `amount` (a number in whole currency) is the older spelling, read by the same strict reader. Not a whole number above nothing: 400 "How much?". |
+| POST /write-off/recover body `reason` | string | Why, in the owner's words. The engine refuses an empty one. |
+| POST /write-off/recover body `into` | account name, default `cash` | Where the money came in (`cash`, `bank`, a till mode). An unknown one is refused by the engine in words. |
+| POST /write-off/recover body `against_ref` | chit id or absent | The written-off invoice. With it, the GST inside the recovery is the share the invoice itself carried (read from its posted tax lines; the engine splits, the route never does); without it, or in a country with no bad-debt row, the whole amount goes back to bad debts and `note` says no GST was adjusted. |
+| POST /write-off/recover body `client_ref` | string or absent | The same recovery sent twice is one entry (`duplicate: true`); the same ref with another amount is 409 `EVENT_REF_REUSED`. |
+| POST /write-off/recover answer `note` | string or null | The posting's note plus, when no GST could be adjusted, the sentence that says so. |
