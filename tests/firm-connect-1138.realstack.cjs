@@ -103,7 +103,7 @@ async function costsTests(F, S) {
 }
 
 async function privilegeMatrix() {
-  const yes = ['expires_at', 'revoked_at', 'revoked_by'];
+  const yes = ['expires_at', 'revoked_at', 'revoked_by', 'posting', 'posting_cap_minor', 'posting_cap_currency', 'can_see_costs'];
   const never = ['grantor_entity', 'grantee_entity', 'preset', 'purpose', 'granted_by', 'granted_at', 'grant_id'];
   ok('21 grant privileges (b863 self-test widened): no table-level UPDATE or DELETE', (await query(`SELECT has_table_privilege('cb_app', 'public.books_access_grant', 'UPDATE') AS u, has_table_privilege('cb_app', 'public.books_access_grant', 'DELETE') AS d`)).rows.every((r) => !r.u && !r.d));
   for (const column of yes) ok('22 cb_app may UPDATE ' + column, await privileged(column));

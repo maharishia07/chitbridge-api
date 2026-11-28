@@ -25,7 +25,7 @@ const MUTANTS = {
   cool_off: ['lib/connect-caps.js', 'if (declined !== null &&', 'if (false &&'],
   direction: ['lib/connect-caps.js', 'if ((await query(BACK_SQL', 'if (false && (await query(BACK_SQL'],
   costs_confirm: ['lib/books-grant.js', 'input.can_see_costs === true && input.consent !== true', 'false'],
-  visit_boundary: ['lib/books-visits.js', '> gap) open.push', '> gap * 2) open.push'],
+  visit_boundary: ['lib/books-visits.js', '> gapMs) open.push', '> gapMs * 2) open.push'],
   bell_owner: ['lib/connect-asks.js', 'if (!mayAnswer) return', 'if (false) return'],
   firms_only: ['lib/connect-asks.js', "AND e.type = '${FIRM_TYPE}'", ''],
   invite_address_cap: ['lib/firm-invite.js', 'if (counts.address >= limits.perAddressWeek)', 'if (false)']
