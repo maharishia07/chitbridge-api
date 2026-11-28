@@ -20,8 +20,8 @@ of file each thing is; this says what already does the job.
 | 131 | `money` | `bill-privacy.js` |  |
 | 121 | `list` | `cap-flag.js` |  |
 | 116 | `code` | `signin.js` | a 5-digit string is simply unfinished, whichever one it turns out to be. |
+| 113 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 112 | `entry` | `books-store.js` |  |
-| 112 | `store` | `move-in-proof.js` | store(conn, entity, rec) — |
 | 106 | `check` | `books-nightly.js` | check(entity) → the result stored as last_check |
 | 102 | `next` | `dayopen.js` | the next thing to do — |
 | 101 | `here` | `screen-id.js` | if (root.addEventListener) root.addEventListener('load', paintHelp); |
@@ -108,9 +108,9 @@ of file each thing is; this says what already does the job.
 | 41 | `opts` | `books-grant-filters.js` |  |
 | 41 | `money` | `cart.js` |  |
 | 41 | `mint` | `api-keys.js` | Throws { status, message } on a validation or limit failure. |
+| 41 | `entries` | `books-store.js` |  |
 | 41 | `amount` | `bounds.js` | below the ceiling of the named chit column (a cost is bounded by the chit total's column: |
 | 40 | `record` | `network-books.js` | record the client now open (or the list, id null) in history: |
-| 40 | `entries` | `books-store.js` |  |
 | 39 | `modal` | `app.html` |  |
 | 39 | `escJs` | `helpers.js` | A value placed inside a JS string literal of an inline handler, onclick="fn('" + escJs(x) + "')": |
 | 39 | `says` | `adopt.js` |  |
