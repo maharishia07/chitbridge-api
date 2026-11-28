@@ -607,6 +607,7 @@ const ENGINE_OTHER = [
   'books-live-bill.js',       /* R1-03 (DEC-267): which bills are live, so Reverse refuses them — CB's own books decision, same bucket as its parent */
   /* ⭐ CS1 (2026-10-12): the country setup step and the books' country gate — reads the ADOPTED regulation registry (below); infra, not an engine */
   'country-setup.js', 'country-setup-merge.js', 'country-setup-clean.js', 'csv-decisions.js', 'books-hooks-use.js', 'profile-payee.js', 'work-unbilled.js', /* batch 1126 size splits: part files of country-setup · books-hooks · profile · work-rows - parts of infra files, no rule of an engine */
+  'me-shop.js', 'party-phone.js', 'lead-may.js', /* drift display 29/35b/21 (28 Nov): which row answers for the shop on /me, the one party phone, the lead's may from the seat's write verdict - views over existing decisions, no rule of an engine */
   'books-advice-in.js',       /* B-F-17: a received payment advice read as my receipt - split from books-hooks.js, the chit decides, the posting is recordChitPayment; infra, no rule of an engine */
   'books-moved-role.js',      /* F-66 (batch 1126): a ledger role handed back when the pack moved its code - chart bookkeeping of books.js, the pack's rule stays in the engine */
   'consent-counts.js',        /* A-F-58: the one count of who agreed to offers, beside consent-standing.js - rows and SQL, no money or tax */
