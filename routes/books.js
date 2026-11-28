@@ -579,7 +579,7 @@ router.get('/party/:id/statement', auth, moneyReader, on, ...checked('GET /party
       from = dateQ(req.query.from, fyStart(req, to));
     const out = await withEntity(e, async (h) => {
       if (!(await B.knownParty(h, e, id))) return null;
-      const st = E.ledger().partyStatement({ ...(await statementInput(h, e, id, from, to)), party: id, from, to });
+      const st = await B.partyStatement(h, e, id, null, from, to); /* RC12: the one assembler (lib/books.partyStatement) */
       const meta = new Map((await S.ledgerLines(h, e, from, to, id)).map((item) => [String(item.entry_id), item]));
       /* where each entry came from (its bill, how it was paid, the counter, who rang it) - the same `source` the day book and a ledger carry, so a party's own ledger reads like theirs */
       const lookup = new Map();
@@ -642,15 +642,6 @@ router.get('/party/:id/statement', auth, moneyReader, on, ...checked('GET /party
     problem(req, res, refusalOf(err, req));
   }
 });
-async function statementInput(db, e, party, from, to) {
-  const ledgerContext = await B.ledgerCtx(db, e);
-  const packs = E.packs();
-  return {
-    pack: ledgerContext.pack,
-    balances: await B.yearBalances(db, e, packs.fiscalYearOf(from, ledgerContext.pack), ledgerContext),
-    lines: (await S.ledgerLines(db, e, B.monthStart(ledgerContext.pack, from), to, party)).map(E.lineOf)
-  };
-}
 
 /**
  * GET /dues?asOf&side=customer|supplier → { currency, asOf, parties: [{ party_id, party_no, name, side, balance_minor (+ they owe
