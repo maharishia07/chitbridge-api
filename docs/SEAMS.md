@@ -39,8 +39,8 @@ of file each thing is; this says what already does the job.
 | 84 | `count` | `money-check.js` | the count /health reads |
 | 83 | `answer` | `app.html` | answer() is async on purpose so the LLM tier can slot in later WITHOUT changing a single caller. |
 | 82 | `read` | `books-grant-drill.js` |  |
+| 82 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 81 | `rows` | `cap-settings.js` |  |
-| 81 | `door` | `signin.js` | offering a shift handover to a counter that cannot bill would be the same dead end in a new coat. |
 | 80 | `items` | `books-store.js` | PERF1: |
 | 80 | `said` | `chits-contract.js` | A body that carried its own `code` keeps it (it is the Problem code too); else `code` names it. |
 | 78 | `toast` | `cb-words.js` |  |
