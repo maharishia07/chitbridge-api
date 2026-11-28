@@ -26,6 +26,8 @@ t('owner may add', v.may.add.ok === true);
 const [ravi, meena, latha] = v.people;
 t('the stored user id is shown as it is', ravi.user_id === 'ravik@shop.br');
 t('a missing user id falls back to key@shop.br', meena.user_id === 'meena@shop.br');
+t('O4: sign_in_as is the typed form, no .br (stored and built)', ravi.sign_in_as === 'ravik@shop' && meena.sign_in_as === 'meena@shop' && !/\.(br|cr)\b/.test(ravi.sign_in_as + meena.sign_in_as));
+t('O4: handle.typedForm strips only a kind suffix right after the entity name', require(path.join(API, 'lib', 'handle')).typedForm('x=g.com@s.cr') === 'x=g.com@s' && require(path.join(API, 'lib', 'handle')).typedForm('a@firm.co.cr') === 'a@firm.co.cr' && require(path.join(API, 'lib', 'handle')).typedForm('ravi@acme') === 'ravi@acme' && require(path.join(API, 'lib', 'handle')).typedForm(null) === '');
 t('the level reads in shop words', ravi.access.label === 'Counter staff' && latha.access.label === 'View-only');
 t('an off person: switch is "on", code and cover are greyed with a sentence', meena.may.switch.to === 'on' && meena.may.switch.ok && !meena.may.reset_pin.ok && !!meena.may.reset_pin.why && !meena.may.cover.ok && !!meena.may.cover.why);
 t('an on person: switch is "off"', ravi.may.switch.to === 'off' && ravi.may.switch.ok);
