@@ -1,0 +1,21 @@
+{
+  "figure": "gstr3b-set-off",
+  "says": "GSTR-3B 6.1 / ledger net: on the rail (chit) side the engine's set-off (posting.gstSetOff = taxSetOff, CGST Act s.49(5) order as the code comments cite) is called from ONE wrapper, tax-lines.setOffRun. netOf (ledger net) and setOffPreview (6.1 preview) both call it. The journal side has its own wrapper (books-period.setOffOf, minor units) and the adopted engine copies call it inside themselves; nothing else may.",
+  "covers": [
+    "in.gstr3b.6_1",
+    "in.gstr3b.3_1a",
+    "in.gstr3b.itc"
+  ],
+  "owner": "lib/tax-lines.js",
+  "owner_fn": "setOffRun",
+  "allowed_elsewhere": [
+    "lib/books-period.js",
+    "lib/gst-returns.js",
+    "lib/posting.js"
+  ],
+  "forbidden": [
+    "gstSetOff",
+    "taxSetOff"
+  ],
+  "decided": "2026-11-28 batch 1141 RC3 (Athi: unify, do not build). Values unchanged: the preview keeps no cess / null on refusal, the net keeps cess and the plain-difference fallback (golden in tests/one-figure-gstr3b-month.test.cjs)."
+}
