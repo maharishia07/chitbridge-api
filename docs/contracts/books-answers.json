@@ -268,7 +268,8 @@
       "start": "2025-07-01",
       "end": "2025-09-30",
       "due": "2025-10-28",
-      "ended": true
+      "ended": true,
+      "before_books": true
      },
      {
       "period": "2025-Q2",
