@@ -6,7 +6,7 @@
 const assert = require('assert');
 const Engines = require('../lib/books-engines');
 const real = Engines.packs();
-const AU0 = real.packFor('AU');
+const AU0 = real.packFor('AU', '1.0.0'); /* 1.0.0 stays resolvable beside any later version */
 const AU1 = Object.assign({}, AU0, { version: '1.0.1', marker: 'new' }); /* a later version beside the old one, as engines 1.0.1 registers it */
 Engines.packs = () => Object.assign({}, real, { packFor: (c, v) => (String(c).toUpperCase() !== 'AU' ? real.packFor(c, v) : v == null || v === '' ? AU1 : v === '1.0.1' ? AU1 : v === '1.0.0' ? AU0 : null) });
 const Pin = require('../lib/books-pack-pin');
