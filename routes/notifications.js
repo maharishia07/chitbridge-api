@@ -110,7 +110,7 @@ async function badgeOf(entity_id, caller_id, limit, internal, mayAnswer) {
   }
   if (!counted) counted = await countOf(false);
   const r = counted.rows[0] || { count: 0, total: 0, seen_at: null };
-  const asks = r.asks || 0; /* the owner's waiting firm requests: counted until answered, outside the watermark */
+  const asks = r.asks | 0; /* the owner's waiting firm requests: counted until answered, outside the watermark */
   return { count: r.count + (r.news_fresh || 0) + asks, total: r.total + (r.news_total || 0), seen_at: r.seen_at, asks };
 }
 
