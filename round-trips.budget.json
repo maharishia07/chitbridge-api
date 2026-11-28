@@ -5843,7 +5843,11 @@
       "fired": true,
       "status": 200,
       "basis": "static read 2026-11-28: one read of the waiting requests (lib/connect-asks), firm-connect-1138",
-      "registered_only": true
+      "registered_only": true,
+      "awaiting_client": {
+        "pr": "web firm-connect-1138 (the Network card in Who can see my books)",
+        "since": "2026-11-28"
+      }
     },
     "POST /api/network/firm-invites": {
       "file": "network.js",
@@ -5852,7 +5856,11 @@
       "fired": true,
       "status": 200,
       "basis": "static read 2026-11-28: one identities read for the inviter then the mail send; the offline stub cannot reach 200 (schema 400), firm-connect-1138",
-      "registered_only": true
+      "registered_only": true,
+      "awaiting_client": {
+        "pr": "web firm-connect-1138 (the Network card in Who can see my books)",
+        "since": "2026-11-28"
+      }
     }
   }
 }
