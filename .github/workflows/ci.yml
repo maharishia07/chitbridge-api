@@ -167,7 +167,7 @@ jobs:
           path: .side/chitbridge-web
       - name: docs/SEAMS.md has not drifted (node .side/chitbridge-web/tools/seams.cjs --check --repo api)
         env:
-          SEAMS_PR_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+          SEAMS_PR_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || (github.ref_name != 'main' && github.ref_name != 'develop' && 'origin/develop') || '' }}
         run: node .side/chitbridge-web/tools/seams.cjs --check --repo api
 
   seams-regen:
