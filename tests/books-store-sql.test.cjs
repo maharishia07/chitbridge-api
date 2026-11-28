@@ -62,6 +62,7 @@ const CALLS = {
   taxedOnlyLines: [E, '2026-04-01', '2026-04-30', 'input_vat', ['purchases']],
   statedExportLines: [E, '2026-07-01', '2026-09-30', ['gst_collected'], 'sales'],
   taxOfEntriesWith: [E, '2026-04-01', '2026-04-30', 'gst_paid', ['ppe_plant']],
+  taxOfEvents: [E, '2026-04-01', '2026-04-30', 'gst_paid', ['credit_note']],   /* ACC-417 */
   /* ACC-290 A · the 0% lines on the plain sales ledger (no supply kind named) */
   zeroRateSales: [E, '2026-07-01', '2026-09-30', 'sales', 'AUD'],
   /* SUPPLY KIND: the catalogue's 0% slabs and items with no kind, one trip */
@@ -136,6 +137,13 @@ const PURE = { loanRefSql: (fn) => /^CASE WHEN a.source_ref LIKE 'loan:%' THEN /
     ok('ACC-269 · only the pack input roles, the shop fenced on the entry and the line', /a\.role = ANY\(\$3::text\[\]\)/.test(q.text) && /x\.entity_id = \$1/.test(q.text) && /l\.entity_id = x\.entity_id/.test(q.text), q.text);
     const grouped = await S.inputTaxOfChits({ query: async () => ({ rows: [{ chit_id: U, role: 'input_cgst', minor: '900' }, { chit_id: U, role: 'input_sgst', minor: '900' }, { chit_id: E, role: 'input_cgst', minor: '0' }] }) }, E, [U, E], ['input_cgst', 'input_sgst'], '2026-04-01', '2026-05-01');
     ok('ACC-269 · the rows come back by chit and role; a role that nets to 0 is absent', JSON.stringify(grouped) === JSON.stringify({ [U]: { input_cgst: 900, input_sgst: 900 } }), JSON.stringify(grouped));
+  }
+  /* ── ACC-417: the tax role's Dr and Cr over the entries of the pack's adjustment event types: ONE statement, the shop fenced, openings left out ── */
+  {
+    seen.length = 0;
+    const sums = await S.taxOfEvents({ query: async (text, params) => { seen.push({ text, params }); return { rows: [{ dr_minor: '120', cr_minor: '0' }] }; } }, E, '2026-04-01', '2026-04-30', 'output_cgst', ['credit_note', 'return']);
+    ok('ACC-417 · taxOfEvents: ONE statement, the shop and the tax role and the event list are parameters, openings left out', seen.length === 1 && seen[0].params[0] === E && seen[0].params[3] === 'output_cgst' && Array.isArray(seen[0].params[4]) && /h\.entity_id = \$1/.test(seen[0].text) && /is_opening IS NOT TRUE/.test(seen[0].text) && /event_type = ANY\(\$5::text\[\]\)/.test(seen[0].text), JSON.stringify(seen[0]));
+    ok('ACC-417 · taxOfEvents: the sums come back as numbers (minor units)', JSON.stringify(sums) === JSON.stringify({ dr_minor: 120, cr_minor: 0 }), JSON.stringify(sums));
   }
   console.log('\n' + (fail ? '  ✗ ' + fail + ' failed' : '  ✓ ' + pass + ' passed') + ' · ' + (pass + fail) + ' checks (' + seen.length + ' statements)\n');
   process.exit(fail ? 1 : 0);

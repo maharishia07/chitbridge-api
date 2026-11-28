@@ -16,6 +16,9 @@ const GUARDS_PART = [
   'ctr-dupbill-1133.test.cjs', // CTR-DUPBILL: a refused bill number steps to the next free one
   'cat344-start-priced-1133.test.cjs', // CAT-344: Start your shop prices an unpriced list
   'cat345-starter-unpriced-1133.test.cjs', // CAT-345: every starter list is unpriced outside the home country
+  'acc417-adjustments.test.cjs', // ACC-417: BAS rows split into adjustment and plain by the pack's event list
+  'acc418-bad-debt.test.cjs', // ACC-418: the invoice a write-off / recovery names: its own GST, read from the posted tax lines
+  'au-pack-pin-1138.test.cjs', // pack pinning: a day reads under the version in force; restamp forward only, from a period start, audited
   'guards-list.test.cjs', // apitrim 1129: the list in three parts is one array, in order, no name lost or twice
   'acc413-named-credit-both-sides.test.cjs', // ACC-413: a rail credit note that names a bill settles that bill at the buyer too (T9 184.80 / T2 1,136.00)
   'acc414-dispute-ref.test.cjs', // ACC-414: a dispute holds a real bill of the party (number or id); an unknown ref is 404, a settled bill 400

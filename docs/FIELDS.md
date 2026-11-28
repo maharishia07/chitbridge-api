@@ -1741,3 +1741,12 @@ Pay expense on a one-tax country (UAE VAT, AU GST) carries two optional fields i
 | `skipped` | array | The codes the shop already held and the call left alone (a second run is safe, BK-11). |
 
 The five ride beside `items[]`. web `public/app/core.js` SIBS now lists them, so a screen that calls it through `api()` reads them instead of `undefined` (e2e/api-envelope.cjs). The empty owner-preview answer of `GET /api/catalogue/:bridge_id` is now built by `publicResponseFor`, the one public shape (byte-equal to before).
+
+## Pack versions · which rules a day is read under (pack pinning, batch 1138, 2026-11-28; every country)
+
+| Route / table | Key | Meaning |
+|---|---|---|
+| `books_setting` (b914) | `pack_version` | The version of the country's rules the shop reads NOW: `major.minor.patch`, set when the ledger is switched on (the latest of its country) or by a restamp. Empty, or the old chart stamp `1`, = never stamped = the latest. Read by `lib/books-pack-pin.js` only. |
+| `books_setting` (b914) | `pack_history` | Dated rows `[{ from, version, by, at }]`, added only by a restamp, never edited. A day reads the last row on or before it; the first row (`from` 0001-01-01) is the version it read before the first restamp. |
+| POST /api/books/setting (widened) | `pack_version` · `pack_from` in; `pack_version` out | Restamp: `pack_version` a version this build holds, newer than the one in force; `pack_from` the first day of a tax period. Owner only. Refused in words otherwise (BOOKS_PACK_BACKWARD · BOOKS_PACK_FROM · BOOKS_PACK_VERSION_UNKNOWN · BOOKS_PACK_NOT_MIGRATED). One `books_change_log` row (field `pack_version`). Out: `{ from, version, was }` or null. |
+| engines `packs/register.json` (the register, one home) | `<ID>@<version>` → `status` · `sha256` · `kind` (law\|rate\|form\|fix\|added) · `purpose` · `source` · `law_as_at` · `form` · `effective_from` · `approved_by` · `touches` | What each released pack version is, frozen by its content hash (engines tests/pack-freeze.test.js) and replayed (tests/golden reg-versions). `null` = not yet checked against the official source. |

@@ -233,15 +233,15 @@ router.post('/setting', auth, owner, on, ...checked('POST /setting'), async (req
       b = req.body || {},
       s = req.books;
     const grain = ['day', 'shift', 'bill'].indexOf(b.walkin_grain) >= 0 ? b.walkin_grain : s.walkin_grain;
-    const enabled = b.enabled !== false;
+    const enabled = b.enabled !== false; let restamped = null;
     await withEntity(e, async (h) => {
-      await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain }));
+      await S.saveSetting(h, e, Object.assign({}, s, { enabled, walkin_grain: grain })); if (b.pack_version) restamped = await require('../lib/books-pack-pin').restampFor(h, e, s, b, byOf(req)); /* pack pinning: forward only, from a tax-period start, audited; periods already closed keep their version */
       if (grain !== s.walkin_grain)
         await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'walkin_grain', old: s.walkin_grain, new: grain });
       if (!enabled) await S.logChange(h, e, { by: byOf(req), table_name: 'books_setting', row_id: e, field: 'enabled', old: 'true', new: 'false' });
     });
     require('../lib/books-hooks').forget(e);
-    res.json({ ok: true, enabled, walkin_grain: grain });
+    res.json({ ok: true, enabled, walkin_grain: grain, pack_version: restamped });
   } catch (err) { problem(req, res, refusalOf(err, req)); }
 });
 /**
@@ -1848,8 +1848,8 @@ router.post('/write-off', auth, owner, on, ...checked('POST /write-off'), async 
       doc_ref: 'wo:' + party + ':' + (ref || CLOCK.nowMs()),
       by: byOf(req)
     };
-    const out = await B.postEntry(null, entity, writeOff, require('../lib/books-event-guard').guardOf(entity, writeOff)); /* AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
-    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: out.note });
+    const found = await require('../lib/books-bad-debt').adjusted(entity, writeOff), out = await B.postEntry(null, entity, found.event, require('../lib/books-event-guard').guardOf(entity, found.event)); /* ACC-418: the invoice's own GST (adjusted); AX-F-02: a reused ref with another amount is 409 EVENT_REF_REUSED */
+    res.json({ ok: out.ok, off: out.off, duplicate: out.duplicate, entry_id: out.entry_id, entry_no: out.entry_no, posting_date: out.posting_date, doc_date: out.doc_date, moved: out.moved, lines: out.lines, items: out.items, note: [out.note, found.note].filter(Boolean).join(' ') || out.note });
   } catch (err) {
     problem(req, res, refusalOf(err, req));
   }
