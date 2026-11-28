@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 702,
+  "partial": 0,
+  "meets": 703,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -31474,11 +31474,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "d01ee3c7fdf751ef"
+    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api, open pending) stage2 re-sign, diff read (badgeOf + badgeAsksSql): the owner asks count now rides as one scalar column of the ?count=1 badge statement (no extra statement, no extra trip; staff and keys get none), badge keys { count, total, seen_at, asks } in the closed shape, count includes the waiting requests; the FEED answer is back to its old keys (no asks key, no request rows); legacy keys and order kept; generic 500; 13 columns pass",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "rail-bell.js"
