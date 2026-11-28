@@ -4,11 +4,13 @@
  * Hand figures (AUD minor): sales 1,000,000 + GST collected 100,000; purchases 250,000 + GST paid 25,000 → 1A 100,000 · 1B 25,000 · 9 = 75,000 payable.
  */
 const assert = require('assert');
-const Engines = require('../lib/books-engines');
-const real = Engines.packs();
-const AU0 = real.packFor('AU', '1.0.0'); /* 1.0.0 stays resolvable beside any later version */
+const Engines = require('../lib/books-engines'), Reg = require('../lib/regulation');
+const AU0 = Reg.packFor('AU', '1.0.0'); /* 1.0.0 stays resolvable beside any later version */
 const AU1 = Object.assign({}, AU0, { version: '1.0.1', marker: 'new' }); /* a later version beside the old one, as engines 1.0.1 registers it */
-Engines.packs = () => Object.assign({}, real, { packFor: (c, v) => (String(c).toUpperCase() !== 'AU' ? real.packFor(c, v) : v == null || v === '' ? AU1 : v === '1.0.1' ? AU1 : v === '1.0.0' ? AU0 : null) });
+const realFor = Reg.packFor.bind(Reg), realPacks = Engines.packs();
+const pickAU = (v) => (v == null || v === '' ? AU1 : v === '1.0.1' ? AU1 : v === '1.0.0' ? AU0 : null);
+Reg.packFor = (c, v) => (String(c).toUpperCase() === 'AU' ? pickAU(v) : realFor(c, v));
+Engines.packs = () => Object.assign({}, realPacks, { packFor: (c) => (String(c).toUpperCase() === 'AU' ? AU1 : realPacks.packFor(c)) });
 const Pin = require('../lib/books-pack-pin');
 const S = require('../lib/books-store'), SP = require('../lib/books-store-pack');
 let n = 0;
