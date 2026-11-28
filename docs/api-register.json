@@ -5,8 +5,8 @@
   "routes": 701,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 700,
+  "partial": 0,
+  "meets": 701,
   "columns": {
    "strict_input": {
     "applies": 360,
@@ -33793,11 +33793,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "dbeecd4aa2564d45"
+    "signed_off_by_date": "cb-api independent re-sign (not the builder) 2026-11-27 PR#1406 CON-165 CRM-259/261: handler, grant front, lib/party-grant-view and the two contracts read after the hash moved; 13 columns pass on the register row. Under X-Books-For the answer is cut by lib/party-grant-view (allow-list, no phone, e-mail, consent, points, follow-ups, notes; keys are a subset of the open shape, so the open answer is unchanged); BOOKS_FOR_READ_ONLY sentence registered and the middleware uses the same words. Customer picker rows cut by CUSTOMER_ROW_KEEP, a subset of the open row; envelope and open answer unchanged. RE-SIGN at head 88d439e04 (2026-11-27, cb-api, not the builder): hash moved after the first sign-off by the move of the search, the 500 page and the grant cut into lib/crm-firm-read.js; read git diff origin/main...88d439e04 for the four handlers, lib/crm-firm-read.js, lib/party-grant-view.js, crm-contract GET /parties row; 13 machine columns true on the regenerated register. Contract: input adds ?q (text max 100, queryBounds) and limit capped at 500 by the one pager (crm.PAGE), output adds next (number or null) already in api-output-shapes.json; one error shape unchanged (problem(), crmFault/failed), no new status or code; owner answers differ only by the default page 500 (was the 5000 read cap) with next, and ?q; firm seat under X-Books-For: same route, same read, cut by allow-list (no phone, e-mail, consent, points, follow-ups, notes), q matches names and party numbers only, no second read path; the two writes stay refused BOOKS_FOR_READ_ONLY. Web callers that read the whole list must page on next (area: web/crm).",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "app.html",
     "cap-definitions.js"
