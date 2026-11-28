@@ -971,22 +971,22 @@ function allocateOf(body) {
   return body.allocate === 'none' ? 'none' : body.allocate === 'oldest_first' ? 'oldest_first' : null;
 }
 const { directionOf, payOut } = require('../lib/pay-out-gate').make({ UUID, isOwner, isInHouseAccountant, ctx, withEntity, store: S, problem, refusalOf }); /* FIN-79 directionOf · AK-F-02 payOut: who may pay a supplier */
+/** the party a body names (party_id, else party), '' when neither */
+const partyIdOf = (body) => String(body.party_id || body.party || '');
+/** the bill-by-bill split a body spells out, null when it names none (the books then decide) */
+const spreadOf = (body) => (Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null);
 /** the payment question a body asks — shared by /payments/preview and /payments; a refusal is { status, words } */
 function paymentQuestion(req, needMode, fxRate) {
-  const body = req.body || {},
-    currency = String(curOf(req)).toUpperCase();
-  const party = String(body.party_id || body.party || '');
+  const body = req.body || {}, currency = String(curOf(req)).toUpperCase(), party = partyIdOf(body);
   if (!UUID.test(party)) return { refuse: { status: 400, words: 'Which party?' } };
   const paidIn = paidInOf(body, currency, fxRate);
   if (paidIn.refuse) return paidIn;
   const amount_minor = minorAsked(body, paidIn.currency);
   if (!(amount_minor > 0)) return { refuse: { status: 400, words: 'How much?' } };
-  const direction = directionOf(body);
-  if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
+  const direction = directionOf(body); if (!direction) return { refuse: { status: 400, words: 'Is this money in or out?' } };
   const mode = knownMode(body, req.books);
   if (needMode && !mode) return { refuse: { status: 400, words: 'Paid how — ' + P().modeList(P().modesOf(req.books, { cheque: true })) + '?' } };
-  const allocate = allocateOf(body);
-  const allocations = Array.isArray(body.allocations) && body.allocations.length ? body.allocations : null;
+  const allocate = allocateOf(body), allocations = spreadOf(body);
   return { party, direction, amount_minor, cur: paidIn.currency, ledger: currency, mode, allocate, allocations, country: req.books && req.books.country };
 }
 /** ⭐ ACC-377: the currency a payment is made in — a FOREIGN one only when it states the bank's rate (fx_rate); without one the ledger's own currency is the only one */
