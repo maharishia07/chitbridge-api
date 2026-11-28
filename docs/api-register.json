@@ -5,8 +5,8 @@
   "routes": 703,
   "no_does": 1,
   "not_started": 0,
-  "partial": 1,
-  "meets": 702,
+  "partial": 0,
+  "meets": 703,
   "columns": {
    "strict_input": {
     "applies": 361,
@@ -11126,11 +11126,10 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": null,
-    "lifecycle": "stable",
-    "stale_since": "06bd4cea590b72b2"
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1449 ONE-FIGURE RC12 re-sign, diff origin/develop...e6b6358d1 read for this route: the handler now calls B.partyStatement(h,e,id,null,from,to) instead of the local statementInput + E.ledger().partyStatement; the old input (pack, yearBalances, S.ledgerLines mapped by E.lineOf) is the same as lib/books.lineRows, party and from/to passed as before, no role so no code, so the engine reads the party's own account as before; same validation chain, seats, statuses, answer keys and closing_minor (golden from develop in tests/one-figure-party-statement.test.cjs, mutation red); 13 machine columns true, stage2.",
+    "lifecycle": "stable"
    },
-   "status": "partial",
+   "status": "meets standard",
    "callers": [
     "cap-books.js"
    ],
