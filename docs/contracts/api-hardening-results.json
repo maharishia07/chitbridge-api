@@ -3175,19 +3175,6 @@
     "why": "not reached: answered 409"
    }
   },
-  "GET /api/network/asks": {
-   "output_allowlist": {
-    "pass": true
-   }
-  },
-  "POST /api/network/firm-invites": {
-   "strict_input": {
-    "pass": true
-   },
-   "output_allowlist": {
-    "pass": true
-   }
-  },
   "POST /api/network/connections/:id/approve": {
    "strict_input": {
     "pass": true

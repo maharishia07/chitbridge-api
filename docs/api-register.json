@@ -2,18 +2,18 @@
  "version": 1,
  "stage": "2b",
  "counts": {
-  "routes": 703,
+  "routes": 701,
   "no_does": 1,
   "not_started": 0,
   "partial": 0,
-  "meets": 703,
+  "meets": 701,
   "columns": {
    "strict_input": {
-    "applies": 361,
+    "applies": 360,
     "failing": 0
    },
    "output_allowlist": {
-    "applies": 703,
+    "applies": 701,
     "failing": 0
    },
    "foreign_id_404": {
@@ -29,46 +29,46 @@
     "failing": 0
    },
    "trips_budgeted": {
-    "applies": 703,
+    "applies": 701,
     "failing": 0
    }
   },
   "reported": {
    "bfla_role_check": {
-    "applies": 82,
+    "applies": 79,
     "failing": 0
    },
    "parameterised_query": {
     "applies": 279,
-    "failing": 2
+    "failing": 1
    },
    "rate_limited": {
-    "applies": 703,
-    "failing": 514
+    "applies": 701,
+    "failing": 519
    },
    "role_matrix": {
-    "applies": 703,
-    "failing": 639
+    "applies": 701,
+    "failing": 637
    },
    "junk_fuzz": {
-    "applies": 703,
-    "failing": 62
+    "applies": 701,
+    "failing": 60
    },
    "resource_cap": {
-    "applies": 703,
+    "applies": 701,
     "failing": 0
    },
    "audit_logged": {
-    "applies": 409,
-    "failing": 355
+    "applies": 408,
+    "failing": 354
    },
    "stale_write_refused": {
     "applies": 64,
     "failing": 62
    },
    "documented_example": {
-    "applies": 703,
-    "failing": 701
+    "applies": 701,
+    "failing": 699
    },
    "paged_read": {
     "applies": 78,
@@ -77,7 +77,7 @@
   },
   "resource_cap_causes": {},
   "tolerant_outward": 26,
-  "output_allowlist_from_recordings": 178
+  "output_allowlist_from_recordings": 176
  },
  "machine_columns": [
   "schema_in",
@@ -6246,7 +6246,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 121,
-   "hash": "cf91a95bf267417a",
+   "hash": "c1dfe6eea9319d5c",
    "does": "Optional filters in -> we read when auditors looked at the books -> the list of looks (owner only).",
    "errors": {
     "count": 2,
@@ -6351,7 +6351,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read: answer adds visits[] (closed shape in api-output-shapes.json, owner-only door unchanged, looks kept byte for byte so legacy callers hold); 13 columns pass",
+    "signed_off_by_date": "cb-api (re-sign by the API surface specialist after its own change, no independent reviewer yet) 2026-11-18 next/col16fix-api: diff read for this route. The query `limit` is now declared B.limit() (integer 1 to 200) through lib/contract-kit queryBounds; the handler and the lib clamp are untouched (the lib cap is the same, never above 200). A limit above 200 or not a whole number is refused with the route own invalid status (named field) where it was clamped or defaulted; the web sends at most 200 here (grep of web: no limit above 200 on this route). 13 machine columns true; resource_cap now holds. Owner area to confirm the refusal of an out-of-range limit. RE-SIGN 2026-11-18 (x-words): the route keeps its released refusal sentence byte for byte through the fragment x-words in middleware/validate.js sentenceOf; diff re-read, 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -22846,7 +22846,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: re-read for card network (lib/home-facts.js): same closed lines/figures/state shape, owner seat only reads requests, staff reads 0 and no door, unknown card still 404, key 403; route hash unchanged; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent reviewer, not the builder) 2026-11-11 PR#1128 stage2: handler + contract read; every card builder in lib/home-facts.js returns only lines/figures/state (rail: its own six keys), all in the closed shape; unknown card 404, api key 403, fault the generic sentence; 13 columns pass",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -30729,137 +30729,13 @@
    }
   },
   {
-   "key": "GET /api/network/asks",
-   "method": "GET",
-   "path": "/api/network/asks",
-   "owner_area": "network",
-   "owner_agent": "cb-network",
-   "file": "src/routes/network.js",
-   "line": 179,
-   "hash": "dc1a4438a99b41c8",
-   "does": "Nothing in (business owner only) -> we read the requests to connect that wait for this business and the ones it asked, a firm always the parent -> { to_me, by_me }.",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     500
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": false,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    500
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "output_allowlist_basis": "recordings",
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": false,
-    "role_matrix": false,
-    "junk_fuzz": false,
-    "resource_cap": true,
-    "audit_logged": true,
-    "stale_write_refused": true,
-    "documented_example": false,
-    "paged_read": true
-   },
-   "reported_applies": {
-    "bfla_role_check": true,
-    "parameterised_query": false,
-    "rate_limited": true,
-    "role_matrix": true,
-    "junk_fuzz": true,
-    "resource_cap": true,
-    "audit_logged": false,
-    "stale_write_refused": false,
-    "documented_example": true,
-    "paged_read": false
-   },
-   "reported_causes": {
-    "resource_cap": [],
-    "paged_read": [],
-    "stale_write_refused_na": [
-     "read"
-    ]
-   },
-   "reported_facts": {
-    "paged_read": {
-     "kind": "single",
-     "mode": "none",
-     "default": null,
-     "max": null,
-     "unasked": "n/a",
-     "via": "no rows answered"
-    }
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: NEW route read: owner-only (ownerDecides, staff and keys 403 OWNER_ONLY), no id in input so foreign_id_404 n/a, answer { to_me, by_me } from lib/connect-asks over the caller own entity only, closed output shape, 1 trip budgeted, generic 500 sentence; 13 columns pass",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 1,
-    "wire": 1,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "GET /api/network/entities/:id/connections",
    "method": "GET",
    "path": "/api/network/entities/:id/connections",
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 155,
+   "line": 153,
    "hash": "a0d06b8ea42b5e78",
    "does": "A business id in the address (signed-in) -> we read its connections as the caller may see them -> the connections.",
    "errors": {
@@ -30985,7 +30861,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 148,
+   "line": 146,
    "hash": "26ec7c352ead04da",
    "does": "A business id in the address (signed-in) -> we read that business and the ones below it, as the caller may see them -> the branch of the network.",
    "errors": {
@@ -31115,7 +30991,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 67,
+   "line": 65,
    "hash": "e154f449feca36d9",
    "does": "A bridge id in the query (signed-in) -> we look up that business in the network -> found with its card, or not found.",
    "errors": {
@@ -31243,7 +31119,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 102,
+   "line": 100,
    "hash": "4747f2c6ffbcb794",
    "does": "A bridge id in the query (signed-in) -> we find where the business sits and the whole network above it in one call -> the business, its root and all nodes.",
    "errors": {
@@ -31371,8 +31247,8 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 174,
-   "hash": "d01ee3c7fdf751ef",
+   "line": 171,
+   "hash": "076b1beba109c671",
    "does": "Signed-in caller with an optional page or count -> we read what is new for them, or just the count for the badge -> the notification feed or the number.",
    "errors": {
     "count": 0,
@@ -31431,7 +31307,7 @@
    "output_allowlist_basis": "recordings",
    "reported": {
     "bfla_role_check": true,
-    "parameterised_query": false,
+    "parameterised_query": true,
     "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
@@ -31474,7 +31350,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api, open pending) stage2 re-sign, diff read (badgeOf + badgeAsksSql): the owner asks count now rides as one scalar column of the ?count=1 badge statement (no extra statement, no extra trip; staff and keys get none), badge keys { count, total, seen_at, asks } in the closed shape, count includes the waiting requests; the FEED answer is back to its old keys (no asks key, no request rows); legacy keys and order kept; generic 500; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-18 batch 1118v2: handler and diff vs main and vs cfea8a18f read; a text query/body value is now read through the one textOf (FUZZ-8): an object, list or number is refused 400 INVALID_INPUT in the one error shape (accepted by Athi, DECISIONS 18 Nov evening), strings answer as before, no key, status or code removed; additive refusal only; 13 columns true",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -31485,7 +31361,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 3,
-    "wire": 10,
+    "wire": 9,
     "screens": [
      "app.html 3/109",
      "rail-bell.js 3/4"
@@ -42124,7 +42000,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books-grants.js",
    "line": 103,
-   "hash": "b8419b116b120c26",
+   "hash": "968b93945cedab0f",
    "does": "A grant id and the changes in -> we change what that auditor can see -> the updated grant (owner only).",
    "errors": {
     "count": 2,
@@ -42233,7 +42109,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read (lib/books-grant.js change/changeCosts): can_see_costs and consent in the closed body, a rise needs consent true else 422 BOOKS_GRANT_CONSENT_NEEDED, 503 in words before b915, owner-only door unchanged, before/after logged; answer shape unchanged; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). ADDITIVE body keys posting, posting_cap_minor, posting_cap_currency; owner only as before. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -74687,8 +74563,8 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 162,
-   "hash": "78f57dfd06bfad30",
+   "line": 160,
+   "hash": "5c423f5a383b953e",
    "does": "Two sides of a connection (signed-in) -> we raise a connection request between those businesses -> the new connection.",
    "errors": {
     "count": 0,
@@ -74746,7 +74622,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": true,
+    "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -74756,7 +74632,7 @@
     "paged_read": true
    },
    "reported_applies": {
-    "bfla_role_check": true,
+    "bfla_role_check": false,
     "parameterised_query": false,
     "rate_limited": true,
     "role_matrix": true,
@@ -74788,7 +74664,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: diff read: ownerAsks added (staff or key 403 OWNER_ONLY, was 401 NO_ACTOR: the intended change, frozen in api-legacy.json), schema and answer unchanged, new refusals 409 FIRM_DIRECTION and 429 ASK_LIMIT/ASK_COOLING_OFF are in the register with sentences; 13 columns pass",
+    "signed_off_by_date": "cb-api (independent re-sign, not the builder) 2026-11-16 l16/integ2c-sign-api over apifix 604cd17f: diff origin/main...604cd17f read (handler, validation chain, called lib). PURE: the hash moved with the route summary (the @does line) or a moved helper; handler logic unchanged. 13 machine columns true.",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -74817,7 +74693,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 196,
+   "line": 176,
    "hash": "cf94b2f1ecb4b050",
    "does": "A connection id in the address (business owner only) -> we approve that requested connection -> the connection now live.",
    "errors": {
@@ -74878,7 +74754,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": true,
+    "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -74951,7 +74827,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 205,
+   "line": 185,
    "hash": "0fc9c8e13510c1f5",
    "does": "A connection id in the address (business owner only) -> we decline that requested connection -> the connection as declined.",
    "errors": {
@@ -75012,7 +74888,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": true,
+    "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75085,7 +74961,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 232,
+   "line": 212,
    "hash": "f2723d9cbe44782d",
    "does": "A connection id in the address (business owner only) -> we end that connection -> the connection as ended.",
    "errors": {
@@ -75146,7 +75022,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": true,
+    "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75219,7 +75095,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 223,
+   "line": 203,
    "hash": "3816956041ef4601",
    "does": "A connection id in the address (business owner only) -> we turn a suspended connection back on -> the connection as active.",
    "errors": {
@@ -75280,7 +75156,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": true,
+    "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75353,7 +75229,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 214,
+   "line": 194,
    "hash": "53cbc22c6326a455",
    "does": "A connection id in the address (business owner only) -> we pause that connection without ending it -> the connection as suspended.",
    "errors": {
@@ -75414,7 +75290,7 @@
    "reported": {
     "bfla_role_check": true,
     "parameterised_query": true,
-    "rate_limited": true,
+    "rate_limited": false,
     "role_matrix": false,
     "junk_fuzz": true,
     "resource_cap": true,
@@ -75487,7 +75363,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 58,
+   "line": 56,
    "hash": "9df9dbc22a72511d",
    "does": "The details of a business to add to the network (signed-in) -> we register it as a node, and a platform-owned one only for the platform seat -> the new network entity, or 403 NOT_PLATFORM.",
    "errors": {
@@ -75613,7 +75489,7 @@
    "owner_area": "network",
    "owner_agent": "cb-network",
    "file": "src/routes/network.js",
-   "line": 77,
+   "line": 75,
    "hash": "f50ade78cee2531b",
    "does": "A network business id in the address (signed-in) -> we mark that listed, still unclaimed business as claimed, only when the caller is the business whose bridge id it carries -> the claimed entity, or the one not-found answer.",
    "errors": {
@@ -75735,139 +75611,13 @@
    }
   },
   {
-   "key": "POST /api/network/firm-invites",
-   "method": "POST",
-   "path": "/api/network/firm-invites",
-   "owner_area": "network",
-   "owner_agent": "cb-network",
-   "file": "src/routes/network.js",
-   "line": 187,
-   "hash": "afc2ae17cdf90915",
-   "does": "A business address in the body (business owner only) -> we send ONE fixed e-mail inviting a firm that is not on ChitBridge, capped, and say whether it was delivered -> { sent, delivered, message }, nothing connects.",
-   "errors": {
-    "count": 0,
-    "statuses": [
-     400,
-     401,
-     500,
-     503
-    ],
-    "codes": []
-   },
-   "reads": [],
-   "writes": [],
-   "money": false,
-   "actions": [],
-   "derived": [
-    "reads",
-    "writes",
-    "money"
-   ],
-   "columns": {
-    "schema_in": true,
-    "schema_out": true,
-    "missing_input_answer": true,
-    "error_shape": true,
-    "codes_registered": true,
-    "error_tests": true,
-    "status_codes": true,
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": true,
-    "idempotent_money_write": true,
-    "inbound_validated": true,
-    "trips_budgeted": true
-   },
-   "applies": {
-    "strict_input": true,
-    "output_allowlist": true,
-    "foreign_id_404": false,
-    "idempotent_money_write": false,
-    "inbound_validated": false,
-    "trips_budgeted": true
-   },
-   "declared": [
-    400,
-    401,
-    500,
-    503
-   ],
-   "notes": [
-    "auth middleware answers 401 in the old body",
-    "legacy keys frozen in docs/contracts/api-legacy.json"
-   ],
-   "output_allowlist_basis": "recordings",
-   "reported": {
-    "bfla_role_check": true,
-    "parameterised_query": true,
-    "rate_limited": true,
-    "role_matrix": false,
-    "junk_fuzz": false,
-    "resource_cap": true,
-    "audit_logged": false,
-    "stale_write_refused": true,
-    "documented_example": false,
-    "paged_read": true
-   },
-   "reported_applies": {
-    "bfla_role_check": true,
-    "parameterised_query": false,
-    "rate_limited": true,
-    "role_matrix": true,
-    "junk_fuzz": true,
-    "resource_cap": true,
-    "audit_logged": true,
-    "stale_write_refused": false,
-    "documented_example": true,
-    "paged_read": false
-   },
-   "reported_causes": {
-    "resource_cap": [],
-    "paged_read": [],
-    "stale_write_refused_na": [
-     "create"
-    ]
-   },
-   "reported_facts": {
-    "paged_read": {
-     "kind": "n/a",
-     "mode": "none",
-     "default": null,
-     "max": null,
-     "unasked": "n/a",
-     "via": null
-    }
-   },
-   "human": {
-    "names_clear": true,
-    "sentence_plain": true,
-    "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-28 PR#(firm-connect-1138 api branch, open pending) stage2: NEW route read: owner-only, write gate 503, strict one-key body { email } (contract pattern fixed: it was an unescaped string, so any address with the letter s was refused 400), cap 429 INVITE_LIMIT registered with sentence, answer { sent, delivered, message } closed, nothing connects, no stored id; 13 columns pass",
-    "lifecycle": "stable"
-   },
-   "status": "meets standard",
-   "callers": [],
-   "offline": "online-only",
-   "round_trips": {
-    "trips": 1,
-    "wire": 1,
-    "screens": []
-   },
-   "measured": {
-    "server_ms_p50": null,
-    "server_ms_p95": null,
-    "bytes_out": null,
-    "slow_3g": null
-   }
-  },
-  {
    "key": "POST /api/notifications/dismiss",
    "method": "POST",
    "path": "/api/notifications/dismiss",
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 292,
+   "line": 289,
    "hash": "8ca0946b1d787775",
    "does": "A list of event ids, or all (signed-in) -> we clear those notifications for the caller so they stop showing -> how many were cleared.",
    "errors": {
@@ -76005,7 +75755,7 @@
    "owner_area": "notifications",
    "owner_agent": "cb-rail",
    "file": "routes/notifications.js",
-   "line": 240,
+   "line": 237,
    "hash": "2d4ccaf0dddfb510",
    "does": "Signed-in caller opens the panel -> we stamp the time they last looked so the badge resets -> a done answer with that time.",
    "errors": {
