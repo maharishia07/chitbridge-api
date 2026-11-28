@@ -1,0 +1,54 @@
+{
+  "_doc": "ONE OWNING MODULE per guarded table (drift exit bar, Athi 28 Nov 2026). tests/one-reader-tables.test.cjs fails the build when SQL on the table appears outside the owner, except the dated waivers below (a waiver is a file + how many lines + why + date; the count may only go down, a new file or a higher count fails). state_patterns: a raw state predicate on the table outside the owner (the decision itself) fails with no waiver possible.",
+  "table": "books_access_grant",
+  "owner": "lib/books-grant.js",
+  "decision": "stateOf (revoked | expired | edge_off | live) over stateColumnsSql; the SQL twin liveGrantSql; ended = endedSql",
+  "state_patterns": [
+    "revoked_ats+ISs+(NOTs+)?NULL",
+    "expires_ats*(<=|>=|<|>)s*now()"
+  ],
+  "waivers": [
+    {
+      "file": "lib/books-action.js",
+      "count": 1,
+      "date": "2026-11-28",
+      "why": "withdrawEnded: the INSERT..SELECT joins the grant row; the 'ended' test and its reason words are endedSql / endedReasonSql"
+    },
+    {
+      "file": "lib/books-baseline.js",
+      "count": 1,
+      "date": "2026-11-28",
+      "why": "liveGrantOf: selects the pair's rows with stateColumnsSql and hands them to grants.liveAmong (the verdict)"
+    },
+    {
+      "file": "lib/books-practice.js",
+      "count": 1,
+      "date": "2026-11-28",
+      "why": "grantsRead: the firm's rows with stateColumnsSql, judged by grants.liveAmong in chooseLive"
+    },
+    {
+      "file": "lib/books-store.js",
+      "count": 1,
+      "date": "2026-11-28",
+      "why": "the audit trail names the firm and people of any party that holds or HELD a grant (revoked still names past actions): not a state decision"
+    },
+    {
+      "file": "lib/jobs-open.js",
+      "count": 2,
+      "date": "2026-11-28",
+      "why": "resolveFilter uses liveGrantSql and joins job chits; eligibilityOf selects rows with stateColumnsSql for verdictOf"
+    },
+    {
+      "file": "lib/network-accept-assign.js",
+      "count": 1,
+      "date": "2026-11-28",
+      "why": "reads the live grant's preset through liveGrantSql"
+    }
+  ],
+  "db_backstop": {
+    "migration": "migrations/b912_books_access_grant_state_view.sql",
+    "what": "security_invoker view books_access_grant_state (time half of the state on the database clock, SELECT only, caller RLS kept); base table keeps FORCE RLS + grant_read/insert/update policies",
+    "proof": "sit-ae2 28 Nov 2026: owner path 3 rows (expired/open/revoked), stranger shop 0 rows via the view and 0 raw, UPDATE through the view refused",
+    "prod": "Athi runs b912 (SIT first)"
+  }
+}

@@ -2564,7 +2564,7 @@ router.get('/reward', auth, auth.requireScope('till'), ...checked('GET /reward')
     const holder = holderFrom({ scheme: req.query.scheme, value: req.query.value });
     if (!holder) return refuseBad(req, res, 'scheme (identity|phone) and value required');
     const prog = await progOf(entity_id);
-    if (!prog) return res.json({ ok: true, holder, programme: null, points: 0, entries: [] });
+    if (!prog) { const kept = await store.balance(entity_id, holder, withEntity, null); return res.json({ ok: true, holder, programme: null, points: kept.points, entries: kept.entries }); } /* a given point is a promise (DECISIONS 5d9ed0f7): no live programme, still held (expiry term kept); programme:null = not redeemable */
     /* the balance is the SUM of every entry (lib/reward-store.balanceOn), never a fold of the newest page */
     const balance = await store.balance(entity_id, holder, withEntity, prog);
     res.json(rewardHeld(holder, prog, balance));

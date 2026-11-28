@@ -3850,7 +3850,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 - does: Optionally for=add in -> we read the shop's people, not removed, with their access levels, or the add-a-person view -> the list.
 - errors: 0 code(s) [-] · statuses 401, 422, 500 · money n (derived)
 - effect: offline online-only · round trips 1 (wire 1; share app.html 1/109, cap-books.js 1/43, cap-employees.js 1/5) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
-- reads (derived): access_events, books_access_grant, identities · writes (derived): - · callers: app.html, cap-books.js, cap-employees.js, cap-tasks.js, employees.html, screen-id.js, shell.js · actions: -
+- reads (derived): access_events, identities · writes (derived): - · callers: app.html, cap-books.js, cap-employees.js, cap-tasks.js, employees.html, screen-id.js, shell.js · actions: -
 
 ### preflight (cb-platform, 1 of 1 with a description)
 
@@ -4137,7 +4137,7 @@ One card per route. `does` is written by hand above the route (`@does`); reads, 
 **GET /api/relationships/customers/:id/rewards** · relationships · cb-crm · meets standard
 - does: A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.
 - errors: 0 code(s) [-] · statuses 400, 401, 404, 500 · money n (derived)
-- effect: offline online-only · round trips 1 (wire 4; share cap-rewards.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
+- effect: offline online-only · round trips 1 (wire 6; share cap-rewards.js 1/1) · p50/p95 ms, bytes out, slow 3G: not measured (SPD-29)
 - reads (derived): definition, definition_version · writes (derived): - · callers: cap-rewards.js · actions: -
 
 **GET /api/relationships/customers/groups** · relationships · cb-crm · meets standard

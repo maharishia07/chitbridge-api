@@ -1837,8 +1837,10 @@
     "GET /api/books/todo",
     "GET /api/books/trial-balance",
     "GET /api/books/year/:fy/status",
+    "GET /api/chits/:chit_id",
     "GET /api/tax/gstr",
     "GET /api/tax/ledger",
+    "GET /health",
     "PATCH /api/books/payments/:id",
     "PATCH /api/books/recurring/:id",
     "POST /api/books-actions",
@@ -1900,7 +1902,14 @@
     "POST /api/books/write-off",
     "POST /api/books/year/:fy/close",
     "POST /api/books/year/:fy/reopen",
-    "POST /api/chits/:chit_id/payment"
+    "POST /api/chits/:chit_id/deliver-lines",
+    "POST /api/chits/:chit_id/payment",
+    "POST /api/chits/send",
+    "POST /api/ctp/deliver",
+    "POST /api/relationships/suppliers",
+    "PUT /api/chits/:chit_id/disputes/:dispute_id/resolve",
+    "PUT /api/chits/:chit_id/status",
+    "PUT /api/chits/:chit_id/void"
    ]
   },
   {

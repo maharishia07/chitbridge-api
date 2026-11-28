@@ -491,5 +491,6 @@ const GUARDS_PART = [
   'pathreds-1130.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'homespeed-plan-once.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
   'w4acc-bas-wages-boxes.test.cjs', // wave7 1130: enrolled (every-test-is-enrolled)
+  'cat353-offer-scope-save.test.cjs', // CAT-353: an offer with an unreadable scope is refused at save
 ];
 module.exports = { GUARDS_PART };

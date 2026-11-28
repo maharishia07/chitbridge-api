@@ -2021,7 +2021,7 @@
     "GET /api/relationships/customers/:id/rewards": {
       "file": "relationships.js",
       "trips": 1,
-      "wire": 4,
+      "wire": 6,
       "fired": true,
       "status": 200
     },

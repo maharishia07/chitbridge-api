@@ -31743,7 +31743,6 @@
    },
    "reads": [
     "access_events",
-    "books_access_grant",
     "identities"
    ],
    "writes": [],
@@ -33826,7 +33825,7 @@
    "owner_agent": "cb-crm",
    "file": "routes/relationships.js",
    "line": 788,
-   "hash": "7c3134ca129680fe",
+   "hash": "37f21ed952c608ef",
    "does": "A customer id in -> we read their reward points with their worth, the next reward and recent movements -> the points picture, or no programme.",
    "errors": {
     "count": 0,
@@ -33929,7 +33928,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api (independent sign-off, not the builder) 2026-11-06 PR#838: first sign-off: whole handler and contract read; entity taken from the token (a stranger's id answers 404), shapes and sentences as registered, no web caller broken, 13 columns pass",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1416 stage2: diff read (routes/till.js, relationships.js, crm.js, lib/reward-store.js balance); no-programme answer keeps its keys (programme null, points, entries/says), no new key, no status change, no error path; openapi-diff 0 breaking; 13 columns pass; raw-error 0; behaviour (held points, DECISIONS 5d9ed0f7) is the catalogue/counter owner's call",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -33939,7 +33938,7 @@
    "offline": "online-only",
    "round_trips": {
     "trips": 1,
-    "wire": 4,
+    "wire": 6,
     "screens": [
      "cap-rewards.js 1/1"
     ]
@@ -40188,7 +40187,7 @@
    "owner_agent": "cb-counter",
    "file": "routes/till.js",
    "line": 2561,
-   "hash": "b7945b493fc90536",
+   "hash": "7734e82a979a99c6",
    "does": "A customer by identity or phone in, a counter key or a shop sign-in -> we add up that customer's reward points and recent entries -> the programme, points and entries.",
    "errors": {
     "count": 0,
@@ -40290,7 +40289,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-07 PR#865 stage2 (sign-off pass, shared)",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1416 stage2: diff read (routes/till.js, relationships.js, crm.js, lib/reward-store.js balance); no-programme answer keeps its keys (programme null, points, entries/says), no new key, no status change, no error path; openapi-diff 0 breaking; 13 columns pass; raw-error 0; behaviour (held points, DECISIONS 5d9ed0f7) is the catalogue/counter owner's call",
     "lifecycle": "stable"
    },
    "status": "meets standard",
@@ -53403,7 +53402,7 @@
    "owner_agent": "cb-accounting",
    "file": "routes/books.js",
    "line": 1718,
-   "hash": "56e50adebc2cb4be",
+   "hash": "634a19b9ec10e261",
    "does": "A party, a bill and disputed true or false in -> we mark or release that bill as disputed so it takes no payment -> the updated bill state (editors).",
    "errors": {
     "count": 1,
@@ -53514,7 +53513,7 @@
     "names_clear": true,
     "sentence_plain": true,
     "backward_compatible": true,
-    "signed_off_by_date": "cb-api 2026-11-21 PR#1394 batch 1128 re-sign, diff origin/main...HEAD read per route (handler, chain, operation), 13 machine columns true, stage2: the hash moved with the books gate only: routes/books.js on() became gateOn(whenOff=null): same 404 LEDGER_OFF, handler text, validation chain and operation unchanged.",
+    "signed_off_by_date": "cb-api 2026-11-28 PR#1413 batch 1137 re-sign (ACC-414), diff origin/main...HEAD read per route (routes/books.js answer line, lib/books.js writeStatus, lib/books-bill-ref.js heldBill), 13 machine columns true, stage2: the hold must name a real bill of this party by number or id (namedRef, the one reader Payables uses); an unknown or other-party ref now 404 BOOKS_NOT_FOUND, a hold on a bill with nothing open 400 BOOKS_BAD_REQUEST (release always allowed), both registered with shopkeeper sentences, one error shape, no raw text; the answer's against_ref now carries the bill id, the same key. The former 200 on an unknown ref was a defect (nothing was held). Web caller cap-finance-pay-held.js sends the Payables ref, which namedRef accepts; api-openapi-diff 0 breaking. Behaviour owner: cb-accounting (this PR is theirs; surface signed only).",
     "lifecycle": "stable"
    },
    "status": "meets standard",
