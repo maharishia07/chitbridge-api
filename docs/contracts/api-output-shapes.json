@@ -50158,6 +50158,7 @@
                 "id",
                 "name",
                 "user_id",
+                "sign_in_as",
                 "actor_key",
                 "role",
                 "phone",
@@ -50181,6 +50182,9 @@
                   "type": "string"
                 },
                 "user_id": {
+                  "type": "string"
+                },
+                "sign_in_as": {
                   "type": "string"
                 },
                 "actor_key": {
