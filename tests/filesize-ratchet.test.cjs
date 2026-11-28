@@ -42,7 +42,7 @@ if (!fs.existsSync(WEB_TOOL) && process.env.CI) {
 } else if (!fs.existsSync(WEB_TOOL)) {
   console.log('  skip  the web tool is not beside this checkout (' + path.relative(API, WEB_TOOL) + ') — locally only; CI fails on this');
 } else {
-  const run = spawnSync(process.execPath, [WEB_TOOL, '--root', API, '--against', process.env.CB_READABILITY_BASE || 'origin/main'], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 120000 });
+  const run = spawnSync(process.execPath, [WEB_TOOL, '--root', API, '--against', process.env.CB_READABILITY_BASE || 'origin/develop'], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 120000 });
   const out = (run.stdout || '') + (run.stderr || '');
   console.log(out.split('\n').map((line) => '        ' + line).join('\n'));
   /* the red lines that are NOT a waived growth; a waiver covers only "FAIL grew: <file> a -> b" with b <= max (growth beyond it is red again) */

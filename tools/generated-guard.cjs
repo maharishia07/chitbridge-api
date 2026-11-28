@@ -4,7 +4,7 @@
  * OWNS      "a feature PR does not carry what a tool derives from the code" (Athi, 11 Nov: stop the generated-file clashes between api PRs). On a feature branch
  *           (CB_GENERATED=regen) the change may not touch the derived register files, the derived contract result files, or any derived key of docs/api-ratchet.json.
  *           CI regenerates them in the runner and the batch build (batch/*) regenerates them once; the strict checks on batch/* and main compare them to the code.
- * CALLED BY CI job api-standard (regen mode only) · by hand before pushing: node tools/generated-guard.cjs --base origin/main
+ * CALLED BY CI job api-standard (regen mode only) · by hand before pushing: node tools/generated-guard.cjs --base origin/develop
  * FLOW      git diff --name-only <base>...HEAD (the merge-base, so a merge of main adds nothing) ──▶ any DERIVED file touched? ──▶ docs/api-ratchet.json: base vs head,
  *           only the hand keys (HAND_RATCHET_KEYS) may differ ──▶ exit 1 with the one command that puts it right
  * CARD      28-platform-and-operations/api-standard
@@ -36,7 +36,7 @@ function derivedRatchetChanges(base, head) {
 function problemsOf({ files, base, head }) {
   const problems = [];
   const touched = DERIVED_FILES.filter((name) => files.includes(name));
-  if (touched.length) problems.push('derived files in this PR: ' + touched.join(', ') + '. CI regenerates them and the batch build commits them once. Put them back: git checkout $(git merge-base origin/main HEAD) -- ' + touched.join(' '));
+  if (touched.length) problems.push('derived files in this PR: ' + touched.join(', ') + '. CI regenerates them and the batch build commits them once. Put them back: git checkout $(git merge-base origin/develop HEAD) -- ' + touched.join(' '));
   if (files.includes('docs/api-ratchet.json')) {
     const keys = derivedRatchetChanges(base, head);
     if (keys.length) problems.push('docs/api-ratchet.json: derived key(s) changed in this PR: ' + keys.join(', ') + ' (only ' + HAND_RATCHET_KEYS.join(', ') + ' are hand facts; the counts are written in the batch). Put the file back, then re-apply only your debt/stage edit.');
@@ -51,7 +51,7 @@ const jsonAt = (ref, file) => { const text = runGit(['show', ref + ':' + file]);
 
 /** the command line: --base <ref>; exit code 0 = no derived file carried */
 function main(argv) {
-  const baseRef = argv.includes('--base') ? argv[argv.indexOf('--base') + 1] : 'origin/main';
+  const baseRef = argv.includes('--base') ? argv[argv.indexOf('--base') + 1] : 'origin/develop';
   if (process.env.CB_GENERATED && process.env.CB_GENERATED !== 'regen') { console.log('generated-guard: CB_GENERATED=' + process.env.CB_GENERATED + ' (batch/* or main): the strict checks compare the derived files to the code; nothing to guard here'); return 0; }
   const names = runGit(['diff', '--name-only', baseRef + '...HEAD']);
   if (names === null) { console.log('generated-guard: cannot diff ' + baseRef + '...HEAD (fetch the base with full history)'); return 1; }

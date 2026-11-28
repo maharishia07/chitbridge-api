@@ -36,7 +36,7 @@ const lines = ['{', ' "about": "x",', ' "version": 1,', ' "routes": {',
   '  "GET /api/z": {"hash":"h3","signed_off_by_date":"cb-api 2026-11-01 stage2"}', ' }', '}', ''];
 fs.writeFileSync(file, lines.join('\n'));
 const verdicts = [{ key: 'GET /api/x', outcome: 'proven', level: 'declaration-join', why: 'w', stale: true }, { key: 'GET /api/a', outcome: 'human', stale: true }];
-const count = patchSignoffs(verdicts, [{ key: 'GET /api/x', hash: 'newhash' }], '2026-11-25', 'origin/main', file);
+const count = patchSignoffs(verdicts, [{ key: 'GET /api/x', hash: 'newhash' }], '2026-11-25', 'origin/develop', file);
 const after = fs.readFileSync(file, 'utf8').split('\n');
 ok('patch: one line re-signed', count === 1);
 ok('patch: only that line changed (no reserialise, no re-sort)', after.length === lines.length && after.filter((line, i) => line !== lines[i]).length === 1 && after[5] !== lines[5]);
@@ -46,9 +46,9 @@ fs.rmSync(dir, { recursive: true, force: true });
 
 const base = { routes: [{ key: 'A', hash: '1' }, { key: 'B', hash: '2' }, { key: 'C', hash: '3' }] };
 const head = { routes: [{ key: 'A', hash: '1', status: 'partial' }, { key: 'B', hash: '9', status: 'meets standard' }, { key: 'C', hash: '8', status: 'partial', human: { stale_since: '8' }, columns: {} }, { key: 'D', hash: '4', status: 'partial', human: {}, columns: {} }] };
-const problems = checkSignedAtFold(base, head, 'origin/main');
+const problems = checkSignedAtFold(base, head, 'origin/develop');
 ok('D3: an unchanged partial route is not this PR\'s to sign', !problems.some((sentence) => sentence.startsWith('A ')));
 ok('D3: a changed route that is signed passes', !problems.some((sentence) => sentence.startsWith('B ')));
-ok('D3: a changed stale route and a new unsigned route fail, each with both commands', problems.length === 2 && problems.every((sentence) => sentence.includes('api-resign-moves.cjs --base origin/main --write') && sentence.includes('cb-api')));
+ok('D3: a changed stale route and a new unsigned route fail, each with both commands', problems.length === 2 && problems.every((sentence) => sentence.includes('api-resign-moves.cjs --base origin/develop --write') && sentence.includes('cb-api')));
 console.log(pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
